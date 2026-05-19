@@ -14,9 +14,11 @@ func NewStreamHandler() *StreamHandler {
 }
 
 func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
-	// id := r.PathValue("id")
-	os.MkdirAll("./internal/transcode/test/output/", 0755)
-	err := transcode.TranscodeHLS("./internal/transcode/test/rubber.mp4", "./internal/transcode/test/output/index.m3u8")
+	id := r.PathValue("id")
+	videoPath := "/data/videos/" + id
+	torrentPath := "/data/torrents/" + id + "/rubber.mp4"
+	os.MkdirAll(videoPath, 0755) //TODO only do if folder doesnt exist, and watchout for folder existing but not with a complete stream.
+	err := transcode.TranscodeHLS(torrentPath, videoPath+"/index.m3u8")
 	if err != nil {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("failed to start stream: %v", err)
@@ -27,10 +29,10 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *StreamHandler) GetIndex(w http.ResponseWriter, r *http.Request) {
-	prefix := "./internal/transcode/test/output/"
-	// id := r.PathValue("id")
+	id := r.PathValue("id")
+	videoPath := "/data/videos/" + id 
 	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
-	if bytes, err := os.ReadFile(prefix + "index.m3u8"); err != nil {
+	if bytes, err := os.ReadFile(videoPath + "/index.m3u8"); err != nil {
 		http.Error(w, "failed to read index file", http.StatusInternalServerError)
 		return
 	} else {
@@ -40,8 +42,8 @@ func (s *StreamHandler) GetIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *StreamHandler) GetSegment(w http.ResponseWriter, r *http.Request) {
-	prefix := "./internal/transcode/test/output/"
-	// id := r.PathValue("id")
+	id := r.PathValue("id")
+	prefix := "/data/videos/" + id 
 	segment := r.PathValue("segment")
 	w.Header().Set("Content-Type", "video/mp2t")
 	if bytes, err := os.ReadFile(prefix + segment); err != nil {
