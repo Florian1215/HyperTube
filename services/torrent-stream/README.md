@@ -18,19 +18,21 @@ Health check.
 
 ## GET /stream/{id}
 
-Starts the HLS torrenting and transcoding pipeline for a movie and waits until the output playlist is ready. The client should poll `GET /stream/{id}/index` once this returns 200.
+Starts the HLS transcoding pipeline for a movie. If the stream was already initialised (folder exists), returns `200` immediately without re-transcoding.
 
 ### Path parameters
 
-| Parameter | Type   | Description                       |
-|-----------|--------|-----------------------------------|
-| `id`      | string | IMDb ID of the movie to stream    |
+| Parameter | Type   | Description                    |
+|-----------|--------|--------------------------------|
+| `id`      | string | IMDb ID of the movie to stream |
 
 ### How it works
 
-1. Locates the source file for `{id}`.
-2. Runs `ffmpeg` to segment it into 5-second HLS chunks (`-hls_time 5`, codec copy).
-3. Returns `200` when the playlist file is written and the first segments are ready.
+1. Checks whether `/data/videos/{id}/` already exists — if so, returns `200` immediately.
+2. Creates `/data/videos/{id}/`.
+3. Reads the source file at `/data/torrents/{id}/rubber.mp4`.
+4. Runs `ffmpeg` to segment it into 5-second HLS chunks, writing `stream.m3u8` and `stream0.ts`, `stream1.ts` … into the video folder.
+5. Returns `200` when done.
 
 ### Response
 
@@ -39,6 +41,7 @@ Starts the HLS torrenting and transcoding pipeline for a movie and waits until t
 ### Error responses
 
 ```
+500 Internal Server Error — "failed to create stream directory"
 500 Internal Server Error — "failed to start stream"
 ```
 
@@ -46,15 +49,15 @@ Starts the HLS torrenting and transcoding pipeline for a movie and waits until t
 
 ## GET /stream/{id}/index
 
-Returns the HLS master playlist (`index.m3u8`) for the given stream.
+Returns the HLS playlist (`stream.m3u8`) for the given stream.
 
-The browser `<video>` element (or any HLS-capable player) fetches this file first, then requests segments listed inside it.
+An HLS-capable player fetches this file first, then requests each segment listed inside it.
 
 ### Path parameters
 
-| Parameter | Type   | Description                    |
-|-----------|--------|--------------------------------|
-| `id`      | string | IMDb ID of the active stream   |
+| Parameter | Type   | Description                  |
+|-----------|--------|------------------------------|
+| `id`      | string | IMDb ID of the active stream |
 
 ### Response
 
@@ -71,9 +74,9 @@ Body is the raw `.m3u8` playlist:
 #EXT-X-VERSION:3
 #EXT-X-TARGETDURATION:5
 #EXTINF:5.000000,
-index0.ts
+stream0.ts
 #EXTINF:5.000000,
-index1.ts
+stream1.ts
 ...
 #EXT-X-ENDLIST
 ```
@@ -94,10 +97,10 @@ The player fetches these URLs automatically from the playlist returned by `GET /
 
 ### Path parameters
 
-| Parameter  | Type   | Description                              |
-|------------|--------|------------------------------------------|
-| `id`       | string | IMDb ID of the active stream             |
-| `segment`  | string | Segment filename, e.g. `index0.ts`       |
+| Parameter | Type   | Description                              |
+|-----------|--------|------------------------------------------|
+| `id`      | string | IMDb ID of the active stream             |
+| `segment` | string | Segment filename, e.g. `stream0.ts`      |
 
 ### Response
 
@@ -114,4 +117,3 @@ Body is the raw binary `.ts` segment.
 ```
 500 Internal Server Error — "failed to read segment file"
 ```
-
