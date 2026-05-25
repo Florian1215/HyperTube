@@ -3,6 +3,7 @@ package transcode
 import (
 	"os"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -115,14 +116,16 @@ func TestConvertHLS(t *testing.T) {
 		},
 	}
 
+	cleanupOutput(t, "./test/output/")
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			out := "./test/output/" + tc.name
+			safeName := strings.NewReplacer(":", "-", " ", "_").Replace(tc.name)
+			out := "./test/output/" + safeName
 			if err := os.MkdirAll(out, 0755); err != nil {
 				t.Fatalf("failed to create output dir: %v", err)
 			}
-			cleanupOutput(t, "./test/output/")
 
 			if err := ConvertHLS("./test/"+tc.fixture, out); err != nil {
 				t.Fatalf("ConvertHLS failed: %v", err)
