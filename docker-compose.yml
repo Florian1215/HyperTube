@@ -23,6 +23,8 @@ services:
     env_file: .env
     ports:
       - "8080:8080"
+    volumes:
+      - ./data:/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,7 +46,7 @@ services:
   #     retries: 5
 
   torrent-stream:
-    build: ./services/torrent-stream
+    build: ./services/torrent-transcode
     restart: unless-stopped
     env_file: .env
     ports:

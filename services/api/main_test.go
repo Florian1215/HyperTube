@@ -10,6 +10,7 @@ import (
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/comments"
 	"hypertube/api/internal/movies"
+	"hypertube/api/internal/stream"
 )
 
 func TestRouterHealthCheck(t *testing.T) {
@@ -131,6 +132,7 @@ func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
 		comments.NewCommentsHandler(nil),
 		auth.NewHandler(nil, tokens),
 		tokens,
+		stream.NewStreamHandler(),
 	), tokens
 }
 

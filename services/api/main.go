@@ -14,6 +14,7 @@ import (
 	"hypertube/api/internal/movies/archive.org"
 	"hypertube/api/internal/movies/c411"
 	"hypertube/api/internal/movies/tmdb"
+	"hypertube/api/internal/stream"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -74,10 +75,11 @@ func main() {
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
 	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
+	streamHandler := stream.NewStreamHandler()
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager)))
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler)))
 }
 
 func connectDB(ctx context.Context) *pgxpool.Pool {
@@ -125,6 +127,7 @@ func newRouter(
 	commentsHandler *comments.CommentsHandler,
 	authHandler *auth.Handler,
 	tokenManager *auth.TokenManager,
+	streamHandler *stream.StreamHandler,
 ) chi.Router {
 	r := chi.NewRouter()
 
@@ -148,6 +151,11 @@ func newRouter(
 
 		r.Get("/movies", moviesHandler.GetMovies)
 
+		// temporarly not protected for dev purposes
+		r.Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
+		r.Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
+		r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+
 		r.Group(func(r chi.Router) {
 			r.Use(auth.RequireAuth(tokenManager))
 
@@ -163,6 +171,11 @@ func newRouter(
 			r.Get("/comments/{id}", commentsHandler.Get)
 			r.Patch("/comments/{id}", commentsHandler.Update)
 			r.Delete("/comments/{id}", commentsHandler.Delete)
+
+			// r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
+			// r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
+			// r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+
 		})
 	})
 
