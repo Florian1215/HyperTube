@@ -8,15 +8,17 @@ import (
 	"testing"
 )
 
-// newTestHandler returns a StreamHandler wired to a temp dir so tests never
-// touch /data/videos or /data/torrents.
-func newTestHandler(t *testing.T, convertHLS func(string, string) error) (*StreamHandler, string) {
+// newTestHandler returns a StreamHandler wired to a temp dir and a fake
+// transcode server, so tests never touch /data or a real torrent-transcode.
+func newTestHandler(t *testing.T, transcodeHandler http.HandlerFunc) (*StreamHandler, string) {
 	t.Helper()
-	dir := t.TempDir() // cleaned up automatically after the test
+	srv := httptest.NewServer(transcodeHandler)
+	t.Cleanup(srv.Close)
+	dir := t.TempDir()
 	return &StreamHandler{
 		videoBasePath:   dir + "/videos",
 		torrentBasePath: dir + "/torrents",
-		convertHLS:      convertHLS,
+		transcodeURL:    srv.URL,
 	}, dir
 }
 
@@ -55,42 +57,33 @@ func checkFFmpeg(t *testing.T) {
 // Unit tests — InitStream
 // ---------------------------------------------------------------------------
 
-func TestInitStream_CreatesFolderWhenMissing(t *testing.T) {
-	var convertCalled bool
-	h, dir := newTestHandler(t, func(_, _ string) error {
-		convertCalled = true
-		return nil
+func TestInitStream_CallsTranscodeServiceWhenFolderMissing(t *testing.T) {
+	var called bool
+	h, _ := newTestHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
 	})
 
 	rr := httptest.NewRecorder()
 	h.InitStream(rr, initRequest("abc123"))
 
-	// Folder must have been created.
-	expectedPath := dir + "/videos/abc123"
-	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
-		t.Errorf("expected folder %s to be created", expectedPath)
+	if !called {
+		t.Error("expected transcode service to be called, but it was not")
 	}
-
-	// ConvertHLS must have been called to build the HLS stream.
-	if !convertCalled {
-		t.Error("expected convertHLS to be called, but it was not")
-	}
-
 	if rr.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", rr.Code, http.StatusOK)
 	}
 }
 
 func TestInitStream_Returns200WhenFolderAlreadyExists(t *testing.T) {
-	var convertCalled bool
-	h, dir := newTestHandler(t, func(_, _ string) error {
-		convertCalled = true
-		return nil
+	var called bool
+	h, dir := newTestHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
 	})
 
 	// Pre-create the folder, simulating a stream that was already initialised.
-	existingPath := dir + "/videos/abc123"
-	if err := os.MkdirAll(existingPath, 0755); err != nil {
+	if err := os.MkdirAll(dir+"/videos/abc123", 0755); err != nil {
 		t.Fatalf("setup: could not create folder: %v", err)
 	}
 
@@ -100,10 +93,8 @@ func TestInitStream_Returns200WhenFolderAlreadyExists(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Errorf("status: got %d, want %d", rr.Code, http.StatusOK)
 	}
-
-	// ConvertHLS must NOT be called — the stream is already ready.
-	if convertCalled {
-		t.Error("expected convertHLS to be skipped when folder already exists")
+	if called {
+		t.Error("expected transcode service to be skipped when folder already exists")
 	}
 }
 

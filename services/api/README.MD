@@ -1,20 +1,90 @@
-API documentation
+# api
 
-Base path: `/api/v1`
+Main HTTP gateway. Handles authentication, movie search, comments, and stream coordination.  
+Delegates HLS transcoding to the `torrent-stream` service.
+
+**Base path:** `/api/v1`  
+**Default port:** `8080` (override with `PORT`)
 
 ---
 
-## GET /health
+## Public endpoints
+
+### GET /health
 
 Health check.
 
-### Response
-
-`200 OK` — no body.
+**Response:** `200 OK` — no body.
 
 ---
 
-## GET /movies
+## Auth endpoints
+
+All unauthenticated.
+
+### POST /auth/register
+
+Register with email and password.
+
+### POST /auth/login
+
+Log in with email and password. Returns a JWT.
+
+### POST /auth/password-reset
+
+Request a password-reset email.
+
+### POST /auth/reset-password
+
+Submit a new password using the token from the reset email.
+
+### GET /auth/42/login → GET /auth/42/callback
+
+42 OAuth flow.
+
+### GET /auth/github/login → GET /auth/github/callback
+
+GitHub OAuth flow.
+
+### POST /oauth/token
+
+Exchange an OAuth authorisation code for a JWT (called by the frontend after an OAuth callback).
+
+---
+
+## Stream endpoints *(temporarily public — will move behind auth)*
+
+### GET /stream/{id}
+
+Initialise the HLS stream for a movie. Calls `POST /transcode/{id}` on the `torrent-stream` service.  
+If `/data/videos/{id}/` already exists the call returns immediately without re-transcoding.
+
+| Parameter | Description          |
+|-----------|----------------------|
+| `id`      | IMDb ID of the movie |
+
+| Code | Meaning                               |
+|------|---------------------------------------|
+| 200  | Stream is ready or has been started   |
+| 500  | Transcode service unreachable/failed  |
+
+### GET /stream/{id}/index
+
+Returns the HLS playlist (`stream.m3u8`).
+
+**Response:** `200 OK` — `Content-Type: application/vnd.apple.mpegurl`
+
+### GET /stream/{id}/{segment}
+
+Serves a single `.ts` segment (e.g. `stream0.ts`). The player fetches these automatically from the playlist.
+
+**Response:** `200 OK` — `Content-Type: video/mp2t`
+
+---
+
+## Protected endpoints *(require `Authorization: Bearer <jwt>`)*
+
+### GET /movies
 
 Returns the curated list of featured movies.
 
