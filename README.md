@@ -34,7 +34,7 @@ browser
         │ REST
         ▼
       API service (Go)
-        ├── auth (OAuth2 — 42 + GitHub, JWT)
+        ├── auth (email/password, 42 OAuth, GitHub OAuth, JWT)
         ├── users, comments, watch history
         └── movie metadata (TMDb)
               │
@@ -137,9 +137,16 @@ docker compose --profile vpn up   # with VPN
 
 ## API
 
-OAuth2-protected. `GET /movies` is the only public endpoint.
+Most content routes are JWT-protected. `GET /movies`, health, registration,
+login, and OAuth start/callback routes are public.
 
 ```
+POST   /auth/register
+POST   /auth/login
+GET    /auth/42/login
+GET    /auth/42/callback
+GET    /auth/github/login
+GET    /auth/github/callback
 POST   /oauth/token
 
 GET    /users
@@ -163,9 +170,10 @@ DELETE /comments/:id
 ## Auth
 
 - Registration: email, username, first name, last name, password (bcrypt)
-- OAuth2: 42 intranet + GitHub
-- Password reset via email
-- JWT on login, validated on every protected request
+- 42 and GitHub OAuth when configured
+- JWT on login/OAuth callback, validated on every protected request
+- OAuth2 password grant at `POST /oauth/token`, returning a Bearer access token for protected API routes
+- Password reset via email when configured
 
 ---
 
