@@ -133,6 +133,7 @@ func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
 		auth.NewHandler(nil, tokens),
 		tokens,
 		stream.NewStreamHandler(),
+		"http://localhost:4200",
 	), tokens
 }
 
