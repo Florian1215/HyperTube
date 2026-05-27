@@ -1,20 +1,90 @@
-API documentation
+# api
 
-Base path: `/api/v1`
+Main HTTP gateway. Handles authentication, movie search, comments, and stream coordination.  
+Delegates HLS transcoding to the `torrent-stream` service.
+
+**Base path:** `/api/v1`  
+**Default port:** `8080` (override with `PORT`)
 
 ---
 
-## GET /health
+## Public endpoints
+
+### GET /health
 
 Health check.
 
-### Response
-
-`200 OK` — no body.
+**Response:** `200 OK` — no body.
 
 ---
 
-## GET /movies
+## Auth endpoints
+
+All unauthenticated.
+
+### POST /auth/register
+
+Register with email and password.
+
+### POST /auth/login
+
+Log in with email and password. Returns a JWT.
+
+### POST /auth/password-reset
+
+Request a password-reset email.
+
+### POST /auth/reset-password
+
+Submit a new password using the token from the reset email.
+
+### GET /auth/42/login → GET /auth/42/callback
+
+42 OAuth flow.
+
+### GET /auth/github/login → GET /auth/github/callback
+
+GitHub OAuth flow.
+
+### POST /oauth/token
+
+Exchange an OAuth authorisation code for a JWT (called by the frontend after an OAuth callback).
+
+---
+
+## Stream endpoints *(temporarily public — will move behind auth)*
+
+### GET /stream/{id}
+
+Initialise the HLS stream for a movie. Calls `POST /transcode/{id}` on the `torrent-stream` service.  
+If `/data/videos/{id}/` already exists the call returns immediately without re-transcoding.
+
+| Parameter | Description          |
+|-----------|----------------------|
+| `id`      | IMDb ID of the movie |
+
+| Code | Meaning                               |
+|------|---------------------------------------|
+| 200  | Stream is ready or has been started   |
+| 500  | Transcode service unreachable/failed  |
+
+### GET /stream/{id}/index
+
+Returns the HLS playlist (`stream.m3u8`).
+
+**Response:** `200 OK` — `Content-Type: application/vnd.apple.mpegurl`
+
+### GET /stream/{id}/{segment}
+
+Serves a single `.ts` segment (e.g. `stream0.ts`). The player fetches these automatically from the playlist.
+
+**Response:** `200 OK` — `Content-Type: video/mp2t`
+
+---
+
+## Protected endpoints *(require `Authorization: Bearer <jwt>`)*
+
+### GET /movies
 
 Returns the curated list of featured movies.
 
@@ -32,7 +102,8 @@ Returns the curated list of featured movies.
       "note": 8.1,
       "genres": [878, 12, 18]
     }
-  ]
+  ],
+  "meta": { "total": 12, "page": 0, "per_page": 12 }
 }
 ```
 
@@ -64,7 +135,8 @@ Returns movies available for direct streaming.
       "note": 8.1,
       "genres": [878, 12, 18]
     }
-  ]
+  ],
+  "meta": { "total": 2, "page": 0, "per_page": 2 }
 }
 ```
 
@@ -119,15 +191,10 @@ Searches for movies by title. On first request, fetches from tracker sources, re
 
 ## GET /movies/watched
 
-Returns the watch history for a user, ordered by most recently watched.
+Returns the watch history for the authenticated user, ordered by most recently
+watched. Requires `Authorization: Bearer <access_token>`.
 
-### Request body
-
-```json
-{
-  "user_id": 1
-}
-```
+No request body is used. The user is taken from the JWT.
 
 ### Response
 
@@ -143,7 +210,8 @@ Returns the watch history for a user, ordered by most recently watched.
       "note": 8.1,
       "genres": [878, 12, 18]
     }
-  ]
+  ],
+  "meta": { "total": 3, "page": 0, "per_page": 3 }
 }
 ```
 
@@ -188,7 +256,7 @@ Returns full metadata for a single movie. Summary, director, and cast are fetche
     "note": 8.1,
     "genres": [878, 12, 18],
     "summary": "string",
-    "director": ["string"],
+    "director": "string",
     "cast": ["string"],
     "extra_backdrops": ["string"],
     "watched": false,
@@ -238,7 +306,8 @@ Returns available torrent sources for a movie.
       "language": "string",
       "seeds": "string"
     }
-  ]
+  ],
+  "meta": { "total": 4, "page": 0, "per_page": 4 }
 }
 ```
 
@@ -275,7 +344,8 @@ Returns comments posted on a movie, ordered by most recent first.
       "content": "string",
       "updated_at": "2026-05-06T12:00:00Z"
     }
-  ]
+  ],
+  "meta": { "total": 8, "page": 0, "per_page": 8 }
 }
 ```
 
@@ -292,7 +362,8 @@ Returns comments posted on a movie, ordered by most recent first.
 
 ## POST /movies/{id}/comments
 
-Posts a new comment on a movie.
+Posts a new comment on a movie as the authenticated user. Requires
+`Authorization: Bearer <access_token>`.
 
 ### Path parameters
 
@@ -304,8 +375,6 @@ Posts a new comment on a movie.
 
 ```json
 {
-  "user_id": 1,
-  "movie_id": "string",
   "content": "string"
 }
 ```
@@ -353,7 +422,8 @@ Returns all comments across all movies.
       "content": "string",
       "updated_at": "2026-05-06T12:00:00Z"
     }
-  ]
+  ],
+  "meta": { "total": 8, "page": 0, "per_page": 8 }
 }
 ```
 
@@ -405,7 +475,8 @@ Returns a single comment by its ID.
 
 ## PATCH /comments/{id}
 
-Updates the content of an existing comment.
+Updates the content of an existing comment if it belongs to the authenticated
+user. Requires `Authorization: Bearer <access_token>`.
 
 ### Path parameters
 
@@ -417,7 +488,6 @@ Updates the content of an existing comment.
 
 ```json
 {
-  "user_id": 2,
   "content": "string"
 }
 ```
@@ -442,6 +512,9 @@ Updates the content of an existing comment.
 { "error": { "code": "VALIDATION_ERROR", "message": "invalid request body" } }
 ```
 ```json
+{ "error": { "code": "NOT_FOUND", "message": "comment not found" } }
+```
+```json
 { "error": { "code": "INTERNAL_ERROR", "message": "failed to update comment" } }
 ```
 
@@ -449,7 +522,8 @@ Updates the content of an existing comment.
 
 ## DELETE /comments/{id}
 
-Deletes a comment.
+Deletes a comment if it belongs to the authenticated user. Requires
+`Authorization: Bearer <access_token>`.
 
 ### Path parameters
 
@@ -457,13 +531,7 @@ Deletes a comment.
 |-----------|--------|-------------------|
 | `id`      | string | ID of the comment |
 
-### Request body
-
-```json
-{
-  "user_id": 2
-}
-```
+No request body is used. The user is taken from the JWT.
 
 ### Response
 
@@ -476,8 +544,8 @@ Deletes a comment.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "invalid request body" } }
+{ "error": { "code": "NOT_FOUND", "message": "comment not found" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to update comment" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "failed to delete comment" } }
 ```

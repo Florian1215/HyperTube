@@ -4,6 +4,7 @@
 # Go binaries
 services/api/api
 services/torrent-stream/torrent-stream
+.tmp/
 
 # Node
 node_modules/
@@ -11,10 +12,19 @@ frontend/.next/
 frontend/out/
 
 # Torrent cache
-data/
+data/*
+!data/torrents/
+data/torrents/*
+!data/torrents/test/
+data/torrents/test/*
+!data/torrents/test/rubber.mp4
 
 # IDE
 .idea/
 .vscode/
 *.swp
 .claude/
+
+# macOS
+.DS_Store
+**/.DS_Store

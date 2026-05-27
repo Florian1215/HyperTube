@@ -1,6 +1,8 @@
 .PHONY: up up-vpn down build logs api stream frontend
 
 up:
+	mkdir -p data/videos
+	mkdir -p data/torrents
 	docker compose up --build
 
 up-vpn:

@@ -5,13 +5,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"hypertube/api/internal/auth"
 	"hypertube/api/internal/comments"
+	"hypertube/api/internal/email"
 	"hypertube/api/internal/movies"
 	"hypertube/api/internal/movies/archive.org"
 	"hypertube/api/internal/movies/c411"
 	"hypertube/api/internal/movies/tmdb"
+	"hypertube/api/internal/stream"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,6 +25,35 @@ func main() {
 
 	db := connectDB(ctx)
 	defer db.Close()
+
+	tokenManager, err := auth.NewTokenManager(os.Getenv("JWT_SECRET"), getEnv("JWT_ISSUER", "hypertube-api"))
+	if err != nil {
+		log.Fatalf("init JWT manager: %v", err)
+	}
+
+	authStore := auth.NewStore(db)
+	fortyTwoRedirectURL := getEnv("FORTYTWO_REDIRECT_URL", "http://localhost:8080/api/v1/auth/42/callback")
+	githubRedirectURL := getEnv("GITHUB_REDIRECT_URL", "http://localhost:8080/api/v1/auth/github/callback")
+	authOptions := []auth.HandlerOption{
+		auth.WithFrontendAuthCallbackURL(getEnv("FRONTEND_AUTH_CALLBACK_URL", "http://localhost:4200/auth/callback")),
+		auth.WithPasswordResetURL(getEnv("PASSWORD_RESET_URL", "http://localhost:4200/{locale}/reset-password")),
+		auth.WithPasswordResetTTL(getPasswordResetTTL()),
+		auth.WithFortyTwoOAuth(auth.NewFortyTwoOAuth(auth.FortyTwoOAuthConfig{
+			ClientID:     os.Getenv("FORTYTWO_CLIENT_ID"),
+			ClientSecret: os.Getenv("FORTYTWO_CLIENT_SECRET"),
+			RedirectURL:  fortyTwoRedirectURL,
+		})),
+		auth.WithGitHubOAuth(auth.NewGitHubOAuth(auth.GitHubOAuthConfig{
+			ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
+			ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+			RedirectURL:  githubRedirectURL,
+		})),
+	}
+	if passwordResetMailer := newPasswordResetMailer(); passwordResetMailer != nil {
+		authOptions = append(authOptions, auth.WithPasswordResetMailer(passwordResetMailer))
+	}
+	authHandler := auth.NewHandler(authStore, tokenManager, authOptions...)
+
 	movieStore := movies.NewStore(db)
 	commentStore := comments.NewStore(db)
 
@@ -41,10 +75,11 @@ func main() {
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
 	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
+	streamHandler := stream.NewStreamHandler()
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler)))
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler)))
 }
 
 func connectDB(ctx context.Context) *pgxpool.Pool {
@@ -87,41 +122,96 @@ func seedFeatured(ctx context.Context, c411Client *c411.Client, tmdbClient *tmdb
 	}
 }
 
-func newRouter(moviesHandler *movies.MoviesHandler, commentsHandler *comments.CommentsHandler) *http.ServeMux {
-	mux := http.NewServeMux()
+func newRouter(
+	moviesHandler *movies.MoviesHandler,
+	commentsHandler *comments.CommentsHandler,
+	authHandler *auth.Handler,
+	tokenManager *auth.TokenManager,
+	streamHandler *stream.StreamHandler,
+) chi.Router {
+	r := chi.NewRouter()
 
-	// Health check
-	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", authHandler.Register)
+			r.Post("/login", authHandler.Login)
+			r.Post("/password-reset", authHandler.RequestPasswordReset)
+			r.Post("/reset-password", authHandler.ResetPassword)
+			r.Get("/42/login", authHandler.LoginFortyTwo)
+			r.Get("/42/callback", authHandler.CallbackFortyTwo)
+			r.Get("/github/login", authHandler.LoginGitHub)
+			r.Get("/github/callback", authHandler.CallbackGitHub)
+		})
+
+		r.Post("/oauth/token", authHandler.OAuthToken)
+
+		r.Get("/movies", moviesHandler.GetMovies)
+
+		// temporarly not protected for dev purposes
+		r.Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
+		r.Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
+		r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+
+		r.Group(func(r chi.Router) {
+			r.Use(auth.RequireAuth(tokenManager))
+
+			r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
+			r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
+			r.Get("/movies/search", moviesHandler.SearchMovies)
+			r.Get("/movies/{id}", moviesHandler.GetMoviesId)
+			r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
+			r.Get("/movies/{id}/comments", moviesHandler.GetComments)
+			r.Post("/movies/{id}/comments", moviesHandler.PostComment)
+
+			r.Get("/comments", commentsHandler.List)
+			r.Get("/comments/{id}", commentsHandler.Get)
+			r.Patch("/comments/{id}", commentsHandler.Update)
+			r.Delete("/comments/{id}", commentsHandler.Delete)
+
+			// r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
+			// r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
+			// r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+
+		})
 	})
 
-	// // Auth
-	// mux.HandleFunc("POST /api/v1/oauth/token", nil)
-	// mux.HandleFunc("GET /api/v1/oauth/callback/42", nil)
-	// mux.HandleFunc("GET /api/v1/oauth/callback/github", nil)
+	// Backward-compatible callback path for the original environment template.
+	r.Get("/oauth/callback/42", authHandler.CallbackFortyTwo)
+	r.Get("/oauth/callback/github", authHandler.CallbackGitHub)
+	r.Post("/oauth/token", authHandler.OAuthToken)
 
-	// // Users
-	// mux.HandleFunc("GET /api/v1/users", nil)
-	// mux.HandleFunc("GET /api/v1/users/{id}", nil)
-	// mux.HandleFunc("PATCH /api/v1/users/{id}", nil)
+	return r
+}
 
-	// Movies
-	mux.HandleFunc("GET /api/v1/movies", moviesHandler.GetMovies)
-	mux.HandleFunc("GET /api/v1/movies/watched", moviesHandler.GetWatchedMovies)
-	mux.HandleFunc("GET /api/v1/movies/directstream", moviesHandler.GetDirectStreamMovies)
-	mux.HandleFunc("GET /api/v1/movies/search", moviesHandler.SearchMovies)
-	mux.HandleFunc("GET /api/v1/movies/{id}", moviesHandler.GetMoviesId)
-	mux.HandleFunc("GET /api/v1/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
-	mux.HandleFunc("GET /api/v1/movies/{id}/comments", moviesHandler.GetComments)
-	mux.HandleFunc("POST /api/v1/movies/{id}/comments", moviesHandler.PostComment)
+func newPasswordResetMailer() *email.BrevoMailer {
+	if os.Getenv("BREVO_API_KEY") == "" {
+		return nil
+	}
+	mailer, err := email.NewBrevoMailer(email.BrevoConfig{
+		APIKey:    os.Getenv("BREVO_API_KEY"),
+		FromEmail: os.Getenv("MAIL_FROM_EMAIL"),
+		FromName:  os.Getenv("MAIL_FROM_NAME"),
+	})
+	if err != nil {
+		log.Fatalf("init Brevo mailer: %v", err)
+	}
+	return mailer
+}
 
-	// // Comments
-	mux.HandleFunc("GET /api/v1/comments", commentsHandler.List)
-	mux.HandleFunc("GET /api/v1/comments/{id}", commentsHandler.Get)
-	mux.HandleFunc("PATCH /api/v1/comments/{id}", commentsHandler.Update)
-	mux.HandleFunc("DELETE /api/v1/comments/{id}", commentsHandler.Delete)
-
-	return mux
+func getPasswordResetTTL() time.Duration {
+	rawTTL := os.Getenv("PASSWORD_RESET_TTL")
+	if rawTTL == "" {
+		return 30 * time.Minute
+	}
+	ttl, err := time.ParseDuration(rawTTL)
+	if err != nil {
+		log.Fatalf("parse PASSWORD_RESET_TTL: %v", err)
+	}
+	return ttl
 }
 
 func getEnv(key, fallback string) string {
