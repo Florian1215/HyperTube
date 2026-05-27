@@ -8,6 +8,8 @@ import {iUser} from "@/types/user";
 import {useAuth} from "@/context/AuthContext";
 import {Button, SmallButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
+import {postRegister} from "@/services/auth";
+import {OauthServices} from "@/components/OAuth";
 
 export default function Register() {
     const {openModal, activeModal, closeModal} = useModal();
@@ -45,35 +47,18 @@ export default function Register() {
                     openModal({type: "signin"});
                 }}>{t("signIn")}</SmallButton>
             </div>
+            <OauthServices />
         </ModalLayout>
     );
 }
 
-function handleRegister(login: (user: iUser, token: string) => void, username: string, email: string, firstname: string, lastname: string, password: string, closeModal: () => void) {
-    // const res = await fetch("/api/register", {
-    //     method: "POST",
-    //     body: JSON.stringify({
-    //         email,
-    //         username,
-    //         firstname,
-    //         lastname,
-    //         password,
-    //     }),
-    // });
-    //
-    // const data = await res.json();
-    // login(data.user, data.token);
-    const user: iUser = {
-        id: Date.now(),
-        username: username,
-        firstname: firstname,
-        lastname: lastname,
-        email: email,
-        color: "purple",
-        profile_picture: null,
-        watch_history: [],
-        joined_at: Date.now(),
-    };
-    login(user, "coucou");
-    closeModal();
+async function handleRegister(login: (user: iUser, token: string) => void, username: string, email: string, firstname: string, lastname: string, password: string, closeModal: () => void) {
+    try { // todo check if work
+        const data = await postRegister(email, username, firstname, lastname, password);
+
+        login(data.user, data.access_token);
+        closeModal();
+    } catch (error) {
+        console.error(error);
+    }
 }
