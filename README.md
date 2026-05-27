@@ -138,31 +138,40 @@ docker compose --profile vpn up   # with VPN
 ## API
 
 Most content routes are JWT-protected. `GET /movies`, health, registration,
-login, and OAuth start/callback routes are public.
+login, password reset, OAuth start/callback routes, and the OAuth2 password
+grant are public. Detailed auth request and response examples are documented in
+`services/api/README.md`.
 
 ```
+GET    /health
+
 POST   /auth/register
 POST   /auth/login
+POST   /auth/password-reset
+POST   /auth/reset-password
 GET    /auth/42/login
 GET    /auth/42/callback
 GET    /auth/github/login
 GET    /auth/github/callback
 POST   /oauth/token
 
-GET    /users
-GET    /users/:id
-PATCH  /users/:id
-
 GET    /movies
+GET    /movies/watched
+GET    /movies/directstream
+GET    /movies/search
 GET    /movies/:id
+GET    /movies/:id/torrents
 GET    /movies/:id/comments
 POST   /movies/:id/comments
 
 GET    /comments
 GET    /comments/:id
-POST   /comments
 PATCH  /comments/:id
 DELETE /comments/:id
+
+GET    /stream/:id                  # temporarily public for development
+GET    /stream/:id/index            # temporarily public for development
+GET    /stream/:id/:segment         # temporarily public for development
 ```
 
 ---
