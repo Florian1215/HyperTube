@@ -80,7 +80,7 @@
   "auth": {
     "signin": {
       "title": "Anmelden",
-      "username": "Benutzername",
+      "email": "E-Mail",
       "password": "Passwort",
       "forgotPassword": "Passwort vergessen?",
       "submit": "Anmelden",
