@@ -1,24 +1,22 @@
 "use client";
 
-import {movies, tMovie} from "@/types/movie";
+import {iMovie} from "@/types/movie";
 import React, {useEffect, useState} from "react";
 import {MoviesCard} from "@/components/MovieCard";
 import MoviesHero from "@/components/MovieHero";
-import {genres} from "@/types/genre";
 import {HypertubeLogo} from "@/components/Icons";
 import GenreTags from "@/components/GenreTags";
 import Section from "@/components/Section";
 import {useAuth} from "@/context/AuthContext";
-import {tUser} from "@/types/user";
-import {useResponsiveSize} from "@/script/utils";
-import {useTranslations} from "next-intl";
+import {iUser} from "@/types/user";
+import {useResponsiveSize} from "@/context/utils";
+import {Locale, useLocale, useTranslations} from "next-intl";
+import {getMovies} from "@/services/movies";
 
 export default function HomePage() {
     const {user} = useAuth();
+    const locale = useLocale() as Locale;
     const t = useTranslations("home");
-    const moviesSets = user ? filterAlreadyWatch(user, movies) : movies;
-    const popular = structuredClone(moviesSets);
-    const mostRated = structuredClone(moviesSets).sort((a, b) => b.rate - a.rate);
     let continueWatching;
     const size = useResponsiveSize();
     let genreCount = 3;
@@ -37,31 +35,70 @@ export default function HomePage() {
     else if (size === "xl")
         heightAnimationLogo = 300;
 
-    if (user) {
+    const [movies, setMovies] = useState<iMovie[] | null>(null);
+    const [dirctedWatchMovies, setDirctedWatchMovies] = useState<iMovie[]>([]);
+    const moviesSets = filterAlreadyWatch(user, movies);
+    const mostRated = moviesSets ? structuredClone(moviesSets).sort((a, b) => b.note - a.note) : null;
+    const popular = structuredClone(moviesSets);
+
+    useEffect(() => {
+        async function loadMovies() {
+            try {
+                const data = await getMovies(locale);
+                for (let i = 0; i < data.data.length; i++)
+                    data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/original/");
+                setMovies(data.data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        loadMovies().then(r => console.log(r));
+    }, []);
+
+    useEffect(() => { // todo filter by film already watch
+        async function loadMovies() {
+            try {
+                const data = await getMovies("directstream");
+                for (let i = 0; i < data.data.length; i++)
+                    data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/w1280/");
+                setDirctedWatchMovies(data.data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        loadMovies().then(r => console.log(r));
+    }, []);
+
+    if (user && movies) {
         continueWatching = user.watch_history
             .filter(h => h.watch_percent < 100)
-            .map(m => movies.find(mSearch => mSearch.id === m.movie_id))
+            .map(m => movies.find(mSearch => mSearch.imdb_id === m.movie_id))
             .filter(m => m !== undefined);
     }
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        <MoviesHero items={movies.slice(0, 5)} movie={movies[0]} />
-        <GenreTags genres={genres.slice(0, genreCount)} className="justify-center w-full my-8" />
+        {movies && <MoviesHero items={movies.slice(0, 5)} movie={movies[0]}/>}
+        <GenreTags genreCount={genreCount} className="justify-center w-full my-8"/>
 
         {(continueWatching && continueWatching.length > 0) &&
         <Section title={t("continueWatching")} href="/users?tab=history">
             <MoviesCard movieSets={continueWatching.slice(0, moviesCount)} />
         </Section>}
 
-        <Section title={t("popular")} href="/movies/">
-            <MoviesCard movieSets={popular.slice(0, moviesCount)} />
-        </Section>
+        {popular && <Section title={t("popular")} href="/movies/">
+            <MoviesCard movieSets={popular.slice(0, moviesCount)}/>
+        </Section>}
 
-        <Section title={t("mostRated")} href="/movies?sort=most_rated">
-            <MoviesCard movieSets={mostRated.slice(0, moviesCount)} />
-        </Section>
+        {mostRated && <Section title={t("mostRated")} href="/movies?sort=most_rated">
+            <MoviesCard movieSets={mostRated.slice(0, moviesCount)}/>
+        </Section>}
 
+        {dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
+            <MoviesCard movieSets={dirctedWatchMovies}/>
+        </Section>}
+
+        {/* todo make componant */}
         <div className="flex w-full">
             <div className="h-4 w-full bg-yellow hover:bg-yellow-hover"></div>
             <div className="h-4 w-full bg-pink hover:bg-pink-hover"></div>
@@ -122,10 +159,12 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
     </div>);
 }
 
-function filterAlreadyWatch(user: tUser, movies: tMovie[]) {
+function filterAlreadyWatch(user: iUser | null, movies: iMovie[] | null) {
+    if (!movies || !user)
+        return null;
     return movies.filter(m => {
         for (let i = 0; i < user.watch_history.length; i++) {
-            if (user.watch_history[i].movie_id === m.id)
+            if (user.watch_history[i].movie_id === m.imdb_id)
                 return false;
         }
         return true;

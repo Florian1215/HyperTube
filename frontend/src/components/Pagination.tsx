@@ -1,5 +1,8 @@
 import {ReactNode, useState} from "react";
 import {LeftIcon, RightIcon} from "@/components/Icons";
+import {tListResponse} from "@/services/api";
+import {iMovie} from "@/types/movie";
+import {iComment} from "@/types/comment";
 
 export default function Pagination({children, currenIndex, totalPage, onClick} : {children: ReactNode, currenIndex: number, totalPage: number, onClick: (i: number) => void}) {
     const [leftColor, setLeftColor] = useState("gray");
@@ -19,9 +22,9 @@ export default function Pagination({children, currenIndex, totalPage, onClick} :
             onClick(index);
     }
 
-    return (<div className="w-full">
+    return (<div className="w-full mb-4">
         {children}
-        { totalPage !== 0 &&
+        { totalPage > 1 &&
             <div className="flex w-full gap-2 justify-center my-4">
                 <button className="mt-1" onClick={handleLeftArrow} onMouseEnter={() => setLeftColor(currenIndex === 0 ? "gray" : "black")} onMouseLeave={() => setLeftColor("gray")}>
                     <LeftIcon color={leftColor}/>
@@ -37,4 +40,9 @@ export default function Pagination({children, currenIndex, totalPage, onClick} :
                 </button>
         </div>}
     </div>);
+}
+
+export function computeTotalPage(data: tListResponse<iMovie[] | iComment[]>, setTotalPage: (total: number) => void) {
+    if (data.meta)
+        setTotalPage(Math.ceil(data.meta.total / data.meta.per_page));
 }

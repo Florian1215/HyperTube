@@ -13,7 +13,8 @@
   "home": {
     "continueWatching": "Continue watching",
     "popular": "Popular",
-    "mostRated": "Most rated"
+    "mostRated": "Most rated",
+    "directStream": "Direct Streaming"
   },
   "movies": {
     "searchPlaceholder": "Search for a movie...",
@@ -35,7 +36,8 @@
     "directors": "Directors",
     "stars": "Stars",
     "synopsis": "Synopsis",
-    "posterAlt": "Poster of movie: {title}"
+    "posterAlt": "Poster of movie: {title}",
+    "noResult": "Film not found"
   },
   "comments": {
     "title": "Comments",

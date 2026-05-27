@@ -1,5 +1,5 @@
-import {comments, tComment} from "@/types/comment";
-import {tUser} from "@/types/user";
+import {iComment} from "@/types/comment";
+import {iUser} from "@/types/user";
 import React, {useEffect, useRef, useState} from "react";
 
 import dayjs from "dayjs";
@@ -7,33 +7,49 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/fr";
 import "dayjs/locale/en";
 import "dayjs/locale/de";
-import Pagination from "@/components/Pagination";
+import Pagination, {computeTotalPage} from "@/components/Pagination";
 import {Button, SecondaryButton, SmallButton} from "@/components/Buttons";
 import ProfilePicture from "@/components/ProfilePicture";
 import {useAuth} from "@/context/AuthContext";
 import {useModal} from "@/context/ModalContext";
 import {EditIcon, TrashIcon} from "@/components/Icons";
-import {movies, tMovie} from "@/types/movie";
+import {iMovie} from "@/types/movie";
 import {MovieCard} from "@/components/MovieCard";
 import {useNotification} from "@/context/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
+import {getComments} from "@/services/comments";
+import {getMovie} from "@/services/movies";
 
 dayjs.extend(relativeTime);
 
 
-export function CommentSection({movie}: {movie: tMovie}) {
+export function CommentSection({movie}: {movie: iMovie}) {
     const {user} = useAuth();
     const {addNotification} = useNotification();
     const {openModal} = useModal();
-    const [actualComments, setComments] = useState(comments);
+    const [actualComments, setComments] = useState<iComment[]>([]);
+    const [index, setIndex] = useState(0);
+    const [totalPage, setTotalPage] = useState(1);
+    useEffect(() => {
+        async function loadComments() {
+            try {
+                const data = await getComments(movie.imdb_id);
+                setComments(data.data);
+                computeTotalPage(data, setTotalPage);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        loadComments().then(r => console.log(r));
+    }, [movie.imdb_id]);
     const t = useTranslations("comments");
     const tSuccess = useTranslations("notifications.success");
-    const addNewComment = (newComment: tComment) => {setComments([...actualComments, newComment]);}
+    const addNewComment = (newComment: iComment) => {setComments([...actualComments, newComment]);}
     const updateComment = (commentId: number, newContent: string) => {
         setComments(actualComments.map((comment) => {
             if (comment.id === commentId) {
                 const newComment = structuredClone(comment);
-                newComment.comment = newContent.replace('\n\n', '\n');
+                newComment.content = newContent.replace('\n\n', '\n');
                 newComment.edited = true;
                 return newComment;
             }
@@ -66,12 +82,11 @@ export function CommentSection({movie}: {movie: tMovie}) {
                 <SmallButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</SmallButton>
             }
         </div>
-        <Comments user={user} comments={actualComments} updateComment={updateComment} deleteComment={deleteComment}/>
+        <Comments user={user} totalPage={totalPage} comments={actualComments} updateComment={updateComment} deleteComment={deleteComment} index={index} setIndex={setIndex}/>
     </div>);
 }
 
-export function Comments({user, comments, updateComment, deleteComment}: {user: tUser | null, comments: tComment[], updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void}) {
-    const [index, setIndex] = useState(0);
+export function Comments({user, totalPage, index, setIndex, comments, updateComment, deleteComment}: {user: iUser | null, totalPage: number, index: number, setIndex: (idx: number) => void, comments: iComment[], updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void}) {
     const locale = useLocale();
     const t = useTranslations("comments");
     if (locale === "fr")
@@ -82,46 +97,58 @@ export function Comments({user, comments, updateComment, deleteComment}: {user: 
         dayjs.locale("de");
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
 
-    if (comments.length === 0)
-        return (<p className="small-text">{t(deleteComment === undefined ? "noCommentsYet" : "noCommentsPrompt")}</p>);
+    if (!comments || comments.length === 0)
+        return (<p className="small-text mb-10">{t(deleteComment === undefined ? "noCommentsYet" : "noCommentsPrompt")}</p>);
 
-    return (<Pagination currenIndex={index} totalPage={5} onClick={changeIndex}>
+    return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col-reverse gap-6">
             {comments.map((comment, index) => (<Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteComment}/>))}
         </div>
     </Pagination>);
 }
 
-function Comment({comment, currentUser, updateComment, deleteComment}: { comment: tComment, currentUser: tUser | null, updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void}) {
-    let user: Partial<tUser>;
+function Comment({comment, currentUser, updateComment, deleteComment}: { comment: iComment, currentUser: iUser | null, updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void}) {
+    let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [hoverTrash, setHoverTrash] = useState(false);
+    const [movie, setMovie] = useState<null | iMovie>(null);
     const {openModal} = useModal();
-    const movie = movies.find(m => m.id === comment.movie_id);
     const t = useTranslations("comments");
 
-    if (currentUser && currentUser.id === comment.author_id)
+    useEffect(() => {
+        async function loadMovie() {
+            try {
+                const data = await getMovie(comment.movie_id);
+                setMovie(data.data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        loadMovie().then(r => console.log(r));
+    }, [comment.movie_id]);
+
+    if (currentUser && currentUser.id === comment.user.id)
         user = currentUser;
     else
-        user = {id: comment.author_id, username: comment.author_username, firstname: comment.author_firstname, lastname: comment.author_lastname, profile_picture: comment.author_profile_pictures, color: comment.author_color};
+        user = comment.user;
 
     return (<div className="w-full"
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
         {(!updateComment && movie) && <div className="flex justify-center mb-3">
             <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={movie} /></div>}
-        <div className={"flex gap-2 sm:gap-4" + ((!updateComment && movie) ? " flex-col sm:flex-row mx-4" : "")}>
+        <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
             <ProfilePicture user={user}/>
             <div className="w-full">
                 <div className="flex justify-between w-full">
                     <div>
                         <span className="text-bold">{user.username}</span>
-                        <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs.unix(comment.created_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
+                        <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs.unix(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
                     {/* todo mby replace icon by text 'edit', 'remove' */}
                     {
-                        (updateComment && currentUser !== null && comment.author_id === currentUser.id && showSettingBtn) &&
+                        (updateComment && currentUser !== null && comment.user.id === currentUser.id && showSettingBtn) &&
                         <div className="flex gap-1">
                             <button
                                 className="uppercase font-condensed text-2xl"
@@ -148,7 +175,7 @@ function Comment({comment, currentUser, updateComment, deleteComment}: { comment
     </div>);
 }
 
-function CommentText({comment}: {comment: tComment}) {
+function CommentText({comment}: {comment: iComment}) {
     const [isCommentExpend, setIsExpendComment] = useState(false);
     const [isClamped, setIsClamped] = useState(false);
     const textRef = useRef<HTMLParagraphElement>(null);
@@ -168,15 +195,15 @@ function CommentText({comment}: {comment: tComment}) {
 
     return (<div>
         <p ref={textRef} className={"whitespace-pre-line " + (isCommentExpend ? "" : "line-clamp-3")}>
-            {comment.comment}
+            {comment.content}
         </p>
         {isClamped && (<SmallButton onClick={() => setIsExpendComment(!isCommentExpend)}>
             {isCommentExpend ? t("collapse") : t("readMore")}</SmallButton>)}
     </div>);
 }
 
-function CommentTextEdit({comment, setEditMode, updateComment}: {comment: tComment, setEditMode: (newEditMode: boolean) => void, updateComment: (commentId: number, newContent: string) => void}) {
-    const [newEditedComment, setNewEditedComment] = useState(comment.comment);
+function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComment, setEditMode: (newEditMode: boolean) => void, updateComment: (commentId: number, newContent: string) => void}) {
+    const [newEditedComment, setNewEditedComment] = useState(comment.content);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const t = useTranslations("comments");
 
@@ -206,7 +233,7 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: tComme
                   onInput={autoResize}
                   className="w-full resize-none font-sans"
                   onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey && newEditedComment.trim().length > 0 && newEditedComment.trim() !== comment.comment) {
+                      if (e.key === "Enter" && !e.shiftKey && newEditedComment.trim().length > 0 && newEditedComment.trim() !== comment.content) {
                           e.preventDefault();
                           saveChange();
                       }
@@ -214,17 +241,17 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: tComme
                   onChange={(e) => setNewEditedComment(e.target.value)}></textarea>
         <div className="flex gap-2">
             <Button className="xl:px-6"
-                disabled={newEditedComment.trim().length <= 0 || newEditedComment.trim() === comment.comment}
+                disabled={newEditedComment.trim().length <= 0 || newEditedComment.trim() === comment.content}
                 onClick={saveChange}>{t("saveChange")}</Button>
             <SecondaryButton className="w-30 xl:w-40" onClick={() => {
                 setEditMode(false);
-                setNewEditedComment(comment.comment);
+                setNewEditedComment(comment.content);
             }}>{t("cancel")}</SecondaryButton>
         </div>
     </div>);
 }
 
-function NewComment({user, movie, onSubmit}: { user: tUser, movie: tMovie, onSubmit: (value: tComment) => void }) {
+function NewComment({user, movie, onSubmit}: { user: iUser, movie: iMovie, onSubmit: (value: iComment) => void }) {
     const [expendComment, setExpendComment] = useState(false);
     const [comment, setComment] = useState("");
     const t = useTranslations("comments");
@@ -235,18 +262,13 @@ function NewComment({user, movie, onSubmit}: { user: tUser, movie: tMovie, onSub
     }
 
     const handlePostComment = () => {
-        const newComment: tComment = {
+        const newComment: iComment = {
             id: Math.floor(Date.now() / 1000),
-            movie_id: movie.id,
-            author_id: user.id,
-            author_username: user.username,
-            author_firstname: user.firstname,
-            author_lastname: user.lastname,
-            author_profile_pictures: user.profile_picture,
-            author_color: user.color,
-            comment: comment.trim(),
+            movie_id: movie.imdb_id,
+            user: user,
+            content: comment.trim(),
             edited: false,
-            created_at: Math.floor(Date.now() / 1000)
+            updated_at: Math.floor(Date.now() / 1000)
         }
         setComment("");
         setExpendComment(false);
