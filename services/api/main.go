@@ -17,6 +17,7 @@ import (
 	"hypertube/api/internal/stream"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -79,7 +80,9 @@ func main() {
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler)))
+	allowedOrigin := getEnv("CORS_ALLOWED_ORIGIN", "http://localhost:4200")
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler, allowedOrigin)))
+	
 }
 
 func connectDB(ctx context.Context) *pgxpool.Pool {
@@ -128,8 +131,16 @@ func newRouter(
 	authHandler *auth.Handler,
 	tokenManager *auth.TokenManager,
 	streamHandler *stream.StreamHandler,
+	allowedOrigin string,
 ) chi.Router {
 	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{allowedOrigin},
+		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		MaxAge:         600,
+	}))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
