@@ -17,6 +17,7 @@ import (
 	"hypertube/api/internal/stream"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -79,7 +80,9 @@ func main() {
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler)))
+	allowedOrigin := getEnv("CORS_ALLOWED_ORIGIN", "http://localhost:4200")
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler, allowedOrigin)))
+
 }
 
 func connectDB(ctx context.Context) *pgxpool.Pool {
@@ -128,8 +131,16 @@ func newRouter(
 	authHandler *auth.Handler,
 	tokenManager *auth.TokenManager,
 	streamHandler *stream.StreamHandler,
+	allowedOrigin string,
 ) chi.Router {
 	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{allowedOrigin},
+		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		MaxAge:         600,
+	}))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -156,21 +167,34 @@ func newRouter(
 		r.Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
 		r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
 
+		r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
+		r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
+		r.Get("/movies/search", moviesHandler.SearchMovies)
+		r.Get("/movies/{id}", moviesHandler.GetMoviesId)
+		r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
+		r.Get("/movies/{id}/comments", moviesHandler.GetComments)
+		r.Post("/movies/{id}/comments", moviesHandler.PostComment)
+
+		r.Get("/comments", commentsHandler.List)
+		r.Get("/comments/{id}", commentsHandler.Get)
+		r.Patch("/comments/{id}", commentsHandler.Update)
+		r.Delete("/comments/{id}", commentsHandler.Delete)
+
 		r.Group(func(r chi.Router) {
 			r.Use(auth.RequireAuth(tokenManager))
 
-			r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
-			r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
-			r.Get("/movies/search", moviesHandler.SearchMovies)
-			r.Get("/movies/{id}", moviesHandler.GetMoviesId)
-			r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
-			r.Get("/movies/{id}/comments", moviesHandler.GetComments)
-			r.Post("/movies/{id}/comments", moviesHandler.PostComment)
+			// r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
+			// r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
+			// r.Get("/movies/search", moviesHandler.SearchMovies)
+			// r.Get("/movies/{id}", moviesHandler.GetMoviesId)
+			// r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
+			// r.Get("/movies/{id}/comments", moviesHandler.GetComments)
+			// r.Post("/movies/{id}/comments", moviesHandler.PostComment)
 
-			r.Get("/comments", commentsHandler.List)
-			r.Get("/comments/{id}", commentsHandler.Get)
-			r.Patch("/comments/{id}", commentsHandler.Update)
-			r.Delete("/comments/{id}", commentsHandler.Delete)
+			// r.Get("/comments", commentsHandler.List)
+			// r.Get("/comments/{id}", commentsHandler.Get)
+			// r.Patch("/comments/{id}", commentsHandler.Update)
+			// r.Delete("/comments/{id}", commentsHandler.Delete)
 
 			// r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
 			// r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
