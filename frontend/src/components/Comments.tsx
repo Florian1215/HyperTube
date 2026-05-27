@@ -16,7 +16,7 @@ import {EditIcon, TrashIcon} from "@/components/Icons";
 import {iMovie} from "@/types/movie";
 import {MovieCard} from "@/components/MovieCard";
 import {useNotification} from "@/context/NotificationContext";
-import {useLocale, useTranslations} from "next-intl";
+import {Locale, useLocale, useTranslations} from "next-intl";
 import {getComments} from "@/services/comments";
 import {getMovie} from "@/services/movies";
 
@@ -115,18 +115,19 @@ function Comment({comment, currentUser, updateComment, deleteComment}: { comment
     const [movie, setMovie] = useState<null | iMovie>(null);
     const {openModal} = useModal();
     const t = useTranslations("comments");
+    const locale = useLocale() as Locale;
 
     useEffect(() => {
         async function loadMovie() {
             try {
-                const data = await getMovie(comment.movie_id);
+                const data = await getMovie(comment.movie_id, locale);
                 setMovie(data.data);
             } catch (error) {
                 console.error(error);
             }
         }
         loadMovie().then(r => console.log(r));
-    }, [comment.movie_id]);
+    }, [comment.movie_id, locale]);
 
     if (currentUser && currentUser.id === comment.user.id)
         user = currentUser;

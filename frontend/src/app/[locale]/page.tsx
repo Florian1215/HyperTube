@@ -53,12 +53,12 @@ export default function HomePage() {
             }
         }
         loadMovies().then(r => console.log(r));
-    }, []);
+    }, [locale]);
 
     useEffect(() => { // todo filter by film already watch
         async function loadMovies() {
             try {
-                const data = await getMovies("directstream");
+                const data = await getMovies(locale, "directstream");
                 for (let i = 0; i < data.data.length; i++)
                     data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/w1280/");
                 setDirctedWatchMovies(data.data);
@@ -67,7 +67,7 @@ export default function HomePage() {
             }
         }
         loadMovies().then(r => console.log(r));
-    }, []);
+    }, [locale]);
 
     if (user && movies) {
         continueWatching = user.watch_history

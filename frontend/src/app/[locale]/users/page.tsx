@@ -11,7 +11,7 @@ import {useAuth} from "@/context/AuthContext";
 import {iComment} from "@/types/comment";
 import Pagination, {computeTotalPage} from "@/components/Pagination";
 import {useSearchParams} from "next/navigation";
-import {useLocale, useTranslations} from "next-intl";
+import {Locale, useLocale, useTranslations} from "next-intl";
 import {iMovie} from "@/types/movie";
 import {getWatchedMovies} from "@/services/movies";
 import {getComments} from "@/services/comments";
@@ -65,11 +65,12 @@ function MovieHistoryTab() {
     const t = useTranslations("profile");
     const [watchMovies, setWatchMovies] = useState<iMovie[] | null>(null);
     const [totalPage, setTotalPage] = useState(1);
+    const locale = useLocale() as Locale;
 
     useEffect(() => {
         async function loadMovies() {
             try {
-                const data = await getWatchedMovies();
+                const data = await getWatchedMovies(locale);
                 for (let i = 0; i < data.data.length; i++)
                     data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/original/");
                 computeTotalPage(data, setTotalPage);
@@ -79,7 +80,7 @@ function MovieHistoryTab() {
             }
         }
         loadMovies().then(r => console.log(r));
-    }, []);
+    }, [locale]);
 
     if (!watchMovies || watchMovies.length === 0)
         return (<p className="small-text">{t("noMoviesYet")}</p>);
