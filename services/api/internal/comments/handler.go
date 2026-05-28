@@ -69,7 +69,7 @@ func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		log.Println("decode err:", err)
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+		respond.FieldValidationError(w, http.StatusBadRequest, "body", "invalid request body")
 		return
 	}
 	comment, err := h.store.update(r.Context(), input.Content, id, int(userID))

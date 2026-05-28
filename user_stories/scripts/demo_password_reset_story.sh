@@ -186,6 +186,11 @@ error_code() {
   jq -r '.error.code // empty' <<<"$REQUEST_BODY" 2>/dev/null
 }
 
+validation_field_message() {
+  local field="$1"
+  jq -r --arg field "$field" '.error.fields[$field].message // empty' <<<"$REQUEST_BODY" 2>/dev/null
+}
+
 data_token() {
   jq -r '.data.access_token // empty' <<<"$REQUEST_BODY" 2>/dev/null
 }
@@ -380,13 +385,13 @@ step_validate_reset_email() {
   request "POST" "$API_URL/auth/password-reset" "$payload"
   print_response
 
-  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" ]]; then
-    record_result "Invalid reset email" "OK" "invalid email returned VALIDATION_ERROR"
-    print_result "OK" "The API rejected the invalid email."
+  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message email)" == "valid email is required" ]]; then
+    record_result "Invalid reset email" "OK" "invalid email returned a field-based VALIDATION_ERROR"
+    print_result "OK" "The API rejected the invalid email with an email field error."
     return 0
   fi
 
-  record_result "Invalid reset email" "FAIL" "expected VALIDATION_ERROR, got HTTP ${REQUEST_STATUS:-<none>} $(error_code)"
+  record_result "Invalid reset email" "FAIL" "expected email VALIDATION_ERROR, got HTTP ${REQUEST_STATUS:-<none>} $(error_code)"
   print_result "FAIL" "The invalid email contract did not match."
 }
 
@@ -465,13 +470,13 @@ step_validate_new_password() {
   request "POST" "$API_URL/auth/reset-password" "$payload"
   print_response
 
-  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" ]]; then
-    record_result "New password validation" "OK" "short password returned VALIDATION_ERROR"
-    print_result "OK" "The API rejected the weak replacement password."
+  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message password)" == "password must be between 8 and 72 bytes" ]]; then
+    record_result "New password validation" "OK" "short password returned a field-based VALIDATION_ERROR"
+    print_result "OK" "The API rejected the weak replacement password with a password field error."
     return 0
   fi
 
-  record_result "New password validation" "FAIL" "expected VALIDATION_ERROR, got HTTP ${REQUEST_STATUS:-<none>} $(error_code)"
+  record_result "New password validation" "FAIL" "expected password VALIDATION_ERROR, got HTTP ${REQUEST_STATUS:-<none>} $(error_code)"
   print_result "FAIL" "The new password validation contract did not match."
 }
 

@@ -40,6 +40,21 @@ The API uses the same success and error envelopes for most auth endpoints:
 }
 ```
 
+Validation errors use field-based messages instead of a top-level `message`:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "fields": {
+      "email": {
+        "message": "valid email is required"
+      }
+    }
+  }
+}
+```
+
 Successful register, login, and OAuth callback responses use this auth payload:
 
 ```json
@@ -792,7 +807,7 @@ Searches for movies by title. On first request, fetches from tracker sources, re
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "title query parameter is required" } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "title": { "message": "title query parameter is required" } } } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "failed to search movies" } }
@@ -829,7 +844,7 @@ No request body is used. The user is taken from the JWT.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "invalid request body" } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "invalid request body" } } } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "failed to load movies" } }
@@ -1009,7 +1024,7 @@ Posts a new comment on a movie as the authenticated user. Requires
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "invalid request body" } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "invalid request body" } } } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "failed to create comment" } }
@@ -1120,7 +1135,7 @@ user. Requires `Authorization: Bearer <access_token>`.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "invalid request body" } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "invalid request body" } } } }
 ```
 ```json
 { "error": { "code": "NOT_FOUND", "message": "comment not found" } }

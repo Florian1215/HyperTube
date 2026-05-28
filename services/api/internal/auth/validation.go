@@ -14,29 +14,37 @@ const (
 
 var usernamePattern = regexp.MustCompile(`^[A-Za-z0-9_]{3,32}$`)
 
-func validateRegisterRequest(req registerRequest) (CreateUserParams, string, bool) {
+type validationErrors map[string]string
+
+func validateRegisterRequest(req registerRequest) (CreateUserParams, validationErrors, bool) {
+	fields := validationErrors{}
+
 	email, ok := normalizeEmail(req.Email)
 	if !ok {
-		return CreateUserParams{}, "valid email is required", false
+		fields["email"] = "valid email is required"
 	}
 
 	username := strings.TrimSpace(req.Username)
 	if !usernamePattern.MatchString(username) {
-		return CreateUserParams{}, "username must be 3-32 characters and contain only letters, numbers, or underscores", false
+		fields["username"] = "username must be 3-32 characters and contain only letters, numbers, or underscores"
 	}
 
 	firstName := strings.TrimSpace(req.FirstName)
 	if firstName == "" || len(firstName) > maxNameLength {
-		return CreateUserParams{}, "first_name is required and must be at most 100 characters", false
+		fields["first_name"] = "first_name is required and must be at most 100 characters"
 	}
 
 	lastName := strings.TrimSpace(req.LastName)
 	if lastName == "" || len(lastName) > maxNameLength {
-		return CreateUserParams{}, "last_name is required and must be at most 100 characters", false
+		fields["last_name"] = "last_name is required and must be at most 100 characters"
 	}
 
 	if validationMessage, ok := validatePassword(req.Password); !ok {
-		return CreateUserParams{}, validationMessage, false
+		fields["password"] = validationMessage
+	}
+
+	if len(fields) > 0 {
+		return CreateUserParams{}, fields, false
 	}
 
 	return CreateUserParams{
@@ -44,18 +52,24 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, string, boo
 		Username:  username,
 		FirstName: firstName,
 		LastName:  lastName,
-	}, "", true
+	}, nil, true
 }
 
-func validateLoginRequest(req loginRequest) (string, string, bool) {
+func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
+	fields := validationErrors{}
+
 	email, ok := normalizeEmail(req.Email)
 	if !ok {
-		return "", "valid email is required", false
+		fields["email"] = "valid email is required"
 	}
 	if req.Password == "" || len(req.Password) > maxPasswordBytes {
-		return "", "password is required", false
+		fields["password"] = "password is required"
 	}
-	return email, "", true
+
+	if len(fields) > 0 {
+		return "", fields, false
+	}
+	return email, nil, true
 }
 
 func validatePassword(password string) (string, bool) {

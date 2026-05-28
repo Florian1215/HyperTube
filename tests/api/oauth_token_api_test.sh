@@ -298,7 +298,13 @@ assert_error_envelope() {
 
   assert_jq_true "$name: error envelope exists" '.error | type == "object"'
   assert_jq_eq "$name: error code" '.error.code' "$expected_code"
-  assert_jq_eq "$name: error message" '.error.message' "$expected_message"
+  if [[ "$expected_code" == "VALIDATION_ERROR" ]]; then
+    assert_jq_true "$name: validation fields exist" '.error.fields | type == "object"'
+    assert_jq_true "$name: validation response has no top-level message" '.error | has("message") | not'
+    assert_jq_eq "$name: title field message" '.error.fields.title.message' "$expected_message"
+  else
+    assert_jq_eq "$name: error message" '.error.message' "$expected_message"
+  fi
 }
 
 assert_header_contains() {

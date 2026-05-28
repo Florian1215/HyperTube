@@ -43,7 +43,7 @@ func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	email, ok := normalizeEmail(req.Email)
 	if !ok {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "valid email is required")
+		respond.FieldValidationError(w, http.StatusBadRequest, "email", "valid email is required")
 		return
 	}
 
@@ -115,13 +115,13 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if validationMessage, ok := validatePassword(req.Password); !ok {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", validationMessage)
+		respond.FieldValidationError(w, http.StatusBadRequest, "password", validationMessage)
 		return
 	}
 
 	passwordHash, err := HashPassword(req.Password)
 	if err != nil {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "password is invalid")
+		respond.FieldValidationError(w, http.StatusBadRequest, "password", "password is invalid")
 		return
 	}
 

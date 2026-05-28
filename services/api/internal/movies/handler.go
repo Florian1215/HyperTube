@@ -155,7 +155,7 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 	const pagnationLimit = 12
 	title := r.URL.Query().Get("title")
 	if title == "" {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "title query parameter is required")
+		respond.FieldValidationError(w, http.StatusBadRequest, "title", "title query parameter is required")
 		return
 	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -289,7 +289,7 @@ func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		log.Println("decode err:", err)
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "invalid request body")
+		respond.FieldValidationError(w, http.StatusBadRequest, "body", "invalid request body")
 		return
 	}
 	comment := models.Comment{

@@ -2,6 +2,7 @@ package comments
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -54,6 +55,39 @@ func TestUpdateUsesAuthenticatedUserID(t *testing.T) {
 	}
 	if store.updateUserID != 42 {
 		t.Fatalf("expected token user id 42, got %d", store.updateUserID)
+	}
+}
+
+func TestUpdateInvalidBodyReturnsFieldValidationError(t *testing.T) {
+	store := &fakeCommentStore{}
+	handler := NewCommentsHandler(store)
+
+	req := httptest.NewRequest(http.MethodPatch, "/comments/1", strings.NewReader(`{"content":`))
+	req.SetPathValue("id", "1")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(handler.Update)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Error struct {
+			Code   string `json:"code"`
+			Fields map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if got := body.Error.Fields["body"].Message; got != "invalid request body" {
+		t.Fatalf("expected body field validation, got %q", got)
 	}
 }
 

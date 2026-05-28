@@ -278,14 +278,38 @@ assert_jq_eq() {
   return 1
 }
 
+validation_field_for_message() {
+  case "$1" in
+    "valid email is required") printf 'email' ;;
+    "username must be 3-32 characters and contain only letters, numbers, or underscores") printf 'username' ;;
+    "first_name is required and must be at most 100 characters") printf 'first_name' ;;
+    "last_name is required and must be at most 100 characters") printf 'last_name' ;;
+    "password must be between 8 and 72 bytes"|"password is required"|"password is invalid") printf 'password' ;;
+    "title query parameter is required") printf 'title' ;;
+    "invalid request body") printf 'body' ;;
+  esac
+}
+
 assert_error() {
   local name="$1"
   local expected_code="$2"
   local expected_message="$3"
+  local expected_field
 
   assert_jq_true "$name: error envelope exists" '.error | type == "object"'
   assert_jq_eq "$name: error code" '.error.code' "$expected_code"
-  assert_jq_eq "$name: error message" '.error.message' "$expected_message"
+  if [[ "$expected_code" == "VALIDATION_ERROR" ]]; then
+    expected_field="$(validation_field_for_message "$expected_message")"
+    assert_jq_true "$name: validation fields exist" '.error.fields | type == "object"'
+    assert_jq_true "$name: validation response has no top-level message" '.error | has("message") | not'
+    if [[ -n "$expected_field" ]]; then
+      assert_jq_eq "$name: $expected_field field message" ".error.fields.${expected_field}.message" "$expected_message"
+    else
+      fail "$name: no field mapping for validation message '$expected_message'"
+    fi
+  else
+    assert_jq_eq "$name: error message" '.error.message' "$expected_message"
+  fi
 }
 
 expect_error_case() {
