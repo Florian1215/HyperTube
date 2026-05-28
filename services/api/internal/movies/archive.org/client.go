@@ -111,14 +111,15 @@ func (c *Client) fetch(ctx context.Context, queryURL string) ([]models.Torrent, 
 	torrents := make([]models.Torrent, 0, len(response.Response.Docs))
 	log.Printf("Archive.org returned %d items", len(response.Response.Docs))
 	for _, torrent := range response.Response.Docs {
-		magnetURL := "magnet:?xt=urn:btih:" + anyStr(torrent.Btih) + "&dn=" + url.QueryEscape(anyStr(torrent.Title))
+		identifier := anyStr(torrent.Identifier)
+		torrentFileURL := "https://archive.org/download/" + identifier + "/" + identifier + "_archive.torrent"
 		Title, Year := stripYear(anyStr(torrent.Title), torrent.Year)
 		torrents = append(torrents, models.Torrent{
 			ImdbID:   "none",
 			Title:    Title,
 			Year:     Year,
 			Source:   "archive.org",
-			URL:      magnetURL,
+			URL:      torrentFileURL,
 			Quality:  "unknown",
 			Size:     formatBytes(torrent.ItemSize),
 			Language: "unknown",
