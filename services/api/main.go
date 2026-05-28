@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"log"
 	"net/http"
 	"os"
@@ -157,6 +158,25 @@ func newRouter(
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		MaxAge:         600,
 	}))
+
+	////
+	// MOCKUP for dev and TEST purposes
+	//go:embed mockup_rubber.html
+	var mockupRubberHTML []byte
+
+	//go:embed mockup_batman.html
+	var mockupBatmanHTML []byte
+	
+	r.Get("/mockup-rubber", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(mockupRubberHTML)
+	})
+	r.Get("/mockup-batman", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(mockupBatmanHTML)
+	})
+	// MOCKUP for dev and TEST purposes
+	////
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

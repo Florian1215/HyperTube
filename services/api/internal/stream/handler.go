@@ -15,7 +15,7 @@ type StreamHandler struct {
 func NewStreamHandler() *StreamHandler {
 	transcodeURL := os.Getenv("TRANSCODE_SERVICE_URL")
 	if transcodeURL == "" {
-		transcodeURL = "http://torrent-stream:8081"
+		transcodeURL = "http://torrent-transcode:8081"
 	}
 	videoBasePath := os.Getenv("VIDEO_BASE_PATH")
 	if videoBasePath == "" {

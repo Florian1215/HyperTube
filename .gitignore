@@ -29,3 +29,8 @@ data/torrents/test/*
 # macOS
 .DS_Store
 **/.DS_Store
+services/torrent-transcode/.torrent.db
+.gitignore
+.gitignore
+services/torrent-transcode/.torrent.db-shm
+services/torrent-transcode/.torrent.db-wal
