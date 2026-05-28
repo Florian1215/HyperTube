@@ -248,6 +248,10 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 func (h *MoviesHandler) GetMovieTorrents(w http.ResponseWriter, r *http.Request) {
 	imdbid := r.PathValue("id")
 	torrents, err := h.store.findTorrent(r.Context(), imdbid)
+	returnedTorrents := make([]torrentResponse, len(torrents))
+	for i, t := range torrents {
+		returnedTorrents[i] = toTorrentResponse(t)
+	}
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "no tracker source found for this movie")
@@ -257,7 +261,7 @@ func (h *MoviesHandler) GetMovieTorrents(w http.ResponseWriter, r *http.Request)
 		}
 		return
 	}
-	respond.List(w, http.StatusOK, torrents)
+	respond.List(w, http.StatusOK, returnedTorrents)
 }
 
 // ListComments returns comments for a movie.
