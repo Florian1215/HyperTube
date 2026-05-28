@@ -9,17 +9,17 @@ import {useTranslations} from "next-intl";
 
 export default function ProfileTab({user, updateUser}: {user: iUser, updateUser: (patch: Partial<iUser>) => void}) {
     return (<div className="mb-20 flex flex-col sm:flex-row gap-14 sm:gap-20 xl:gap-30 max-w-9/10 xl:max-w-2/3 w-full justify-center items-center mx-auto">
-        <ProfileSection key={user.id} user={user} updateUser={updateUser} />
+        <ProfileSection user={user} updateUser={updateUser} />
         <AvatarSection user={user} updateUser={updateUser} />
     </div>);
 }
 
 function ProfileSection({user, updateUser}: {user: iUser, updateUser: (patch: Partial<iUser>) => void}) {
     const { addNotification } = useNotification();
-    const [email, setEmail] = useState(user.email);
-    const [firstname, setFirstname] = useState(user.firstname);
-    const [lastname, setLastname] = useState(user.lastname);
-    const [username, setUsername] = useState(user.username);
+    const [email, setEmail] = useState("");
+    const [firstname, setFirstname] = useState("");
+    const [lastname, setLastname] = useState("");
+    const [username, setUsername] = useState("");
     const t = useTranslations("profile.fields");
     const tProfile = useTranslations("profile");
     const tSuccess = useTranslations("notifications.success");
@@ -29,21 +29,24 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser: (patch: Pa
         let isInfoChanged = false;
 
         if (email && email != user.email) {
-            isInfoChanged = true;
             newUser.email = email;
             addNotification(tSuccess("emailChanged"), "warning");
+            setEmail("");
         }
         if (firstname && firstname != user.firstname) {
             isInfoChanged = true;
             newUser.firstname = firstname;
+            setFirstname("");
         }
         if (lastname && lastname != user.lastname) {
             isInfoChanged = true;
             newUser.lastname = lastname;
+            setLastname("");
         }
         if (username && username != user.username) {
             isInfoChanged = true;
             newUser.username = username;
+            setUsername("");
         }
         if (isInfoChanged) {
             updateUser(newUser);
