@@ -33,7 +33,6 @@ func probeStreams(inputPath string) ([]ffprobeStream, error) {
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("ffprobe: %v\n%s", err, stderr.String())
 	}
-	log.Printf("probeStreams: done, stdout=%s", stdout.String())
 	var out ffprobeOutput
 	if err := json.Unmarshal(stdout.Bytes(), &out); err != nil {
 		return nil, fmt.Errorf("ffprobe parse: %v", err)
