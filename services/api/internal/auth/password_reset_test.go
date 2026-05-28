@@ -140,6 +140,7 @@ func TestRequestPasswordResetRejectsInvalidInputAndMissingMailer(t *testing.T) {
 		withMailer bool
 		wantStatus int
 		wantCode   string
+		wantField  string
 	}{
 		{
 			name:       "invalid email",
@@ -147,6 +148,7 @@ func TestRequestPasswordResetRejectsInvalidInputAndMissingMailer(t *testing.T) {
 			withMailer: false,
 			wantStatus: http.StatusBadRequest,
 			wantCode:   "VALIDATION_ERROR",
+			wantField:  "email",
 		},
 		{
 			name:       "unknown field",
@@ -195,8 +197,12 @@ func TestRequestPasswordResetRejectsInvalidInputAndMissingMailer(t *testing.T) {
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
 			}
-			if got := decodeErrorEnvelope(t, rec).Error.Code; got != tt.wantCode {
+			errorBody := decodeErrorEnvelope(t, rec).Error
+			if got := errorBody.Code; got != tt.wantCode {
 				t.Fatalf("expected error code %q, got %q", tt.wantCode, got)
+			}
+			if tt.wantField != "" && errorBody.Fields[tt.wantField].Message == "" {
+				t.Fatalf("expected validation field %q, got %+v", tt.wantField, errorBody.Fields)
 			}
 		})
 	}
@@ -298,6 +304,7 @@ func TestResetPasswordRejectsInvalidPasswordAndTokens(t *testing.T) {
 		body       string
 		wantStatus int
 		wantCode   string
+		wantField  string
 	}{
 		{
 			name:       "short token",
@@ -310,6 +317,7 @@ func TestResetPasswordRejectsInvalidPasswordAndTokens(t *testing.T) {
 			body:       `{"token":"valid-reset-token-with-enough-length-123","password":"short"}`,
 			wantStatus: http.StatusBadRequest,
 			wantCode:   "VALIDATION_ERROR",
+			wantField:  "password",
 		},
 		{
 			name:       "unknown token",
@@ -341,8 +349,12 @@ func TestResetPasswordRejectsInvalidPasswordAndTokens(t *testing.T) {
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
 			}
-			if got := decodeErrorEnvelope(t, rec).Error.Code; got != tt.wantCode {
+			errorBody := decodeErrorEnvelope(t, rec).Error
+			if got := errorBody.Code; got != tt.wantCode {
 				t.Fatalf("expected error code %q, got %q", tt.wantCode, got)
+			}
+			if tt.wantField != "" && errorBody.Fields[tt.wantField].Message == "" {
+				t.Fatalf("expected validation field %q, got %+v", tt.wantField, errorBody.Fields)
 			}
 		})
 	}

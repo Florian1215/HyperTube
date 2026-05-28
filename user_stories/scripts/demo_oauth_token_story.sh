@@ -349,9 +349,10 @@ request "GET" "$PROTECTED_URL" "" "application/json" "true"
 print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
 
 ERROR_CODE="$(jq -r '.error.code // empty' <<<"$HTTP_BODY" 2>/dev/null)"
-if [[ "$HTTP_STATUS" == "400" && "$ERROR_CODE" == "VALIDATION_ERROR" ]]; then
-  record_result "Protected route with token" "OK" "Bearer token passed auth and reached route validation."
-  print_result "OK" "Bearer token passed auth and reached route validation."
+ERROR_FIELD_MESSAGE="$(jq -r '.error.fields.title.message // empty' <<<"$HTTP_BODY" 2>/dev/null)"
+if [[ "$HTTP_STATUS" == "400" && "$ERROR_CODE" == "VALIDATION_ERROR" && "$ERROR_FIELD_MESSAGE" == "title query parameter is required" ]]; then
+  record_result "Protected route with token" "OK" "Bearer token passed auth and reached field-based route validation."
+  print_result "OK" "Bearer token passed auth and reached field-based route validation."
 elif is_success_status "$HTTP_STATUS"; then
   record_result "Protected route with token" "OK" "Bearer token passed auth and route returned success."
   print_result "OK" "Bearer token passed auth and route returned success."

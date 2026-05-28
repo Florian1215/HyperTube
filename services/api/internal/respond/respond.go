@@ -18,13 +18,20 @@ type envelope struct {
 }
 
 type errorBody struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string      `json:"code"`
+	Message string      `json:"message,omitempty"`
+	Fields  FieldErrors `json:"fields,omitempty"`
 }
 
 type errorResponse struct {
 	Error errorBody `json:"error"`
 }
+
+type FieldError struct {
+	Message string `json:"message"`
+}
+
+type FieldErrors map[string]FieldError
 
 func JSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -58,6 +65,18 @@ func Item(w http.ResponseWriter, status int, data any) {
 func Error(w http.ResponseWriter, status int, code, message string) {
 	JSON(w, status, errorResponse{
 		Error: errorBody{Code: code, Message: message},
+	})
+}
+
+func ValidationError(w http.ResponseWriter, status int, fields FieldErrors) {
+	JSON(w, status, errorResponse{
+		Error: errorBody{Code: "VALIDATION_ERROR", Fields: fields},
+	})
+}
+
+func FieldValidationError(w http.ResponseWriter, status int, field, message string) {
+	ValidationError(w, status, FieldErrors{
+		field: {Message: message},
 	})
 }
 

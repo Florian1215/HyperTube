@@ -185,6 +185,37 @@ func TestGetMovies_StoreError(t *testing.T) {
 	}
 }
 
+func TestSearchMoviesMissingTitleReturnsFieldValidationError(t *testing.T) {
+	h := &MoviesHandler{}
+
+	req := httptest.NewRequest(http.MethodGet, "/movies/search", nil)
+	rec := httptest.NewRecorder()
+
+	h.SearchMovies(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Error struct {
+			Code   string `json:"code"`
+			Fields map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if got := body.Error.Fields["title"].Message; got != "title query parameter is required" {
+		t.Fatalf("expected title field validation, got %q", got)
+	}
+}
+
 func TestGetMoviesId_OK(t *testing.T) {
 	h := &MoviesHandler{tmdb: &fakeTMDB{}, store: &fakeStore{
 		movies: []models.Movie{

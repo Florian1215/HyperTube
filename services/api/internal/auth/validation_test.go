@@ -6,7 +6,7 @@ import (
 )
 
 func TestValidateRegisterRequestNormalizesInput(t *testing.T) {
-	params, message, ok := validateRegisterRequest(registerRequest{
+	params, fields, ok := validateRegisterRequest(registerRequest{
 		Email:     " Alice@Example.COM ",
 		Username:  " alice_1 ",
 		FirstName: " Alice ",
@@ -15,7 +15,7 @@ func TestValidateRegisterRequestNormalizesInput(t *testing.T) {
 	})
 
 	if !ok {
-		t.Fatalf("expected valid request, got message %q", message)
+		t.Fatalf("expected valid request, got fields %+v", fields)
 	}
 	if params.Email != "alice@example.com" {
 		t.Fatalf("expected normalized email, got %q", params.Email)
@@ -39,46 +39,54 @@ func TestValidateRegisterRequestRejectsInvalidFields(t *testing.T) {
 
 	tests := []struct {
 		name   string
+		field  string
 		mutate func(*registerRequest)
 	}{
 		{
-			name: "invalid email",
+			name:  "invalid email",
+			field: "email",
 			mutate: func(req *registerRequest) {
 				req.Email = "not-an-email"
 			},
 		},
 		{
-			name: "invalid username",
+			name:  "invalid username",
+			field: "username",
 			mutate: func(req *registerRequest) {
 				req.Username = "al"
 			},
 		},
 		{
-			name: "missing first name",
+			name:  "missing first name",
+			field: "first_name",
 			mutate: func(req *registerRequest) {
 				req.FirstName = " "
 			},
 		},
 		{
-			name: "missing last name",
+			name:  "missing last name",
+			field: "last_name",
 			mutate: func(req *registerRequest) {
 				req.LastName = " "
 			},
 		},
 		{
-			name: "short password",
+			name:  "short password",
+			field: "password",
 			mutate: func(req *registerRequest) {
 				req.Password = strings.Repeat("a", minPasswordBytes-1)
 			},
 		},
 		{
-			name: "long password",
+			name:  "long password",
+			field: "password",
 			mutate: func(req *registerRequest) {
 				req.Password = strings.Repeat("a", maxPasswordBytes+1)
 			},
 		},
 		{
-			name: "long first name",
+			name:  "long first name",
+			field: "first_name",
 			mutate: func(req *registerRequest) {
 				req.FirstName = strings.Repeat("a", maxNameLength+1)
 			},
@@ -90,25 +98,44 @@ func TestValidateRegisterRequestRejectsInvalidFields(t *testing.T) {
 			req := valid
 			tt.mutate(&req)
 
-			_, message, ok := validateRegisterRequest(req)
+			_, fields, ok := validateRegisterRequest(req)
 			if ok {
 				t.Fatalf("expected invalid request for %s", tt.name)
 			}
-			if message == "" {
-				t.Fatal("expected validation message")
+			if fields[tt.field] == "" {
+				t.Fatalf("expected validation message for %q, got %+v", tt.field, fields)
 			}
 		})
 	}
 }
 
+func TestValidateRegisterRequestCollectsMultipleInvalidFields(t *testing.T) {
+	_, fields, ok := validateRegisterRequest(registerRequest{
+		Email:     "not-an-email",
+		Username:  "ab",
+		FirstName: "",
+		LastName:  "",
+		Password:  "short",
+	})
+
+	if ok {
+		t.Fatal("expected invalid request")
+	}
+	for _, field := range []string{"email", "username", "first_name", "last_name", "password"} {
+		if fields[field] == "" {
+			t.Fatalf("expected validation message for %q, got %+v", field, fields)
+		}
+	}
+}
+
 func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
-	email, message, ok := validateLoginRequest(loginRequest{
+	email, fields, ok := validateLoginRequest(loginRequest{
 		Email:    " Alice@Example.COM ",
 		Password: "correct-horse-battery",
 	})
 
 	if !ok {
-		t.Fatalf("expected valid login, got message %q", message)
+		t.Fatalf("expected valid login, got fields %+v", fields)
 	}
 	if email != "alice@example.com" {
 		t.Fatalf("expected normalized email, got %q", email)
@@ -116,19 +143,22 @@ func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
 }
 
 func TestValidateLoginRequestRejectsInvalidInput(t *testing.T) {
-	tests := []loginRequest{
-		{Email: "not-an-email", Password: "correct-horse-battery"},
-		{Email: "alice@example.com", Password: ""},
-		{Email: "alice@example.com", Password: strings.Repeat("a", maxPasswordBytes+1)},
+	tests := []struct {
+		req   loginRequest
+		field string
+	}{
+		{req: loginRequest{Email: "not-an-email", Password: "correct-horse-battery"}, field: "email"},
+		{req: loginRequest{Email: "alice@example.com", Password: ""}, field: "password"},
+		{req: loginRequest{Email: "alice@example.com", Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
 	}
 
-	for _, req := range tests {
-		_, message, ok := validateLoginRequest(req)
+	for _, tt := range tests {
+		_, fields, ok := validateLoginRequest(tt.req)
 		if ok {
-			t.Fatalf("expected invalid login request: %+v", req)
+			t.Fatalf("expected invalid login request: %+v", tt.req)
 		}
-		if message == "" {
-			t.Fatal("expected validation message")
+		if fields[tt.field] == "" {
+			t.Fatalf("expected validation message for %q, got %+v", tt.field, fields)
 		}
 	}
 }

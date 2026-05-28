@@ -58,7 +58,7 @@ func TestRouterOAuthTokenIsPublic(t *testing.T) {
 	var body struct {
 		Error string `json:"error"`
 	}
-	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	if body.Error != "unsupported_grant_type" {
@@ -117,6 +117,9 @@ func TestRouterAuthorizedMovieRouteReachesHandler(t *testing.T) {
 	if got := decodeRouterErrorCode(t, rec); got != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", got)
 	}
+	if got := decodeRouterValidationField(t, rec, "title"); got != "title query parameter is required" {
+		t.Fatalf("expected title field validation, got %q", got)
+	}
 }
 
 func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
@@ -145,8 +148,24 @@ func decodeRouterErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string 
 			Code string `json:"code"`
 		} `json:"error"`
 	}
-	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	return body.Error.Code
+}
+
+func decodeRouterValidationField(t *testing.T, rec *httptest.ResponseRecorder, field string) string {
+	t.Helper()
+
+	var body struct {
+		Error struct {
+			Fields map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body.Error.Fields[field].Message
 }

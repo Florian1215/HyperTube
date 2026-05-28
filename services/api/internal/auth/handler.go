@@ -106,15 +106,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params, validationMessage, ok := validateRegisterRequest(req)
+	params, validationFields, ok := validateRegisterRequest(req)
 	if !ok {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", validationMessage)
+		writeValidationError(w, validationFields)
 		return
 	}
 
 	passwordHash, err := HashPassword(req.Password)
 	if err != nil {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "password is invalid")
+		respond.FieldValidationError(w, http.StatusBadRequest, "password", "password is invalid")
 		return
 	}
 	params.PasswordHash = passwordHash
@@ -138,9 +138,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email, validationMessage, ok := validateLoginRequest(req)
+	email, validationFields, ok := validateLoginRequest(req)
 	if !ok {
-		respond.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", validationMessage)
+		writeValidationError(w, validationFields)
 		return
 	}
 
@@ -185,6 +185,14 @@ func toUserResponse(user models.User) userResponse {
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 	}
+}
+
+func writeValidationError(w http.ResponseWriter, fields validationErrors) {
+	responseFields := make(respond.FieldErrors, len(fields))
+	for field, message := range fields {
+		responseFields[field] = respond.FieldError{Message: message}
+	}
+	respond.ValidationError(w, http.StatusBadRequest, responseFields)
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {

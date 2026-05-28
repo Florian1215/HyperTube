@@ -270,6 +270,67 @@ func TestRegisterRejectsInvalidRequests(t *testing.T) {
 	}
 }
 
+func TestRegisterValidationErrorReturnsFieldErrors(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	body := `{"email":"not-an-email","username":"ab","first_name":"","last_name":"","password":"short"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if errorBody.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
+	}
+	if errorBody.Message != "" {
+		t.Fatalf("expected validation response without top-level message, got %q", errorBody.Message)
+	}
+
+	wantFields := map[string]string{
+		"email":      "valid email is required",
+		"username":   "username must be 3-32 characters and contain only letters, numbers, or underscores",
+		"first_name": "first_name is required and must be at most 100 characters",
+		"last_name":  "last_name is required and must be at most 100 characters",
+		"password":   "password must be between 8 and 72 bytes",
+	}
+	for field, wantMessage := range wantFields {
+		got, ok := errorBody.Fields[field]
+		if !ok {
+			t.Fatalf("expected field %q in validation response, got %+v", field, errorBody.Fields)
+		}
+		if got.Message != wantMessage {
+			t.Fatalf("expected %s message %q, got %q", field, wantMessage, got.Message)
+		}
+	}
+}
+
+func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":"not-an-email","password":""}`))
+	rec := httptest.NewRecorder()
+
+	handler.Login(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if errorBody.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
+	}
+	if got := errorBody.Fields["email"].Message; got != "valid email is required" {
+		t.Fatalf("expected email validation message, got %q", got)
+	}
+	if got := errorBody.Fields["password"].Message; got != "password is required" {
+		t.Fatalf("expected password validation message, got %q", got)
+	}
+}
+
 func TestRegisterDuplicateUserReturnsConflict(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
@@ -519,6 +580,9 @@ func decodeErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
 	Error struct {
 		Code    string `json:"code"`
 		Message string `json:"message"`
+		Fields  map[string]struct {
+			Message string `json:"message"`
+		} `json:"fields"`
 	} `json:"error"`
 } {
 	t.Helper()
@@ -527,6 +591,9 @@ func decodeErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
 		Error struct {
 			Code    string `json:"code"`
 			Message string `json:"message"`
+			Fields  map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
 		} `json:"error"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {

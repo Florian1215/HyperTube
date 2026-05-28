@@ -148,7 +148,7 @@ The API consistently returns envelopes:
 Errors are shaped as:
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "..." } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "email": { "message": "..." } } } }
 ```
 
 Recommendation:

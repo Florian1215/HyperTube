@@ -92,6 +92,21 @@ Error:
 }
 ```
 
+Validation errors use field-based messages:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "fields": {
+      "email": {
+        "message": "valid email is required"
+      }
+    }
+  }
+}
+```
+
 Register, login, and non-redirect OAuth callbacks return this auth payload:
 
 ```json
