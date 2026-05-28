@@ -93,11 +93,13 @@ type authResponse struct {
 }
 
 type userResponse struct {
-	ID        int64  `json:"id"`
-	Email     string `json:"email"`
-	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	ID             int64   `json:"id"`
+	Email          string  `json:"email"`
+	Username       string  `json:"username"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+	ProfilePicture *string `json:"profile_picture"`
+	CreatedAt      string  `json:"created_at"`
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -178,12 +180,18 @@ func (h *Handler) writeAuthResponse(w http.ResponseWriter, status int, user mode
 }
 
 func toUserResponse(user models.User) userResponse {
+	var profilePicture *string
+	if user.ProfilePicture != "" {
+		profilePicture = &user.ProfilePicture
+	}
 	return userResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Username:  user.Username,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
+		ID:             user.ID,
+		Email:          user.Email,
+		Username:       user.Username,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		ProfilePicture: profilePicture,
+		CreatedAt:      user.CreatedAt.Format(time.RFC3339),
 	}
 }
 

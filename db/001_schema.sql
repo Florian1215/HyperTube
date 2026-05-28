@@ -35,14 +35,19 @@ CREATE TABLE IF NOT EXISTS featured_movies (
 
 CREATE TABLE IF NOT EXISTS users (
     id            SERIAL PRIMARY KEY,
-    email         CITEXT      NOT NULL UNIQUE,
+    email         CITEXT      NOT NULL,
     username      TEXT        NOT NULL UNIQUE,
     first_name    TEXT        NOT NULL,
     last_name     TEXT        NOT NULL,
+    profile_picture TEXT,
     password_hash TEXT,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_password_email_key
+    ON users (email)
+    WHERE COALESCE(password_hash, '') <> '';
 
 CREATE TABLE IF NOT EXISTS oauth_accounts (
     id               SERIAL PRIMARY KEY,

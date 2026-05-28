@@ -56,7 +56,7 @@ repository. Endpoint-level request and response examples live in
 | `GITHUB_CLIENT_ID` | GitHub OAuth application client ID. |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth application secret. |
 | `GITHUB_REDIRECT_URL` | GitHub callback URL. Defaults to `http://localhost:8080/api/v1/auth/github/callback`. |
-| `FRONTEND_AUTH_CALLBACK_URL` | Frontend URL that receives OAuth success data in the URL fragment or OAuth errors in the query string. Defaults to `http://localhost:4200/auth/callback`. |
+| `FRONTEND_AUTH_CALLBACK_URL` | Frontend URL that receives OAuth success data in the URL fragment or OAuth errors in the query string. Defaults to `http://localhost:4200/en/auth/callback`. |
 | `BREVO_API_KEY` | Enables password-reset email sending when present. |
 | `MAIL_FROM_EMAIL` | Sender email for password-reset emails. Required and validated when Brevo is enabled. |
 | `MAIL_FROM_NAME` | Sender display name for password-reset emails. Optional, defaults to `Hypertube`. |
@@ -197,7 +197,7 @@ OAuth callback errors redirect to the frontend query string when
 `FRONTEND_AUTH_CALLBACK_URL` is configured:
 
 ```http
-http://localhost:4200/auth/callback?error=INVALID_OAUTH_STATE&error_description=invalid+OAuth+state
+http://localhost:4200/en/auth/callback?error=INVALID_OAUTH_STATE&error_description=invalid+OAuth+state
 ```
 
 Without a frontend callback URL, the same errors are returned as standard JSON
