@@ -104,13 +104,12 @@ func (c *Client) fetch(ctx context.Context, queryURL string) ([]models.Torrent, 
 		if imdbID == "" {
 			continue
 		}
-		infohash := item.attr("infohash")
-		magnetURL := "magnet:?xt=urn:btih:" + infohash + "&dn=" + url.QueryEscape(item.Title)
+		torrentFileURL := item.Enclosure.URL
 		torrents = append(torrents, models.Torrent{
 			ImdbID:   imdbID,
 			Title:    item.Title,
 			Source:   "C411",
-			URL:      magnetURL,
+			URL:      torrentFileURL,
 			Quality:  extractQuality(item.Title),
 			Size:     formatBytes(item.Size),
 			Language: extractLanguage(item.Title),

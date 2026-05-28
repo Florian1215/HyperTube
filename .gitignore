@@ -18,6 +18,7 @@ data/torrents/*
 !data/torrents/test/
 data/torrents/test/*
 !data/torrents/test/rubber.mp4
+!data/torrents/batman-1966_202112_archive.torrent
 
 # IDE
 .idea/
