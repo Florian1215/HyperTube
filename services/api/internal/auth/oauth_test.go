@@ -102,7 +102,22 @@ func TestFortyTwoOAuthExchangeFetchesProfile(t *testing.T) {
 					if got := req.Header.Get("Authorization"); got != "Bearer token-123" {
 						t.Fatalf("expected bearer token header, got %q", got)
 					}
-					return jsonResponse(req, http.StatusOK, `{"id":123,"email":"ft.user@example.com","login":"ft_user","first_name":"Forty","last_name":"Two"}`), nil
+					return jsonResponse(req, http.StatusOK, `{
+						"id":123,
+						"email":"ft.user@example.com",
+						"login":"ft_user",
+						"first_name":"Forty",
+						"usual_first_name":"FT",
+						"last_name":"Two",
+						"image":{
+							"link":"https://cdn.intra.42.fr/users/123/ft_user.jpg",
+							"versions":{
+								"large":"https://cdn.intra.42.fr/users/123/large_ft_user.jpg",
+								"medium":"https://cdn.intra.42.fr/users/123/medium_ft_user.jpg",
+								"small":"https://cdn.intra.42.fr/users/123/small_ft_user.jpg"
+							}
+						}
+					}`), nil
 
 				default:
 					t.Fatalf("unexpected request URL: %s", req.URL.String())
@@ -131,6 +146,12 @@ func TestFortyTwoOAuthExchangeFetchesProfile(t *testing.T) {
 	}
 	if identity.Email != "ft.user@example.com" || identity.Username != "ft_user" {
 		t.Fatalf("unexpected identity: %+v", identity)
+	}
+	if identity.FirstName != "FT" || identity.LastName != "Two" {
+		t.Fatalf("expected preferred 42 name fields, got %+v", identity)
+	}
+	if identity.ProfilePicture != "https://cdn.intra.42.fr/users/123/medium_ft_user.jpg" {
+		t.Fatalf("expected 42 medium image URL, got %q", identity.ProfilePicture)
 	}
 }
 
@@ -252,7 +273,7 @@ func TestGitHubOAuthExchangeFetchesProfileAndVerifiedEmail(t *testing.T) {
 					if got := req.Header.Get("X-GitHub-Api-Version"); got != "2022-11-28" {
 						t.Fatalf("expected GitHub API version header, got %q", got)
 					}
-					return jsonResponse(req, http.StatusOK, `{"id":98765,"login":"octocat","name":"Jane Octo Cat","email":null}`), nil
+					return jsonResponse(req, http.StatusOK, `{"id":98765,"login":"octocat","name":"Jane Octo Cat","email":null,"avatar_url":"https://avatars.githubusercontent.com/u/98765?v=4"}`), nil
 
 				case githubEmailsURL:
 					emailsRequested = true
@@ -294,6 +315,9 @@ func TestGitHubOAuthExchangeFetchesProfileAndVerifiedEmail(t *testing.T) {
 	}
 	if identity.FirstName != "Jane" || identity.LastName != "Octo Cat" {
 		t.Fatalf("unexpected GitHub name split: %+v", identity)
+	}
+	if identity.ProfilePicture != "https://avatars.githubusercontent.com/u/98765?v=4" {
+		t.Fatalf("expected GitHub avatar URL, got %q", identity.ProfilePicture)
 	}
 }
 

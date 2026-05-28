@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -34,11 +35,12 @@ type Store struct {
 }
 
 type CreateUserParams struct {
-	Email        string
-	Username     string
-	FirstName    string
-	LastName     string
-	PasswordHash string
+	Email          string
+	Username       string
+	FirstName      string
+	LastName       string
+	ProfilePicture string
+	PasswordHash   string
 }
 
 type OAuthUserParams struct {
@@ -48,6 +50,7 @@ type OAuthUserParams struct {
 	Username       string
 	FirstName      string
 	LastName       string
+	ProfilePicture string
 }
 
 type CreatePasswordResetTokenParams struct {
@@ -62,10 +65,10 @@ func NewStore(db *pgxpool.Pool) *Store {
 
 func (s *Store) CreateUser(ctx context.Context, params CreateUserParams) (models.User, error) {
 	user, err := scanUser(s.db.QueryRow(ctx, `
-		INSERT INTO users (email, username, first_name, last_name, password_hash)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, email, username, first_name, last_name, COALESCE(password_hash, ''), created_at, updated_at
-	`, params.Email, params.Username, params.FirstName, params.LastName, params.PasswordHash))
+		INSERT INTO users (email, username, first_name, last_name, profile_picture, password_hash)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+	`, params.Email, params.Username, params.FirstName, params.LastName, nullableString(params.ProfilePicture), params.PasswordHash))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return models.User{}, ErrDuplicateUser
@@ -77,9 +80,9 @@ func (s *Store) CreateUser(ctx context.Context, params CreateUserParams) (models
 
 func (s *Store) FindUserByEmail(ctx context.Context, email string) (models.User, error) {
 	user, err := scanUser(s.db.QueryRow(ctx, `
-		SELECT id, email, username, first_name, last_name, COALESCE(password_hash, ''), created_at, updated_at
+		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
 		FROM users
-		WHERE email = $1
+		WHERE email = $1 AND COALESCE(password_hash, '') <> ''
 	`, email))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -98,9 +101,9 @@ func (s *Store) FindUserByLogin(ctx context.Context, login string) (models.User,
 	}
 
 	user, err := scanUser(s.db.QueryRow(ctx, `
-		SELECT id, email, username, first_name, last_name, COALESCE(password_hash, ''), created_at, updated_at
+		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
 		FROM users
-		WHERE email = $1 OR username = $2
+		WHERE (email = $1 OR username = $2) AND COALESCE(password_hash, '') <> ''
 	`, email, login))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -125,6 +128,27 @@ func (s *Store) FindOrCreateOAuthUser(ctx context.Context, params OAuthUserParam
 
 	user, err := findOAuthUserByAccount(ctx, tx, params.Provider, params.ProviderUserID)
 	if err == nil {
+		hasOtherProvider, err := userHasOtherOAuthProvider(ctx, tx, user.ID, params.Provider)
+		if err != nil {
+			return models.User{}, err
+		}
+		if hasOtherProvider {
+			user, err = createOAuthUser(ctx, tx, params)
+			if err != nil {
+				return models.User{}, err
+			}
+			if err := reassignOAuthAccount(ctx, tx, user.ID, params); err != nil {
+				return models.User{}, err
+			}
+			if err := tx.Commit(ctx); err != nil {
+				return models.User{}, err
+			}
+			return user, nil
+		}
+		user, err = applyOAuthProfile(ctx, tx, user, params)
+		if err != nil {
+			return models.User{}, err
+		}
 		if err := tx.Commit(ctx); err != nil {
 			return models.User{}, err
 		}
@@ -134,36 +158,8 @@ func (s *Store) FindOrCreateOAuthUser(ctx context.Context, params OAuthUserParam
 		return models.User{}, err
 	}
 
-	if params.Email != "" {
-		user, err = findUserByEmail(ctx, tx, params.Email)
-		if err == nil {
-			if err := insertOAuthAccount(ctx, tx, user.ID, params); err != nil {
-				return models.User{}, err
-			}
-			if err := tx.Commit(ctx); err != nil {
-				return models.User{}, err
-			}
-			return user, nil
-		}
-		if !errors.Is(err, ErrUserNotFound) {
-			return models.User{}, err
-		}
-	}
-
-	username, err := availableOAuthUsername(ctx, tx, params.Username, params.Provider, params.ProviderUserID)
+	user, err = createOAuthUser(ctx, tx, params)
 	if err != nil {
-		return models.User{}, err
-	}
-
-	user, err = scanUser(tx.QueryRow(ctx, `
-		INSERT INTO users (email, username, first_name, last_name, password_hash)
-		VALUES ($1, $2, $3, $4, '')
-		RETURNING id, email, username, first_name, last_name, COALESCE(password_hash, ''), created_at, updated_at
-	`, params.Email, username, params.FirstName, params.LastName))
-	if err != nil {
-		if isUniqueViolation(err) {
-			return models.User{}, ErrDuplicateUser
-		}
 		return models.User{}, err
 	}
 
@@ -172,6 +168,26 @@ func (s *Store) FindOrCreateOAuthUser(ctx context.Context, params OAuthUserParam
 	}
 
 	if err := tx.Commit(ctx); err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
+
+func createOAuthUser(ctx context.Context, q rowQuerier, params OAuthUserParams) (models.User, error) {
+	username, err := availableOAuthUsername(ctx, q, params.Username, params.Provider, params.ProviderUserID)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	user, err := scanUser(q.QueryRow(ctx, `
+		INSERT INTO users (email, username, first_name, last_name, profile_picture, password_hash)
+		VALUES ($1, $2, $3, $4, $5, '')
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+	`, params.Email, username, params.FirstName, params.LastName, nullableString(params.ProfilePicture)))
+	if err != nil {
+		if isUniqueViolation(err) {
+			return models.User{}, ErrDuplicateUser
+		}
 		return models.User{}, err
 	}
 	return user, nil
@@ -210,7 +226,7 @@ func (s *Store) ResetPasswordWithToken(ctx context.Context, tokenHash string, pa
 		UPDATE users
 		SET password_hash = $1, updated_at = NOW()
 		WHERE id = $2
-		RETURNING id, email, username, first_name, last_name, COALESCE(password_hash, ''), created_at, updated_at
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
 	`, passwordHash, userID))
 	if err != nil {
 		return models.User{}, err
@@ -224,18 +240,23 @@ func (s *Store) ResetPasswordWithToken(ctx context.Context, tokenHash string, pa
 
 func scanUser(row pgx.Row) (models.User, error) {
 	var user models.User
+	var profilePicture sql.NullString
 	err := row.Scan(
 		&user.ID,
 		&user.Email,
 		&user.Username,
 		&user.FirstName,
 		&user.LastName,
+		&profilePicture,
 		&user.PasswordHash,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
 	if err != nil {
 		return models.User{}, err
+	}
+	if profilePicture.Valid {
+		user.ProfilePicture = profilePicture.String
 	}
 	return user, nil
 }
@@ -253,24 +274,9 @@ type execer interface {
 	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 }
 
-func findUserByEmail(ctx context.Context, q rowQuerier, email string) (models.User, error) {
-	user, err := scanUser(q.QueryRow(ctx, `
-		SELECT id, email, username, first_name, last_name, COALESCE(password_hash, ''), created_at, updated_at
-		FROM users
-		WHERE email = $1
-	`, email))
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, ErrUserNotFound
-		}
-		return models.User{}, err
-	}
-	return user, nil
-}
-
 func findOAuthUserByAccount(ctx context.Context, q rowQuerier, provider string, providerUserID string) (models.User, error) {
 	user, err := scanUser(q.QueryRow(ctx, `
-		SELECT u.id, u.email, u.username, u.first_name, u.last_name, COALESCE(u.password_hash, ''), u.created_at, u.updated_at
+		SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.profile_picture, COALESCE(u.password_hash, ''), u.created_at, u.updated_at
 		FROM users u
 		JOIN oauth_accounts oa ON oa.user_id = u.id
 		WHERE oa.provider = $1 AND oa.provider_user_id = $2
@@ -282,6 +288,95 @@ func findOAuthUserByAccount(ctx context.Context, q rowQuerier, provider string, 
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func userHasOtherOAuthProvider(ctx context.Context, q rowQuerier, userID int64, provider string) (bool, error) {
+	var exists bool
+	err := q.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM oauth_accounts
+			WHERE user_id = $1 AND provider <> $2
+		)
+	`, userID, provider).Scan(&exists)
+	return exists, err
+}
+
+func reassignOAuthAccount(ctx context.Context, q execer, userID int64, params OAuthUserParams) error {
+	_, err := q.Exec(ctx, `
+		UPDATE oauth_accounts
+		SET user_id = $1, provider_email = $2, updated_at = NOW()
+		WHERE provider = $3 AND provider_user_id = $4
+	`, userID, nullableString(params.Email), params.Provider, params.ProviderUserID)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return ErrDuplicateUser
+		}
+		return err
+	}
+	return nil
+}
+
+func applyOAuthProfile(ctx context.Context, q rowQuerier, user models.User, params OAuthUserParams) (models.User, error) {
+	username, err := oauthUsernameForExistingUser(ctx, q, user, params)
+	if err != nil {
+		return models.User{}, err
+	}
+	firstName := user.FirstName
+	if params.FirstName != "" {
+		firstName = params.FirstName
+	}
+	lastName := user.LastName
+	if params.LastName != "" {
+		lastName = params.LastName
+	}
+	profilePicture := user.ProfilePicture
+	if params.ProfilePicture != "" {
+		profilePicture = params.ProfilePicture
+	}
+
+	if username == user.Username && firstName == user.FirstName && lastName == user.LastName && profilePicture == user.ProfilePicture {
+		return user, nil
+	}
+
+	updatedUser, err := scanUser(q.QueryRow(ctx, `
+		UPDATE users
+		SET username = $1, first_name = $2, last_name = $3, profile_picture = $4, updated_at = NOW()
+		WHERE id = $5
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+	`, username, firstName, lastName, nullableString(profilePicture), user.ID))
+	if err != nil {
+		return models.User{}, err
+	}
+	return updatedUser, nil
+}
+
+func oauthUsernameForExistingUser(ctx context.Context, q rowQuerier, user models.User, params OAuthUserParams) (string, error) {
+	username := oauthUsernameBase(params.Username, params.Provider, params.ProviderUserID)
+	if username == user.Username {
+		return user.Username, nil
+	}
+
+	available, err := usernameAvailableForUser(ctx, q, username, user.ID)
+	if err != nil {
+		return "", err
+	}
+	if available {
+		return username, nil
+	}
+	return user.Username, nil
+}
+
+func usernameAvailableForUser(ctx context.Context, q rowQuerier, username string, userID int64) (bool, error) {
+	var existingID int64
+	err := q.QueryRow(ctx, `SELECT id FROM users WHERE username = $1`, username).Scan(&existingID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return true, nil
+		}
+		return false, err
+	}
+	return existingID == userID, nil
 }
 
 func insertOAuthAccount(ctx context.Context, q execer, userID int64, params OAuthUserParams) error {
@@ -352,6 +447,8 @@ func normalizeOAuthUserParams(params OAuthUserParams) OAuthUserParams {
 	if params.LastName == "" {
 		params.LastName = params.Provider
 	}
+
+	params.ProfilePicture = strings.TrimSpace(params.ProfilePicture)
 
 	return params
 }

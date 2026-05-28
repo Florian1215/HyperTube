@@ -93,8 +93,24 @@ func connectDB(ctx context.Context) *pgxpool.Pool {
 	if err := db.Ping(ctx); err != nil {
 		log.Fatalf("ping db: %v", err)
 	}
+	ensureSchema(ctx, db)
 	log.Println("connected to database")
 	return db
+}
+
+func ensureSchema(ctx context.Context, db *pgxpool.Pool) {
+	if _, err := db.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT`); err != nil {
+		log.Fatalf("migrate users.profile_picture: %v", err)
+	}
+	if _, err := db.Exec(ctx, `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key`); err != nil {
+		log.Fatalf("migrate users email constraint: %v", err)
+	}
+	if _, err := db.Exec(ctx, `DROP INDEX IF EXISTS users_email_key`); err != nil {
+		log.Fatalf("migrate users email index: %v", err)
+	}
+	if _, err := db.Exec(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS users_password_email_key ON users (email) WHERE COALESCE(password_hash, '') <> ''`); err != nil {
+		log.Fatalf("migrate users password email index: %v", err)
+	}
 }
 
 func seedFeatured(ctx context.Context, c411Client *c411.Client, tmdbClient *tmdb.Client, store *movies.Store) {

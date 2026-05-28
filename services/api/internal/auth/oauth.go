@@ -50,6 +50,7 @@ type OAuthIdentity struct {
 	Username       string
 	FirstName      string
 	LastName       string
+	ProfilePicture string
 }
 
 type FortyTwoOAuthConfig struct {
@@ -129,8 +130,9 @@ func (c *FortyTwoOAuth) Exchange(ctx context.Context, code string) (OAuthIdentit
 		ProviderUserID: strconv.FormatInt(profile.ID, 10),
 		Email:          profile.Email,
 		Username:       profile.Login,
-		FirstName:      profile.FirstName,
+		FirstName:      firstNonEmpty(profile.UsualFirstName, profile.FirstName),
 		LastName:       profile.LastName,
+		ProfilePicture: profileImageURL(profile.Image),
 	}, nil
 }
 
@@ -219,11 +221,24 @@ type fortyTwoTokenResponse struct {
 }
 
 type fortyTwoProfile struct {
-	ID        int64  `json:"id"`
-	Email     string `json:"email"`
-	Login     string `json:"login"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	ID             int64                `json:"id"`
+	Email          string               `json:"email"`
+	Login          string               `json:"login"`
+	FirstName      string               `json:"first_name"`
+	LastName       string               `json:"last_name"`
+	UsualFirstName string               `json:"usual_first_name"`
+	DisplayName    string               `json:"displayname"`
+	Image          fortyTwoProfileImage `json:"image"`
+}
+
+type fortyTwoProfileImage struct {
+	Link     string `json:"link"`
+	Versions struct {
+		Large  string `json:"large"`
+		Medium string `json:"medium"`
+		Small  string `json:"small"`
+		Micro  string `json:"micro"`
+	} `json:"versions"`
 }
 
 type GitHubOAuthConfig struct {
@@ -311,6 +326,7 @@ func (c *GitHubOAuth) Exchange(ctx context.Context, code string) (OAuthIdentity,
 		Username:       profile.Login,
 		FirstName:      firstName,
 		LastName:       lastName,
+		ProfilePicture: strings.TrimSpace(profile.AvatarURL),
 	}, nil
 }
 
@@ -453,10 +469,11 @@ type githubTokenResponse struct {
 }
 
 type githubProfile struct {
-	ID    int64  `json:"id"`
-	Login string `json:"login"`
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	ID        int64  `json:"id"`
+	Login     string `json:"login"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 type githubEmail struct {
@@ -547,6 +564,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 		Username:       identity.Username,
 		FirstName:      identity.FirstName,
 		LastName:       identity.LastName,
+		ProfilePicture: identity.ProfilePicture,
 	})
 	if err != nil {
 		log.Printf(
@@ -561,6 +579,25 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 	}
 
 	h.writeOAuthSuccess(w, r, user)
+}
+
+func profileImageURL(image fortyTwoProfileImage) string {
+	return firstNonEmpty(
+		image.Versions.Medium,
+		image.Versions.Large,
+		image.Link,
+		image.Versions.Small,
+		image.Versions.Micro,
+	)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			return trimmed
+		}
+	}
+	return ""
 }
 
 func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User) {

@@ -3,6 +3,12 @@
 import {createContext, useContext, useEffect, useState, ReactNode,} from "react";
 import {iUser} from "@/types/user";
 
+type StoredUser = Partial<iUser> & {
+    first_name?: string;
+    last_name?: string;
+    created_at?: string;
+};
+
 interface AuthContextType {
     user: iUser | null;
     login: (user: iUser, token: string) => void;
@@ -23,7 +29,7 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
 
         if (token && userData)
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setUser(JSON.parse(userData));
+            setUser(normalizeStoredUser(JSON.parse(userData) as StoredUser));
 
         setLoading(false);
     }, []);
@@ -55,6 +61,20 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
         value={{user, login, logout, loading, updateUser}}>
         {children}
     </AuthContext.Provider>);
+}
+
+function normalizeStoredUser(user: StoredUser): iUser {
+    return {
+        id: user.id ?? 0,
+        username: user.username ?? "",
+        firstname: user.firstname ?? user.first_name ?? "",
+        lastname: user.lastname ?? user.last_name ?? "",
+        email: user.email ?? "",
+        color: user.color ?? "purple",
+        profile_picture: user.profile_picture ?? null,
+        watch_history: user.watch_history ?? [],
+        joined_at: user.joined_at ?? (user.created_at ? Date.parse(user.created_at) : Date.now()),
+    };
 }
 
 export function useAuth() {

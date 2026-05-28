@@ -37,6 +37,7 @@ func TestNormalizeOAuthUserParamsKeepsValidProfileFields(t *testing.T) {
 		Username:       " ft_user ",
 		FirstName:      " Forty ",
 		LastName:       " Two ",
+		ProfilePicture: " https://cdn.intra.42.fr/users/123/medium_ft_user.jpg ",
 	})
 
 	if params.Email != "ft.user@example.com" {
@@ -47,6 +48,9 @@ func TestNormalizeOAuthUserParamsKeepsValidProfileFields(t *testing.T) {
 	}
 	if params.FirstName != "Forty" || params.LastName != "Two" {
 		t.Fatalf("expected trimmed names, got %+v", params)
+	}
+	if params.ProfilePicture != "https://cdn.intra.42.fr/users/123/medium_ft_user.jpg" {
+		t.Fatalf("expected trimmed profile picture, got %q", params.ProfilePicture)
 	}
 }
 

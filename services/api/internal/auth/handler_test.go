@@ -18,6 +18,7 @@ import (
 type memoryUserStore struct {
 	nextID          int64
 	usersByEmail    map[string]models.User
+	usersByID       map[int64]models.User
 	usersByUsername map[string]models.User
 	oauthAccounts   map[string]int64
 	resetTokens     map[string]memoryPasswordResetToken
@@ -32,6 +33,7 @@ type memoryPasswordResetToken struct {
 func newMemoryUserStore() *memoryUserStore {
 	return &memoryUserStore{
 		usersByEmail:    make(map[string]models.User),
+		usersByID:       make(map[int64]models.User),
 		usersByUsername: make(map[string]models.User),
 		oauthAccounts:   make(map[string]int64),
 		resetTokens:     make(map[string]memoryPasswordResetToken),
@@ -39,8 +41,10 @@ func newMemoryUserStore() *memoryUserStore {
 }
 
 func (s *memoryUserStore) CreateUser(_ context.Context, params CreateUserParams) (models.User, error) {
-	if _, ok := s.usersByEmail[params.Email]; ok {
-		return models.User{}, ErrDuplicateUser
+	if params.PasswordHash != "" {
+		if _, ok := s.usersByEmail[params.Email]; ok {
+			return models.User{}, ErrDuplicateUser
+		}
 	}
 	if _, ok := s.usersByUsername[params.Username]; ok {
 		return models.User{}, ErrDuplicateUser
@@ -49,16 +53,20 @@ func (s *memoryUserStore) CreateUser(_ context.Context, params CreateUserParams)
 	s.nextID++
 	now := time.Now().UTC()
 	user := models.User{
-		ID:           s.nextID,
-		Email:        params.Email,
-		Username:     params.Username,
-		FirstName:    params.FirstName,
-		LastName:     params.LastName,
-		PasswordHash: params.PasswordHash,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:             s.nextID,
+		Email:          params.Email,
+		Username:       params.Username,
+		FirstName:      params.FirstName,
+		LastName:       params.LastName,
+		ProfilePicture: params.ProfilePicture,
+		PasswordHash:   params.PasswordHash,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
-	s.usersByEmail[user.Email] = user
+	s.usersByID[user.ID] = user
+	if user.PasswordHash != "" {
+		s.usersByEmail[user.Email] = user
+	}
 	s.usersByUsername[user.Username] = user
 	return user, nil
 }
@@ -78,7 +86,7 @@ func (s *memoryUserStore) FindUserByLogin(_ context.Context, login string) (mode
 			return user, nil
 		}
 	}
-	if user, ok := s.usersByUsername[login]; ok {
+	if user, ok := s.usersByUsername[login]; ok && user.PasswordHash != "" {
 		return user, nil
 	}
 	return models.User{}, ErrUserNotFound
@@ -88,12 +96,11 @@ func (s *memoryUserStore) FindOrCreateOAuthUser(_ context.Context, params OAuthU
 	params = normalizeOAuthUserParams(params)
 	key := oauthAccountKey(params.Provider, params.ProviderUserID)
 	if userID, ok := s.oauthAccounts[key]; ok {
-		return s.findUserByID(userID)
-	}
-
-	if user, ok := s.usersByEmail[params.Email]; ok {
-		s.oauthAccounts[key] = user.ID
-		return user, nil
+		user, err := s.findUserByID(userID)
+		if err != nil {
+			return models.User{}, err
+		}
+		return s.applyOAuthProfile(user, params), nil
 	}
 
 	username := oauthUsernameBase(params.Username, params.Provider, params.ProviderUserID)
@@ -102,11 +109,12 @@ func (s *memoryUserStore) FindOrCreateOAuthUser(_ context.Context, params OAuthU
 	}
 
 	user, err := s.CreateUser(context.Background(), CreateUserParams{
-		Email:        params.Email,
-		Username:     username,
-		FirstName:    params.FirstName,
-		LastName:     params.LastName,
-		PasswordHash: "",
+		Email:          params.Email,
+		Username:       username,
+		FirstName:      params.FirstName,
+		LastName:       params.LastName,
+		ProfilePicture: params.ProfilePicture,
+		PasswordHash:   "",
 	})
 	if err != nil {
 		return models.User{}, err
@@ -116,12 +124,25 @@ func (s *memoryUserStore) FindOrCreateOAuthUser(_ context.Context, params OAuthU
 }
 
 func (s *memoryUserStore) findUserByID(userID int64) (models.User, error) {
-	for _, user := range s.usersByEmail {
-		if user.ID == userID {
-			return user, nil
-		}
+	if user, ok := s.usersByID[userID]; ok {
+		return user, nil
 	}
 	return models.User{}, ErrUserNotFound
+}
+
+func (s *memoryUserStore) applyOAuthProfile(user models.User, params OAuthUserParams) models.User {
+	if params.FirstName != "" {
+		user.FirstName = params.FirstName
+	}
+	if params.LastName != "" {
+		user.LastName = params.LastName
+	}
+	if params.ProfilePicture != "" {
+		user.ProfilePicture = params.ProfilePicture
+	}
+	s.usersByID[user.ID] = user
+	s.usersByUsername[user.Username] = user
+	return user
 }
 
 func oauthAccountKey(provider string, providerUserID string) string {
@@ -151,6 +172,7 @@ func (s *memoryUserStore) ResetPasswordWithToken(_ context.Context, tokenHash st
 	s.resetTokens[tokenHash] = token
 	user.PasswordHash = passwordHash
 	user.UpdatedAt = time.Now().UTC()
+	s.usersByID[user.ID] = user
 	s.usersByEmail[user.Email] = user
 	s.usersByUsername[user.Username] = user
 	return user, nil
@@ -609,6 +631,41 @@ func TestMemoryUserStoreFindMissing(t *testing.T) {
 	}
 }
 
+func TestOAuthUsersWithSameEmailStaySeparateByProvider(t *testing.T) {
+	store := newMemoryUserStore()
+
+	fortyTwoUser, err := store.FindOrCreateOAuthUser(context.Background(), OAuthUserParams{
+		Provider:       fortyTwoProvider,
+		ProviderUserID: "42-id",
+		Email:          "same@example.com",
+		Username:       "forty_two",
+		FirstName:      "Forty",
+		LastName:       "Two",
+	})
+	if err != nil {
+		t.Fatalf("create 42 user: %v", err)
+	}
+
+	githubUser, err := store.FindOrCreateOAuthUser(context.Background(), OAuthUserParams{
+		Provider:       githubProvider,
+		ProviderUserID: "github-id",
+		Email:          "same@example.com",
+		Username:       "github_user",
+		FirstName:      "Git",
+		LastName:       "Hub",
+	})
+	if err != nil {
+		t.Fatalf("create GitHub user: %v", err)
+	}
+
+	if githubUser.ID == fortyTwoUser.ID {
+		t.Fatalf("expected separate OAuth users for matching provider email, got id %d", githubUser.ID)
+	}
+	if githubUser.FirstName != "Git" || githubUser.LastName != "Hub" {
+		t.Fatalf("expected GitHub profile fields, got %+v", githubUser)
+	}
+}
+
 func TestFortyTwoLoginRedirectsWithStateCookie(t *testing.T) {
 	store := newMemoryUserStore()
 	tokens := newTestTokenManager(t)
@@ -654,6 +711,7 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 			Username:       "ft_user",
 			FirstName:      "Forty",
 			LastName:       "Two",
+			ProfilePicture: "https://cdn.intra.42.fr/users/12345/medium_ft_user.jpg",
 		},
 	}
 	handler := NewHandler(store, tokens, WithFortyTwoOAuth(provider))
@@ -674,6 +732,9 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 	}
 	if response.Data.User.Username != "ft_user" {
 		t.Fatalf("expected 42 login as username, got %q", response.Data.User.Username)
+	}
+	if response.Data.User.ProfilePicture == nil || *response.Data.User.ProfilePicture != "https://cdn.intra.42.fr/users/12345/medium_ft_user.jpg" {
+		t.Fatalf("expected 42 profile picture, got %+v", response.Data.User.ProfilePicture)
 	}
 	if _, err := tokens.ValidateAccessToken(response.Data.AccessToken); err != nil {
 		t.Fatalf("42 auth token should validate: %v", err)
