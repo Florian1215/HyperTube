@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 )
 
 type TorrentTranscodeHandler struct {
@@ -39,12 +40,20 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 
 	torrentPath := s.torrentBasePath + "/" + "test" + "/rubber.mp4" // hardcoded for now
 	id = "batman-1966"                                          // hardcoded for now
-	s.mu.Lock()
-	torrentReader := (*s.streams)[id]
-	s.mu.Unlock()
+	var torrentReader io.ReadSeekCloser
+	deadline := time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		s.mu.Lock()
+		torrentReader = (*s.streams)[id]
+		s.mu.Unlock()
+		if torrentReader != nil {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 	if torrentReader == nil {
-		http.Error(w, "torrent not found", http.StatusNotFound)
-		log.Printf("torrent not found: %s", id)
+		http.Error(w, "torrent not ready", http.StatusServiceUnavailable)
+		log.Printf("torrent not ready after timeout: %s", id)
 		return
 	}
 
