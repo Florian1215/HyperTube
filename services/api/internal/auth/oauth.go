@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -534,6 +535,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 
 	identity, err := provider.Exchange(r.Context(), code)
 	if err != nil {
+		log.Printf("oauth callback: %s exchange failed: %v", providerName, err)
 		h.redirectOAuthError(w, r, http.StatusBadGateway, "OAUTH_EXCHANGE_FAILED", "failed to exchange "+providerName+" authorization code")
 		return
 	}
@@ -547,6 +549,13 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 		LastName:       identity.LastName,
 	})
 	if err != nil {
+		log.Printf(
+			"oauth callback: failed to create %s OAuth user: provider_user_id=%q username=%q error=%v",
+			providerName,
+			identity.ProviderUserID,
+			identity.Username,
+			err,
+		)
 		h.redirectOAuthError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create OAuth user")
 		return
 	}

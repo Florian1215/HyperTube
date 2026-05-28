@@ -36,7 +36,7 @@ func main() {
 	fortyTwoRedirectURL := getEnv("FORTYTWO_REDIRECT_URL", "http://localhost:8080/api/v1/auth/42/callback")
 	githubRedirectURL := getEnv("GITHUB_REDIRECT_URL", "http://localhost:8080/api/v1/auth/github/callback")
 	authOptions := []auth.HandlerOption{
-		auth.WithFrontendAuthCallbackURL(getEnv("FRONTEND_AUTH_CALLBACK_URL", "http://localhost:4200/auth/callback")),
+		auth.WithFrontendAuthCallbackURL(getEnv("FRONTEND_AUTH_CALLBACK_URL", "http://localhost:4200/en/auth/callback")),
 		auth.WithPasswordResetURL(getEnv("PASSWORD_RESET_URL", "http://localhost:4200/{locale}/reset-password")),
 		auth.WithPasswordResetTTL(getPasswordResetTTL()),
 		auth.WithFortyTwoOAuth(auth.NewFortyTwoOAuth(auth.FortyTwoOAuthConfig{

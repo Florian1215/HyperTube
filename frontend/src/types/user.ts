@@ -2,7 +2,7 @@ export interface iUserToken {
     user: iUser
     access_token: string
     token_type: "Bearer"
-    expires_in: 900
+    expires_in: number
 }
 
 export interface iUser {
