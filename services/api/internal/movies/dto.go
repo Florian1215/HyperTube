@@ -68,6 +68,28 @@ func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailRes
 	}
 }
 
+type torrentResponse struct {
+	ID       int     `json:"id"`
+	Title    string  `json:"title"`
+	Source   string  `json:"source"`
+	Quality  string  `json:"quality"`
+	Size     float64 `json:"size"`
+	Language string  `json:"language"`
+	Seeds    string  `json:"seeds"`
+}
+
+func toTorrentResponse(t models.Torrent) torrentResponse {
+	return torrentResponse{
+		ID:       t.Id,
+		Title:    t.Title,
+		Source:   t.Source,
+		Quality:  t.Quality,
+		Size:     t.Size,
+		Language: t.Language,
+		Seeds:    t.Seeds,
+	}
+}
+
 func firstDirector(directors []string) string {
 	if len(directors) == 0 {
 		return ""
