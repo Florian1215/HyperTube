@@ -112,9 +112,10 @@ func (h *MoviesHandler) GetMoviesId(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	language := r.URL.Query().Get("lang")
-	if language == "" {
-		language = "en-US"
+	language := r.Header.Get("Accept-Language")
+	if language != "en" && language != "fr" && language != "de" {
+		respond.Error(w, http.StatusUnprocessableEntity, "UNPROCESSABLE_ENTITY", "unsupported language")
+		return
 	}
 	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, language)
 	if err != nil {
