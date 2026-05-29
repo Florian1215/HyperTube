@@ -105,7 +105,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
             <td className="hidden sm:table-cell">
                 <div className="flex gap-1 items-center">
                     <StarIcon />
-                    {movie ? <span className="font-medium">{movie.note.toFixed(1)}</span> :
+                    {movie ? <span>{movie.note.toFixed(1)}</span> :
                         <div className="h-5.5 w-5">
                             <div className="custom-loading"/>
                         </div>
