@@ -78,7 +78,9 @@ export default function HomePage() {
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        {movies && <MoviesHero items={movies.slice(0, 5)} movie={movies[0]}/>}
+        {movies ?
+            <MoviesHero items={movies.slice(0, 5)} movie={movies[0]}/> :
+            <MoviesHero items={[]} movie={null}/>}
         <GenreTags genreCount={genreCount} className="justify-center w-full my-8"/>
 
         {(continueWatching && continueWatching.length > 0) &&

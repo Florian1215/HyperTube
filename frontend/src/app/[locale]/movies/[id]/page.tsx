@@ -11,7 +11,7 @@ import {useParams} from "next/navigation";
 
 export default function MoviePage() {
     const params = useParams();
-    const [movie, setMovie] = useState<iMovieDetails | null>(null);
+    const [movie, setMovie] = useState<iMovieDetails | null | undefined>(null);
     const id = String(params.id);
     const t = useTranslations("movie");
     const locale = useLocale() as Locale;
@@ -20,21 +20,23 @@ export default function MoviePage() {
         async function loadMovie() {
             try {
                 const data = await getMovie(id, locale);
+                console.log('LOCAL: ', locale);
                 data.data.backdrop_url = data.data.backdrop_url.replace("/w500/", "/original/");
                 setMovie(data.data);
             } catch (error) {
                 console.error(error);
+                setMovie(undefined);
             }
         }
         loadMovie().then(r => console.log(r));
     }, [id, locale]);
 
-    if (!movie)
+    if (movie === undefined)
         return (<p className="small-text">{t("noResult")}</p>);
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MoviesHero movie={movie} items={[movie.backdrop_url]} onClick={() => console.log('play movie')} />
-        <MovieInfoSection movie={movie} />
-        <CommentSection movie={movie} />
+        <MoviesHero movie={movie} items={[]} onClick={() => console.log('play movie')} />
+        {movie && <MovieInfoSection movie={movie}/>}
+        {movie && <CommentSection movie={movie} />}
     </div>);
 }

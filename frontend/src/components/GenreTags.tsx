@@ -2,7 +2,7 @@ import React, {Dispatch, SetStateAction} from "react";
 import {useModal} from "@/context/ModalContext";
 import {useRouter} from "@/i18n/navigation";
 import {useGenres} from "@/context/useGenres";
-import {iGenre} from "@/types/movie";
+import {iGenre} from "@/types/genre";
 import {useLocale} from "next-intl";
 import {tLocale} from "@/i18n/request";
 
@@ -11,12 +11,10 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
     const {openModal, closeModal} = useModal();
 
     const locale = useLocale() as tLocale;
-    const {data, isLoading, error} = useGenres(locale);
+    const {data, error} = useGenres(locale);
 
     if (!data?.genres)
-        return <div>Loading...</div>;
-    if (isLoading)
-        return <div>Loading...</div>; // todo remake
+        return;
 
     let showGenres = data.genres;
     if (error)

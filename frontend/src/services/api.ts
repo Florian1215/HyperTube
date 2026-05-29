@@ -14,8 +14,8 @@ export type tResponse<T> = {
 };
 
 export async function apiFetch<T>(endpoint: string, language?: string, options: RequestInit = {}): Promise<T> {
-    if (!language)
-        language = "en-US";
+    if (language === undefined)
+        language = "en";
     const token = localStorage.getItem("token");
     const response = await fetch(
         `${API_URL}${endpoint}`,
@@ -31,6 +31,7 @@ export async function apiFetch<T>(endpoint: string, language?: string, options: 
             },
         }
     );
+    console.log('REQUEST LOCAL: ', language);
 
     if (!response.ok)
         throw new Error("Erreur API");

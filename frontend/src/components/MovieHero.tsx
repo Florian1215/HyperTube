@@ -5,9 +5,9 @@ import {Link} from "@/i18n/navigation";
 import {SecondaryButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
 
-export default function MoviesHero({items, movie, onClick}: { items?: iMovie[] | string[], movie: iMovie, onClick?: () => void }) {
+export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | string[], movie: iMovie | null, onClick?: () => void }) {
     const [index, setIndex] = useState(0);
-    if (items === undefined)
+    if (items.length === 0 && movie)
         items = [movie.backdrop_url];
 
     const slideLeft = () => setIndex((prev) => (prev - 1 + items.length) % items.length);
@@ -22,39 +22,43 @@ export default function MoviesHero({items, movie, onClick}: { items?: iMovie[] |
     return (<div className="overflow-hidden w-full">
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
-            {items.map((item, index) => (
-                <MovieHero key={index} movie={typeof item === "string" ? movie : item} backdrop={typeof item === "string" ? item : undefined} onClick={onClick} onClickLeft={slideLeft} onClickRight={slideRight}/>
-            ))}
+            {items.length > 0 ?
+                items.map((item, index) => (
+                <MovieHero key={index} movie={typeof item === "string" ? movie : item} backdrop={typeof item === "string" ? item : undefined} onClick={onClick} onClickLeft={slideLeft} onClickRight={slideRight}/>)) :
+                <MovieHero movie={null} onClickLeft={slideLeft} onClickRight={slideRight} />
+            }
         </div>
     </div>);
 }
 
-function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movie: iMovie, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string }) {
+function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movie: iMovie | null, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string }) {
     const t = useTranslations("movie");
+    const [isLoaded, setIsLoaded] = useState(false);
 
     return (<div className="px-4 sm:px-6 min-w-full">
         <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
-            <Image className="size-full object-cover" width={5000} height={5000} loading="eager"
-                   src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}/>
+            {movie && <Image className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
+                             height={5000} loading="eager" onLoad={() => setIsLoaded(true)}
+                             src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}/>}
             <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left"
                  onClick={onClickLeft}></div>
             {onClick ?
                 <div className="h-full w-full z-20 absolute custom-cursor-play" onClick={onClick}></div>
-                : <Link href={"/movies/" + movie.imdb_id} className="h-full w-full z-20 absolute"></Link>
+                : (movie && <Link href={"/movies/" + movie.imdb_id} className="h-full w-full z-20 absolute"></Link>)
             }
             <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right"
                  onClick={onClickRight}></div>
             <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
-                <div className="bg-gradient"></div>
-                <Link href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
+                <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
+                {movie && <Link href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
                     {
                         backdrop === undefined ?
-                        <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
-                            <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
-                        </h1> :
-                        <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={() => console.log("watch movie")}>{t("watch")}</SecondaryButton>
+                            <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
+                                <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
+                            </h1> :
+                            <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={() => console.log("watch movie")}>{t("watch")}</SecondaryButton>
                     }
-                </Link>
+                </Link>}
             </div>
         </div>
     </div>);
