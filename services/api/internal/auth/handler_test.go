@@ -203,9 +203,10 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if registerResponse.Data.User.Email != "alice@example.com" {
 		t.Fatalf("expected normalized email, got %q", registerResponse.Data.User.Email)
 	}
-	if registerResponse.Data.User.FrontendFirstName != "Alice" || registerResponse.Data.User.FrontendLastName != "Example" {
-		t.Fatalf("expected frontend name aliases, got %q %q", registerResponse.Data.User.FrontendFirstName, registerResponse.Data.User.FrontendLastName)
+	if registerResponse.Data.User.FirstName != "Alice" || registerResponse.Data.User.LastName != "Example" {
+		t.Fatalf("expected canonical names, got %q %q", registerResponse.Data.User.FirstName, registerResponse.Data.User.LastName)
 	}
+	assertNoFrontendNameAliasFields(t, registerRec)
 	if registerResponse.Data.User.JoinedAt == 0 {
 		t.Fatal("expected joined_at compatibility field")
 	}
@@ -289,9 +290,7 @@ func TestRegisterAcceptsFrontendNameAliases(t *testing.T) {
 	if registerResponse.Data.User.FirstName != "Front" || registerResponse.Data.User.LastName != "End" {
 		t.Fatalf("expected canonical names from frontend aliases, got %q %q", registerResponse.Data.User.FirstName, registerResponse.Data.User.LastName)
 	}
-	if registerResponse.Data.User.FrontendFirstName != "Front" || registerResponse.Data.User.FrontendLastName != "End" {
-		t.Fatalf("expected frontend alias response names, got %q %q", registerResponse.Data.User.FrontendFirstName, registerResponse.Data.User.FrontendLastName)
-	}
+	assertNoFrontendNameAliasFields(t, registerRec)
 
 	loginBody := `{"email": "frontend_1", "password": "correct-horse-battery"}`
 	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(loginBody))
@@ -656,10 +655,28 @@ func decodeAuthEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
 	var body struct {
 		Data authResponse `json:"data"`
 	}
-	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	return body
+}
+
+func assertNoFrontendNameAliasFields(t *testing.T, rec *httptest.ResponseRecorder) {
+	t.Helper()
+
+	var body struct {
+		Data struct {
+			User map[string]json.RawMessage `json:"user"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response fields: %v", err)
+	}
+	for _, field := range []string{"firstname", "lastname"} {
+		if _, ok := body.Data.User[field]; ok {
+			t.Fatalf("response must not include %q alias field: %s", field, rec.Body.String())
+		}
+	}
 }
 
 func decodeErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {

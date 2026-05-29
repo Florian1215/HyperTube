@@ -103,18 +103,16 @@ type authResponse struct {
 }
 
 type userResponse struct {
-	ID                int64   `json:"id"`
-	Email             string  `json:"email"`
-	Username          string  `json:"username"`
-	FirstName         string  `json:"first_name"`
-	LastName          string  `json:"last_name"`
-	FrontendFirstName string  `json:"firstname"`
-	FrontendLastName  string  `json:"lastname"`
-	ProfilePicture    *string `json:"profile_picture"`
-	CreatedAt         string  `json:"created_at"`
-	JoinedAt          int64   `json:"joined_at"`
-	Color             string  `json:"color"`
-	WatchHistory      []any   `json:"watch_history"`
+	ID             int64   `json:"id"`
+	Email          string  `json:"email"`
+	Username       string  `json:"username"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+	ProfilePicture *string `json:"profile_picture"`
+	CreatedAt      string  `json:"created_at"`
+	JoinedAt       int64   `json:"joined_at"`
+	Color          string  `json:"color"`
+	WatchHistory   []any   `json:"watch_history"`
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -200,18 +198,16 @@ func toUserResponse(user models.User) userResponse {
 		profilePicture = &user.ProfilePicture
 	}
 	return userResponse{
-		ID:                user.ID,
-		Email:             user.Email,
-		Username:          user.Username,
-		FirstName:         user.FirstName,
-		LastName:          user.LastName,
-		FrontendFirstName: user.FirstName,
-		FrontendLastName:  user.LastName,
-		ProfilePicture:    profilePicture,
-		CreatedAt:         user.CreatedAt.Format(time.RFC3339),
-		JoinedAt:          user.CreatedAt.UnixMilli(),
-		Color:             "purple",
-		WatchHistory:      []any{},
+		ID:             user.ID,
+		Email:          user.Email,
+		Username:       user.Username,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		ProfilePicture: profilePicture,
+		CreatedAt:      user.CreatedAt.Format(time.RFC3339),
+		JoinedAt:       user.CreatedAt.UnixMilli(),
+		Color:          "purple",
+		WatchHistory:   []any{},
 	}
 }
 
