@@ -9,7 +9,7 @@ import {Button} from "@/components/Buttons";
 import {useLocale, useTranslations} from "next-intl";
 import {useGenres} from "@/context/useGenres";
 import {tLocale} from "@/i18n/request";
-import {iGenre} from "@/types/movie";
+import {iGenre} from "@/types/genre";
 
 export function GenreModal() {
     const {activeModal, closeModal,} = useModal();
@@ -28,19 +28,13 @@ export function FilterGenreModal() {
     const t = useTranslations("modal.filterGenre");
     const [modalFilterGenre, setModalFilterGenre] = useState<iGenre[]>([]);
     const locale = useLocale() as tLocale;
-    const {data, isLoading, error} = useGenres(locale);
+    const {data} = useGenres(locale);
 
     useEffect(() => {
         if (activeModal.filterGenre !== undefined)
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setModalFilterGenre(activeModal.filterGenre[0]);
     }, [activeModal.filterGenre]);
-
-    if (isLoading)
-        return <div>Loading...</div>; // todo remake
-
-    if (error)
-        return <div>Error</div>;
 
     if (activeModal.type !== "filter-genre" || activeModal.filterGenre === undefined)
         return null;

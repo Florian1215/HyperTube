@@ -1,6 +1,7 @@
 "use client";
 
-import {iGenre, iMovie} from "@/types/movie";
+import {iMovie} from "@/types/movie";
+import {iGenre} from "@/types/genre";
 import {ListMovieCard, MoviesCard} from "@/components/MovieCard";
 import React, {useEffect, useRef, useState} from "react";
 import {GridIcon, ListIcon} from "@/components/Icons";
@@ -15,29 +16,28 @@ import {useGenres} from "@/context/useGenres";
 import {tLocale} from "@/i18n/request";
 
 type tViewType = | "grid" | "list";
-type tSort = "name" | "genre" | "grade" | "year";
+type tSort = "title" | "genre" | "grade" | "year";
 
 interface iSort {
-    type: tSort;
+    type?: tSort;
     side: boolean;
 }
 
 export default function Page() {
     const searchParams = useSearchParams();
     const genreId = searchParams.get("genre") as number | null;
-    let genre;
+    let genre: undefined | iGenre;
     const locale = useLocale() as tLocale;
     const {data} = useGenres(locale);
     if (genreId && data)
-        genre = data.genres.find(e => e.id === genreId);
+        genre = data.genres.find(e => e.id == genreId);
     const mostRated = searchParams.get("sort");
     const query = searchParams.get("q");
     const [searchValue, setSearchValue] = useState(query === null ? "" : query);
     const [previusSearchValue, setPreviusSearchValue] = useState("");
     const [viewType, setViewType] = useState<tViewType>(genre === undefined && mostRated === null ? "grid" : "list");
-    const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : "name", side: true});
+    const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [index, setIndex] = useState(0);
-    const [loading, setLoading] = useState(false);
     const [totalPage, setTotalPage] = useState(1);
     const [movies, setMovies] = useState<iMovie[] | null>(null);
 
@@ -46,7 +46,7 @@ export default function Page() {
         const controller = new AbortController();
         const timeout = setTimeout(async () => {
             try {
-                setLoading(true);
+                setMovies(null);
                 if (previusSearchValue !== searchValue)
                     setIndex(0);
                 const data = await getMovies(locale, searchValue, index, controller.signal);
@@ -60,8 +60,6 @@ export default function Page() {
                 if (error instanceof DOMException && error.name === "AbortError")
                     return;
                 console.error(error);
-            } finally {
-                setLoading(false);
             }
         }, 300);
 
@@ -71,6 +69,10 @@ export default function Page() {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [index, locale, searchValue]);
+
+    useEffect(() => {
+        setViewType(genre === undefined && mostRated === null ? "grid" : "list");
+    }, [genre, mostRated]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e === undefined ? "" : e.target.value.toLowerCase()
@@ -83,12 +85,9 @@ export default function Page() {
     return (<div className="flex flex-col gap-4 mx-2 md:mx-4 xl:mx-6">
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />
         <Filter viewType={viewType} onClick={handleSetViewType}/>
-        { loading ?
-            <div>loading...</div> :
-            <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} >
-                {movies && <Results movies={movies} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>}
-            </Pagination>
-        }
+        <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} >
+            <Results movies={movies} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+        </Pagination>
     </div>);
 }
 
@@ -116,7 +115,7 @@ function Filter({viewType, onClick}: {viewType: tViewType, onClick: (value: tVie
     </div>);
 }
 
-function Results({movies, viewType, sort, changeSort, genre}: {movies: iMovie[], viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
+function Results({movies, viewType, sort, changeSort, genre}: {movies: iMovie[] | null, viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
     const {openModal} = useModal();
     const [filterGenre, setFilterGenre] = useState<iGenre[]>(genre === undefined ? [] : [genre])
     const size = useResponsiveSize();
@@ -124,37 +123,40 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies: iMovie[],
 
     const noResult = () => (<p className="small-text">{t("noResults")}</p>);
 
-    if (movies.length === 0)
+    if (movies && movies.length === 0)
         return noResult();
 
     if (viewType === "grid")
         return (<MoviesCard movieSets={movies}/>);
 
     const sortOptions: {type: tSort, label: string}[] = [
-        {type: "name", label: t("sort.title")},
+        {type: "title", label: t("sort.title")},
         {type: "year", label: t("sort.year")},
         {type: "genre", label: t("sort.genre")},
         {type: "grade", label: t("sort.rating")},
     ];
-    let sortedMovies;
-    if (sort.type === "grade")
-        sortedMovies = movies.sort((a, b) => a.note - b.note);
-    else if (sort.type === "year")
-        sortedMovies = movies.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-    else
-        sortedMovies = movies.sort((a, b) => b.title.localeCompare(a.title));
+    let sortedMovies = movies;
+    if (sortedMovies) {
+        if (sort.type === "grade")
+            sortedMovies = sortedMovies.sort((a, b) => a.note - b.note);
+        else if (sort.type === "year")
+            sortedMovies = sortedMovies.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+        else if (sort.type === "title")
+            sortedMovies = sortedMovies.sort((a, b) => b.title.localeCompare(a.title));
 
-    if (sort.side)
-        sortedMovies = sortedMovies.reverse();
+        if (sort.side)
+            sortedMovies = sortedMovies.reverse();
 
-    if (filterGenre.length > 0 && size === "xl")
-        sortedMovies = sortedMovies.filter(m => {
-            for (let i = 0; i < filterGenre.length; i++) {
-                if (m.genres && !m.genres.includes(filterGenre[i].id))
-                    return false;
-            }
-            return true;
-        })
+        if (filterGenre.length > 0 && size === "xl")
+            sortedMovies = sortedMovies.filter(m => {
+                for (let i = 0; i < filterGenre.length; i++) {
+                    if (m.genres && !m.genres.includes(filterGenre[i].id))
+                        return false;
+                }
+                return true;
+            })
+    }
+
 
     const handleSort = (sortOption: tSort) => {
         if (sortOption === "genre")
@@ -199,10 +201,13 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies: iMovie[],
                 </tr>
             </thead>
             <tbody>
-                {sortedMovies.map((movie, index) => (<ListMovieCard key={index} movie={movie} setFilterGenre={setFilterGenre}/>))}
+                {sortedMovies ?
+                    sortedMovies.map((movie) => (<ListMovieCard key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre}/>)) :
+                    [...Array(3)].map((_, i) => (<ListMovieCard key={i} movie={null} setFilterGenre={setFilterGenre}/>))
+                }
             </tbody>
         </table>
-        {sortedMovies.length === 0 && noResult()}
+        {(sortedMovies && sortedMovies.length === 0) && noResult()}
     </div>);
 }
 

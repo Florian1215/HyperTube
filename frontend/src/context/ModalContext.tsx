@@ -1,7 +1,7 @@
 "use client";
 
 import React, {createContext, Dispatch, SetStateAction, useContext, useState} from "react";
-import {iGenre} from "@/types/movie";
+import {iGenre} from "@/types/genre";
 
 type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "forgot-password" | "delete-comment" | null;
 
