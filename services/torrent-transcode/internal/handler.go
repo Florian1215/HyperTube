@@ -39,7 +39,7 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 		log.Printf("torrent not found in db for id %s: %v", id, err)
 		return
 	}
-	
+
 	torrentPath, err := s.torrentClient.DownloadTorrentFile(torrentURL)
 	if err != nil {
 		http.Error(w, "failed to download torrent file", http.StatusInternalServerError)
@@ -47,7 +47,7 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 		return
 	}
 	log.Printf("%s: torrent file downloaded for torrent", id)
-	
+
 	IOReader, err := s.torrentClient.Add(torrentPath)
 	if err != nil {
 		http.Error(w, "failed to add torrent", http.StatusInternalServerError)
@@ -55,7 +55,7 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 		return
 	}
 	log.Printf("%s: torrent init successful for torrent", id)
-	
+
 	s.mu.Lock()
 	(*s.streams)[id] = IOReader
 	s.mu.Unlock()
@@ -65,12 +65,6 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	videoPath := s.videoBasePath + "/" + id
-	// videoPath1 := s.videoBasePath + "/test"
-	// videoPath2 := s.videoBasePath + "/batman" // hardcoded for now
-	// videoPath3 := s.videoBasePath + "/nos" // hardcoded for now
-
-	// torrentPath := s.torrentBasePath + "/" + "test" + "/rubber.mp4" // hardcoded for now
-	// id = "batman-1966"     
 
 	// Check if torrent is ready for transcoding
 	var torrentReader io.ReadSeekCloser
@@ -91,19 +85,36 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 	}
 	log.Printf("%s: torrent file pipe ready for transcoding", id)
 
+
 	if err := os.MkdirAll(videoPath, 0755); err != nil {
 		http.Error(w, "failed to create stream directory", http.StatusInternalServerError)
 		log.Printf("failed to create stream directory: %v", err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-
+	log.Printf("%s: ConvertHLS starting", id)
 	go func() {
-		log.Printf("%s: ConvertHLS starting", id)
 		if err := transcode.ConvertPipeHLS(torrentReader, videoPath); err != nil {
 			log.Printf("ConvertPipeHLS failed: %v", err)
 		}
-		// TODO register that the torrent is converted and finished in the db 
+		// TODO register that the torrent is converted and finished in the db
 	}()
+
+	m3u8Path := videoPath + "/stream.m3u8"
+	deadline = time.Now().Add(60 * time.Second)
+	var m3u8Ready bool
+	for time.Now().Before(deadline) {
+		if _, err := os.Stat(m3u8Path); err == nil {
+			m3u8Ready = true
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if !m3u8Ready {
+		http.Error(w, "transcode timed out", http.StatusGatewayTimeout)
+		log.Printf("%s: m3u8 not ready after 60s timeout", id)
+		return
+	}
+	log.Printf("%s: transcoding far enough to stream", id)
+	w.WriteHeader(http.StatusOK)
 }
