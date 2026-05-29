@@ -43,7 +43,7 @@ export default function Page() {
         <div className="flex items-center gap-4 justify-center">
             <ProfilePicture user={user} size={1}/>
             <div className="flex flex-col items-start">
-                <h2>{user.firstname} {user.lastname[0]}.</h2>
+                <h2>{user.first_name} {user.last_name[0]}.</h2>
                 <p className="uppercase">{tProfile("memberSince", {date: memberSince, username: user.username})}</p>
             </div>
         </div>
