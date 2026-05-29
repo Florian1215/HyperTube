@@ -37,6 +37,7 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 	id := r.PathValue("id")
 	videoPath := s.videoBasePath + "/test"
 	videoPath2 := s.videoBasePath + "/batman" // hardcoded for now
+	videoPath3 := s.videoBasePath + "/nos" // hardcoded for now
 
 	torrentPath := s.torrentBasePath + "/" + "test" + "/rubber.mp4" // hardcoded for now
 	id = "batman-1966"                                          // hardcoded for now
@@ -57,12 +58,36 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	id = "nos"                                          // hardcoded for now
+	var torrentReader2 io.ReadSeekCloser
+	deadline2 := time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline2) {
+		s.mu.Lock()
+		torrentReader2 = (*s.streams)[id]
+		s.mu.Unlock()
+		if torrentReader2 != nil {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	if torrentReader2 == nil {
+		http.Error(w, "torrent not ready", http.StatusServiceUnavailable)
+		log.Printf("torrent not ready after timeout: %s", id)
+		return
+	}
+
 	if err := os.MkdirAll(videoPath, 0755); err != nil {
 		http.Error(w, "failed to create stream directory", http.StatusInternalServerError)
 		log.Printf("failed to create stream directory: %v", err)
 		return
 	}
 	if err := os.MkdirAll(videoPath2, 0755); err != nil {
+		http.Error(w, "failed to create stream directory", http.StatusInternalServerError)
+		log.Printf("failed to create stream directory: %v", err)
+		return
+	}
+
+	if err := os.MkdirAll(videoPath3, 0755); err != nil {
 		http.Error(w, "failed to create stream directory", http.StatusInternalServerError)
 		log.Printf("failed to create stream directory: %v", err)
 		return
@@ -78,6 +103,17 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 		}
 		log.Printf("ConvertHLS done")
 		if err := transcode.ConvertPipeHLS(torrentReader, videoPath2); err != nil {
+			log.Printf("ConvertPipeHLS failed: %v", err)
+		}
+		log.Printf("ConvertHLS done")
+		if err := transcode.ConvertPipeHLS(torrentReader2, videoPath3); err != nil {
+			log.Printf("ConvertPipeHLS failed: %v", err)
+		}
+	}()
+
+		go func() {
+		log.Printf("ConvertHLS done")
+		if err := transcode.ConvertPipeHLS(torrentReader2, videoPath3); err != nil {
 			log.Printf("ConvertPipeHLS failed: %v", err)
 		}
 	}()

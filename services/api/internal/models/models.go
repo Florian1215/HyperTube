@@ -15,7 +15,7 @@ type Movie struct {
 }
 
 type Torrent struct {
-	Id       int     `json:"id"`
+	Id       string     `json:"id"`
 	ImdbID   string  `json:"imdb_id"`
 	Title    string  `json:"title"`
 	Year     int     `json:"year"`

@@ -30,15 +30,18 @@ func NewClient(mu *sync.Mutex, streams *map[string]io.ReadSeekCloser) (*Client, 
 
 	go func() {
 		torrentPath, err := downloadTorrentFile("https://archive.org/download/batman-1966_202112/batman-1966_202112_archive.torrent")
+		torrentPath2, err := downloadTorrentFile("https://archive.org/download/nosferatu_201508/nosferatu_201508_archive.torrent")
 		if err != nil {
 			log.Printf("download torrent file: %v", err)
 			return
 		}
 		t, err := cl.AddTorrentFromFile(torrentPath)
+		t2, err := cl.AddTorrentFromFile(torrentPath2)
 		if err != nil {
 			log.Printf("add torrent: %v", err)
 			return
 		}
+
 		<-t.GotInfo()
 		var largest *torrentlib.File
 		for _, f := range t.Files() {
@@ -49,19 +52,43 @@ func NewClient(mu *sync.Mutex, streams *map[string]io.ReadSeekCloser) (*Client, 
 		if largest == nil {
 			return
 		}
+
+		<-t2.GotInfo()
+		var largest2 *torrentlib.File
+		for _, f := range t2.Files() {
+			if largest2 == nil || f.Length() > largest2.Length() {
+				largest2 = f
+			}
+		}
+		if largest == nil {
+			return
+		}
 		log.Printf("downloading largest file: %s", largest.Path())
 		largest.Download()
+		log.Printf("downloading largest file: %s", largest2.Path())
+		largest2.Download()
 
 		const minBuffer = 10 * 1024 * 1024 // 10 MB before making reader available for probing
 		for largest.BytesCompleted() < minBuffer {
 			time.Sleep(500 * time.Millisecond)
 		}
-		log.Printf("buffer ready, registering reader")
-
+		log.Printf("buffer 1 ready, registering reader")
+		
 		reader := largest.NewReader()
 		reader.SetReadahead(largest.Length())
 		mu.Lock()
 		(*streams)["batman-1966"] = reader
+		mu.Unlock()
+		
+		for largest2.BytesCompleted() < minBuffer {
+			time.Sleep(500 * time.Millisecond)
+		}
+		log.Printf("buffer 2 ready, registering reader")
+
+		reader2:= largest2.NewReader()
+		reader2.SetReadahead(largest2.Length())
+		mu.Lock()
+		(*streams)["nos"] = reader2
 		mu.Unlock()
 		// for {
 		// 	if largest.BytesCompleted() == largest.Length() {
