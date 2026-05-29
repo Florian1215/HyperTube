@@ -38,7 +38,7 @@ repository. Endpoint-level request and response examples live in
 | User store | `services/api/internal/auth/store.go` | Password users, OAuth users, reset tokens. |
 | Response helpers | `services/api/internal/respond/respond.go` | Common `data` and `error` JSON envelopes. |
 | Email | `services/api/internal/email/brevo.go` | Brevo password-reset mailer. |
-| DB schema | `db/001_schema.sql`, `db/003_auth.sql`, `db/004_password_reset.sql` | Users, OAuth accounts, watch history, password reset storage. |
+| DB schema | `db/001_schema.sql`, `db/002_seed_dev.sql`, `db/003_auth.sql`, `db/004_password_reset.sql` | Users, OAuth accounts, watch history, dev seed data, password reset storage. |
 | Frontend state | `frontend/src/context/AuthContext.tsx` | Local `localStorage` auth state. |
 | Frontend modals | `frontend/src/components/modal/Signin.tsx`, `Register.tsx`, `ForgotPassword.tsx` | Current mock auth UI. |
 
