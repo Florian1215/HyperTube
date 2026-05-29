@@ -69,6 +69,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
     let title = movie?.title;
     const [isLoaded, setIsLoaded] = useState(false);
     const maxWidths = ["max-w-40", "max-w-70", "max-w-100", "max-w-130", "max-w-150"]
+    const [randomWidth] = useState(() => maxWidths[Math.floor(Math.random() * maxWidths.length)]);
 
     if (title && title.length > 20)
         title = title.slice(0, 18) + "...";
@@ -93,7 +94,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
                     <span className="responsive-text-hairline">{movie.year}</span>
                 </Link> :
                     <div className="h-17">
-                        <div className={"custom-loading " + maxWidths[Math.floor(Math.random() * maxWidths.length)]} />
+                        <div className={"custom-loading " + randomWidth} />
                     </div>
                 }
             </td>

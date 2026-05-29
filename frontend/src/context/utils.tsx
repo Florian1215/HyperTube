@@ -19,7 +19,3 @@ export function useResponsiveSize() {
     }, []);
     return size;
 }
-
-export const randomWidth = () => {
-
-};

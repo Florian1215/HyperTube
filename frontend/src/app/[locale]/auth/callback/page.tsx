@@ -22,7 +22,7 @@ export default function OAuthCallbackPage() {
         const user = JSON.parse(decodeURIComponent(decodeURIComponent(userEncoded)));
         login(user, token);
         router.push("/");
-    }, []);
+    }, [login, router]);
 
     return (<p className="small-text">{t("loadingAuth")}</p>);
 }
