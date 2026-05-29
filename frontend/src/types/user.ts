@@ -8,8 +8,8 @@ export interface iUserToken {
 export interface iUser {
     id: number
     username: string
-    firstname: string
-    lastname: string
+    first_name: string
+    last_name: string
     email: string
     color: string
     profile_picture: null | string

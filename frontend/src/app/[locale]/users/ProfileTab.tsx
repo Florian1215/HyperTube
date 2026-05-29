@@ -33,14 +33,14 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser: (patch: Pa
             addNotification(tSuccess("emailChanged"), "warning");
             setEmail("");
         }
-        if (firstname && firstname != user.firstname) {
+        if (firstname && firstname != user.first_name) {
             isInfoChanged = true;
-            newUser.firstname = firstname;
+            newUser.first_name = firstname;
             setFirstname("");
         }
-        if (lastname && lastname != user.lastname) {
+        if (lastname && lastname != user.last_name) {
             isInfoChanged = true;
-            newUser.lastname = lastname;
+            newUser.last_name = lastname;
             setLastname("");
         }
         if (username && username != user.username) {
