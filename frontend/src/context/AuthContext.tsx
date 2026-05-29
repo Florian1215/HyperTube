@@ -2,6 +2,8 @@
 
 import {createContext, useContext, useEffect, useState, ReactNode,} from "react";
 import {iUser} from "@/types/user";
+import {tErrorResponse} from "@/services/api";
+import {tNotificationType} from "@/context/NotificationContext";
 
 interface AuthContextType {
     user: iUser | null;
@@ -25,7 +27,7 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
                 const parsed = JSON.parse(userData);
                 // eslint-disable-next-line react-hooks/set-state-in-effect
                 setUser(parsed);
-            } catch (e) {
+            } catch {
                 console.warn("Invalid user in localStorage:", userData);
                 localStorage.removeItem("user");
             }
@@ -68,4 +70,19 @@ export function useAuth() {
     if (!context)
         throw new Error("useAuth must be used inside AuthProvider");
     return context;
+}
+
+export function handleErrorRequest(err: tErrorResponse, addNotification: (message: string, type?: tNotificationType) => void, setErrors: (newError: Record<string, string>) => void, networkErrorMsg: string) {
+    if (!err?.data)
+        addNotification(networkErrorMsg, "error");
+    else if (err.data.error.fields) {
+        const newErrors: Record<string, string> = {};
+
+        Object.entries(err.data.error.fields).map(([key, value])=> {
+            newErrors[key] = value.message;
+        });
+        setErrors(newErrors);
+    }
+    else
+        addNotification(`${err.status} - ${err.data.error.message}`, "error");
 }
