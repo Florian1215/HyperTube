@@ -18,7 +18,3 @@ export interface iMovieDetails extends iMovie {
     "progression": number// todo handle change 0.0
 }
 
-export interface iGenre {
-    "id": number
-    "name": string
-}
