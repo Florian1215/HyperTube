@@ -10,6 +10,7 @@ import {Button, SmallButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
 import {postRegister} from "@/services/auth";
 import {OauthServices} from "@/components/OAuth";
+import {tNotificationType, useNotification} from "@/context/NotificationContext";
 
 export default function Register() {
     const {openModal, activeModal, closeModal} = useModal();
@@ -20,6 +21,8 @@ export default function Register() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const t = useTranslations("auth.register");
+    const tSuccess = useTranslations("notifications.success");
+    const {addNotification} = useNotification();
 
     if (activeModal.type !== "register")
         return null;
@@ -37,7 +40,7 @@ export default function Register() {
             <Input id="password-register" value={password} onChange={setPassword} type="password" placeholder={t("password")} className={"max-w-2/3"}></Input>
 
             <Button className="h-8 mt-2" onClick={() =>
-                handleRegister(login, username, email, firstname, lastname, password, closeModal)
+                handleRegister(login, addNotification, username, email, firstname, lastname, password, closeModal, tSuccess("accountCreatedSuccess"))
             }>{t("submit")}</Button>
 
             <div className="flex gap-2 mt-5">
@@ -52,13 +55,13 @@ export default function Register() {
     );
 }
 
-async function handleRegister(login: (user: iUser, token: string) => void, username: string, email: string, firstname: string, lastname: string, password: string, closeModal: () => void) {
-    try { // todo check if work
+async function handleRegister(login: (user: iUser, token: string) => void, addNotification: (message: string, type?: tNotificationType) => void, username: string, email: string, firstname: string, lastname: string, password: string, closeModal: () => void, successMessage: string) {
+    try {
         const data = await postRegister(email, username, firstname, lastname, password);
-
-        login(data.user, data.access_token);
+        login(data.data.user, data.data.access_token);
         closeModal();
-    } catch (error) {
+        addNotification(successMessage, "success");
+    } catch (error) { // todo handle
         console.error(error);
     }
 }

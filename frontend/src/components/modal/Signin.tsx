@@ -49,9 +49,9 @@ export default function Signin() {
 }
 
 async function handleLogin(login: (user: iUser, token: string) => void, addNotification: (message: string, type?: tNotificationType) => void, email: string, password: string, closeModal: () => void, passwordIncorrectMessage: string, loginSuccessMessage: string) {
-    try { // todo check if work
+    try {
         const data = await postLogin(email, password);
-        login(data.user, data.access_token);
+        login(data.data.user, data.data.access_token);
         closeModal();
         addNotification(loginSuccessMessage, "success");
     } catch (error) {
