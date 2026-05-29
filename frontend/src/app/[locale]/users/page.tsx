@@ -38,7 +38,7 @@ export default function Page() {
         if (activeTab !== tabName)
             setActiveTab(tabName);
     }
-    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 sm:px-4">
+    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 sm:px-4 mb-10">
         <div></div>
         <div className="flex items-center gap-4 justify-center">
             <ProfilePicture user={user} size={1}/>

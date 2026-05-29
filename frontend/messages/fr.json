@@ -108,6 +108,9 @@
       "new": "Nouveau mot de passe",
       "confirm": "Confirmer le nouveau mot de passe",
       "submit": "Modifier"
+    },
+    "oauth": {
+      "loadingAuth": "Connexion en cours..."
     }
   },
   "modal": {
@@ -131,7 +134,8 @@
       "emailResetPassword": "Un e-mail vient de vous être envoyé pour réinitialiser votre mot de passe.",
       "infoChanged": "Vos informations ont bien été mises à jour.",
       "login": "Vous êtes maintenant connecté avec succès.",
-      "commentChange": "La modification de votre commentaire a bien été mise à jour."
+      "commentChange": "La modification de votre commentaire a bien été mise à jour.",
+      "accountCreatedSuccess": "Compte créé avec succès !"
     },
     "error": {
       "unknown": "Une erreur inattendue est survenue. Veuillez réessayer.",

@@ -20,7 +20,6 @@ export default function MoviePage() {
         async function loadMovie() {
             try {
                 const data = await getMovie(id, locale);
-                console.log('LOCAL: ', locale);
                 data.data.backdrop_url = data.data.backdrop_url.replace("/w500/", "/original/");
                 setMovie(data.data);
             } catch (error) {

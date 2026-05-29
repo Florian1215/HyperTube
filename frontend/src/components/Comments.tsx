@@ -60,7 +60,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
     }
     const deleteComment = (commentId: number) => {setComments(actualComments.filter(c => c.id !== commentId));}
 
-    return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7">
+    return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
             <h1 className="text-center">{t("title")}</h1>
             <div className="flex h-2 sm:h-4 mt-1 sm:mt-2 w-full">
@@ -98,7 +98,7 @@ export function Comments({user, totalPage, index, setIndex, comments, updateComm
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
 
     if (!comments || comments.length === 0)
-        return (<p className="small-text mb-10">{t(deleteComment === undefined ? "noCommentsYet" : "noCommentsPrompt")}</p>);
+        return (<p className="small-text">{t(deleteComment === undefined ? "noCommentsYet" : "noCommentsPrompt")}</p>);
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col-reverse gap-6">
@@ -147,7 +147,6 @@ function Comment({comment, currentUser, updateComment, deleteComment}: { comment
                         <span className="text-bold">{user.username}</span>
                         <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs.unix(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
-                    {/* todo mby replace icon by text 'edit', 'remove' */}
                     {
                         (updateComment && currentUser !== null && comment.user.id === currentUser.id && showSettingBtn) &&
                         <div className="flex gap-1">

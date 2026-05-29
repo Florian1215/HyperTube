@@ -1,4 +1,4 @@
-import React, {Dispatch, SetStateAction} from "react";
+import React, {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {useModal} from "@/context/ModalContext";
 import {useRouter} from "@/i18n/navigation";
 import {useGenres} from "@/context/useGenres";
@@ -11,15 +11,17 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
     const {openModal, closeModal} = useModal();
 
     const locale = useLocale() as tLocale;
-    const {data, error} = useGenres(locale);
+    const {data} = useGenres(locale);
+    const [randomGenres, setRandomGenres] = useState<iGenre[]>([]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setRandomGenres([...data ? data.genres : []].sort(() => Math.random() - 0.5).slice(0, genreCount));
+    }, [data, genreCount]);
 
     if (!data?.genres)
         return;
-
     let showGenres = data.genres;
-    if (error)
-        return <div>Error</div>;
-
     if (genreIds)
         showGenres = data.genres.filter(g => genreIds.includes(g.id));
     else if (limit !== undefined && data.genres.length > limit) {
@@ -27,7 +29,7 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
         showGenres = data.genres.slice(0, limit);
     }
     else if (genreCount)
-        showGenres = data.genres.slice(0, genreCount); // todo select random genre
+        showGenres = randomGenres;
 
     return (<div className={"flex gap-2 sm:gap-4 flex-wrap " + className}>
         {showGenres.map((genre) => (<GenreTag key={genre.id} closeModal={closeModal} setFilterGenre={setFilterGenre}>{genre}</GenreTag>))}

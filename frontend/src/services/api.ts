@@ -13,6 +13,17 @@ export type tResponse<T> = {
     data: T;
 };
 
+export type tErrorResponse = {
+    status: number;
+    data: {
+        error: {
+            code: string
+            message?: string
+            fields?: Record<string, { message: string }>
+        }
+    }
+};
+
 export async function apiFetch<T>(endpoint: string, language?: string, options: RequestInit = {}): Promise<T> {
     if (language === undefined)
         language = "en";
@@ -31,9 +42,12 @@ export async function apiFetch<T>(endpoint: string, language?: string, options: 
             },
         }
     );
-    console.log('REQUEST LOCAL: ', language);
 
+    const data = await response.json().catch(() => null);
     if (!response.ok)
-        throw new Error("Erreur API");
-    return response.json();
+        throw {
+            status: response.status,
+            data: data,
+        } satisfies tErrorResponse;
+    return data;
 }

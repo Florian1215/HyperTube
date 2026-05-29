@@ -8,7 +8,7 @@ import {useTranslations} from "next-intl";
 
 
 export default function ProfileTab({user, updateUser}: {user: iUser, updateUser: (patch: Partial<iUser>) => void}) {
-    return (<div className="mb-20 flex flex-col sm:flex-row gap-14 sm:gap-20 xl:gap-30 max-w-9/10 xl:max-w-2/3 w-full justify-center items-center mx-auto">
+    return (<div className="flex flex-col sm:flex-row gap-14 sm:gap-20 xl:gap-30 max-w-9/10 xl:max-w-2/3 w-full justify-center items-center mx-auto">
         <ProfileSection user={user} updateUser={updateUser} />
         <AvatarSection user={user} updateUser={updateUser} />
     </div>);

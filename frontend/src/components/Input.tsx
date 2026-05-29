@@ -1,7 +1,7 @@
 import React from "react";
 import {EyeIcon} from "@/components/Icons";
 
-export default function Input({id, type, placeholder, value, onChange, className }: {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string}) {
+export default function Input({id, type, placeholder, value, onChange, className, errorMessage }: {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string, errorMessage?: string}) {
     const isPassword = type === "password";
     const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
@@ -13,12 +13,13 @@ export default function Input({id, type, placeholder, value, onChange, className
         <input id={id} type={isPasswordVisible && isPassword ? "text" : type} placeholder=""
                value={value}
                onChange={(e) => onChange(e.target.value.trim())}
-               className="peer py-4 m-0 w-full h-8 bg-white text-black border-b focus:border-b-2"/>
+               className={"peer py-4 m-0 w-full h-8 bg-white  border-b focus:border-b-2 " + (errorMessage ? "border-b-red text-red" : "text-black")}/>
         <label htmlFor={id}
-               className="pointer-events-none uppercase absolute text-xs font-sans bottom-15
-               peer-focus:text-xs peer-focus:font-sans peer-focus:bottom-15
-               peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl">{placeholder}</label>
-        {isPassword && (<button className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible}/></button>)}
+               className={"pointer-events-none uppercase absolute text-xs font-sans bottom-15\
+                   peer-focus:text-xs peer-focus:font-sans peer-focus:bottom-15\
+                   peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl" + (errorMessage ? " text-red" : "")}>{placeholder}</label>
+        {isPassword && (<button className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={errorMessage ? "red" : "black"}/></button>)}
+        {errorMessage && <span className="text-xs text-red">{errorMessage}</span>}
     </div>
     );
 }

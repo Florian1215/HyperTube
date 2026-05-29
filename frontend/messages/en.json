@@ -108,6 +108,9 @@
       "new": "New password",
       "confirm": "Confirm new password",
       "submit": "Change"
+    },
+    "oauth": {
+      "loadingAuth": "Signing in..."
     }
   },
   "modal": {
@@ -131,7 +134,8 @@
       "emailResetPassword": "An email has been sent to reset your password.",
       "infoChanged": "Your profile information has been updated.",
       "login": "You are now successfully signed in.",
-      "commentChange": "Your comment has been updated."
+      "commentChange": "Your comment has been updated.",
+      "accountCreatedSuccess": "Account successfully created!"
     },
     "error": {
       "unknown": "An unexpected error occurred. Please try again.",
