@@ -1080,6 +1080,124 @@ func TestGitHubLoginRequiresConfiguredProvider(t *testing.T) {
 	}
 }
 
+func TestGitLabLoginRedirectsWithStateCookie(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	provider := &fakeOAuthProvider{authURL: "https://gitlab.com/oauth/authorize"}
+	handler := NewHandler(store, tokens, WithGitLabOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/login", nil)
+	rec := httptest.NewRecorder()
+
+	handler.LoginGitLab(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if provider.lastState == "" {
+		t.Fatal("expected generated OAuth state")
+	}
+	location := rec.Header().Get("Location")
+	if !strings.Contains(location, "state="+provider.lastState) {
+		t.Fatalf("expected redirect location to include state, got %q", location)
+	}
+
+	cookie := rec.Result().Cookies()[0]
+	if cookie.Name != gitlabOAuthStateCookieName {
+		t.Fatalf("expected state cookie %q, got %q", gitlabOAuthStateCookieName, cookie.Name)
+	}
+	if cookie.Value != provider.lastState {
+		t.Fatalf("expected cookie state %q, got %q", provider.lastState, cookie.Value)
+	}
+	if !cookie.HttpOnly {
+		t.Fatal("state cookie must be HttpOnly")
+	}
+}
+
+func TestGitLabCallbackCreatesUserAndToken(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	provider := &fakeOAuthProvider{
+		identity: OAuthIdentity{
+			Provider:       gitlabProvider,
+			ProviderUserID: "13579",
+			Email:          "gl.user@example.com",
+			Username:       "gl_user",
+			FirstName:      "Git",
+			LastName:       "Lab",
+			ProfilePicture: "https://gitlab.com/uploads/-/system/user/avatar/13579/avatar.png",
+		},
+	}
+	handler := NewHandler(store, tokens, WithGitLabOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/callback?code=valid-code&state=test-state", nil)
+	req.AddCookie(&http.Cookie{Name: gitlabOAuthStateCookieName, Value: "test-state"})
+	rec := httptest.NewRecorder()
+
+	handler.CallbackGitLab(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	response := decodeAuthEnvelope(t, rec)
+	if response.Data.User.Email != "gl.user@example.com" {
+		t.Fatalf("expected GitLab email, got %q", response.Data.User.Email)
+	}
+	if response.Data.User.Username != "gl_user" {
+		t.Fatalf("expected GitLab username, got %q", response.Data.User.Username)
+	}
+	if response.Data.User.ProfilePicture == nil || *response.Data.User.ProfilePicture != "https://gitlab.com/uploads/-/system/user/avatar/13579/avatar.png" {
+		t.Fatalf("expected GitLab profile picture, got %+v", response.Data.User.ProfilePicture)
+	}
+	if _, err := tokens.ValidateAccessToken(response.Data.AccessToken); err != nil {
+		t.Fatalf("GitLab auth token should validate: %v", err)
+	}
+
+	secondReq := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/callback?code=valid-code&state=second-state", nil)
+	secondReq.AddCookie(&http.Cookie{Name: gitlabOAuthStateCookieName, Value: "second-state"})
+	secondRec := httptest.NewRecorder()
+
+	handler.CallbackGitLab(secondRec, secondReq)
+	secondResponse := decodeAuthEnvelope(t, secondRec)
+	if secondResponse.Data.User.ID != response.Data.User.ID {
+		t.Fatalf("expected repeat GitLab login to reuse user id %d, got %d", response.Data.User.ID, secondResponse.Data.User.ID)
+	}
+}
+
+func TestGitLabCallbackRejectsInvalidState(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	provider := &fakeOAuthProvider{identity: OAuthIdentity{Provider: gitlabProvider, ProviderUserID: "1", Username: "gl"}}
+	handler := NewHandler(store, tokens, WithGitLabOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/callback?code=valid-code&state=bad-state", nil)
+	req.AddCookie(&http.Cookie{Name: gitlabOAuthStateCookieName, Value: "good-state"})
+	rec := httptest.NewRecorder()
+
+	handler.CallbackGitLab(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGitLabLoginRequiresConfiguredProvider(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/login", nil)
+	rec := httptest.NewRecorder()
+
+	handler.LoginGitLab(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeErrorEnvelope(t, rec).Error.Code; got != "OAUTH_NOT_CONFIGURED" {
+		t.Fatalf("expected OAUTH_NOT_CONFIGURED, got %q", got)
+	}
+}
+
 func findCookie(t *testing.T, rec *httptest.ResponseRecorder, name string) *http.Cookie {
 	t.Helper()
 

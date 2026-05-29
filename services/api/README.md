@@ -587,6 +587,77 @@ Without a frontend callback URL, errors use the standard JSON error envelope.
 | 503 | `OAUTH_NOT_CONFIGURED` | `GitHub OAuth is not configured` |
 | 500 | `INTERNAL_ERROR` | `failed to create OAuth user`, `failed to create token`, or invalid frontend callback configuration |
 
+### GET /auth/gitlab/login -> GET /auth/gitlab/callback
+
+Starts and completes the GitLab OAuth authorization-code flow.
+
+#### GET /auth/gitlab/login
+
+No request body is used.
+
+The endpoint generates a random state value, stores it in an HttpOnly cookie
+named `hypertube_oauth_gitlab_state`, and redirects the browser to GitLab.
+
+##### Example request
+
+```http
+GET /api/v1/auth/gitlab/login
+```
+
+##### Response
+
+`302 Found`
+
+```http
+Location: https://gitlab.com/oauth/authorize?client_id=<client_id>&redirect_uri=<redirect_uri>&response_type=code&scope=read_user&state=<state>
+Set-Cookie: hypertube_oauth_gitlab_state=<state>; Path=/; Max-Age=600; HttpOnly; SameSite=Lax
+```
+
+##### Error responses
+
+| Status | Code | Message |
+|--------|------|---------|
+| 503 | `OAUTH_NOT_CONFIGURED` | `GitLab OAuth is not configured` |
+| 500 | `INTERNAL_ERROR` | `failed to create OAuth state` |
+| 500 | `INTERNAL_ERROR` | `failed to start GitLab OAuth` |
+
+#### GET /auth/gitlab/callback
+
+No request body is used.
+
+Required callback inputs:
+
+| Parameter | Location | Required | Description |
+|-----------|----------|----------|-------------|
+| `code` | query | yes, unless provider returned `error` | Authorization code from GitLab. |
+| `state` | query | yes | Must match the `hypertube_oauth_gitlab_state` cookie. |
+| `hypertube_oauth_gitlab_state` | cookie | yes | State cookie set by `/auth/gitlab/login`. |
+| `error` | query | no | Provider denial or provider-side error. |
+
+##### Example request
+
+```http
+GET /api/v1/auth/gitlab/callback?code=provider-code&state=<state>
+Cookie: hypertube_oauth_gitlab_state=<state>
+```
+
+##### Response
+
+When `FRONTEND_AUTH_CALLBACK_URL` is configured, the API redirects to the
+frontend with auth data in the URL fragment, matching the 42 and GitHub
+callback shape. Without a frontend callback URL, the success response is
+`200 OK` with the standard auth payload.
+
+##### Error responses
+
+| Status | Code | Message |
+|--------|------|---------|
+| 400 | `INVALID_OAUTH_STATE` | `invalid OAuth state` |
+| 401 | `OAUTH_DENIED` | Provider error value, for example `access_denied`. |
+| 502 | `OAUTH_EXCHANGE_FAILED` | `failed to exchange GitLab authorization code` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `GitLab OAuth is not configured` |
+| 500 | `INTERNAL_ERROR` | `failed to create OAuth user`, `failed to create token`, or invalid frontend callback configuration |
+
 ### POST /oauth/token
 
 OAuth2-compatible token endpoint for the password grant. It returns a JWT bearer

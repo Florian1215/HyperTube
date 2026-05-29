@@ -18,6 +18,7 @@ type Handler struct {
 	tokens                  *TokenManager
 	fortyTwo                oauthProvider
 	github                  oauthProvider
+	gitlab                  oauthProvider
 	frontendAuthCallbackURL string
 	passwordResetMailer     passwordResetMailer
 	passwordResetURL        string
@@ -35,6 +36,12 @@ func WithFortyTwoOAuth(provider oauthProvider) HandlerOption {
 func WithGitHubOAuth(provider oauthProvider) HandlerOption {
 	return func(h *Handler) {
 		h.github = provider
+	}
+}
+
+func WithGitLabOAuth(provider oauthProvider) HandlerOption {
+	return func(h *Handler) {
+		h.gitlab = provider
 	}
 }
 
@@ -101,13 +108,13 @@ type userResponse struct {
 	Username          string  `json:"username"`
 	FirstName         string  `json:"first_name"`
 	LastName          string  `json:"last_name"`
-	FrontendFirstName string `json:"firstname"`
-	FrontendLastName  string `json:"lastname"`
-	ProfilePicture   *string `json:"profile_picture"`
-	CreatedAt        string  `json:"created_at"`
-	JoinedAt         int64   `json:"joined_at"`
-	Color            string  `json:"color"`
-	WatchHistory     []any   `json:"watch_history"`
+	FrontendFirstName string  `json:"firstname"`
+	FrontendLastName  string  `json:"lastname"`
+	ProfilePicture    *string `json:"profile_picture"`
+	CreatedAt         string  `json:"created_at"`
+	JoinedAt          int64   `json:"joined_at"`
+	Color             string  `json:"color"`
+	WatchHistory      []any   `json:"watch_history"`
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -200,11 +207,11 @@ func toUserResponse(user models.User) userResponse {
 		LastName:          user.LastName,
 		FrontendFirstName: user.FirstName,
 		FrontendLastName:  user.LastName,
-		ProfilePicture:   profilePicture,
-		CreatedAt:        user.CreatedAt.Format(time.RFC3339),
-		JoinedAt:         user.CreatedAt.UnixMilli(),
-		Color:            "purple",
-		WatchHistory:     []any{},
+		ProfilePicture:    profilePicture,
+		CreatedAt:         user.CreatedAt.Format(time.RFC3339),
+		JoinedAt:          user.CreatedAt.UnixMilli(),
+		Color:             "purple",
+		WatchHistory:      []any{},
 	}
 }
 

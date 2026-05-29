@@ -17,6 +17,7 @@ SCRIPT_IDS=(
   "oauth-token"
   "forty-two-auth"
   "github-auth"
+  "gitlab-auth"
   "forty-two-cli"
   "password-reset"
   "frontend-auth-contract"
@@ -30,6 +31,7 @@ SCRIPT_TITLES=(
   "OAuth2 Token Journey"
   "42 OAuth Safety Journey"
   "GitHub OAuth Safety Journey"
+  "GitLab OAuth Safety Journey"
   "Manual 42 CLI Login Journey"
   "Password Reset Journey"
   "Frontend Auth Contract Journey"
@@ -43,6 +45,7 @@ SCRIPT_FILES=(
   "demo_oauth_token_story.sh"
   "demo_42_auth_story.sh"
   "demo_github_auth_story.sh"
+  "demo_gitlab_auth_story.sh"
   "demo_42_cli_login_story.sh"
   "demo_password_reset_story.sh"
   "demo_frontend_auth_contract_story.sh"
@@ -53,6 +56,7 @@ SCRIPT_DEPS=(
   "curl jq"
   "curl jq"
   "curl jq"
+  "curl jq sed"
   "curl jq sed"
   "curl jq sed"
   "curl jq sed"
@@ -69,13 +73,14 @@ SCRIPT_DESCRIPTIONS=(
   "Registers a password user, exchanges credentials through POST /oauth/token, reuses the Bearer token, and demonstrates OAuth2 error bodies."
   "Validates the 42 OAuth start and callback safety paths, including missing provider configuration, state checks, and denied consent."
   "Validates the GitHub OAuth start and callback safety paths, including missing provider configuration, state checks, scopes, and denied consent."
+  "Validates the GitLab OAuth start and callback safety paths, including missing provider configuration, state checks, scope, and denied consent."
   "Guides a developer through real 42 OAuth consent from the terminal, then uses the returned JWT on a protected movie search."
   "Requests a password reset email, checks account-enumeration-safe responses, and optionally consumes RESET_TOKEN to verify the new password."
   "Shows that the backend accepts the current frontend auth payloads and returns frontend-compatible user fields without frontend changes."
   "Prints a readable snapshot of the Hypertube database via Docker Compose or psql. This is a utility, not part of Run All Walkthroughs."
 )
 
-WALKTHROUGH_COUNT=10
+WALKTHROUGH_COUNT=11
 
 RESET=""
 BOLD=""
@@ -115,6 +120,7 @@ Stories:
   oauth-token       OAuth2 password grant and bearer-token walkthrough.
   forty-two-auth    42 OAuth route safety and callback validation.
   github-auth       GitHub OAuth route safety and callback validation.
+  gitlab-auth       GitLab OAuth route safety and callback validation.
   forty-two-cli     Manual real 42 OAuth login flow from the terminal.
   password-reset    Password reset request and token-consumption walkthrough.
   frontend-auth-contract
@@ -130,7 +136,7 @@ Environment:
 Interactive controls:
   Up/Down or j/k    Move selection.
   Enter             Run selected item.
-  1-9, 0            Jump to a story; use arrows for database/run-all/quit.
+  1-9, 0            Jump to the first ten stories; use arrows for later items.
   q or Esc          Quit.
 USAGE
 }
@@ -253,17 +259,20 @@ resolve_script_index() {
     7|github|github-auth|github-oauth|github-safety)
       printf '6'
       ;;
-    8|forty-two-cli|42-cli|manual-42|manual-oauth|cli-login)
+    8|gitlab|gitlab-auth|gitlab-oauth|gitlab-safety)
       printf '7'
       ;;
-    9|password-reset|password|reset|forgot-password)
+    9|forty-two-cli|42-cli|manual-42|manual-oauth|cli-login)
       printf '8'
       ;;
-    10|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
+    10|password-reset|password|reset|forgot-password)
       printf '9'
       ;;
-    11|database|db|snapshot|show-db)
+    11|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
       printf '10'
+      ;;
+    12|database|db|snapshot|show-db)
+      printf '11'
       ;;
     *)
       return 1
