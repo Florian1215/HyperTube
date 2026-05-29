@@ -163,6 +163,16 @@ func (c *Client) FindByName(ctx context.Context, title string, year int) (models
 }
 
 func (c *Client) GetMovieDetails(ctx context.Context, tmdbID string, language string) (models.MovieDetails, error) {
+		switch language {
+	case "de":
+		language = "de-DE"
+	case "en":
+		language = "en-US"
+	case "fr":
+		language = "fr-FR"
+	default:
+		return models.MovieDetails{}, fmt.Errorf("unsupported language: %s", language)
+	}
 	var creditsResult creditsResponse
 	if err := c.get(ctx, "https://api.themoviedb.org/3/movie/"+tmdbID+"?append_to_response=credits&language="+language, &creditsResult); err != nil {
 		return models.MovieDetails{}, err
