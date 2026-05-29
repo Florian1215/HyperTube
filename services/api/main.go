@@ -161,12 +161,7 @@ func newRouter(
 
 	////
 	// MOCKUP for dev and TEST purposes
-	//go:embed mockup_rubber.html
-	var mockupRubberHTML []byte
 
-	//go:embed mockup_batman.html
-	var mockupBatmanHTML []byte
-	
 	r.Get("/mockup-rubber", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Write(mockupRubberHTML)
@@ -260,6 +255,12 @@ func getPasswordResetTTL() time.Duration {
 	}
 	return ttl
 }
+
+//go:embed mockup_rubber.html
+var mockupRubberHTML []byte
+
+//go:embed mockup_batman.html
+var mockupBatmanHTML []byte
 
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
