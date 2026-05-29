@@ -7,7 +7,7 @@ repository. Endpoint-level request and response examples live in
 ## Current State
 
 - Backend: Go API with Chi router under `/api/v1`.
-- Active auth methods: email/password, 42 OAuth, GitHub OAuth, and OAuth2
+- Active auth methods: email/password, 42 OAuth, GitHub OAuth, GitLab OAuth, and OAuth2
   password grant.
 - Password reset: active when Brevo email configuration is present.
 - Token format: JWT signed with `HS256`, containing `user_id`, `iss`, `sub`,
@@ -29,7 +29,7 @@ repository. Endpoint-level request and response examples live in
 | Router and protection boundary | `services/api/main.go` | Registers public routes, protected routes, OAuth aliases, and auth configuration. |
 | Auth handler | `services/api/internal/auth/handler.go` | Register, login, JSON decoding, auth response envelope. |
 | Password reset | `services/api/internal/auth/password_reset.go` | Reset-token creation, email dispatch, token consumption. |
-| OAuth providers | `services/api/internal/auth/oauth.go` | 42 and GitHub authorization URLs, callback handling, state cookies, profile exchange. |
+| OAuth providers | `services/api/internal/auth/oauth.go` | 42, GitHub, and GitLab authorization URLs, callback handling, state cookies, profile exchange. |
 | OAuth token endpoint | `services/api/internal/auth/oauth2.go` | OAuth2 password grant at `/oauth/token`. |
 | JWT | `services/api/internal/auth/jwt.go` | Creates and validates access tokens. |
 | Middleware | `services/api/internal/auth/middleware.go` | Validates bearer tokens and writes `user_id` into request context. |
@@ -56,6 +56,9 @@ repository. Endpoint-level request and response examples live in
 | `GITHUB_CLIENT_ID` | GitHub OAuth application client ID. |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth application secret. |
 | `GITHUB_REDIRECT_URL` | GitHub callback URL. Defaults to `http://localhost:8080/api/v1/auth/github/callback`. |
+| `GITLAB_CLIENT_ID` | GitLab OAuth application client ID. |
+| `GITLAB_CLIENT_SECRET` | GitLab OAuth application secret. |
+| `GITLAB_REDIRECT_URL` | GitLab callback URL. Defaults to `http://localhost:8080/api/v1/auth/gitlab/callback`. |
 | `FRONTEND_AUTH_CALLBACK_URL` | Frontend URL that receives OAuth success data in the URL fragment or OAuth errors in the query string. Defaults to `http://localhost:4200/en/auth/callback`. |
 | `BREVO_API_KEY` | Enables password-reset email sending when present. |
 | `MAIL_FROM_EMAIL` | Sender email for password-reset emails. Required and validated when Brevo is enabled. |
@@ -143,6 +146,8 @@ All paths in this table are mounted under `/api/v1`.
 | `GET /auth/42/callback` | Active when 42 OAuth is configured | none; query and state cookie required | `303` redirect to frontend, or auth payload without frontend callback URL |
 | `GET /auth/github/login` | Active when GitHub OAuth is configured | none | `302` redirect to GitHub, state cookie set |
 | `GET /auth/github/callback` | Active when GitHub OAuth is configured | none; query and state cookie required | `303` redirect to frontend, or auth payload without frontend callback URL |
+| `GET /auth/gitlab/login` | Active when GitLab OAuth is configured | none | `302` redirect to GitLab, state cookie set |
+| `GET /auth/gitlab/callback` | Active when GitLab OAuth is configured | none; query and state cookie required | `303` redirect to frontend, or auth payload without frontend callback URL |
 | `POST /oauth/token` | Active | Form or JSON OAuth2 password grant | `200` OAuth2 token response |
 
 Backward-compatible aliases also exist:
@@ -151,6 +156,7 @@ Backward-compatible aliases also exist:
 |-------|---------|
 | `GET /oauth/callback/42` | 42 OAuth callback |
 | `GET /oauth/callback/github` | GitHub OAuth callback |
+| `GET /oauth/callback/gitlab` | GitLab OAuth callback |
 | `POST /oauth/token` | OAuth2 password grant |
 
 ## Validation Rules
@@ -169,12 +175,13 @@ documents, and bodies larger than 1 MiB.
 
 ## OAuth Flows
 
-The 42 and GitHub browser flows use the same local structure:
+The 42, GitHub, and GitLab browser flows use the same local structure:
 
 1. The frontend sends the browser to `/api/v1/auth/<provider>/login`.
 2. The API generates a random state value.
 3. The API stores that state in an HttpOnly cookie:
-   `hypertube_oauth_42_state` or `hypertube_oauth_github_state`.
+   `hypertube_oauth_42_state`, `hypertube_oauth_github_state`, or
+   `hypertube_oauth_gitlab_state`.
 4. The API redirects to the provider authorization URL.
 5. The provider redirects back to `/api/v1/auth/<provider>/callback`.
 6. The callback validates query `state` against the cookie.
@@ -336,6 +343,8 @@ OAuth aliases listed above.
 | `GET /auth/42/callback` | Active when configured | Public |
 | `GET /auth/github/login` | Active when configured | Public |
 | `GET /auth/github/callback` | Active when configured | Public |
+| `GET /auth/gitlab/login` | Active when configured | Public |
+| `GET /auth/gitlab/callback` | Active when configured | Public |
 | `POST /oauth/token` | Active | Public |
 | `GET /movies` | Active | Public |
 | `GET /stream/{id}` | Active for development | Public |
@@ -420,6 +429,7 @@ Acceptance-style API scripts also exist:
 
 - `verification/tests/api/forty_two_auth_api_test.sh`
 - `verification/tests/api/github_auth_api_test.sh`
+- `verification/tests/api/gitlab_auth_api_test.sh`
 - `verification/tests/api/oauth_token_api_test.sh`
 - `verification/tests/api/github_oauth_acceptance_test.sh`
 

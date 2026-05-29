@@ -355,6 +355,209 @@ func TestGitHubOAuthExchangeAllowsMissingVerifiedEmail(t *testing.T) {
 	}
 }
 
+func TestGitLabOAuthAuthCodeURL(t *testing.T) {
+	provider := NewGitLabOAuth(GitLabOAuthConfig{
+		ClientID:     "gitlab-client-id",
+		ClientSecret: "gitlab-client-secret",
+		RedirectURL:  "http://localhost:8080/api/v1/auth/gitlab/callback",
+	})
+
+	authURL, err := provider.AuthCodeURL("state-123")
+	if err != nil {
+		t.Fatalf("auth code url: %v", err)
+	}
+
+	parsed, err := url.Parse(authURL)
+	if err != nil {
+		t.Fatalf("parse auth url: %v", err)
+	}
+	if parsed.Scheme != "https" || parsed.Host != "gitlab.com" || parsed.Path != "/oauth/authorize" {
+		t.Fatalf("unexpected authorize URL: %q", authURL)
+	}
+
+	query := parsed.Query()
+	if query.Get("client_id") != "gitlab-client-id" {
+		t.Fatalf("expected client_id, got %q", query.Get("client_id"))
+	}
+	if query.Get("redirect_uri") != "http://localhost:8080/api/v1/auth/gitlab/callback" {
+		t.Fatalf("expected redirect_uri, got %q", query.Get("redirect_uri"))
+	}
+	if query.Get("response_type") != "code" {
+		t.Fatalf("expected response_type=code, got %q", query.Get("response_type"))
+	}
+	if query.Get("scope") != "read_user" {
+		t.Fatalf("expected GitLab scope, got %q", query.Get("scope"))
+	}
+	if query.Get("state") != "state-123" {
+		t.Fatalf("expected state, got %q", query.Get("state"))
+	}
+}
+
+func TestGitLabOAuthRequiresConfiguration(t *testing.T) {
+	provider := NewGitLabOAuth(GitLabOAuthConfig{ClientID: "client-id"})
+
+	if _, err := provider.AuthCodeURL("state"); !errors.Is(err, ErrOAuthNotConfigured) {
+		t.Fatalf("expected ErrOAuthNotConfigured from AuthCodeURL, got %v", err)
+	}
+	if _, err := provider.Exchange(context.Background(), "code"); !errors.Is(err, ErrOAuthNotConfigured) {
+		t.Fatalf("expected ErrOAuthNotConfigured from Exchange, got %v", err)
+	}
+}
+
+func TestGitLabOAuthExchangeFetchesProfile(t *testing.T) {
+	var tokenRequested bool
+	var profileRequested bool
+	provider := NewGitLabOAuth(GitLabOAuthConfig{
+		ClientID:     "gitlab-client-id",
+		ClientSecret: "gitlab-client-secret",
+		RedirectURL:  "http://localhost:8080/api/v1/auth/gitlab/callback",
+		HTTPClient: &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				switch req.URL.String() {
+				case gitlabTokenURL:
+					tokenRequested = true
+					if req.Method != http.MethodPost {
+						t.Fatalf("expected token request POST, got %s", req.Method)
+					}
+					if got := req.Header.Get("Accept"); got != "application/json" {
+						t.Fatalf("expected JSON token response, got %q", got)
+					}
+					if got := req.Header.Get("Content-Type"); got != "application/x-www-form-urlencoded" {
+						t.Fatalf("expected form content type, got %q", got)
+					}
+					if err := req.ParseForm(); err != nil {
+						t.Fatalf("parse token form: %v", err)
+					}
+					if req.PostForm.Get("grant_type") != "authorization_code" {
+						t.Fatalf("expected grant_type authorization_code, got %q", req.PostForm.Get("grant_type"))
+					}
+					if req.PostForm.Get("client_id") != "gitlab-client-id" {
+						t.Fatalf("expected client_id, got %q", req.PostForm.Get("client_id"))
+					}
+					if req.PostForm.Get("client_secret") != "gitlab-client-secret" {
+						t.Fatalf("expected client_secret, got %q", req.PostForm.Get("client_secret"))
+					}
+					if req.PostForm.Get("code") != "valid-code" {
+						t.Fatalf("expected trimmed code, got %q", req.PostForm.Get("code"))
+					}
+					if req.PostForm.Get("redirect_uri") != "http://localhost:8080/api/v1/auth/gitlab/callback" {
+						t.Fatalf("expected redirect_uri, got %q", req.PostForm.Get("redirect_uri"))
+					}
+					return jsonResponse(req, http.StatusOK, `{"access_token":"glpat-token","token_type":"Bearer","scope":"read_user"}`), nil
+
+				case gitlabMeURL:
+					profileRequested = true
+					if req.Method != http.MethodGet {
+						t.Fatalf("expected profile request GET, got %s", req.Method)
+					}
+					if got := req.Header.Get("Authorization"); got != "Bearer glpat-token" {
+						t.Fatalf("expected bearer token header, got %q", got)
+					}
+					if got := req.Header.Get("User-Agent"); got != "hypertube-api" {
+						t.Fatalf("expected User-Agent, got %q", got)
+					}
+					return jsonResponse(req, http.StatusOK, `{
+						"id":13579,
+						"username":"gitlab_user",
+						"email":"gitlab.user@example.com",
+						"public_email":"public.gitlab@example.com",
+						"name":"Grace Git Lab",
+						"avatar_url":"https://secure.gravatar.com/avatar/gitlab-user"
+					}`), nil
+
+				default:
+					t.Fatalf("unexpected request URL: %s", req.URL.String())
+					return nil, nil
+				}
+			}),
+		},
+	})
+
+	identity, err := provider.Exchange(context.Background(), " valid-code ")
+	if err != nil {
+		t.Fatalf("exchange: %v", err)
+	}
+
+	if !tokenRequested {
+		t.Fatal("expected token request")
+	}
+	if !profileRequested {
+		t.Fatal("expected profile request")
+	}
+	if identity.Provider != gitlabProvider {
+		t.Fatalf("expected provider %q, got %q", gitlabProvider, identity.Provider)
+	}
+	if identity.ProviderUserID != "13579" {
+		t.Fatalf("expected provider user id 13579, got %q", identity.ProviderUserID)
+	}
+	if identity.Email != "gitlab.user@example.com" || identity.Username != "gitlab_user" {
+		t.Fatalf("unexpected identity: %+v", identity)
+	}
+	if identity.FirstName != "Grace" || identity.LastName != "Git Lab" {
+		t.Fatalf("unexpected GitLab name split: %+v", identity)
+	}
+	if identity.ProfilePicture != "https://secure.gravatar.com/avatar/gitlab-user" {
+		t.Fatalf("expected GitLab avatar URL, got %q", identity.ProfilePicture)
+	}
+}
+
+func TestGitLabOAuthExchangeUsesPublicEmailFallback(t *testing.T) {
+	provider := NewGitLabOAuth(GitLabOAuthConfig{
+		ClientID:     "gitlab-client-id",
+		ClientSecret: "gitlab-client-secret",
+		RedirectURL:  "http://localhost:8080/api/v1/auth/gitlab/callback",
+		HTTPClient: &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				switch req.URL.String() {
+				case gitlabTokenURL:
+					return jsonResponse(req, http.StatusOK, `{"access_token":"glpat-token"}`), nil
+				case gitlabMeURL:
+					return jsonResponse(req, http.StatusOK, `{"id":13579,"username":"gitlab_user","email":"","public_email":"public.gitlab@example.com","name":""}`), nil
+				default:
+					t.Fatalf("unexpected request URL: %s", req.URL.String())
+					return nil, nil
+				}
+			}),
+		},
+	})
+
+	identity, err := provider.Exchange(context.Background(), "valid-code")
+	if err != nil {
+		t.Fatalf("exchange: %v", err)
+	}
+	if identity.Email != "public.gitlab@example.com" {
+		t.Fatalf("expected public email fallback, got %q", identity.Email)
+	}
+	if identity.Username != "gitlab_user" {
+		t.Fatalf("expected GitLab username, got %q", identity.Username)
+	}
+}
+
+func TestGitLabOAuthExchangeRejectsIncompleteProfile(t *testing.T) {
+	provider := NewGitLabOAuth(GitLabOAuthConfig{
+		ClientID:     "gitlab-client-id",
+		ClientSecret: "gitlab-client-secret",
+		RedirectURL:  "http://localhost:8080/api/v1/auth/gitlab/callback",
+		HTTPClient: &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				switch req.URL.String() {
+				case gitlabTokenURL:
+					return jsonResponse(req, http.StatusOK, `{"access_token":"glpat-token"}`), nil
+				case gitlabMeURL:
+					return jsonResponse(req, http.StatusOK, `{"id":0,"username":""}`), nil
+				default:
+					t.Fatalf("unexpected request URL: %s", req.URL.String())
+					return nil, nil
+				}
+			}),
+		},
+	})
+
+	if _, err := provider.Exchange(context.Background(), "valid-code"); err == nil {
+		t.Fatal("expected incomplete profile error")
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
