@@ -69,7 +69,7 @@ func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailRes
 }
 
 type torrentResponse struct {
-	ID       int     `json:"id"`
+	ID       string     `json:"id"`
 	Title    string  `json:"title"`
 	Source   string  `json:"source"`
 	Quality  string  `json:"quality"`
