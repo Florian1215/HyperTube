@@ -27,7 +27,7 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
         showGenres = data.genres.slice(0, limit);
     }
     else if (genreCount)
-        showGenres = data.genres.slice(0, genreCount); // todo select random genre
+        showGenres = [...data.genres].sort(() => Math.random() - 0.5).slice(0, genreCount);
 
     return (<div className={"flex gap-2 sm:gap-4 flex-wrap " + className}>
         {showGenres.map((genre) => (<GenreTag key={genre.id} closeModal={closeModal} setFilterGenre={setFilterGenre}>{genre}</GenreTag>))}
