@@ -82,6 +82,22 @@ func TestRouterGitHubOAuthLoginIsPublic(t *testing.T) {
 	}
 }
 
+func TestRouterGitLabOAuthLoginIsPublic(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/login", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected public GitLab OAuth route to return 503 when unconfigured, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeRouterErrorCode(t, rec); got != "OAUTH_NOT_CONFIGURED" {
+		t.Fatalf("expected OAUTH_NOT_CONFIGURED, got %q", got)
+	}
+}
+
 func TestRouterDevMovieRoutesReachHandlerWithoutBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
