@@ -416,6 +416,47 @@ func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	}
 }
 
+func TestRegisterValidationErrorUsesAcceptLanguage(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	body := `{"email":"not-an-email","username":"ab","first_name":"","last_name":"","password":"short"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(body))
+	req.Header.Set("Accept-Language", "fr")
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if got := errorBody.Fields["email"].Message; got != "adresse email invalide" {
+		t.Fatalf("expected French email message, got %q", got)
+	}
+	if got := errorBody.Fields["password"].Message; got != "le mot de passe doit contenir entre 8 et 72 octets" {
+		t.Fatalf("expected French password message, got %q", got)
+	}
+}
+
+func TestLoginInvalidCredentialsUsesAcceptLanguage(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":"missing@example.com","password":"right-password"}`))
+	req.Header.Set("Accept-Language", "de")
+	rec := httptest.NewRecorder()
+
+	handler.Login(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if errorBody.Code != "INVALID_CREDENTIALS" {
+		t.Fatalf("expected INVALID_CREDENTIALS, got %q", errorBody.Code)
+	}
+	if got := errorBody.Message; got != "Benutzername/E-Mail oder Passwort ist ungültig" {
+		t.Fatalf("expected German invalid credentials message, got %q", got)
+	}
+}
+
 func TestRegisterDuplicateUserReturnsConflict(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
@@ -647,6 +688,30 @@ func TestOAuthTokenRejectsInvalidGrant(t *testing.T) {
 	}
 }
 
+func TestOAuthTokenErrorUsesAcceptLanguage(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(`{}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Language", "fr")
+	rec := httptest.NewRecorder()
+
+	handler.OAuthToken(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var response oauthErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response.Error != "invalid_request" {
+		t.Fatalf("expected invalid_request, got %q", response.Error)
+	}
+	if response.ErrorDescription != "grant_type est requis" {
+		t.Fatalf("expected French OAuth error description, got %q", response.ErrorDescription)
+	}
+}
+
 func decodeAuthEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
 	Data authResponse `json:"data"`
 } {
@@ -778,6 +843,28 @@ func TestFortyTwoLoginRedirectsWithStateCookie(t *testing.T) {
 	}
 	if !cookie.HttpOnly {
 		t.Fatal("state cookie must be HttpOnly")
+	}
+}
+
+func TestFortyTwoLoginStoresOAuthLocaleCookie(t *testing.T) {
+	provider := &fakeOAuthProvider{authURL: "https://api.intra.42.fr/oauth/authorize"}
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t), WithFortyTwoOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login", nil)
+	req.Header.Set("Accept-Language", "de-DE,de;q=0.9")
+	rec := httptest.NewRecorder()
+
+	handler.LoginFortyTwo(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+	}
+	cookie := findCookie(t, rec, oauthLocaleCookieName(oauthStateCookieName))
+	if cookie.Value != "de" {
+		t.Fatalf("expected stored OAuth locale de, got %q", cookie.Value)
+	}
+	if !cookie.HttpOnly {
+		t.Fatal("locale cookie must be HttpOnly")
 	}
 }
 
@@ -919,13 +1006,43 @@ func TestFortyTwoCallbackRedirectsProviderErrorToFrontend(t *testing.T) {
 	if got := location.Query().Get("error"); got != "OAUTH_DENIED" {
 		t.Fatalf("expected OAUTH_DENIED, got %q", got)
 	}
-	if got := location.Query().Get("error_description"); got != "access_denied" {
-		t.Fatalf("expected provider error description, got %q", got)
+	if got := location.Query().Get("error_description"); got != "42 OAuth authorization was denied" {
+		t.Fatalf("expected localized provider error description, got %q", got)
 	}
 
 	cookie := findCookie(t, rec, oauthStateCookieName)
 	if cookie.MaxAge >= 0 {
 		t.Fatalf("expected OAuth state cookie to be cleared, got MaxAge=%d", cookie.MaxAge)
+	}
+}
+
+func TestFortyTwoCallbackErrorUsesStoredOAuthLocale(t *testing.T) {
+	handler := NewHandler(
+		newMemoryUserStore(),
+		newTestTokenManager(t),
+		WithFortyTwoOAuth(&fakeOAuthProvider{}),
+		WithFrontendAuthCallbackURL("http://frontend.local/auth/callback"),
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback?code=valid-code&state=bad-state", nil)
+	req.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "good-state"})
+	req.AddCookie(&http.Cookie{Name: oauthLocaleCookieName(oauthStateCookieName), Value: "fr"})
+	rec := httptest.NewRecorder()
+
+	handler.CallbackFortyTwo(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303, got %d: %s", rec.Code, rec.Body.String())
+	}
+	location, err := url.Parse(rec.Header().Get("Location"))
+	if err != nil {
+		t.Fatalf("parse redirect location: %v", err)
+	}
+	if got := location.Query().Get("error"); got != "INVALID_OAUTH_STATE" {
+		t.Fatalf("expected INVALID_OAUTH_STATE, got %q", got)
+	}
+	if got := location.Query().Get("error_description"); got != "état OAuth invalide" {
+		t.Fatalf("expected French OAuth error description, got %q", got)
 	}
 }
 

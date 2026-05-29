@@ -76,13 +76,16 @@ func (s *fakeStore) listDirectStream(ctx context.Context) ([]models.Movie, error
 	return nil, nil
 }
 
-type fakeTMDB struct{}
+type fakeTMDB struct {
+	lastLanguage string
+}
 
 func (f *fakeTMDB) FindByIMDBID(_ context.Context, imdbID string) (models.Movie, error) {
 	return models.Movie{ImdbID: imdbID}, nil
 }
 
-func (f *fakeTMDB) GetMovieDetails(_ context.Context, _ string, _ string) (models.MovieDetails, error) {
+func (f *fakeTMDB) GetMovieDetails(_ context.Context, _ string, language string) (models.MovieDetails, error) {
+	f.lastLanguage = language
 	return models.MovieDetails{
 		Summary:  "A desert planet epic.",
 		Director: []string{"Denis Villeneuve"},
@@ -217,7 +220,8 @@ func TestSearchMoviesMissingTitleReturnsFieldValidationError(t *testing.T) {
 }
 
 func TestGetMoviesId_OK(t *testing.T) {
-	h := &MoviesHandler{tmdb: &fakeTMDB{}, store: &fakeStore{
+	tmdb := &fakeTMDB{}
+	h := &MoviesHandler{tmdb: tmdb, store: &fakeStore{
 		movies: []models.Movie{
 			{
 				ImdbID:      "693134",
@@ -241,6 +245,7 @@ func TestGetMoviesId_OK(t *testing.T) {
 	}}
 
 	req := httptest.NewRequest(http.MethodGet, "/movies/693134", nil)
+	req.Header.Set("Accept-Language", "fr")
 	req.SetPathValue("id", "693134")
 	rec := httptest.NewRecorder()
 	h.GetMoviesId(rec, req)
@@ -262,6 +267,9 @@ func TestGetMoviesId_OK(t *testing.T) {
 
 	if body.Data.Director != "Denis Villeneuve" {
 		t.Errorf("expected director 'Denis Villeneuve', got %q", body.Data.Director)
+	}
+	if tmdb.lastLanguage != "fr-FR" {
+		t.Errorf("expected TMDB language fr-FR, got %q", tmdb.lastLanguage)
 	}
 }
 
