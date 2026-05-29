@@ -36,8 +36,8 @@ export default function HomePage() {
         heightAnimationLogo = 300;
 
     const [movies, setMovies] = useState<iMovie[] | null>(null);
+    const [moviesSets, setMoviesSets] = useState<iMovie[] | null>(null);
     const [dirctedWatchMovies, setDirctedWatchMovies] = useState<iMovie[]>([]);
-    const moviesSets = filterAlreadyWatch(user, movies);
     const mostRated = moviesSets ? structuredClone(moviesSets).sort((a, b) => b.note - a.note) : null;
     const popular = structuredClone(moviesSets);
 
@@ -48,12 +48,13 @@ export default function HomePage() {
                 for (let i = 0; i < data.data.length; i++)
                     data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/original/");
                 setMovies(data.data);
+                setMoviesSets(filterAlreadyWatch(user, data.data));
             } catch (error) {
                 console.error(error);
             }
         }
         loadMovies().then(r => console.log(r));
-    }, [locale]);
+    }, [locale, user]);
 
     useEffect(() => { // todo filter by film already watch
         async function loadMovies() {
@@ -88,11 +89,11 @@ export default function HomePage() {
             <MoviesCard movieSets={continueWatching.slice(0, moviesCount)} />
         </Section>}
 
-        {popular && <Section title={t("popular")} href="/movies/">
+        {(popular && popular.length >0) && <Section title={t("popular")} href="/movies/">
             <MoviesCard movieSets={popular.slice(0, moviesCount)}/>
         </Section>}
 
-        {mostRated && <Section title={t("mostRated")} href="/movies?sort=most_rated">
+        {(mostRated && mostRated.length >0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
             <MoviesCard movieSets={mostRated.slice(0, moviesCount)}/>
         </Section>}
 
@@ -101,7 +102,7 @@ export default function HomePage() {
         </Section>}
 
         {/* todo make componant */}
-        <div className="flex w-full">
+        <div className={"flex w-full" + ((!popular && !mostRated) ? " pt-4 sm:pt-6" : "")}>
             <div className="h-4 w-full bg-yellow hover:bg-yellow-hover"></div>
             <div className="h-4 w-full bg-pink hover:bg-pink-hover"></div>
             <div className="h-4 w-full bg-green hover:bg-green-hover"></div>
@@ -162,8 +163,10 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
 }
 
 function filterAlreadyWatch(user: iUser | null, movies: iMovie[] | null) {
-    if (!movies || !user)
+    if (!movies)
         return null;
+    if (!user)
+        return movies;
     return movies.filter(m => {
         for (let i = 0; i < user.watch_history.length; i++) {
             if (user.watch_history[i].movie_id === m.imdb_id)
