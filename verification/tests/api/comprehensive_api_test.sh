@@ -281,6 +281,7 @@ assert_jq_eq() {
 validation_field_for_message() {
   case "$1" in
     "valid email is required") printf 'email' ;;
+    "login must be a valid email address or username") printf 'login' ;;
     "username must be 3-32 characters and contain only letters, numbers, or underscores") printf 'username' ;;
     "first_name is required and must be at most 100 characters") printf 'first_name' ;;
     "last_name is required and must be at most 100 characters") printf 'last_name' ;;
@@ -487,10 +488,10 @@ test_auth_validation_and_success() {
     "POST" "/auth/login" "400" "BAD_REQUEST" "invalid JSON body" \
     '{"email":"extra@example.com","password":"password123","remember":true}'
 
-  payload="$(login_payload "not-an-email" "$test_password")"
+  payload="$(login_payload "not-an-email!" "$test_password")"
   expect_error_case \
-    "Login rejects invalid email" \
-    "POST" "/auth/login" "400" "VALIDATION_ERROR" "valid email is required" \
+    "Login rejects invalid username/email" \
+    "POST" "/auth/login" "400" "VALIDATION_ERROR" "login must be a valid email address or username" \
     "$payload"
 
   payload="$(login_payload "$normalized_email" "")"
@@ -502,13 +503,13 @@ test_auth_validation_and_success() {
   payload="$(login_payload "$normalized_email" "wrong-password")"
   expect_error_case \
     "Login rejects wrong password" \
-    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "invalid email or password" \
+    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "invalid username/email or password" \
     "$payload"
 
   payload="$(login_payload "missing-$run_id@example.com" "$test_password")"
   expect_error_case \
     "Login rejects unknown email" \
-    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "invalid email or password" \
+    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "invalid username/email or password" \
     "$payload"
 
   payload="$(login_payload "$uppercase_email" "$test_password")"

@@ -82,31 +82,30 @@ func TestRouterGitHubOAuthLoginIsPublic(t *testing.T) {
 	}
 }
 
-func TestRouterProtectedMovieRoutesRequireBearerToken(t *testing.T) {
+func TestRouterDevMovieRoutesReachHandlerWithoutBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search?title=dune", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected handler validation 400, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
-		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	if got := decodeRouterErrorCode(t, rec); got != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", got)
+	}
+	if got := decodeRouterValidationField(t, rec, "title"); got != "title query parameter is required" {
+		t.Fatalf("expected title field validation, got %q", got)
 	}
 }
 
-func TestRouterAuthorizedMovieRouteReachesHandler(t *testing.T) {
-	router, tokens := newTestRouter(t)
-	token, _, err := tokens.CreateAccessToken(42)
-	if err != nil {
-		t.Fatalf("create token: %v", err)
-	}
+func TestRouterMovieRouteStillAcceptsBearerTokenDuringDevAuth(t *testing.T) {
+	router, _ := newTestRouter(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Authorization", "Bearer dev-token-is-ignored")
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)

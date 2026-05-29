@@ -28,6 +28,23 @@ func TestValidateRegisterRequestNormalizesInput(t *testing.T) {
 	}
 }
 
+func TestValidateRegisterRequestAcceptsFrontendNameAliases(t *testing.T) {
+	params, fields, ok := validateRegisterRequest(registerRequest{
+		Email:             " Alice@Example.COM ",
+		Username:          " alice_1 ",
+		FrontendFirstName: " Alice ",
+		FrontendLastName:  " Example ",
+		Password:          "correct-horse-battery",
+	})
+
+	if !ok {
+		t.Fatalf("expected valid request, got fields %+v", fields)
+	}
+	if params.FirstName != "Alice" || params.LastName != "Example" {
+		t.Fatalf("expected names from frontend aliases, got %+v", params)
+	}
+}
+
 func TestValidateRegisterRequestRejectsInvalidFields(t *testing.T) {
 	valid := registerRequest{
 		Email:     "alice@example.com",
@@ -129,7 +146,7 @@ func TestValidateRegisterRequestCollectsMultipleInvalidFields(t *testing.T) {
 }
 
 func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
-	email, fields, ok := validateLoginRequest(loginRequest{
+	login, fields, ok := validateLoginRequest(loginRequest{
 		Email:    " Alice@Example.COM ",
 		Password: "correct-horse-battery",
 	})
@@ -137,8 +154,22 @@ func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected valid login, got fields %+v", fields)
 	}
-	if email != "alice@example.com" {
-		t.Fatalf("expected normalized email, got %q", email)
+	if login != "alice@example.com" {
+		t.Fatalf("expected normalized email, got %q", login)
+	}
+}
+
+func TestValidateLoginRequestAcceptsUsername(t *testing.T) {
+	login, fields, ok := validateLoginRequest(loginRequest{
+		Email:    "alice_1",
+		Password: "correct-horse-battery",
+	})
+
+	if !ok {
+		t.Fatalf("expected valid login, got fields %+v", fields)
+	}
+	if login != "alice_1" {
+		t.Fatalf("expected username login, got %q", login)
 	}
 }
 
@@ -147,7 +178,7 @@ func TestValidateLoginRequestRejectsInvalidInput(t *testing.T) {
 		req   loginRequest
 		field string
 	}{
-		{req: loginRequest{Email: "not-an-email", Password: "correct-horse-battery"}, field: "email"},
+		{req: loginRequest{Email: "not-an-email!", Password: "correct-horse-battery"}, field: "login"},
 		{req: loginRequest{Email: "alice@example.com", Password: ""}, field: "password"},
 		{req: loginRequest{Email: "alice@example.com", Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
 	}

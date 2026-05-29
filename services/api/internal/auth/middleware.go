@@ -38,6 +38,15 @@ func RequireAuth(tokens *TokenManager) func(http.Handler) http.Handler {
 	}
 }
 
+func DevAuthenticateAs(userID int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), userIDContextKey, userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func UserIDFromContext(ctx context.Context) (int64, bool) {
 	userID, ok := ctx.Value(userIDContextKey).(int64)
 	return userID, ok

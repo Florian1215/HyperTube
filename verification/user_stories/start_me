@@ -19,6 +19,7 @@ SCRIPT_IDS=(
   "github-auth"
   "forty-two-cli"
   "password-reset"
+  "frontend-auth-contract"
   "database"
 )
 SCRIPT_TITLES=(
@@ -31,6 +32,7 @@ SCRIPT_TITLES=(
   "GitHub OAuth Safety Journey"
   "Manual 42 CLI Login Journey"
   "Password Reset Journey"
+  "Frontend Auth Contract Journey"
   "Database Snapshot"
 )
 SCRIPT_FILES=(
@@ -43,6 +45,7 @@ SCRIPT_FILES=(
   "demo_github_auth_story.sh"
   "demo_42_cli_login_story.sh"
   "demo_password_reset_story.sh"
+  "demo_frontend_auth_contract_story.sh"
   "show_db_contents.sh"
 )
 SCRIPT_DEPS=(
@@ -55,6 +58,7 @@ SCRIPT_DEPS=(
   "curl jq sed"
   "curl jq sed"
   "curl jq sed"
+  "bash curl jq sed date"
   ""
 )
 SCRIPT_DESCRIPTIONS=(
@@ -67,10 +71,11 @@ SCRIPT_DESCRIPTIONS=(
   "Validates the GitHub OAuth start and callback safety paths, including missing provider configuration, state checks, scopes, and denied consent."
   "Guides a developer through real 42 OAuth consent from the terminal, then uses the returned JWT on a protected movie search."
   "Requests a password reset email, checks account-enumeration-safe responses, and optionally consumes RESET_TOKEN to verify the new password."
+  "Shows that the backend accepts the current frontend auth payloads and returns frontend-compatible user fields without frontend changes."
   "Prints a readable snapshot of the Hypertube database via Docker Compose or psql. This is a utility, not part of Run All Walkthroughs."
 )
 
-WALKTHROUGH_COUNT=9
+WALKTHROUGH_COUNT=10
 
 RESET=""
 BOLD=""
@@ -112,6 +117,8 @@ Stories:
   github-auth       GitHub OAuth route safety and callback validation.
   forty-two-cli     Manual real 42 OAuth login flow from the terminal.
   password-reset    Password reset request and token-consumption walkthrough.
+  frontend-auth-contract
+                    Current frontend registration/login compatibility walkthrough.
   database          Database snapshot utility.
   all               Run every walkthrough story except the database snapshot.
 
@@ -123,7 +130,7 @@ Environment:
 Interactive controls:
   Up/Down or j/k    Move selection.
   Enter             Run selected item.
-  1-9, 0            Jump to a story or utility.
+  1-9, 0            Jump to a story; use arrows for database/run-all/quit.
   q or Esc          Quit.
 USAGE
 }
@@ -208,7 +215,7 @@ list_stories() {
   done
 
   printf '  %b%d. Run All Walkthroughs%b\n' "$BOLD" "$((${#SCRIPT_IDS[@]} + 1))" "$RESET"
-  print_wrapped "     " "" "Runs the nine user-facing walkthrough stories in order. The database snapshot is excluded because it is an inspection utility."
+  print_wrapped "     " "" "Runs the user-facing walkthrough stories in order. The database snapshot is excluded because it is an inspection utility."
 }
 
 normalize_query() {
@@ -252,8 +259,11 @@ resolve_script_index() {
     9|password-reset|password|reset|forgot-password)
       printf '8'
       ;;
-    10|database|db|snapshot|show-db)
+    10|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
       printf '9'
+      ;;
+    11|database|db|snapshot|show-db)
+      printf '10'
       ;;
     *)
       return 1
@@ -423,7 +433,7 @@ draw_menu() {
       description="${SCRIPT_DESCRIPTIONS[$i]}"
     elif [[ "$i" -eq "$run_all_index" ]]; then
       label="Run All Walkthroughs"
-      description="Runs the nine user-facing walkthrough stories in order. The database snapshot stays manual."
+      description="Runs the user-facing walkthrough stories in order. The database snapshot stays manual."
     else
       label="Quit"
       description="Leave the user story runner without starting a script."
