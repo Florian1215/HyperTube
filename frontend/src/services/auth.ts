@@ -1,14 +1,14 @@
-import {API_URL, apiFetch} from "@/services/api";
+import {API_URL, apiFetch, tResponse} from "@/services/api";
 import {iUserToken} from "@/types/user";
 import {tOauthService} from "@/components/OAuth";
 
 
 export function postLogin(email: string, password: string) {
-    return apiFetch<iUserToken>("/auth/login", undefined, {method: "POST", body: JSON.stringify({email, password})});
+    return apiFetch<tResponse<iUserToken>>("/auth/login", undefined, {method: "POST", body: JSON.stringify({email, password})});
 }
 
 export function postRegister(email: string, username: string, firstname: string, lastname: string, password: string) {
-    return apiFetch<iUserToken>("/auth/register", undefined, {method: "POST", body: JSON.stringify({email, username, firstname, lastname, password})});
+    return apiFetch<tResponse<iUserToken>>("/auth/register", undefined, {method: "POST", body: JSON.stringify({email, username, firstname, lastname, password})});
 }
 
 export function handleOauth(oatuhCompany: tOauthService) {
