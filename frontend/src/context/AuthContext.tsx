@@ -18,14 +18,18 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
         const userData = localStorage.getItem("user");
 
-        // if (token && userData) {
-        //     console.log("User authenticated from localStorage:", userData);
-        //     // eslint-disable-next-line react-hooks/set-state-in-effect
-        //     setUser(JSON.parse(userData));
-        // }
+        if (userData && userData !== "undefined" && userData !== "null") {
+            try {
+                const parsed = JSON.parse(userData);
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setUser(parsed);
+            } catch (e) {
+                console.warn("Invalid user in localStorage:", userData);
+                localStorage.removeItem("user");
+            }
+        }
 
         setLoading(false);
     }, []);
