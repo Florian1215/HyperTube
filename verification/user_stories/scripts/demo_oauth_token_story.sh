@@ -3,7 +3,7 @@
 # CLI demo walkthrough for the Hypertube OAuth2 token endpoint.
 #
 # Usage:
-#   ./user_stories/scripts/demo_oauth_token_story.sh
+#   ./verification/user_stories/scripts/demo_oauth_token_story.sh
 #
 # Optional environment variables:
 #   BASE_URL        API origin. Default: http://localhost:8080
@@ -12,8 +12,8 @@
 #   DEMO_PASSWORD   Demo user's password. Default: DemoOAuth123!
 #
 # Examples:
-#   BASE_URL=http://localhost:8080 ./user_stories/scripts/demo_oauth_token_story.sh
-#   DEMO_USERNAME=oauth_demo DEMO_PASSWORD=DemoOAuth123! ./user_stories/scripts/demo_oauth_token_story.sh
+#   BASE_URL=http://localhost:8080 ./verification/user_stories/scripts/demo_oauth_token_story.sh
+#   DEMO_USERNAME=oauth_demo DEMO_PASSWORD=DemoOAuth123! ./verification/user_stories/scripts/demo_oauth_token_story.sh
 
 set -o pipefail
 

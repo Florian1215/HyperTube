@@ -3,7 +3,7 @@
 set -uo pipefail
 
 STORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "$STORY_ROOT/.." && pwd)"
+REPO_ROOT="$(cd -- "$STORY_ROOT/../.." && pwd)"
 SCRIPT_DIR="$STORY_ROOT/scripts"
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -97,10 +97,10 @@ usage() {
 Hypertube User Story Runner
 
 Usage:
-  user_stories/start_me
-  user_stories/start_me --list
-  user_stories/start_me --run <story|all>
-  user_stories/start_me --help
+  verification/user_stories/start_me
+  verification/user_stories/start_me --list
+  verification/user_stories/start_me --run <story|all>
+  verification/user_stories/start_me --help
 
 Stories:
   user              New user registration, login, browse, search, detail, torrents.
@@ -187,7 +187,7 @@ print_wrapped() {
 
 print_header() {
   printf '%b%s%b\n' "${BOLD}${CYAN}" "Hypertube User Story Runner" "$RESET"
-  printf '%b%s%b\n' "$DIM" "Interactive walkthrough selection for scripts in user_stories/scripts." "$RESET"
+  printf '%b%s%b\n' "$DIM" "Interactive walkthrough selection for scripts in verification/user_stories/scripts." "$RESET"
   rule
 }
 
@@ -203,7 +203,7 @@ list_stories() {
     printf '  %b%d. %s%b\n' "$BOLD" "$((i + 1))" "${SCRIPT_TITLES[$i]}" "$RESET"
     printf '     %bID:%b %s\n' "$DIM" "$RESET" "${SCRIPT_IDS[$i]}"
     print_wrapped "     " "" "${SCRIPT_DESCRIPTIONS[$i]}"
-    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "user_stories/scripts/${SCRIPT_FILES[$i]}"
+    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "verification/user_stories/scripts/${SCRIPT_FILES[$i]}"
     echo
   done
 
@@ -285,7 +285,7 @@ print_run_banner() {
   rule
   printf '%bRunning:%b %s\n' "${BOLD}${CYAN}" "$RESET" "${SCRIPT_TITLES[$index]}"
   printf '%bPurpose:%b %s\n' "$DIM" "$RESET" "${SCRIPT_DESCRIPTIONS[$index]}"
-  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL user_stories/scripts/${SCRIPT_FILES[$index]}"
+  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL verification/user_stories/scripts/${SCRIPT_FILES[$index]}"
   rule
   echo
 }

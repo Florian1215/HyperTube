@@ -5,7 +5,7 @@ set -uo pipefail
 # API smoke/e2e contract test for password reset routes.
 #
 # Usage:
-#   tests/api/password_reset_api_test.sh
+#   verification/tests/api/password_reset_api_test.sh
 #
 # Configuration:
 #   BASE_URL=http://localhost:8080/api/v1

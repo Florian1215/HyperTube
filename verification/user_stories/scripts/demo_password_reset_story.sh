@@ -8,7 +8,7 @@
 #   exposing whether an email address exists in Hypertube.
 #
 # Usage:
-#   ./user_stories/scripts/demo_password_reset_story.sh
+#   ./verification/user_stories/scripts/demo_password_reset_story.sh
 #
 # Optional environment variables:
 #   BASE_URL       API origin. Default: http://localhost:8080
@@ -21,8 +21,8 @@
 #                 consumption steps are reported as skipped.
 #
 # Examples:
-#   BASE_URL=http://localhost:8080 ./user_stories/scripts/demo_password_reset_story.sh
-#   RESET_TOKEN=token-from-email ./user_stories/scripts/demo_password_reset_story.sh
+#   BASE_URL=http://localhost:8080 ./verification/user_stories/scripts/demo_password_reset_story.sh
+#   RESET_TOKEN=token-from-email ./verification/user_stories/scripts/demo_password_reset_story.sh
 
 set -o pipefail
 

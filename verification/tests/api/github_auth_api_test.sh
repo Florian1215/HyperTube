@@ -2,15 +2,15 @@
 
 set -uo pipefail
 
-# API smoke test for the 42 OAuth route surface.
+# API smoke test for the GitHub OAuth route surface.
 #
-# This test is intentionally safe to run without real 42 credentials:
-# - If /auth/42/login reports OAUTH_NOT_CONFIGURED, that path is accepted.
+# This test is safe to run without real GitHub credentials:
+# - If /auth/github/login reports OAUTH_NOT_CONFIGURED, that path is accepted.
 # - Callback CSRF and provider-denial behavior is still validated with a
 #   simulated state cookie.
 #
 # Usage:
-#   tests/api/forty_two_auth_api_test.sh
+#   verification/tests/api/github_auth_api_test.sh
 #
 # Configuration:
 #   BASE_URL=http://localhost:8080/api/v1
@@ -21,8 +21,8 @@ BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-20}"
 
-STATE_COOKIE_NAME="hypertube_oauth_42_state"
-TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/hypertube-42-auth-test.XXXXXX")"
+STATE_COOKIE_NAME="hypertube_oauth_github_state"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/hypertube-github-auth-test.XXXXXX")"
 LAST_BODY_FILE="$TMP_DIR/last_body"
 LAST_HEADERS_FILE="$TMP_DIR/last_headers"
 LAST_CURL_ERR_FILE="$TMP_DIR/last_curl_err"
@@ -37,7 +37,6 @@ FAILED=0
 SKIPPED=0
 OAUTH_LOGIN_STATE=""
 OAUTH_LOGIN_COOKIE=""
-OAUTH_LOGIN_LOCATION=""
 
 RESET=""
 BOLD=""
@@ -355,18 +354,18 @@ test_login_start() {
   local state
   local cookie_state
 
-  section "42 login start"
+  section "GitHub login start"
 
-  request "GET" "/auth/42/login"
+  request "GET" "/auth/github/login"
 
   if [[ "$LAST_STATUS" == "503" ]]; then
-    pass "42 login reports missing provider configuration"
-    assert_error_envelope "42 login not configured response" "OAUTH_NOT_CONFIGURED" "42 OAuth is not configured"
-    skip "42 authorization redirect checks" "FORTYTWO_CLIENT_ID, FORTYTWO_CLIENT_SECRET, or FORTYTWO_REDIRECT_URL is not configured"
+    pass "GitHub login reports missing provider configuration"
+    assert_error_envelope "GitHub login not configured response" "OAUTH_NOT_CONFIGURED" "GitHub OAuth is not configured"
+    skip "GitHub authorization redirect checks" "GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, or GITHUB_REDIRECT_URL is not configured"
     return 0
   fi
 
-  if ! expect_status "42 login starts with redirect" "302"; then
+  if ! expect_status "GitHub login starts with redirect" "302"; then
     return 1
   fi
 
@@ -374,43 +373,42 @@ test_login_start() {
   state="$(extract_state_from_location "$location")"
   cookie_state="$(set_cookie_value "$STATE_COOKIE_NAME")"
 
-  if [[ "$location" == https://api.intra.42.fr/oauth/authorize* ]]; then
-    pass "42 login redirects to the official 42 authorization endpoint"
+  if [[ "$location" == https://github.com/login/oauth/authorize* ]]; then
+    pass "GitHub login redirects to the official GitHub authorization endpoint"
   else
-    fail "42 login redirects to the official 42 authorization endpoint"
+    fail "GitHub login redirects to the official GitHub authorization endpoint"
   fi
 
-  [[ "$location" == *"response_type=code"* ]] && pass "42 authorize URL requests code flow" || fail "42 authorize URL requests code flow"
-  [[ "$location" == *"scope=public"* ]] && pass "42 authorize URL requests public scope" || fail "42 authorize URL requests public scope"
-  [[ "$location" == *"client_id="* ]] && pass "42 authorize URL includes client_id" || fail "42 authorize URL includes client_id"
-  [[ "$location" == *"redirect_uri="* ]] && pass "42 authorize URL includes redirect_uri" || fail "42 authorize URL includes redirect_uri"
+  [[ "$location" == *"response_type=code"* ]] && pass "GitHub authorize URL requests code flow" || fail "GitHub authorize URL requests code flow"
+  [[ "$location" == *"read%3Auser"* && "$location" == *"user%3Aemail"* ]] && pass "GitHub authorize URL requests identity and email scopes" || fail "GitHub authorize URL requests identity and email scopes"
+  [[ "$location" == *"client_id="* ]] && pass "GitHub authorize URL includes client_id" || fail "GitHub authorize URL includes client_id"
+  [[ "$location" == *"redirect_uri="* ]] && pass "GitHub authorize URL includes redirect_uri" || fail "GitHub authorize URL includes redirect_uri"
 
   if [[ -n "$state" ]]; then
-    pass "42 authorize URL includes state"
+    pass "GitHub authorize URL includes state"
   else
-    fail "42 authorize URL includes state"
+    fail "GitHub authorize URL includes state"
   fi
 
   if [[ -n "$cookie_state" && "$cookie_state" == "$state" ]]; then
-    pass "42 login stores matching state cookie"
+    pass "GitHub login stores matching state cookie"
     OAUTH_LOGIN_STATE="$state"
     OAUTH_LOGIN_COOKIE="$STATE_COOKIE_NAME=$cookie_state"
-    OAUTH_LOGIN_LOCATION="$location"
   else
-    fail "42 login stores matching state cookie"
+    fail "GitHub login stores matching state cookie"
   fi
 
-  assert_header_contains "42 state cookie is HttpOnly" "Set-Cookie" "HttpOnly"
-  assert_header_contains "42 state cookie uses SameSite=Lax" "Set-Cookie" "SameSite=Lax"
+  assert_header_contains "GitHub state cookie is HttpOnly" "Set-Cookie" "HttpOnly"
+  assert_header_contains "GitHub state cookie uses SameSite=Lax" "Set-Cookie" "SameSite=Lax"
 }
 
 test_callback_csrf_errors() {
-  section "42 callback CSRF validation"
+  section "GitHub callback CSRF validation"
 
-  request "GET" "/auth/42/callback"
+  request "GET" "/auth/github/callback"
   assert_redirect_or_error "Callback rejects missing state" "400" "INVALID_OAUTH_STATE" "invalid OAuth state"
 
-  request "GET" "/auth/42/callback?code=fake-code&state=wrong-state" "$STATE_COOKIE_NAME=expected-state"
+  request "GET" "/auth/github/callback?code=fake-code&state=wrong-state" "$STATE_COOKIE_NAME=expected-state"
   assert_redirect_or_error "Callback rejects mismatched state" "400" "INVALID_OAUTH_STATE" "invalid OAuth state"
 }
 
@@ -418,13 +416,13 @@ test_callback_denial() {
   local state
   local cookie
 
-  section "42 provider denial callback"
+  section "GitHub provider denial callback"
 
   state="${OAUTH_LOGIN_STATE:-simulated-state}"
   cookie="${OAUTH_LOGIN_COOKIE:-$STATE_COOKIE_NAME=$state}"
 
-  request "GET" "/auth/42/callback?error=access_denied&state=$state" "$cookie"
-  assert_redirect_or_error "Callback handles denied 42 consent" "401" "OAUTH_DENIED" "access_denied"
+  request "GET" "/auth/github/callback?error=access_denied&state=$state" "$cookie"
+  assert_redirect_or_error "Callback handles denied GitHub consent" "401" "OAUTH_DENIED" "access_denied"
   assert_header_contains "Callback clears state cookie" "Set-Cookie" "$STATE_COOKIE_NAME="
 }
 

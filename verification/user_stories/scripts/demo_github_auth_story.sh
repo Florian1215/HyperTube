@@ -8,15 +8,15 @@
 #   or malformed.
 #
 # Usage:
-#   ./user_stories/scripts/demo_github_auth_story.sh
+#   ./verification/user_stories/scripts/demo_github_auth_story.sh
 #
 # Optional environment variables:
 #   BASE_URL      API origin. Default: http://localhost:8080
 #   CURL_TIMEOUT  Curl timeout in seconds. Default: 20
 #
 # Examples:
-#   BASE_URL=http://localhost:8080 ./user_stories/scripts/demo_github_auth_story.sh
-#   CURL_TIMEOUT=10 ./user_stories/scripts/demo_github_auth_story.sh
+#   BASE_URL=http://localhost:8080 ./verification/user_stories/scripts/demo_github_auth_story.sh
+#   CURL_TIMEOUT=10 ./verification/user_stories/scripts/demo_github_auth_story.sh
 
 set -o pipefail
 

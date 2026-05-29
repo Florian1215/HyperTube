@@ -3,7 +3,7 @@
 # Pretty database snapshot for the Hypertube Postgres database.
 #
 # Usage:
-#   ./user_stories/scripts/show_db_contents.sh
+#   ./verification/user_stories/scripts/show_db_contents.sh
 #
 # Optional environment variables:
 #   DB_BACKEND=auto|docker|psql   Connection mode. Default: auto
@@ -14,10 +14,10 @@
 #   FULL_DUMP=1                   Include full JSON rows for every table. Default: 1
 #
 # Examples:
-#   ./user_stories/scripts/show_db_contents.sh
-#   ROW_LIMIT=25 ./user_stories/scripts/show_db_contents.sh
-#   FULL_DUMP=0 ./user_stories/scripts/show_db_contents.sh
-#   DB_BACKEND=psql DATABASE_URL='postgres://hypertube:changeme@localhost:5432/hypertube?sslmode=disable' ./user_stories/scripts/show_db_contents.sh
+#   ./verification/user_stories/scripts/show_db_contents.sh
+#   ROW_LIMIT=25 ./verification/user_stories/scripts/show_db_contents.sh
+#   FULL_DUMP=0 ./verification/user_stories/scripts/show_db_contents.sh
+#   DB_BACKEND=psql DATABASE_URL='postgres://hypertube:changeme@localhost:5432/hypertube?sslmode=disable' ./verification/user_stories/scripts/show_db_contents.sh
 
 set -o pipefail
 
@@ -417,7 +417,7 @@ WHERE schemaname = 'public'
 \gexec
 \else
 \echo
-\echo Full table dump skipped. Run FULL_DUMP=1 ./user_stories/scripts/show_db_contents.sh to include it.
+\echo Full table dump skipped. Run FULL_DUMP=1 ./verification/user_stories/scripts/show_db_contents.sh to include it.
 \endif
 
 \echo

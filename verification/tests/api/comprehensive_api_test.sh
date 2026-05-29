@@ -5,7 +5,7 @@ set -uo pipefail
 # Comprehensive API smoke/e2e test for the running Hypertube API.
 #
 # Usage:
-#   tests/api/comprehensive_api_test.sh
+#   verification/tests/api/comprehensive_api_test.sh
 #
 # Configuration:
 #   BASE_URL=http://localhost:8080/api/v1

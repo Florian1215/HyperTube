@@ -418,10 +418,10 @@ Auth behavior is covered by backend tests:
 
 Acceptance-style API scripts also exist:
 
-- `tests/api/forty_two_auth_api_test.sh`
-- `tests/api/github_auth_api_test.sh`
-- `tests/api/oauth_token_api_test.sh`
-- `tests/api/github_oauth_acceptance_test.sh`
+- `verification/tests/api/forty_two_auth_api_test.sh`
+- `verification/tests/api/github_auth_api_test.sh`
+- `verification/tests/api/oauth_token_api_test.sh`
+- `verification/tests/api/github_oauth_acceptance_test.sh`
 
 When changing protected routes, cover at least these cases:
 

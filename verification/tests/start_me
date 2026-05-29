@@ -3,7 +3,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 API_TEST_DIR="$SCRIPT_DIR/api"
 
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
@@ -68,10 +68,10 @@ usage() {
 Hypertube API Test Runner
 
 Usage:
-  tests/start_me
-  tests/start_me --list
-  tests/start_me --run <test|all>
-  tests/start_me --help
+  verification/tests/start_me
+  verification/tests/start_me --list
+  verification/tests/start_me --run <test|all>
+  verification/tests/start_me --help
 
 Tests:
   comprehensive    Comprehensive API E2E smoke/e2e coverage.
@@ -170,7 +170,7 @@ list_tests() {
     printf '  %b%d. %s%b\n' "$BOLD" "$((i + 1))" "${TEST_TITLES[$i]}" "$RESET"
     printf '     %bID:%b %s\n' "$DIM" "$RESET" "${TEST_IDS[$i]}"
     print_wrapped "     " "" "${TEST_DESCRIPTIONS[$i]}"
-    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "api/${TEST_FILES[$i]}"
+    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "verification/tests/api/${TEST_FILES[$i]}"
     echo
   done
 
@@ -240,7 +240,7 @@ print_run_banner() {
   rule
   printf '%bRunning:%b %s\n' "${BOLD}${CYAN}" "$RESET" "${TEST_TITLES[$index]}"
   printf '%bPurpose:%b %s\n' "$DIM" "$RESET" "${TEST_DESCRIPTIONS[$index]}"
-  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL api/${TEST_FILES[$index]}"
+  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL verification/tests/api/${TEST_FILES[$index]}"
   rule
   echo
 }
