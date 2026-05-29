@@ -108,6 +108,9 @@
       "new": "Neues Passwort",
       "confirm": "Neues Passwort bestätigen",
       "submit": "Ändern"
+    },
+    "oauth": {
+      "loadingAuth": "Anmeldung läuft..."
     }
   },
   "modal": {
@@ -131,7 +134,8 @@
       "emailResetPassword": "Eine E-Mail zum Zurücksetzen Ihres Passworts wurde gesendet.",
       "infoChanged": "Ihre Profilinformationen wurden aktualisiert.",
       "login": "Sie sind jetzt erfolgreich angemeldet.",
-      "commentChange": "Ihr Kommentar wurde aktualisiert."
+      "commentChange": "Ihr Kommentar wurde aktualisiert.",
+      "accountCreatedSuccess": "Konto erfolgreich erstellt!"
     },
     "error": {
       "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
