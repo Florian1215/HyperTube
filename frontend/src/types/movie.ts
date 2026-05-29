@@ -15,6 +15,5 @@ export interface iMovieDetails extends iMovie {
     "director": string
     "cast": string[]
     "watched": boolean
-    "progression": number// todo handle change 0.0
+    "progression": number
 }
-

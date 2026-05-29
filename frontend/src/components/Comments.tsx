@@ -147,7 +147,6 @@ function Comment({comment, currentUser, updateComment, deleteComment}: { comment
                         <span className="text-bold">{user.username}</span>
                         <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs.unix(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
-                    {/* todo mby replace icon by text 'edit', 'remove' */}
                     {
                         (updateComment && currentUser !== null && comment.user.id === currentUser.id && showSettingBtn) &&
                         <div className="flex gap-1">

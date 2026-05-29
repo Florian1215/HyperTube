@@ -12,7 +12,6 @@ import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 
 
-// todo useRandomBackdrop ?
 export function MoviesCard({movieSets, className} : {movieSets: iMovie[] | null, className?: string}) {
     const {user} = useAuth();
 

@@ -14,6 +14,3 @@ export function postRegister(email: string, username: string, firstname: string,
 export function handleOauth(oatuhCompany: tOauthService) {
     window.location.href = `${API_URL}/auth/${oatuhCompany}/login`;
 }
-
-// todo implement /api/v1/auth/password-reset
-
