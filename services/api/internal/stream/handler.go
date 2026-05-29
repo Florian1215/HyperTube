@@ -13,42 +13,45 @@ type StreamHandler struct {
 }
 
 func NewStreamHandler() *StreamHandler {
-	transcodeURL := os.Getenv("TRANSCODE_SERVICE_URL")
-	if transcodeURL == "" {
-		transcodeURL = "http://vpn:8081"
-	}
-	videoBasePath := os.Getenv("VIDEO_BASE_PATH")
-	if videoBasePath == "" {
-		videoBasePath = "/data/videos"
-	}
 	return &StreamHandler{
-		videoBasePath:   videoBasePath,
+		videoBasePath:   "/data/videos",
 		torrentBasePath: "/data/torrents",
-		transcodeURL:    transcodeURL,
+		transcodeURL:    "http://vpn:8081",
 	}
 }
 
 func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	videoPath := s.videoBasePath + "/" + id
 
-	// If the folder already exists the stream is ready — skip transcoding.
-	if _, err := os.Stat(videoPath); err == nil {
-		w.WriteHeader(http.StatusOK)
+	// TODO check if the torrent stream ID has status finished, if yes exit with ok
+	// if (check DB store for torrent.id.status == finished){
+	// 	w.WriteHeader(http.StatusOK)
+	// 	return
+	// }
+
+	// Init the download 
+	respDownload, err := http.Post(s.transcodeURL + "/download/" + id, "application/json", nil)
+	if err != nil || respDownload.StatusCode != http.StatusOK {
+		http.Error(w, "failed to start stream", http.StatusInternalServerError)
+		log.Printf("download service error for %s: %v", id, err)
 		return
 	}
+	defer respDownload.Body.Close()
+	
+	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
 
-	// Init download
-	// TODO: start torrent download and wait until enough data is buffered.
-
-	// Init transcoding — delegate to the torrent-transcode service.
-	resp, err := http.Post(s.transcodeURL+"/transcode/"+id, "application/json", nil)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	// Init transcoding — delegate to the torrent-transcode service and wait for an OK;
+	respTranscode, err := http.Post(s.transcodeURL + "/transcode/" + id, "application/json", nil)
+	if err != nil || respTranscode.StatusCode != http.StatusOK {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("transcode service error for %s: %v", id, err)
 		return
 	}
-	defer resp.Body.Close()
+	defer respTranscode.Body.Close()
+
+	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
+
+	// TODO add the torrent to the watch list of the user 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

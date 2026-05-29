@@ -201,21 +201,18 @@ func newRouter(
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{allowedOrigin},
 		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		AllowedHeaders: []string{"Content-Type", "Authorization", "Accept-Language"},
 		MaxAge:         600,
 	}))
 
 	////
 	// MOCKUP for dev and TEST purposes
 
-	r.Get("/mockup-rubber", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/mockup-stream", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(mockupRubberHTML)
+		w.Write(mockupHTML)
 	})
-	r.Get("/mockup-batman", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(mockupBatmanHTML)
-	})
+
 	// MOCKUP for dev and TEST purposes
 	////
 
@@ -241,11 +238,6 @@ func newRouter(
 
 		r.Get("/movies", moviesHandler.GetMovies)
 
-		// temporarly not protected for dev purposes
-		r.Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
-		r.Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
-		r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
-
 		r.Group(func(r chi.Router) {
 			// Dev-only: keep formerly protected routes reachable while the frontend is built out.
 			// Switch back to auth.RequireAuth(tokenManager) before enabling production auth.
@@ -265,9 +257,9 @@ func newRouter(
 			r.Patch("/comments/{id}", commentsHandler.Update)
 			r.Delete("/comments/{id}", commentsHandler.Delete)
 
-			// r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
-			// r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
-			// r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+			r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
+			r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
+			r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
 
 		})
 	})
@@ -308,11 +300,9 @@ func getPasswordResetTTL() time.Duration {
 	return ttl
 }
 
-//go:embed mockup_rubber.html
-var mockupRubberHTML []byte
+//go:embed mockup_front_stream.html
+var mockupHTML []byte
 
-//go:embed mockup_batman.html
-var mockupBatmanHTML []byte
 
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {

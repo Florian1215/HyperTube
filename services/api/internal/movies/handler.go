@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"hypertube/api/internal/auth"
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
 	"hypertube/api/internal/respond"
 )
@@ -54,7 +55,7 @@ func (h *MoviesHandler) GetMovies(w http.ResponseWriter, r *http.Request) {
 	movies, err := h.store.listFeatured(r.Context())
 	if err != nil {
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load movies")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
 		return
 	}
 
@@ -68,14 +69,14 @@ func (h *MoviesHandler) GetMovies(w http.ResponseWriter, r *http.Request) {
 func (h *MoviesHandler) GetWatchedMovies(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
-		respond.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user context")
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
 		return
 	}
 
 	movies, err := h.store.listWatched(r.Context(), int(userID))
 	if err != nil {
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load movies")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
 		return
 	}
 	movieResponse := make([]movieResponse, len(movies))
@@ -89,7 +90,7 @@ func (h *MoviesHandler) GetDirectStreamMovies(w http.ResponseWriter, r *http.Req
 	movies, err := h.store.listDirectStream(r.Context())
 	if err != nil {
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load movies")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
 		return
 	}
 	movieResponse := make([]movieResponse, len(movies))
@@ -105,21 +106,23 @@ func (h *MoviesHandler) GetMoviesId(w http.ResponseWriter, r *http.Request) {
 	movie, err := h.store.findByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "movie not found")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
 		} else {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load movie")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovie)
 		}
 		return
 	}
-	language := r.URL.Query().Get("lang")
-	if language == "" {
-		language = "en-US"
+  
+	locale := i18n.FromRequest(r)
+	if r.Header.Get("Accept-Language") == "" && r.URL.Query().Get("lang") != "" {
+		locale = i18n.FromValue(r.URL.Query().Get("lang"))
 	}
+	language := i18n.TMDBLanguage(locale)
 	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, language)
 	if err != nil {
 		log.Printf("TMDB details error for TmdbID %s: %v", movie.TmdbID, err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to fetch movie details")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedFetchMovieDetails)
 		return
 	}
 	respond.Item(w, http.StatusOK, toMovieDetailResponse(*movie, details))
@@ -155,7 +158,7 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 	const pagnationLimit = 12
 	title := r.URL.Query().Get("title")
 	if title == "" {
-		respond.FieldValidationError(w, http.StatusBadRequest, "title", "title query parameter is required")
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "title", i18n.MsgTitleQueryRequired)
 		return
 	}
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -167,14 +170,14 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 	total, err := h.store.countSearchResults(r.Context(), title)
 	if err != nil {
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to check search cache")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCheckSearchCache)
 		return
 	}
 	if total > 0 {
 		movies, err := h.store.listSearchResults(r.Context(), title, pagnationLimit, page*pagnationLimit)
 		if err != nil {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load search results")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadSearchResults)
 			return
 		}
 		result := make([]movieResponse, len(movies))
@@ -189,7 +192,7 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 	torrents, err := h.collectTorrents(r.Context(), title)
 	if err != nil {
 		log.Println("search err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to search movies")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedSearchMovies)
 		return
 	}
 
@@ -209,7 +212,7 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		if !imdbIdSeen[movie.ImdbID] {
 			if err = h.store.UpsertMovie(r.Context(), movie); err != nil {
 				log.Println("db err:", err)
-				respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to store movie")
+				respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedStoreMovie)
 				return
 			}
 			allMovies = append(allMovies, movie)
@@ -217,7 +220,7 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		}
 		if err = h.store.UpsertTorrent(r.Context(), torrent); err != nil {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to store torrent")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedStoreTorrent)
 			return
 		}
 	}
@@ -254,10 +257,10 @@ func (h *MoviesHandler) GetMovieTorrents(w http.ResponseWriter, r *http.Request)
 	}
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "no tracker source found for this movie")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgNoTrackerSource)
 		} else {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load tracker source")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadTrackerSource)
 		}
 		return
 	}
@@ -270,10 +273,10 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 	comments, err := h.store.listComments(r.Context(), imdbid)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "no comments")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgNoComments)
 		} else {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to acess comments")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
 		}
 		return
 	}
@@ -284,7 +287,7 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
-		respond.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user context")
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
 		return
 	}
 
@@ -293,7 +296,7 @@ func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		log.Println("decode err:", err)
-		respond.FieldValidationError(w, http.StatusBadRequest, "body", "invalid request body")
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
 		return
 	}
 	comment := models.Comment{
@@ -303,7 +306,7 @@ func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 	}
 	if comment, err := h.store.createComment(r.Context(), comment); err != nil {
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create comment")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateComment)
 		return
 	} else {
 		respond.Item(w, http.StatusCreated, comment)

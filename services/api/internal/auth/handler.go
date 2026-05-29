@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
 	"hypertube/api/internal/respond"
 )
@@ -123,13 +124,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	params, validationFields, ok := validateRegisterRequest(req)
 	if !ok {
-		writeValidationError(w, validationFields)
+		writeValidationError(w, r, validationFields)
 		return
 	}
 
 	passwordHash, err := HashPassword(req.Password)
 	if err != nil {
-		respond.FieldValidationError(w, http.StatusBadRequest, "password", "password is invalid")
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "password", i18n.MsgPasswordInvalid)
 		return
 	}
 	params.PasswordHash = passwordHash
@@ -137,14 +138,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.CreateUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, ErrDuplicateUser) {
-			respond.Error(w, http.StatusConflict, "USER_EXISTS", "email or username already exists")
+			respond.LocalizedError(w, r, http.StatusConflict, "USER_EXISTS", i18n.MsgEmailOrUsernameExists)
 			return
 		}
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create user")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateUser)
 		return
 	}
 
-	h.writeAuthResponse(w, http.StatusCreated, user)
+	h.writeAuthResponse(w, r, http.StatusCreated, user)
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
@@ -155,32 +156,32 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	login, validationFields, ok := validateLoginRequest(req)
 	if !ok {
-		writeValidationError(w, validationFields)
+		writeValidationError(w, r, validationFields)
 		return
 	}
 
 	user, err := h.store.FindUserByLogin(r.Context(), login)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
-			respond.Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid username/email or password")
+			respond.LocalizedError(w, r, http.StatusUnauthorized, "INVALID_CREDENTIALS", i18n.MsgInvalidCredentials)
 			return
 		}
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load user")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
 		return
 	}
 
 	if user.PasswordHash == "" || !CheckPassword(user.PasswordHash, req.Password) {
-		respond.Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid username/email or password")
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "INVALID_CREDENTIALS", i18n.MsgInvalidCredentials)
 		return
 	}
 
-	h.writeAuthResponse(w, http.StatusOK, user)
+	h.writeAuthResponse(w, r, http.StatusOK, user)
 }
 
-func (h *Handler) writeAuthResponse(w http.ResponseWriter, status int, user models.User) {
+func (h *Handler) writeAuthResponse(w http.ResponseWriter, r *http.Request, status int, user models.User) {
 	token, _, err := h.tokens.CreateAccessToken(user.ID)
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create token")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateToken)
 		return
 	}
 
@@ -211,10 +212,11 @@ func toUserResponse(user models.User) userResponse {
 	}
 }
 
-func writeValidationError(w http.ResponseWriter, fields validationErrors) {
+func writeValidationError(w http.ResponseWriter, r *http.Request, fields validationErrors) {
+	locale := i18n.FromRequest(r)
 	responseFields := make(respond.FieldErrors, len(fields))
 	for field, message := range fields {
-		responseFields[field] = respond.FieldError{Message: message}
+		responseFields[field] = respond.FieldError{Message: i18n.T(locale, message)}
 	}
 	respond.ValidationError(w, http.StatusBadRequest, responseFields)
 }
@@ -226,12 +228,12 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(dst); err != nil {
-		respond.Error(w, http.StatusBadRequest, "BAD_REQUEST", "invalid JSON body")
+		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
 		return false
 	}
 
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		respond.Error(w, http.StatusBadRequest, "BAD_REQUEST", "invalid JSON body")
+		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
 		return false
 	}
 
