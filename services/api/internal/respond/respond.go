@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"reflect"
+
+	"hypertube/api/internal/i18n"
 )
 
 type Meta struct {
@@ -68,6 +70,10 @@ func Error(w http.ResponseWriter, status int, code, message string) {
 	})
 }
 
+func LocalizedError(w http.ResponseWriter, r *http.Request, status int, code string, message i18n.Message, args ...any) {
+	Error(w, status, code, i18n.T(i18n.FromRequest(r), message, args...))
+}
+
 func ValidationError(w http.ResponseWriter, status int, fields FieldErrors) {
 	JSON(w, status, errorResponse{
 		Error: errorBody{Code: "VALIDATION_ERROR", Fields: fields},
@@ -78,6 +84,10 @@ func FieldValidationError(w http.ResponseWriter, status int, field, message stri
 	ValidationError(w, status, FieldErrors{
 		field: {Message: message},
 	})
+}
+
+func LocalizedFieldValidationError(w http.ResponseWriter, r *http.Request, status int, field string, message i18n.Message, args ...any) {
+	FieldValidationError(w, status, field, i18n.T(i18n.FromRequest(r), message, args...))
 }
 
 func listLength(data any) int {

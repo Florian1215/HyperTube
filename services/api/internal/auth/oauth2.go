@@ -7,6 +7,8 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+
+	"hypertube/api/internal/i18n"
 )
 
 type oauthTokenRequest struct {
@@ -29,55 +31,56 @@ type oauthErrorResponse struct {
 }
 
 func (h *Handler) OAuthToken(w http.ResponseWriter, r *http.Request) {
-	req, ok := decodeOAuthTokenRequest(w, r)
+	locale := i18n.FromRequest(r)
+	req, ok := decodeOAuthTokenRequest(w, r, locale)
 	if !ok {
 		return
 	}
 
 	switch strings.TrimSpace(req.GrantType) {
 	case "password":
-		h.oauthPasswordGrant(w, r, req)
+		h.oauthPasswordGrant(w, r, req, locale)
 	case "":
-		writeOAuthError(w, http.StatusBadRequest, "invalid_request", "grant_type is required")
+		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgGrantTypeRequired))
 	default:
-		writeOAuthError(w, http.StatusBadRequest, "unsupported_grant_type", "only password grant_type is supported")
+		writeOAuthError(w, http.StatusBadRequest, "unsupported_grant_type", i18n.T(locale, i18n.MsgUnsupportedGrantType))
 	}
 }
 
-func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req oauthTokenRequest) {
+func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req oauthTokenRequest, locale i18n.Locale) {
 	if h.store == nil || h.tokens == nil {
-		writeOAuthError(w, http.StatusInternalServerError, "server_error", "authentication service is unavailable")
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
 		return
 	}
 
 	login := strings.TrimSpace(req.Username)
 	if login == "" || req.Password == "" {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_request", "username and password are required")
+		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgUsernamePasswordRequired))
 		return
 	}
 	if len(req.Password) > maxPasswordBytes {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_request", "password is too long")
+		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgPasswordTooLong))
 		return
 	}
 
 	user, err := h.store.FindUserByLogin(r.Context(), login)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
-			writeOAuthError(w, http.StatusBadRequest, "invalid_grant", "invalid username or password")
+			writeOAuthError(w, http.StatusBadRequest, "invalid_grant", i18n.T(locale, i18n.MsgInvalidUsernamePassword))
 			return
 		}
-		writeOAuthError(w, http.StatusInternalServerError, "server_error", "failed to load user")
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgFailedLoadUser))
 		return
 	}
 
 	if user.PasswordHash == "" || !CheckPassword(user.PasswordHash, req.Password) {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_grant", "invalid username or password")
+		writeOAuthError(w, http.StatusBadRequest, "invalid_grant", i18n.T(locale, i18n.MsgInvalidUsernamePassword))
 		return
 	}
 
 	token, _, err := h.tokens.CreateAccessToken(user.ID)
 	if err != nil {
-		writeOAuthError(w, http.StatusInternalServerError, "server_error", "failed to create access token")
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgFailedCreateAccessToken))
 		return
 	}
 
@@ -90,17 +93,17 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 	writeOAuthJSON(w, http.StatusOK, response)
 }
 
-func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request) (oauthTokenRequest, bool) {
+func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n.Locale) (oauthTokenRequest, bool) {
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil && r.Header.Get("Content-Type") != "" {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_request", "invalid Content-Type")
+		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgInvalidContentType))
 		return oauthTokenRequest{}, false
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
 	if contentType == "" || contentType == "application/x-www-form-urlencoded" {
 		if err := r.ParseForm(); err != nil {
-			writeOAuthError(w, http.StatusBadRequest, "invalid_request", "invalid form body")
+			writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgInvalidFormBody))
 			return oauthTokenRequest{}, false
 		}
 		return oauthTokenRequest{
@@ -116,17 +119,17 @@ func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request) (oauthToken
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&req); err != nil {
-			writeOAuthError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
+			writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgInvalidJSONBody))
 			return oauthTokenRequest{}, false
 		}
 		if err := decoder.Decode(&struct{}{}); err != io.EOF {
-			writeOAuthError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
+			writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgInvalidJSONBody))
 			return oauthTokenRequest{}, false
 		}
 		return req, true
 	}
 
-	writeOAuthError(w, http.StatusUnsupportedMediaType, "invalid_request", "request body must be form encoded or JSON")
+	writeOAuthError(w, http.StatusUnsupportedMediaType, "invalid_request", i18n.T(locale, i18n.MsgRequestBodyFormOrJSON))
 	return oauthTokenRequest{}, false
 }
 

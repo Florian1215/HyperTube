@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"hypertube/api/internal/auth"
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
 	"hypertube/api/internal/respond"
 )
@@ -31,10 +32,10 @@ func (h *CommentsHandler) List(w http.ResponseWriter, r *http.Request) {
 	comments, err := h.store.findAll(r.Context())
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "comments not found")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentsNotFound)
 		} else {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load comments")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadComments)
 		}
 		return
 	}
@@ -46,10 +47,10 @@ func (h *CommentsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	comment, err := h.store.findByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "comment not found")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
 		} else {
 			log.Println("db err:", err)
-			respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load comment")
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadComment)
 		}
 		return
 	}
@@ -59,7 +60,7 @@ func (h *CommentsHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
-		respond.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user context")
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
 		return
 	}
 
@@ -69,17 +70,17 @@ func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		log.Println("decode err:", err)
-		respond.FieldValidationError(w, http.StatusBadRequest, "body", "invalid request body")
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
 		return
 	}
 	comment, err := h.store.update(r.Context(), input.Content, id, int(userID))
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "comment not found")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
 			return
 		}
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to update comment")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedUpdateComment)
 		return
 	}
 	respond.Item(w, http.StatusOK, comment)
@@ -88,7 +89,7 @@ func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *CommentsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
-		respond.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user context")
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
 		return
 	}
 
@@ -96,11 +97,11 @@ func (h *CommentsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	err := h.store.delete(r.Context(), id, int(userID))
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.Error(w, http.StatusNotFound, "NOT_FOUND", "comment not found")
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
 			return
 		}
 		log.Println("db err:", err)
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to delete comment")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedDeleteComment)
 		return
 	}
 	respond.Item(w, http.StatusOK, nil)

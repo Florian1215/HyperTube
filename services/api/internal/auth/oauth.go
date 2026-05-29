@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
 	"hypertube/api/internal/respond"
 )
@@ -694,34 +695,37 @@ func (h *Handler) CallbackGitLab(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) loginOAuth(w http.ResponseWriter, r *http.Request, provider oauthProvider, providerName string, stateCookieName string) {
+	locale := oauthLocaleFromRequest(r, stateCookieName)
 	if provider == nil {
-		respond.Error(w, http.StatusServiceUnavailable, "OAUTH_NOT_CONFIGURED", providerName+" OAuth is not configured")
+		respond.Error(w, http.StatusServiceUnavailable, "OAUTH_NOT_CONFIGURED", i18n.T(locale, i18n.MsgOAuthProviderNotConfigured, providerName))
 		return
 	}
 
 	state, err := newOAuthState()
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create OAuth state")
+		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateOAuthState))
 		return
 	}
 
 	authURL, err := provider.AuthCodeURL(state)
 	if err != nil {
 		if errors.Is(err, ErrOAuthNotConfigured) {
-			respond.Error(w, http.StatusServiceUnavailable, "OAUTH_NOT_CONFIGURED", providerName+" OAuth is not configured")
+			respond.Error(w, http.StatusServiceUnavailable, "OAUTH_NOT_CONFIGURED", i18n.T(locale, i18n.MsgOAuthProviderNotConfigured, providerName))
 			return
 		}
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to start "+providerName+" OAuth")
+		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedStartOAuth, providerName))
 		return
 	}
 
 	http.SetCookie(w, oauthStateCookie(r, stateCookieName, state, int(oauthStateTTL.Seconds())))
+	http.SetCookie(w, oauthLocaleCookie(r, stateCookieName, locale.String(), int(oauthStateTTL.Seconds())))
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
 func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider oauthProvider, providerName string, stateCookieName string) {
+	locale := oauthLocaleFromRequest(r, stateCookieName)
 	if provider == nil {
-		h.redirectOAuthError(w, r, http.StatusServiceUnavailable, "OAUTH_NOT_CONFIGURED", providerName+" OAuth is not configured")
+		h.redirectOAuthError(w, r, http.StatusServiceUnavailable, "OAUTH_NOT_CONFIGURED", i18n.T(locale, i18n.MsgOAuthProviderNotConfigured, providerName))
 		return
 	}
 
@@ -729,10 +733,10 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 		state := strings.TrimSpace(r.URL.Query().Get("state"))
 		h.clearOAuthState(w, r, stateCookieName)
 		if state == "" || !validOAuthState(r, stateCookieName, state) {
-			h.redirectOAuthError(w, r, http.StatusBadRequest, "INVALID_OAUTH_STATE", "invalid OAuth state")
+			h.redirectOAuthError(w, r, http.StatusBadRequest, "INVALID_OAUTH_STATE", i18n.T(locale, i18n.MsgInvalidOAuthState))
 			return
 		}
-		h.redirectOAuthError(w, r, http.StatusUnauthorized, "OAUTH_DENIED", providerError)
+		h.redirectOAuthError(w, r, http.StatusUnauthorized, "OAUTH_DENIED", i18n.T(locale, i18n.MsgOAuthDenied, providerName))
 		return
 	}
 
@@ -740,7 +744,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 	state := strings.TrimSpace(r.URL.Query().Get("state"))
 	if code == "" || state == "" || !validOAuthState(r, stateCookieName, state) {
 		h.clearOAuthState(w, r, stateCookieName)
-		h.redirectOAuthError(w, r, http.StatusBadRequest, "INVALID_OAUTH_STATE", "invalid OAuth state")
+		h.redirectOAuthError(w, r, http.StatusBadRequest, "INVALID_OAUTH_STATE", i18n.T(locale, i18n.MsgInvalidOAuthState))
 		return
 	}
 	h.clearOAuthState(w, r, stateCookieName)
@@ -748,7 +752,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 	identity, err := provider.Exchange(r.Context(), code)
 	if err != nil {
 		log.Printf("oauth callback: %s exchange failed: %v", providerName, err)
-		h.redirectOAuthError(w, r, http.StatusBadGateway, "OAUTH_EXCHANGE_FAILED", "failed to exchange "+providerName+" authorization code")
+		h.redirectOAuthError(w, r, http.StatusBadGateway, "OAUTH_EXCHANGE_FAILED", i18n.T(locale, i18n.MsgFailedExchangeOAuthCode, providerName))
 		return
 	}
 
@@ -769,11 +773,11 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 			identity.Username,
 			err,
 		)
-		h.redirectOAuthError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create OAuth user")
+		h.redirectOAuthError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateOAuthUser))
 		return
 	}
 
-	h.writeOAuthSuccess(w, r, user)
+	h.writeOAuthSuccess(w, r, user, locale)
 }
 
 func profileImageURL(image fortyTwoProfileImage) string {
@@ -795,10 +799,10 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User) {
+func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User, locale i18n.Locale) {
 	token, _, err := h.tokens.CreateAccessToken(user.ID)
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create token")
+		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateToken))
 		return
 	}
 
@@ -816,13 +820,13 @@ func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user
 
 	callbackURL, err := url.Parse(h.frontendAuthCallbackURL)
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "invalid frontend auth callback URL")
+		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgInvalidFrontendAuthCallbackURL))
 		return
 	}
 
 	userJSON, err := json.Marshal(response.User)
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create auth response")
+		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateAuthResponse))
 		return
 	}
 
@@ -863,6 +867,7 @@ func validOAuthState(r *http.Request, cookieName string, state string) bool {
 
 func (h *Handler) clearOAuthState(w http.ResponseWriter, r *http.Request, cookieName string) {
 	http.SetCookie(w, oauthStateCookie(r, cookieName, "", -1))
+	http.SetCookie(w, oauthLocaleCookie(r, cookieName, "", -1))
 }
 
 func oauthStateCookie(r *http.Request, name string, value string, maxAge int) *http.Cookie {
@@ -875,6 +880,32 @@ func oauthStateCookie(r *http.Request, name string, value string, maxAge int) *h
 		SameSite: http.SameSiteLaxMode,
 		Secure:   isSecureRequest(r),
 	}
+}
+
+func oauthLocaleCookie(r *http.Request, stateCookieName string, value string, maxAge int) *http.Cookie {
+	return &http.Cookie{
+		Name:     oauthLocaleCookieName(stateCookieName),
+		Value:    value,
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   isSecureRequest(r),
+	}
+}
+
+func oauthLocaleFromRequest(r *http.Request, stateCookieName string) i18n.Locale {
+	if locale := strings.TrimSpace(r.URL.Query().Get("locale")); locale != "" {
+		return i18n.FromValue(locale)
+	}
+	if cookie, err := r.Cookie(oauthLocaleCookieName(stateCookieName)); err == nil && cookie.Value != "" {
+		return i18n.FromValue(cookie.Value)
+	}
+	return i18n.FromRequest(r)
+}
+
+func oauthLocaleCookieName(stateCookieName string) string {
+	return stateCookieName + "_locale"
 }
 
 func isSecureRequest(r *http.Request) bool {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/respond"
 )
 
@@ -18,17 +19,17 @@ func RequireAuth(tokens *TokenManager) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString, ok := bearerToken(r.Header.Get("Authorization"))
 			if !ok {
-				respond.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing bearer token")
+				respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingBearerToken)
 				return
 			}
 
 			claims, err := tokens.ValidateAccessToken(tokenString)
 			if err != nil {
 				if errors.Is(err, ErrExpiredToken) {
-					respond.Error(w, http.StatusUnauthorized, "TOKEN_EXPIRED", "token expired")
+					respond.LocalizedError(w, r, http.StatusUnauthorized, "TOKEN_EXPIRED", i18n.MsgTokenExpired)
 					return
 				}
-				respond.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "invalid bearer token")
+				respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgInvalidBearerToken)
 				return
 			}
 

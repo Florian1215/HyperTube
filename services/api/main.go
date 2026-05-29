@@ -201,7 +201,7 @@ func newRouter(
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{allowedOrigin},
 		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		AllowedHeaders: []string{"Content-Type", "Authorization", "Accept-Language"},
 		MaxAge:         600,
 	}))
 

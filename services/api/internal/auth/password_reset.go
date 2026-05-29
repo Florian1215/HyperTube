@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/respond"
 )
 
@@ -43,32 +44,32 @@ func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	email, ok := normalizeEmail(req.Email)
 	if !ok {
-		respond.FieldValidationError(w, http.StatusBadRequest, "email", "valid email is required")
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "email", i18n.MsgValidEmailRequired)
 		return
 	}
 
 	if h.store == nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "authentication service is unavailable")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgAuthServiceUnavailable)
 		return
 	}
 	if h.passwordResetMailer == nil {
-		respond.Error(w, http.StatusServiceUnavailable, "EMAIL_NOT_CONFIGURED", "password reset email is not configured")
+		respond.LocalizedError(w, r, http.StatusServiceUnavailable, "EMAIL_NOT_CONFIGURED", i18n.MsgPasswordResetEmailNotConfigured)
 		return
 	}
 
 	user, err := h.store.FindUserByEmail(r.Context(), email)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
-			h.writePasswordResetAccepted(w)
+			h.writePasswordResetAccepted(w, r)
 			return
 		}
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load user")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
 		return
 	}
 
 	token, tokenHash, err := newPasswordResetToken()
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create password reset token")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreatePasswordResetToken)
 		return
 	}
 
@@ -78,23 +79,27 @@ func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 		TokenHash: tokenHash,
 		ExpiresAt: expiresAt,
 	}); err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to store password reset token")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedStorePasswordResetToken)
 		return
 	}
 
-	resetURL, err := h.buildPasswordResetURL(token, req.Locale)
+	resetLocale := req.Locale
+	if strings.TrimSpace(resetLocale) == "" {
+		resetLocale = i18n.FromRequest(r).String()
+	}
+	resetURL, err := h.buildPasswordResetURL(token, resetLocale)
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "password reset URL is not configured")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgPasswordResetURLNotConfigured)
 		return
 	}
 
 	toName := strings.TrimSpace(user.FirstName + " " + user.LastName)
 	if err := h.passwordResetMailer.SendPasswordReset(r.Context(), user.Email, toName, resetURL, h.passwordResetTTL); err != nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to send password reset email")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedSendPasswordResetEmail)
 		return
 	}
 
-	h.writePasswordResetAccepted(w)
+	h.writePasswordResetAccepted(w, r)
 }
 
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
@@ -104,37 +109,37 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.store == nil {
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "authentication service is unavailable")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgAuthServiceUnavailable)
 		return
 	}
 
 	tokenHash, ok := passwordResetTokenHash(req.Token)
 	if !ok {
-		respond.Error(w, http.StatusBadRequest, "INVALID_RESET_TOKEN", "password reset link is invalid or expired")
+		respond.LocalizedError(w, r, http.StatusBadRequest, "INVALID_RESET_TOKEN", i18n.MsgInvalidPasswordResetToken)
 		return
 	}
 
 	if validationMessage, ok := validatePassword(req.Password); !ok {
-		respond.FieldValidationError(w, http.StatusBadRequest, "password", validationMessage)
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "password", validationMessage)
 		return
 	}
 
 	passwordHash, err := HashPassword(req.Password)
 	if err != nil {
-		respond.FieldValidationError(w, http.StatusBadRequest, "password", "password is invalid")
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "password", i18n.MsgPasswordInvalid)
 		return
 	}
 
 	if _, err := h.store.ResetPasswordWithToken(r.Context(), tokenHash, passwordHash); err != nil {
 		if errors.Is(err, ErrInvalidPasswordResetToken) {
-			respond.Error(w, http.StatusBadRequest, "INVALID_RESET_TOKEN", "password reset link is invalid or expired")
+			respond.LocalizedError(w, r, http.StatusBadRequest, "INVALID_RESET_TOKEN", i18n.MsgInvalidPasswordResetToken)
 			return
 		}
-		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to reset password")
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedResetPassword)
 		return
 	}
 
-	respond.Data(w, http.StatusOK, passwordResetResponse{Message: "password has been reset"})
+	respond.Data(w, http.StatusOK, passwordResetResponse{Message: i18n.T(i18n.FromRequest(r), i18n.MsgPasswordResetSuccess)})
 }
 
 func (h *Handler) buildPasswordResetURL(token string, locale string) (string, error) {
@@ -146,6 +151,7 @@ func (h *Handler) buildPasswordResetURL(token string, locale string) (string, er
 	if locale == "" {
 		locale = "en"
 	}
+	locale = i18n.FromValue(locale).String()
 	if strings.Contains(rawURL, "{locale}") {
 		rawURL = strings.ReplaceAll(rawURL, "{locale}", url.PathEscape(locale))
 	} else if !strings.Contains(rawURL, "/en/") && !strings.Contains(rawURL, "/de/") && !strings.Contains(rawURL, "/fr/") {
@@ -162,9 +168,9 @@ func (h *Handler) buildPasswordResetURL(token string, locale string) (string, er
 	return parsed.String(), nil
 }
 
-func (h *Handler) writePasswordResetAccepted(w http.ResponseWriter) {
+func (h *Handler) writePasswordResetAccepted(w http.ResponseWriter, r *http.Request) {
 	respond.Data(w, http.StatusAccepted, passwordResetResponse{
-		Message: "if the email exists, a password reset link has been sent",
+		Message: i18n.T(i18n.FromRequest(r), i18n.MsgPasswordResetAccepted),
 	})
 }
 
