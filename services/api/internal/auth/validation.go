@@ -4,6 +4,8 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+
+	"hypertube/api/internal/i18n"
 )
 
 const (
@@ -14,19 +16,19 @@ const (
 
 var usernamePattern = regexp.MustCompile(`^[A-Za-z0-9_]{3,32}$`)
 
-type validationErrors map[string]string
+type validationErrors map[string]i18n.Message
 
 func validateRegisterRequest(req registerRequest) (CreateUserParams, validationErrors, bool) {
 	fields := validationErrors{}
 
 	email, ok := normalizeEmail(req.Email)
 	if !ok {
-		fields["email"] = "valid email is required"
+		fields["email"] = i18n.MsgValidEmailRequired
 	}
 
 	username := strings.TrimSpace(req.Username)
 	if !usernamePattern.MatchString(username) {
-		fields["username"] = "username must be 3-32 characters and contain only letters, numbers, or underscores"
+		fields["username"] = i18n.MsgUsernameInvalid
 	}
 
 	firstName := strings.TrimSpace(req.FirstName)
@@ -34,7 +36,7 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 		firstName = strings.TrimSpace(req.FrontendFirstName)
 	}
 	if firstName == "" || len(firstName) > maxNameLength {
-		fields["first_name"] = "first_name is required and must be at most 100 characters"
+		fields["first_name"] = i18n.MsgFirstNameInvalid
 	}
 
 	lastName := strings.TrimSpace(req.LastName)
@@ -42,7 +44,7 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 		lastName = strings.TrimSpace(req.FrontendLastName)
 	}
 	if lastName == "" || len(lastName) > maxNameLength {
-		fields["last_name"] = "last_name is required and must be at most 100 characters"
+		fields["last_name"] = i18n.MsgLastNameInvalid
 	}
 
 	if validationMessage, ok := validatePassword(req.Password); !ok {
@@ -69,14 +71,14 @@ func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 		login = strings.TrimSpace(req.Email)
 	}
 	if login == "" {
-		fields["login"] = "username or email is required"
+		fields["login"] = i18n.MsgLoginRequired
 	} else if email, ok := normalizeEmail(login); ok {
 		login = email
 	} else if !usernamePattern.MatchString(login) {
-		fields["login"] = "login must be a valid email address or username"
+		fields["login"] = i18n.MsgLoginInvalid
 	}
 	if req.Password == "" || len(req.Password) > maxPasswordBytes {
-		fields["password"] = "password is required"
+		fields["password"] = i18n.MsgPasswordRequired
 	}
 
 	if len(fields) > 0 {
@@ -85,9 +87,9 @@ func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 	return login, nil, true
 }
 
-func validatePassword(password string) (string, bool) {
+func validatePassword(password string) (i18n.Message, bool) {
 	if len(password) < minPasswordBytes || len(password) > maxPasswordBytes {
-		return "password must be between 8 and 72 bytes", false
+		return i18n.MsgPasswordLength, false
 	}
 	return "", true
 }
