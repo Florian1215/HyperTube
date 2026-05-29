@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
                 hostname: "image.tmdb.org",
                 pathname: "/t/p/**",
             },
+            {
+                protocol: "https",
+                hostname: "cdn.intra.42.fr"
+            },
+            {
+                protocol: "https",
+                hostname: "avatars.githubusercontent.com"
+            }
         ],
     },
 };
