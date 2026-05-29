@@ -31,7 +31,6 @@ export async function apiFetch<T>(endpoint: string, language?: string, options: 
             },
         }
     );
-    console.log('REQUEST LOCAL: ', language);
 
     if (!response.ok)
         throw new Error("Erreur API");
