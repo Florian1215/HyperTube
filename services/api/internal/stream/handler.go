@@ -14,9 +14,9 @@ type StreamHandler struct {
 
 func NewStreamHandler() *StreamHandler {
 	return &StreamHandler{
-		videoBasePath:   "http://vpn:8081",
+		videoBasePath:   "/data/videos",
 		torrentBasePath: "/data/torrents",
-		transcodeURL:    "/data/videos",
+		transcodeURL:    "http://vpn:8081",
 	}
 }
 
@@ -29,17 +29,29 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
+	// Init the download 
+	respDownload, err := http.Post(s.transcodeURL + "/download/" + id, "application/json", nil)
+	if err != nil || respDownload.StatusCode != http.StatusOK {
+		http.Error(w, "failed to start stream", http.StatusInternalServerError)
+		log.Printf("download service error for %s: %v", id, err)
+		return
+	}
+	defer respDownload.Body.Close()
+	
+	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
 
 	// Init transcoding — delegate to the torrent-transcode service and wait for an OK;
-	resp, err := http.Post(s.transcodeURL + "/transcode/" + id, "application/json", nil)
-	defer resp.Body.Close()
-	if err != nil || resp.StatusCode != http.StatusOK {
+	respTranscode, err := http.Post(s.transcodeURL + "/transcode/" + id, "application/json", nil)
+	if err != nil || respTranscode.StatusCode != http.StatusOK {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("transcode service error for %s: %v", id, err)
 		return
 	}
+	defer respTranscode.Body.Close()
 
 	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
+
+	// TODO add the torrent to the watch list of the user 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

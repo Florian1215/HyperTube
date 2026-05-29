@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS torrents (
     source      TEXT    NOT NULL,
     url         TEXT    NOT NULL,
     quality     TEXT    NOT NULL,
-    size        FLOAT    NOT NULL,
+    size        FLOAT   NOT NULL,
     language    TEXT    NOT NULL,
     seeds       TEXT    NOT NULL,
     UNIQUE (imdbid, url)
