@@ -203,6 +203,15 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if registerResponse.Data.User.Email != "alice@example.com" {
 		t.Fatalf("expected normalized email, got %q", registerResponse.Data.User.Email)
 	}
+	if registerResponse.Data.User.FrontendFirstName != "Alice" || registerResponse.Data.User.FrontendLastName != "Example" {
+		t.Fatalf("expected frontend name aliases, got %q %q", registerResponse.Data.User.FrontendFirstName, registerResponse.Data.User.FrontendLastName)
+	}
+	if registerResponse.Data.User.JoinedAt == 0 {
+		t.Fatal("expected joined_at compatibility field")
+	}
+	if registerResponse.Data.User.Color == "" || registerResponse.Data.User.WatchHistory == nil {
+		t.Fatal("expected frontend profile compatibility fields")
+	}
 	if registerResponse.Data.AccessToken == "" {
 		t.Fatal("expected access token")
 	}
@@ -237,6 +246,61 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	}
 	if _, err := tokens.ValidateAccessToken(loginResponse.Data.AccessToken); err != nil {
 		t.Fatalf("login token should validate: %v", err)
+	}
+
+	usernameLoginBody := `{"login": "alice_1", "password": "correct-horse-battery"}`
+	usernameLoginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(usernameLoginBody))
+	usernameLoginRec := httptest.NewRecorder()
+
+	handler.Login(usernameLoginRec, usernameLoginReq)
+
+	if usernameLoginRec.Code != http.StatusOK {
+		t.Fatalf("expected username login 200, got %d: %s", usernameLoginRec.Code, usernameLoginRec.Body.String())
+	}
+
+	usernameLoginResponse := decodeAuthEnvelope(t, usernameLoginRec)
+	if usernameLoginResponse.Data.User.ID != registerResponse.Data.User.ID {
+		t.Fatalf("expected username login user id %d, got %d", registerResponse.Data.User.ID, usernameLoginResponse.Data.User.ID)
+	}
+}
+
+func TestRegisterAcceptsFrontendNameAliases(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	handler := NewHandler(store, tokens)
+
+	registerBody := `{
+		"email": "Frontend@example.com",
+		"username": "frontend_1",
+		"firstname": "Front",
+		"lastname": "End",
+		"password": "correct-horse-battery"
+	}`
+	registerReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(registerBody))
+	registerRec := httptest.NewRecorder()
+
+	handler.Register(registerRec, registerReq)
+
+	if registerRec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", registerRec.Code, registerRec.Body.String())
+	}
+
+	registerResponse := decodeAuthEnvelope(t, registerRec)
+	if registerResponse.Data.User.FirstName != "Front" || registerResponse.Data.User.LastName != "End" {
+		t.Fatalf("expected canonical names from frontend aliases, got %q %q", registerResponse.Data.User.FirstName, registerResponse.Data.User.LastName)
+	}
+	if registerResponse.Data.User.FrontendFirstName != "Front" || registerResponse.Data.User.FrontendLastName != "End" {
+		t.Fatalf("expected frontend alias response names, got %q %q", registerResponse.Data.User.FrontendFirstName, registerResponse.Data.User.FrontendLastName)
+	}
+
+	loginBody := `{"email": "frontend_1", "password": "correct-horse-battery"}`
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(loginBody))
+	loginRec := httptest.NewRecorder()
+
+	handler.Login(loginRec, loginReq)
+
+	if loginRec.Code != http.StatusOK {
+		t.Fatalf("expected username login through email field 200, got %d: %s", loginRec.Code, loginRec.Body.String())
 	}
 }
 
@@ -345,8 +409,8 @@ func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	if errorBody.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
 	}
-	if got := errorBody.Fields["email"].Message; got != "valid email is required" {
-		t.Fatalf("expected email validation message, got %q", got)
+	if got := errorBody.Fields["login"].Message; got != "login must be a valid email address or username" {
+		t.Fatalf("expected login validation message, got %q", got)
 	}
 	if got := errorBody.Fields["password"].Message; got != "password is required" {
 		t.Fatalf("expected password validation message, got %q", got)

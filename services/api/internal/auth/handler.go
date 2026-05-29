@@ -73,15 +73,18 @@ func NewHandler(store userStore, tokens *TokenManager, opts ...HandlerOption) *H
 }
 
 type registerRequest struct {
-	Email     string `json:"email"`
-	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Password  string `json:"password"`
+	Email             string `json:"email"`
+	Username          string `json:"username"`
+	FirstName         string `json:"first_name"`
+	LastName          string `json:"last_name"`
+	FrontendFirstName string `json:"firstname"`
+	FrontendLastName  string `json:"lastname"`
+	Password          string `json:"password"`
 }
 
 type loginRequest struct {
-	Email    string `json:"email"`
+	Email    string `json:"email,omitempty"`
+	Login    string `json:"login,omitempty"`
 	Password string `json:"password"`
 }
 
@@ -93,13 +96,18 @@ type authResponse struct {
 }
 
 type userResponse struct {
-	ID             int64   `json:"id"`
-	Email          string  `json:"email"`
-	Username       string  `json:"username"`
-	FirstName      string  `json:"first_name"`
-	LastName       string  `json:"last_name"`
-	ProfilePicture *string `json:"profile_picture"`
-	CreatedAt      string  `json:"created_at"`
+	ID                int64   `json:"id"`
+	Email             string  `json:"email"`
+	Username          string  `json:"username"`
+	FirstName         string  `json:"first_name"`
+	LastName          string  `json:"last_name"`
+	FrontendFirstName string `json:"firstname"`
+	FrontendLastName  string `json:"lastname"`
+	ProfilePicture   *string `json:"profile_picture"`
+	CreatedAt        string  `json:"created_at"`
+	JoinedAt         int64   `json:"joined_at"`
+	Color            string  `json:"color"`
+	WatchHistory     []any   `json:"watch_history"`
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -140,16 +148,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email, validationFields, ok := validateLoginRequest(req)
+	login, validationFields, ok := validateLoginRequest(req)
 	if !ok {
 		writeValidationError(w, validationFields)
 		return
 	}
 
-	user, err := h.store.FindUserByEmail(r.Context(), email)
+	user, err := h.store.FindUserByLogin(r.Context(), login)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
-			respond.Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid email or password")
+			respond.Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid username/email or password")
 			return
 		}
 		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to load user")
@@ -157,7 +165,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.PasswordHash == "" || !CheckPassword(user.PasswordHash, req.Password) {
-		respond.Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid email or password")
+		respond.Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid username/email or password")
 		return
 	}
 
@@ -185,13 +193,18 @@ func toUserResponse(user models.User) userResponse {
 		profilePicture = &user.ProfilePicture
 	}
 	return userResponse{
-		ID:             user.ID,
-		Email:          user.Email,
-		Username:       user.Username,
-		FirstName:      user.FirstName,
-		LastName:       user.LastName,
-		ProfilePicture: profilePicture,
-		CreatedAt:      user.CreatedAt.Format(time.RFC3339),
+		ID:                user.ID,
+		Email:             user.Email,
+		Username:          user.Username,
+		FirstName:         user.FirstName,
+		LastName:          user.LastName,
+		FrontendFirstName: user.FirstName,
+		FrontendLastName:  user.LastName,
+		ProfilePicture:   profilePicture,
+		CreatedAt:        user.CreatedAt.Format(time.RFC3339),
+		JoinedAt:         user.CreatedAt.UnixMilli(),
+		Color:            "purple",
+		WatchHistory:     []any{},
 	}
 }
 

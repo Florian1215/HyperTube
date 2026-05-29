@@ -4,12 +4,12 @@ set -uo pipefail
 
 # Interactive acceptance test for the real GitHub OAuth login flow.
 #
-# This test is intentionally not part of tests/start_me or Run All because it
+# This test is intentionally not part of verification/tests/start_me or Run All because it
 # depends on real GitHub OAuth app credentials and a human completing consent in
 # a browser.
 #
 # Usage:
-#   tests/api/github_oauth_acceptance_test.sh
+#   verification/tests/api/github_oauth_acceptance_test.sh
 #
 # Configuration:
 #   BASE_URL=http://localhost:8080/api/v1

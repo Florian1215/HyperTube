@@ -3,7 +3,7 @@
 set -uo pipefail
 
 STORY_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "$STORY_ROOT/.." && pwd)"
+REPO_ROOT="$(cd -- "$STORY_ROOT/../.." && pwd)"
 SCRIPT_DIR="$STORY_ROOT/scripts"
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -19,6 +19,7 @@ SCRIPT_IDS=(
   "github-auth"
   "forty-two-cli"
   "password-reset"
+  "frontend-auth-contract"
   "database"
 )
 SCRIPT_TITLES=(
@@ -31,6 +32,7 @@ SCRIPT_TITLES=(
   "GitHub OAuth Safety Journey"
   "Manual 42 CLI Login Journey"
   "Password Reset Journey"
+  "Frontend Auth Contract Journey"
   "Database Snapshot"
 )
 SCRIPT_FILES=(
@@ -43,6 +45,7 @@ SCRIPT_FILES=(
   "demo_github_auth_story.sh"
   "demo_42_cli_login_story.sh"
   "demo_password_reset_story.sh"
+  "demo_frontend_auth_contract_story.sh"
   "show_db_contents.sh"
 )
 SCRIPT_DEPS=(
@@ -55,6 +58,7 @@ SCRIPT_DEPS=(
   "curl jq sed"
   "curl jq sed"
   "curl jq sed"
+  "bash curl jq sed date"
   ""
 )
 SCRIPT_DESCRIPTIONS=(
@@ -67,10 +71,11 @@ SCRIPT_DESCRIPTIONS=(
   "Validates the GitHub OAuth start and callback safety paths, including missing provider configuration, state checks, scopes, and denied consent."
   "Guides a developer through real 42 OAuth consent from the terminal, then uses the returned JWT on a protected movie search."
   "Requests a password reset email, checks account-enumeration-safe responses, and optionally consumes RESET_TOKEN to verify the new password."
+  "Shows that the backend accepts the current frontend auth payloads and returns frontend-compatible user fields without frontend changes."
   "Prints a readable snapshot of the Hypertube database via Docker Compose or psql. This is a utility, not part of Run All Walkthroughs."
 )
 
-WALKTHROUGH_COUNT=9
+WALKTHROUGH_COUNT=10
 
 RESET=""
 BOLD=""
@@ -97,10 +102,10 @@ usage() {
 Hypertube User Story Runner
 
 Usage:
-  user_stories/start_me
-  user_stories/start_me --list
-  user_stories/start_me --run <story|all>
-  user_stories/start_me --help
+  verification/user_stories/start_me
+  verification/user_stories/start_me --list
+  verification/user_stories/start_me --run <story|all>
+  verification/user_stories/start_me --help
 
 Stories:
   user              New user registration, login, browse, search, detail, torrents.
@@ -112,6 +117,8 @@ Stories:
   github-auth       GitHub OAuth route safety and callback validation.
   forty-two-cli     Manual real 42 OAuth login flow from the terminal.
   password-reset    Password reset request and token-consumption walkthrough.
+  frontend-auth-contract
+                    Current frontend registration/login compatibility walkthrough.
   database          Database snapshot utility.
   all               Run every walkthrough story except the database snapshot.
 
@@ -123,7 +130,7 @@ Environment:
 Interactive controls:
   Up/Down or j/k    Move selection.
   Enter             Run selected item.
-  1-9, 0            Jump to a story or utility.
+  1-9, 0            Jump to a story; use arrows for database/run-all/quit.
   q or Esc          Quit.
 USAGE
 }
@@ -187,7 +194,7 @@ print_wrapped() {
 
 print_header() {
   printf '%b%s%b\n' "${BOLD}${CYAN}" "Hypertube User Story Runner" "$RESET"
-  printf '%b%s%b\n' "$DIM" "Interactive walkthrough selection for scripts in user_stories/scripts." "$RESET"
+  printf '%b%s%b\n' "$DIM" "Interactive walkthrough selection for scripts in verification/user_stories/scripts." "$RESET"
   rule
 }
 
@@ -203,12 +210,12 @@ list_stories() {
     printf '  %b%d. %s%b\n' "$BOLD" "$((i + 1))" "${SCRIPT_TITLES[$i]}" "$RESET"
     printf '     %bID:%b %s\n' "$DIM" "$RESET" "${SCRIPT_IDS[$i]}"
     print_wrapped "     " "" "${SCRIPT_DESCRIPTIONS[$i]}"
-    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "user_stories/scripts/${SCRIPT_FILES[$i]}"
+    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "verification/user_stories/scripts/${SCRIPT_FILES[$i]}"
     echo
   done
 
   printf '  %b%d. Run All Walkthroughs%b\n' "$BOLD" "$((${#SCRIPT_IDS[@]} + 1))" "$RESET"
-  print_wrapped "     " "" "Runs the nine user-facing walkthrough stories in order. The database snapshot is excluded because it is an inspection utility."
+  print_wrapped "     " "" "Runs the user-facing walkthrough stories in order. The database snapshot is excluded because it is an inspection utility."
 }
 
 normalize_query() {
@@ -252,8 +259,11 @@ resolve_script_index() {
     9|password-reset|password|reset|forgot-password)
       printf '8'
       ;;
-    10|database|db|snapshot|show-db)
+    10|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
       printf '9'
+      ;;
+    11|database|db|snapshot|show-db)
+      printf '10'
       ;;
     *)
       return 1
@@ -285,7 +295,7 @@ print_run_banner() {
   rule
   printf '%bRunning:%b %s\n' "${BOLD}${CYAN}" "$RESET" "${SCRIPT_TITLES[$index]}"
   printf '%bPurpose:%b %s\n' "$DIM" "$RESET" "${SCRIPT_DESCRIPTIONS[$index]}"
-  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL user_stories/scripts/${SCRIPT_FILES[$index]}"
+  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL verification/user_stories/scripts/${SCRIPT_FILES[$index]}"
   rule
   echo
 }
@@ -423,7 +433,7 @@ draw_menu() {
       description="${SCRIPT_DESCRIPTIONS[$i]}"
     elif [[ "$i" -eq "$run_all_index" ]]; then
       label="Run All Walkthroughs"
-      description="Runs the nine user-facing walkthrough stories in order. The database snapshot stays manual."
+      description="Runs the user-facing walkthrough stories in order. The database snapshot stays manual."
     else
       label="Quit"
       description="Leave the user story runner without starting a script."

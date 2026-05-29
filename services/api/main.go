@@ -199,7 +199,10 @@ func newRouter(
 		r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
 
 		r.Group(func(r chi.Router) {
-			r.Use(auth.RequireAuth(tokenManager))
+			// Dev-only: keep formerly protected routes reachable while the frontend is built out.
+			// Switch back to auth.RequireAuth(tokenManager) before enabling production auth.
+			r.Use(auth.DevAuthenticateAs(1))
+			// r.Use(auth.RequireAuth(tokenManager))
 
 			r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
 			r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)

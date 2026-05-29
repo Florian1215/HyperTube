@@ -3,13 +3,13 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 API_TEST_DIR="$SCRIPT_DIR/api"
 
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 
-TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "basic" "password-reset")
+TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "basic" "password-reset" "frontend-auth-contract")
 TEST_TITLES=(
   "Comprehensive API E2E"
   "OAuth2 Token API"
@@ -17,6 +17,7 @@ TEST_TITLES=(
   "GitHub OAuth Route Smoke Test"
   "Basic Curl Walkthrough"
   "Password Reset API"
+  "Frontend Auth Contract API"
 )
 TEST_FILES=(
   "comprehensive_api_test.sh"
@@ -25,6 +26,7 @@ TEST_FILES=(
   "github_auth_api_test.sh"
   "basic_api_test.sh"
   "password_reset_api_test.sh"
+  "frontend_auth_contract_api_test.sh"
 )
 TEST_DEPS=(
   "curl jq sed date tr"
@@ -33,6 +35,7 @@ TEST_DEPS=(
   "curl jq sed awk grep mktemp"
   "curl jq"
   "curl jq sed"
+  "curl jq sed date"
 )
 TEST_DESCRIPTIONS=(
   "Validates public routes, registration, login, protected-route failures, JWT user context, comment ownership, and authenticated movie flows."
@@ -41,6 +44,7 @@ TEST_DESCRIPTIONS=(
   "Checks GitHub OAuth login startup, state-cookie handling, callback CSRF protection, and provider-denial behavior; unconfigured OAuth is handled as an expected safe state."
   "Prints readable request/response examples for health, movie listing, movie lookup, torrent lookup, registration, and login. Best for quick manual inspection."
   "Validates password-reset request validation, missing-mailer behavior, reset-token validation, and invalid or expired token errors."
+  "Validates that the API accepts the current frontend auth payloads and returns both backend and frontend-compatible user fields."
 )
 
 RESET=""
@@ -68,10 +72,10 @@ usage() {
 Hypertube API Test Runner
 
 Usage:
-  tests/start_me
-  tests/start_me --list
-  tests/start_me --run <test|all>
-  tests/start_me --help
+  verification/tests/start_me
+  verification/tests/start_me --list
+  verification/tests/start_me --run <test|all>
+  verification/tests/start_me --help
 
 Tests:
   comprehensive    Comprehensive API E2E smoke/e2e coverage.
@@ -80,6 +84,8 @@ Tests:
   github           GitHub OAuth route surface and callback validation.
   basic            Readable curl walkthrough for manual inspection.
   password-reset   Password reset route validation and invalid-token behavior.
+  frontend-auth-contract
+                   Current frontend registration/login contract compatibility.
   all              Run every test in the order shown above.
 
 Environment:
@@ -170,7 +176,7 @@ list_tests() {
     printf '  %b%d. %s%b\n' "$BOLD" "$((i + 1))" "${TEST_TITLES[$i]}" "$RESET"
     printf '     %bID:%b %s\n' "$DIM" "$RESET" "${TEST_IDS[$i]}"
     print_wrapped "     " "" "${TEST_DESCRIPTIONS[$i]}"
-    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "api/${TEST_FILES[$i]}"
+    printf '     %bCommand:%b %s\n' "$DIM" "$RESET" "verification/tests/api/${TEST_FILES[$i]}"
     echo
   done
 
@@ -210,6 +216,9 @@ resolve_test_index() {
     6|password-reset|password|reset|forgot-password)
       printf '5'
       ;;
+    7|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
+      printf '6'
+      ;;
     *)
       return 1
       ;;
@@ -240,7 +249,7 @@ print_run_banner() {
   rule
   printf '%bRunning:%b %s\n' "${BOLD}${CYAN}" "$RESET" "${TEST_TITLES[$index]}"
   printf '%bPurpose:%b %s\n' "$DIM" "$RESET" "${TEST_DESCRIPTIONS[$index]}"
-  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL api/${TEST_FILES[$index]}"
+  printf '%bCommand:%b %s\n' "$DIM" "$RESET" "BASE_URL=$BASE_URL verification/tests/api/${TEST_FILES[$index]}"
   rule
   echo
 }

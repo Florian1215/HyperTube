@@ -135,6 +135,35 @@ func TestRequireAuthRejectsExpiredBearerToken(t *testing.T) {
 	}
 }
 
+func TestDevAuthenticateAsSetsContextUserID(t *testing.T) {
+	nextCalled := false
+	handler := DevAuthenticateAs(7)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+
+		userID, ok := UserIDFromContext(r.Context())
+		if !ok {
+			t.Fatal("expected user id in request context")
+		}
+		if userID != 7 {
+			t.Fatalf("expected user id 7, got %d", userID)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/watched", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if !nextCalled {
+		t.Fatal("expected next handler to be called")
+	}
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestBearerTokenParsesSchemeCaseInsensitively(t *testing.T) {
 	token, ok := bearerToken("bEaReR abc.def.ghi")
 	if !ok {

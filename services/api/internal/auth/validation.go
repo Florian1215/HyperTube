@@ -30,11 +30,17 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 	}
 
 	firstName := strings.TrimSpace(req.FirstName)
+	if firstName == "" {
+		firstName = strings.TrimSpace(req.FrontendFirstName)
+	}
 	if firstName == "" || len(firstName) > maxNameLength {
 		fields["first_name"] = "first_name is required and must be at most 100 characters"
 	}
 
 	lastName := strings.TrimSpace(req.LastName)
+	if lastName == "" {
+		lastName = strings.TrimSpace(req.FrontendLastName)
+	}
 	if lastName == "" || len(lastName) > maxNameLength {
 		fields["last_name"] = "last_name is required and must be at most 100 characters"
 	}
@@ -58,9 +64,16 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 	fields := validationErrors{}
 
-	email, ok := normalizeEmail(req.Email)
-	if !ok {
-		fields["email"] = "valid email is required"
+	login := strings.TrimSpace(req.Login)
+	if login == "" {
+		login = strings.TrimSpace(req.Email)
+	}
+	if login == "" {
+		fields["login"] = "username or email is required"
+	} else if email, ok := normalizeEmail(login); ok {
+		login = email
+	} else if !usernamePattern.MatchString(login) {
+		fields["login"] = "login must be a valid email address or username"
 	}
 	if req.Password == "" || len(req.Password) > maxPasswordBytes {
 		fields["password"] = "password is required"
@@ -69,7 +82,7 @@ func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 	if len(fields) > 0 {
 		return "", fields, false
 	}
-	return email, nil, true
+	return login, nil, true
 }
 
 func validatePassword(password string) (string, bool) {

@@ -21,9 +21,11 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
         const token = localStorage.getItem("token");
         const userData = localStorage.getItem("user");
 
-        if (token && userData)
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setUser(JSON.parse(userData));
+        // if (token && userData) {
+        //     console.log("User authenticated from localStorage:", userData);
+        //     // eslint-disable-next-line react-hooks/set-state-in-effect
+        //     setUser(JSON.parse(userData));
+        // }
 
         setLoading(false);
     }, []);

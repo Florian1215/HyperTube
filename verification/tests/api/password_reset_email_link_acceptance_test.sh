@@ -4,11 +4,11 @@ set -uo pipefail
 
 # Interactive acceptance test for the real password reset email link flow.
 #
-# This test is intentionally not part of tests/start_me or Run All because it
+# This test is intentionally not part of verification/tests/start_me or Run All because it
 # depends on real email delivery and a human pasting the received link.
 #
 # Usage:
-#   tests/api/password_reset_email_link_acceptance_test.sh
+#   verification/tests/api/password_reset_email_link_acceptance_test.sh
 #
 # Configuration:
 #   BASE_URL=http://localhost:8080/api/v1

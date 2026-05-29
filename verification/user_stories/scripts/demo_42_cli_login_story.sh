@@ -8,7 +8,7 @@
 #   into the terminal, and use the returned JWT against a protected API route.
 #
 # Usage:
-#   ./user_stories/scripts/demo_42_cli_login_story.sh
+#   ./verification/user_stories/scripts/demo_42_cli_login_story.sh
 #
 # Recommended CLI-only 42 app redirect URI:
 #   http://localhost:8080/api/v1/auth/42/manual-copy
@@ -28,9 +28,9 @@
 #   OAUTH_CALLBACK_URL   Callback URL pasted non-interactively.
 #
 # Examples:
-#   ./user_stories/scripts/demo_42_cli_login_story.sh
-#   SEARCH_QUERY=matrix ./user_stories/scripts/demo_42_cli_login_story.sh
-#   AUTO_ADVANCE=1 OAUTH_CALLBACK_URL='http://localhost:8080/...?...' ./user_stories/scripts/demo_42_cli_login_story.sh
+#   ./verification/user_stories/scripts/demo_42_cli_login_story.sh
+#   SEARCH_QUERY=matrix ./verification/user_stories/scripts/demo_42_cli_login_story.sh
+#   AUTO_ADVANCE=1 OAUTH_CALLBACK_URL='http://localhost:8080/...?...' ./verification/user_stories/scripts/demo_42_cli_login_story.sh
 
 set -o pipefail
 

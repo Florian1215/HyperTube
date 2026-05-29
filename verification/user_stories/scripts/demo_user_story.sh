@@ -3,7 +3,7 @@
 # CLI demo walkthrough for the Hypertube API user story.
 #
 # Usage:
-#   ./user_stories/scripts/demo_user_story.sh
+#   ./verification/user_stories/scripts/demo_user_story.sh
 #
 # Optional environment variables:
 #   BASE_URL       API base URL. Default: http://localhost:8080
@@ -13,9 +13,9 @@
 #   SEARCH_QUERY   Movie search query. Default: matrix
 #
 # Examples:
-#   BASE_URL=http://localhost:8080 ./user_stories/scripts/demo_user_story.sh
-#   DEMO_EMAIL=demo@example.test DEMO_PASSWORD=DemoPass123! ./user_stories/scripts/demo_user_story.sh
-#   SEARCH_QUERY=inception ./user_stories/scripts/demo_user_story.sh
+#   BASE_URL=http://localhost:8080 ./verification/user_stories/scripts/demo_user_story.sh
+#   DEMO_EMAIL=demo@example.test DEMO_PASSWORD=DemoPass123! ./verification/user_stories/scripts/demo_user_story.sh
+#   SEARCH_QUERY=inception ./verification/user_stories/scripts/demo_user_story.sh
 
 set -o pipefail
 

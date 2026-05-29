@@ -9,7 +9,7 @@
 #   not from a user_id sent by the client.
 #
 # Usage:
-#   ./user_stories/scripts/demo_comments_story.sh
+#   ./verification/user_stories/scripts/demo_comments_story.sh
 #
 # Optional environment variables:
 #   BASE_URL       API base URL. Default: http://localhost:8080
@@ -19,9 +19,9 @@
 #   MOVIE_ID       Movie IMDB ID to comment on. Default: first movie from list.
 #
 # Examples:
-#   BASE_URL=http://localhost:8080 ./user_stories/scripts/demo_comments_story.sh
-#   MOVIE_ID=tt0133093 ./user_stories/scripts/demo_comments_story.sh
-#   DEMO_EMAIL=demo@example.test DEMO_PASSWORD=DemoPass123! ./user_stories/scripts/demo_comments_story.sh
+#   BASE_URL=http://localhost:8080 ./verification/user_stories/scripts/demo_comments_story.sh
+#   MOVIE_ID=tt0133093 ./verification/user_stories/scripts/demo_comments_story.sh
+#   DEMO_EMAIL=demo@example.test DEMO_PASSWORD=DemoPass123! ./verification/user_stories/scripts/demo_comments_story.sh
 
 set -o pipefail
 

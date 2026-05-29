@@ -5,7 +5,7 @@ set -uo pipefail
 # API smoke test for the OAuth2 token endpoint.
 #
 # Usage:
-#   tests/api/oauth_token_api_test.sh
+#   verification/tests/api/oauth_token_api_test.sh
 #
 # Configuration:
 #   BASE_URL=http://localhost:8080/api/v1

@@ -1,41 +1,48 @@
 #!/usr/bin/env bash
 #
-# CLI demo walkthrough for a second Hypertube API user story.
+# CLI demo walkthrough for a third Hypertube API user story.
 #
 # User story:
-#   As a visitor, I want to browse featured movies first, then sign in when
-#   details and torrents require authentication.
+#   As a signed-in user, I want to search for a specific movie, recover from a
+#   weak or empty search result, and still reach movie details and torrents.
 #
 # Usage:
-#   ./user_stories/scripts/demo_featured_movie_story.sh
+#   ./verification/user_stories/scripts/demo_search_fallback_story.sh
 #
 # Optional environment variables:
 #   BASE_URL        API base URL. Default: http://localhost:8080
 #   DEMO_EMAIL      Demo user's email. Default: unique email per run.
 #   DEMO_USERNAME   Demo user's username. Default: unique username per run.
 #   DEMO_PASSWORD   Demo user's password. Default: DemoPass123!
-#   FEATURED_INDEX  Zero-based movie index from the featured list. Default: 0
+#   SEARCH_QUERY    Primary movie search query. Default: matrx
+#   BACKUP_QUERY    Backup movie search query. Default: matrix
+#   FEATURED_INDEX  Zero-based fallback movie index from /movies. Default: 0
 #
 # Examples:
-#   BASE_URL=http://localhost:8080 ./user_stories/scripts/demo_featured_movie_story.sh
-#   FEATURED_INDEX=1 ./user_stories/scripts/demo_featured_movie_story.sh
-#   DEMO_EMAIL=demo@example.test DEMO_PASSWORD=DemoPass123! ./user_stories/scripts/demo_featured_movie_story.sh
+#   BASE_URL=http://localhost:8080 ./verification/user_stories/scripts/demo_search_fallback_story.sh
+#   SEARCH_QUERY=interstelar BACKUP_QUERY=interstellar ./verification/user_stories/scripts/demo_search_fallback_story.sh
+#   FEATURED_INDEX=2 ./verification/user_stories/scripts/demo_search_fallback_story.sh
 
 set -o pipefail
 
-TOTAL_STEPS=9
+TOTAL_STEPS=10
 RUN_ID="$(date +%Y%m%d%H%M%S)-$$"
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 BASE_URL="${BASE_URL%/}"
-DEMO_EMAIL="${DEMO_EMAIL:-featured-demo-${RUN_ID}@example.test}"
-DEMO_USERNAME="${DEMO_USERNAME:-featured_${RUN_ID//[^A-Za-z0-9_]/_}}"
+DEMO_EMAIL="${DEMO_EMAIL:-fallback-demo-${RUN_ID}@example.test}"
+DEMO_USERNAME="${DEMO_USERNAME:-fallback_${RUN_ID//[^A-Za-z0-9_]/_}}"
 DEMO_PASSWORD="${DEMO_PASSWORD:-DemoPass123!}"
+SEARCH_QUERY="${SEARCH_QUERY:-matrx}"
+BACKUP_QUERY="${BACKUP_QUERY:-matrix}"
 FEATURED_INDEX="${FEATURED_INDEX:-0}"
 
 TOKEN=""
+PRIMARY_MOVIE_ID=""
+BACKUP_MOVIE_ID=""
+FEATURED_MOVIE_ID=""
 MOVIE_ID=""
-MOVIE_TITLE=""
+MOVIE_SOURCE=""
 
 TMP_FILES=()
 SUMMARY_NAMES=()
@@ -69,7 +76,7 @@ else
 fi
 
 usage() {
-  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -129,8 +136,8 @@ status_label() {
 print_summary() {
   local i
 
-  heading 9 "Summary"
-  explain "The CLI reports which parts of the featured movie walkthrough succeeded, failed, or were skipped."
+  heading 10 "Summary"
+  explain "The CLI reports which parts of the search fallback walkthrough succeeded, failed, or were skipped."
 
   printf '\n%sResult:%s\n' "$BOLD" "$RESET"
   for i in "${!SUMMARY_NAMES[@]}"; do
@@ -141,6 +148,8 @@ print_summary() {
   printf '  BASE_URL: %s\n' "$BASE_URL"
   printf '  DEMO_EMAIL: %s\n' "$DEMO_EMAIL"
   printf '  DEMO_USERNAME: %s\n' "$DEMO_USERNAME"
+  printf '  SEARCH_QUERY: %s\n' "$SEARCH_QUERY"
+  printf '  BACKUP_QUERY: %s\n' "$BACKUP_QUERY"
   printf '  FEATURED_INDEX: %s\n' "$FEATURED_INDEX"
 }
 
@@ -151,12 +160,12 @@ abort_critical() {
   exit 1
 }
 
-is_success_status() {
-  [[ "$1" =~ ^2[0-9][0-9]$ ]]
+urlencode() {
+  jq -rn --arg value "$1" '$value | @uri'
 }
 
-is_auth_challenge_status() {
-  [[ "$1" == "401" || "$1" == "403" ]]
+is_success_status() {
+  [[ "$1" =~ ^2[0-9][0-9]$ ]]
 }
 
 is_conflict_status() {
@@ -273,14 +282,12 @@ extract_token() {
   ' <<<"$body" 2>/dev/null
 }
 
-extract_movie_field() {
+extract_movie_id() {
   local body="$1"
-  local index="$2"
-  local field="$3"
+  local index="${2:-0}"
 
   jq -r \
     --argjson index "$index" \
-    --arg field "$field" \
     '
       def collection:
         if (.data | type) == "array" then .data
@@ -292,13 +299,7 @@ extract_movie_field() {
         end;
 
       collection[$index] // {}
-      | if $field == "id" then
-          .imdb_id // .imdbID // .imdbId // .id // empty
-        elif $field == "title" then
-          .title // .name // empty
-        else
-          empty
-        end
+      | .imdb_id // .imdbID // .imdbId // .id // empty
     ' <<<"$body" 2>/dev/null
 }
 
@@ -310,8 +311,8 @@ REGISTER_PAYLOAD="$(
     '{
       email: $email,
       username: $username,
-      first_name: "Featured",
-      last_name: "Viewer",
+      first_name: "Fallback",
+      last_name: "Searcher",
       password: $password
     }'
 )"
@@ -324,7 +325,7 @@ LOGIN_PAYLOAD="$(
 )"
 
 heading 1 "Health Check"
-explain "The CLI checks whether the backend is reachable before browsing the featured catalog."
+explain "The CLI checks whether the backend is reachable before attempting authenticated discovery."
 HEALTH_URL="$BASE_URL/api/v1/health"
 print_request "GET" "$HEALTH_URL"
 request "GET" "$HEALTH_URL"
@@ -339,62 +340,8 @@ else
   abort_critical "Health check failed; the API must be running before the demo can continue."
 fi
 
-heading 2 "Browse Featured Movies"
-explain "The CLI loads the public featured movie list without sending any auth token."
-MOVIES_URL="$BASE_URL/api/v1/movies"
-print_request "GET" "$MOVIES_URL"
-request "GET" "$MOVIES_URL"
-print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
-
-if is_success_status "$HTTP_STATUS"; then
-  MOVIE_ID="$(extract_movie_field "$HTTP_BODY" "$FEATURED_INDEX" "id")"
-  MOVIE_TITLE="$(extract_movie_field "$HTTP_BODY" "$FEATURED_INDEX" "title")"
-
-  if [[ -n "$MOVIE_ID" ]]; then
-    record_result "Browse featured movies" "OK" "Selected candidate movie ID $MOVIE_ID from the public list."
-    print_result "OK" "Selected candidate movie ID $MOVIE_ID from the public list."
-  else
-    record_result "Browse featured movies" "FAIL" "No movie ID found at FEATURED_INDEX=$FEATURED_INDEX."
-    print_result "FAIL" "No movie ID found at FEATURED_INDEX=$FEATURED_INDEX."
-    abort_critical "The featured list did not provide a movie ID for the configured index."
-  fi
-else
-  record_result "Browse featured movies" "FAIL" "Featured movie list request failed."
-  print_result "FAIL" "Featured movie list request failed."
-  abort_critical "The featured movie list is required for this story."
-fi
-
-heading 3 "Choose Featured Movie"
-explain "The CLI confirms which featured movie will be used for the protected detail and torrent requests."
-
-if [[ -n "$MOVIE_TITLE" ]]; then
-  record_result "Choose featured movie" "OK" "Using $MOVIE_TITLE ($MOVIE_ID)."
-  print_result "OK" "Using $MOVIE_TITLE ($MOVIE_ID)."
-else
-  record_result "Choose featured movie" "OK" "Using movie ID $MOVIE_ID."
-  print_result "OK" "Using movie ID $MOVIE_ID."
-fi
-
-heading 4 "Try Details Before Login"
-explain "The CLI intentionally requests protected movie details without a token to show where sign-in is required."
-DETAILS_URL="$BASE_URL/api/v1/movies/$MOVIE_ID"
-print_request "GET" "$DETAILS_URL"
-request "GET" "$DETAILS_URL"
-print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
-
-if is_auth_challenge_status "$HTTP_STATUS"; then
-  record_result "Try details before login" "OK" "API required authentication as expected."
-  print_result "OK" "API required authentication as expected."
-elif is_success_status "$HTTP_STATUS"; then
-  record_result "Try details before login" "WARN" "Movie details were available without authentication."
-  print_result "WARN" "Movie details were available without authentication."
-else
-  record_result "Try details before login" "WARN" "Unauthenticated detail request returned HTTP $HTTP_STATUS."
-  print_result "WARN" "Unauthenticated detail request returned HTTP $HTTP_STATUS."
-fi
-
-heading 5 "Ensure Demo Account"
-explain "The CLI creates a demo account for sign-in. If it already exists, the script keeps going and logs in."
+heading 2 "Ensure Demo Account"
+explain "The CLI creates a demo account. If it already exists, the script keeps going and verifies access by logging in."
 REGISTER_URL="$BASE_URL/api/v1/auth/register"
 print_request "POST" "$REGISTER_URL" "$REGISTER_PAYLOAD"
 request "POST" "$REGISTER_URL" "$REGISTER_PAYLOAD"
@@ -411,8 +358,8 @@ else
   print_result "WARN" "Registration failed; login will verify whether the account is usable."
 fi
 
-heading 6 "Log In And Store Token"
-explain "The CLI logs in and extracts the JWT so protected movie endpoints can be called."
+heading 3 "Log In And Store Token"
+explain "The CLI logs in and extracts the JWT so search, details, and torrents can use bearer authentication."
 LOGIN_URL="$BASE_URL/api/v1/auth/login"
 print_request "POST" "$LOGIN_URL" "$LOGIN_PAYLOAD"
 request "POST" "$LOGIN_URL" "$LOGIN_PAYLOAD"
@@ -434,32 +381,131 @@ else
   abort_critical "Login failed; authenticated movie requests cannot continue."
 fi
 
-heading 7 "Fetch Authenticated Details"
-explain "The CLI repeats the movie detail request with the stored bearer token."
+heading 4 "Primary Search"
+explain "The CLI searches for the user's first query and tries to select the first movie from those results."
+PRIMARY_URL="$BASE_URL/api/v1/movies/search?title=$(urlencode "$SEARCH_QUERY")"
+print_request "GET" "$PRIMARY_URL" "" "true"
+request "GET" "$PRIMARY_URL" "" "true"
+print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
+
+if is_success_status "$HTTP_STATUS"; then
+  PRIMARY_MOVIE_ID="$(extract_movie_id "$HTTP_BODY")"
+  if [[ -n "$PRIMARY_MOVIE_ID" ]]; then
+    record_result "Primary search" "OK" "Primary search returned movie ID $PRIMARY_MOVIE_ID."
+    print_result "OK" "Primary search returned movie ID $PRIMARY_MOVIE_ID."
+  else
+    record_result "Primary search" "WARN" "Primary search succeeded, but returned no usable movie ID."
+    print_result "WARN" "Primary search succeeded, but returned no usable movie ID."
+  fi
+else
+  record_result "Primary search" "WARN" "Primary search failed with HTTP $HTTP_STATUS."
+  print_result "WARN" "Primary search failed with HTTP $HTTP_STATUS."
+fi
+
+heading 5 "Backup Search"
+explain "If the first query did not produce a movie, the CLI retries with a cleaner backup query."
+
+if [[ -z "$PRIMARY_MOVIE_ID" ]]; then
+  BACKUP_URL="$BASE_URL/api/v1/movies/search?title=$(urlencode "$BACKUP_QUERY")"
+  print_request "GET" "$BACKUP_URL" "" "true"
+  request "GET" "$BACKUP_URL" "" "true"
+  print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
+
+  if is_success_status "$HTTP_STATUS"; then
+    BACKUP_MOVIE_ID="$(extract_movie_id "$HTTP_BODY")"
+    if [[ -n "$BACKUP_MOVIE_ID" ]]; then
+      record_result "Backup search" "OK" "Backup search returned movie ID $BACKUP_MOVIE_ID."
+      print_result "OK" "Backup search returned movie ID $BACKUP_MOVIE_ID."
+    else
+      record_result "Backup search" "WARN" "Backup search succeeded, but returned no usable movie ID."
+      print_result "WARN" "Backup search succeeded, but returned no usable movie ID."
+    fi
+  else
+    record_result "Backup search" "WARN" "Backup search failed with HTTP $HTTP_STATUS."
+    print_result "WARN" "Backup search failed with HTTP $HTTP_STATUS."
+  fi
+else
+  record_result "Backup search" "SKIP" "Skipped because the primary search already returned a movie."
+  print_result "SKIP" "Skipped because the primary search already returned a movie."
+fi
+
+heading 6 "Featured Fallback"
+explain "If both searches miss, the CLI falls back to the public featured movie list so the user can still inspect available content."
+
+if [[ -z "$PRIMARY_MOVIE_ID" && -z "$BACKUP_MOVIE_ID" ]]; then
+  FEATURED_URL="$BASE_URL/api/v1/movies"
+  print_request "GET" "$FEATURED_URL"
+  request "GET" "$FEATURED_URL"
+  print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
+
+  if is_success_status "$HTTP_STATUS"; then
+    FEATURED_MOVIE_ID="$(extract_movie_id "$HTTP_BODY" "$FEATURED_INDEX")"
+    if [[ -n "$FEATURED_MOVIE_ID" ]]; then
+      record_result "Featured fallback" "OK" "Featured fallback returned movie ID $FEATURED_MOVIE_ID."
+      print_result "OK" "Featured fallback returned movie ID $FEATURED_MOVIE_ID."
+    else
+      record_result "Featured fallback" "WARN" "Featured list loaded, but no movie ID was found at index $FEATURED_INDEX."
+      print_result "WARN" "Featured list loaded, but no movie ID was found at index $FEATURED_INDEX."
+    fi
+  else
+    record_result "Featured fallback" "WARN" "Featured fallback failed with HTTP $HTTP_STATUS."
+    print_result "WARN" "Featured fallback failed with HTTP $HTTP_STATUS."
+  fi
+else
+  record_result "Featured fallback" "SKIP" "Skipped because a search result was already available."
+  print_result "SKIP" "Skipped because a search result was already available."
+fi
+
+heading 7 "Select Movie"
+explain "The CLI chooses the best available movie ID in order: primary search, backup search, then featured fallback."
+
+if [[ -n "$PRIMARY_MOVIE_ID" ]]; then
+  MOVIE_ID="$PRIMARY_MOVIE_ID"
+  MOVIE_SOURCE="primary search"
+elif [[ -n "$BACKUP_MOVIE_ID" ]]; then
+  MOVIE_ID="$BACKUP_MOVIE_ID"
+  MOVIE_SOURCE="backup search"
+elif [[ -n "$FEATURED_MOVIE_ID" ]]; then
+  MOVIE_ID="$FEATURED_MOVIE_ID"
+  MOVIE_SOURCE="featured fallback"
+fi
+
+if [[ -n "$MOVIE_ID" ]]; then
+  record_result "Select movie" "OK" "Selected $MOVIE_ID from $MOVIE_SOURCE."
+  print_result "OK" "Selected $MOVIE_ID from $MOVIE_SOURCE."
+else
+  record_result "Select movie" "FAIL" "No movie ID was available from any discovery path."
+  print_result "FAIL" "No movie ID was available from any discovery path."
+  abort_critical "No movie could be selected for details or torrents."
+fi
+
+heading 8 "Fetch Movie Details"
+explain "The CLI fetches details for the selected movie with the stored bearer token."
+DETAILS_URL="$BASE_URL/api/v1/movies/$MOVIE_ID"
 print_request "GET" "$DETAILS_URL" "" "true"
 request "GET" "$DETAILS_URL" "" "true"
 print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
 
 if is_success_status "$HTTP_STATUS"; then
-  record_result "Fetch authenticated details" "OK" "Movie details loaded for $MOVIE_ID."
+  record_result "Fetch movie details" "OK" "Movie details loaded for $MOVIE_ID."
   print_result "OK" "Movie details loaded for $MOVIE_ID."
 else
-  record_result "Fetch authenticated details" "WARN" "Authenticated detail request failed for $MOVIE_ID."
-  print_result "WARN" "Authenticated detail request failed for $MOVIE_ID."
+  record_result "Fetch movie details" "WARN" "Movie detail request failed for $MOVIE_ID."
+  print_result "WARN" "Movie detail request failed for $MOVIE_ID."
 fi
 
-heading 8 "Fetch Movie Torrents"
-explain "The CLI requests available torrents for the same featured movie using the stored token."
+heading 9 "Fetch Torrents"
+explain "The CLI fetches available torrents for the selected movie with the stored bearer token."
 TORRENTS_URL="$BASE_URL/api/v1/movies/$MOVIE_ID/torrents"
 print_request "GET" "$TORRENTS_URL" "" "true"
 request "GET" "$TORRENTS_URL" "" "true"
 print_response "$HTTP_STATUS" "$HTTP_BODY" "$CURL_ERROR"
 
 if is_success_status "$HTTP_STATUS"; then
-  record_result "Fetch movie torrents" "OK" "Torrent list loaded for $MOVIE_ID."
+  record_result "Fetch torrents" "OK" "Torrent list loaded for $MOVIE_ID."
   print_result "OK" "Torrent list loaded for $MOVIE_ID."
 else
-  record_result "Fetch movie torrents" "WARN" "Torrent request failed or no torrents were available for $MOVIE_ID."
+  record_result "Fetch torrents" "WARN" "Torrent request failed or no torrents were available for $MOVIE_ID."
   print_result "WARN" "Torrent request failed or no torrents were available for $MOVIE_ID."
 fi
 
