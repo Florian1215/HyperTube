@@ -9,12 +9,13 @@ API_TEST_DIR="$SCRIPT_DIR/api"
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 
-TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "basic" "password-reset" "frontend-auth-contract")
+TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract")
 TEST_TITLES=(
   "Comprehensive API E2E"
   "OAuth2 Token API"
   "42 OAuth Route Smoke Test"
   "GitHub OAuth Route Smoke Test"
+  "GitLab OAuth Route Smoke Test"
   "Basic Curl Walkthrough"
   "Password Reset API"
   "Frontend Auth Contract API"
@@ -24,6 +25,7 @@ TEST_FILES=(
   "oauth_token_api_test.sh"
   "forty_two_auth_api_test.sh"
   "github_auth_api_test.sh"
+  "gitlab_auth_api_test.sh"
   "basic_api_test.sh"
   "password_reset_api_test.sh"
   "frontend_auth_contract_api_test.sh"
@@ -31,6 +33,7 @@ TEST_FILES=(
 TEST_DEPS=(
   "curl jq sed date tr"
   "curl jq sed date tr grep"
+  "curl jq sed awk grep mktemp"
   "curl jq sed awk grep mktemp"
   "curl jq sed awk grep mktemp"
   "curl jq"
@@ -42,6 +45,7 @@ TEST_DESCRIPTIONS=(
   "Validates POST /oauth/token password grant behavior, OAuth2 error bodies, root route alias, and Bearer token access to protected routes."
   "Checks 42 OAuth login startup, state-cookie handling, callback CSRF protection, and provider-denial behavior; unconfigured OAuth is handled as an expected safe state."
   "Checks GitHub OAuth login startup, state-cookie handling, callback CSRF protection, and provider-denial behavior; unconfigured OAuth is handled as an expected safe state."
+  "Checks GitLab OAuth login startup, state-cookie handling, callback CSRF protection, and provider-denial behavior; unconfigured OAuth is handled as an expected safe state."
   "Prints readable request/response examples for health, movie listing, movie lookup, torrent lookup, registration, and login. Best for quick manual inspection."
   "Validates password-reset request validation, missing-mailer behavior, reset-token validation, and invalid or expired token errors."
   "Validates that the API accepts the current frontend auth payloads and returns both backend and frontend-compatible user fields."
@@ -82,6 +86,7 @@ Tests:
   oauth-token      OAuth2 password grant and token route behavior.
   forty-two        42 OAuth route surface and callback validation.
   github           GitHub OAuth route surface and callback validation.
+  gitlab           GitLab OAuth route surface and callback validation.
   basic            Readable curl walkthrough for manual inspection.
   password-reset   Password reset route validation and invalid-token behavior.
   frontend-auth-contract
@@ -96,7 +101,7 @@ Environment:
 Interactive controls:
   Up/Down or j/k  Move selection.
   Enter           Run selected item.
-  1-8             Jump to an item.
+  1-9             Jump to an item.
   q or Esc        Quit.
 USAGE
 }
@@ -210,14 +215,17 @@ resolve_test_index() {
     4|github|github-auth|github-oauth)
       printf '3'
       ;;
-    5|basic|curl|walkthrough)
+    5|gitlab|gitlab-auth|gitlab-oauth)
       printf '4'
       ;;
-    6|password-reset|password|reset|forgot-password)
+    6|basic|curl|walkthrough)
       printf '5'
       ;;
-    7|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
+    7|password-reset|password|reset|forgot-password)
       printf '6'
+      ;;
+    8|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
+      printf '7'
       ;;
     *)
       return 1
@@ -368,7 +376,7 @@ draw_menu() {
   printf '\033[H\033[2J'
   print_header
   printf '  %b%-14s%b %s\n' "$DIM" "BASE_URL" "$RESET" "$BASE_URL"
-  printf '  %b%-14s%b %s\n' "$DIM" "Controls" "$RESET" "Up/Down, j/k, Enter, 1-$total_options, q"
+  printf '  %b%-14s%b %s\n' "$DIM" "Controls" "$RESET" "Up/Down, j/k, Enter, 1-9, q"
   echo
 
   for ((i = 0; i < total_options; i++)); do
@@ -453,7 +461,7 @@ interactive_menu() {
       j|J)
         selected=$(((selected + 1) % total_options))
         ;;
-      1|2|3|4|5|6|7|8)
+      1|2|3|4|5|6|7|8|9)
         selected=$((key - 1))
         ;;
       q|Q)
