@@ -42,9 +42,9 @@ func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email, ok := normalizeEmail(req.Email)
+	email, validationMessage, ok := validateEmail(req.Email)
 	if !ok {
-		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "email", i18n.MsgValidEmailRequired)
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "email", validationMessage)
 		return
 	}
 

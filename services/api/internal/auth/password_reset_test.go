@@ -63,7 +63,7 @@ func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("expected 202, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if got := decodePasswordResetEnvelope(t, rec).Data.Message; got != "if the email exists, a password reset link has been sent" {
+	if got := decodePasswordResetEnvelope(t, rec).Data.Message; got != "If the email exists, a password reset link has been sent" {
 		t.Fatalf("unexpected response message: %q", got)
 	}
 	if mailer.calls != 1 {
@@ -244,7 +244,7 @@ func TestResetPasswordConsumesTokenAndUpdatesPassword(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if got := decodePasswordResetEnvelope(t, rec).Data.Message; got != "password has been reset" {
+	if got := decodePasswordResetEnvelope(t, rec).Data.Message; got != "Password has been reset" {
 		t.Fatalf("unexpected response message: %q", got)
 	}
 

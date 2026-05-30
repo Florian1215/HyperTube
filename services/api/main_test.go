@@ -112,7 +112,7 @@ func TestRouterDevMovieRoutesReachHandlerWithoutBearerToken(t *testing.T) {
 	if got := decodeRouterErrorCode(t, rec); got != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", got)
 	}
-	if got := decodeRouterValidationField(t, rec, "title"); got != "title query parameter is required" {
+	if got := decodeRouterValidationField(t, rec, "title"); got != "Title query parameter is required" {
 		t.Fatalf("expected title field validation, got %q", got)
 	}
 }
@@ -132,7 +132,7 @@ func TestRouterMovieRouteStillAcceptsBearerTokenDuringDevAuth(t *testing.T) {
 	if got := decodeRouterErrorCode(t, rec); got != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", got)
 	}
-	if got := decodeRouterValidationField(t, rec, "title"); got != "title query parameter is required" {
+	if got := decodeRouterValidationField(t, rec, "title"); got != "Title query parameter is required" {
 		t.Fatalf("expected title field validation, got %q", got)
 	}
 }

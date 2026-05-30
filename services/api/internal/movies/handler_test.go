@@ -214,7 +214,7 @@ func TestSearchMoviesMissingTitleReturnsFieldValidationError(t *testing.T) {
 	if body.Error.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
 	}
-	if got := body.Error.Fields["title"].Message; got != "title query parameter is required" {
+	if got := body.Error.Fields["title"].Message; got != "Title query parameter is required" {
 		t.Fatalf("expected title field validation, got %q", got)
 	}
 }
