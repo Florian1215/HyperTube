@@ -53,7 +53,7 @@ export default function HomePage() {
                 console.error(error);
             }
         }
-        loadMovies().then(r => console.log(r));
+        loadMovies();
     }, [locale, user]);
 
     useEffect(() => { // todo filter by film already watch
@@ -67,7 +67,7 @@ export default function HomePage() {
                 console.error(error);
             }
         }
-        loadMovies().then(r => console.log(r));
+        loadMovies();
     }, [locale]);
 
     if (user && movies) {

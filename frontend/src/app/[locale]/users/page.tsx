@@ -79,7 +79,7 @@ function MovieHistoryTab() {
                 console.error(error);
             }
         }
-        loadMovies().then(r => console.log(r));
+        loadMovies();
     }, [locale]);
 
     if (!watchMovies || watchMovies.length === 0)
@@ -104,7 +104,7 @@ function CommentsTab({user}: {user: iUser}) {
                 console.error(error);
             }
         }
-        loadComments().then(r => console.log(r));
+        loadComments();
     }, []);
 
     return (<div className="max-w-3xl w-full mx-auto">

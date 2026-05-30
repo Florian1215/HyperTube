@@ -40,7 +40,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
                 console.error(error);
             }
         }
-        loadComments().then(r => console.log(r));
+        loadComments();
     }, [movie.imdb_id]);
     const t = useTranslations("comments");
     const tSuccess = useTranslations("notifications.success");

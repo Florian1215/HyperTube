@@ -27,7 +27,7 @@ export default function MoviePage() {
                 setMovie(undefined);
             }
         }
-        loadMovie().then(r => console.log(r));
+        loadMovie();
     }, [id, locale]);
 
     if (movie === undefined)
