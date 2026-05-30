@@ -18,6 +18,5 @@ export function patchComment(locale: string, commentId: number, content: string)
 }
 
 export function deleteComment(locale: string, commentId: number) {
-    commentId = 4453;
     return apiFetch<tResponse<iComment>>(`/comments/${commentId}`, locale, {method: "DELETE"});
 }
