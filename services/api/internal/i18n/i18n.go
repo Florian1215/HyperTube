@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/text/language"
 )
@@ -20,18 +22,28 @@ type Message string
 
 const (
 	MsgInvalidJSONBody                 Message = "invalid JSON body"
-	MsgValidEmailRequired              Message = "valid email is required"
-	MsgUsernameInvalid                 Message = "username must be 3-32 characters and contain only letters, numbers, or underscores"
-	MsgFirstNameInvalid                Message = "first_name is required and must be at most 100 characters"
-	MsgLastNameInvalid                 Message = "last_name is required and must be at most 100 characters"
-	MsgPasswordLength                  Message = "password must be between 8 and 72 bytes"
-	MsgLoginRequired                   Message = "username or email is required"
-	MsgLoginInvalid                    Message = "login must be a valid email address or username"
+	MsgEmailRequired                   Message = "email is required"
+	MsgValidEmailRequired              Message = "invalid email"
+	MsgUsernameRequired                Message = "username is required"
+	MsgUsernameTooShort                Message = "username is too short"
+	MsgUsernameTooLong                 Message = "username is too long"
+	MsgUsernameInvalidChars            Message = "username has invalid characters"
+	MsgUsernameInvalid                 Message = "invalid username"
+	MsgFirstNameRequired               Message = "first name is required"
+	MsgFirstNameTooLong                Message = "first name is too long"
+	MsgFirstNameInvalid                Message = "invalid first name"
+	MsgLastNameRequired                Message = "last name is required"
+	MsgLastNameTooLong                 Message = "last name is too long"
+	MsgLastNameInvalid                 Message = "invalid last name"
+	MsgPasswordTooShort                Message = "password is too short"
+	MsgPasswordLength                  Message = "invalid password length"
+	MsgLoginRequired                   Message = "email or username is required"
+	MsgLoginInvalid                    Message = "invalid email or username"
 	MsgPasswordRequired                Message = "password is required"
-	MsgPasswordInvalid                 Message = "password is invalid"
+	MsgPasswordInvalid                 Message = "invalid password"
 	MsgEmailOrUsernameExists           Message = "email or username already exists"
 	MsgFailedCreateUser                Message = "failed to create user"
-	MsgInvalidCredentials              Message = "invalid username/email or password"
+	MsgInvalidCredentials              Message = "invalid email, username, or password"
 	MsgFailedLoadUser                  Message = "failed to load user"
 	MsgFailedCreateToken               Message = "failed to create token"
 	MsgAuthServiceUnavailable          Message = "authentication service is unavailable"
@@ -44,17 +56,17 @@ const (
 	MsgFailedResetPassword             Message = "failed to reset password"
 	MsgPasswordResetSuccess            Message = "password has been reset"
 	MsgPasswordResetAccepted           Message = "if the email exists, a password reset link has been sent"
-	MsgOAuthProviderNotConfigured      Message = "%s OAuth is not configured"
+	MsgOAuthProviderNotConfigured      Message = "OAuth provider %s is not configured"
 	MsgFailedCreateOAuthState          Message = "failed to create OAuth state"
 	MsgFailedStartOAuth                Message = "failed to start %s OAuth"
 	MsgInvalidOAuthState               Message = "invalid OAuth state"
-	MsgOAuthDenied                     Message = "%s OAuth authorization was denied"
+	MsgOAuthDenied                     Message = "OAuth authorization was denied for %s"
 	MsgFailedExchangeOAuthCode         Message = "failed to exchange %s authorization code"
 	MsgFailedCreateOAuthUser           Message = "failed to create OAuth user"
 	MsgInvalidFrontendAuthCallbackURL  Message = "invalid frontend auth callback URL"
 	MsgFailedCreateAuthResponse        Message = "failed to create auth response"
-	MsgGrantTypeRequired               Message = "grant_type is required"
-	MsgUnsupportedGrantType            Message = "only password grant_type is supported"
+	MsgGrantTypeRequired               Message = "grant type is required"
+	MsgUnsupportedGrantType            Message = "only password grant type is supported"
 	MsgUsernamePasswordRequired        Message = "username and password are required"
 	MsgPasswordTooLong                 Message = "password is too long"
 	MsgInvalidUsernamePassword         Message = "invalid username or password"
@@ -99,18 +111,28 @@ var matcher = language.NewMatcher([]language.Tag{
 var translations = map[Locale]map[Message]string{
 	French: {
 		MsgInvalidJSONBody:                 "corps JSON invalide",
-		MsgValidEmailRequired:              "adresse email invalide",
-		MsgUsernameInvalid:                 "le nom d'utilisateur doit contenir 3 à 32 caractères et uniquement des lettres, chiffres ou underscores",
-		MsgFirstNameInvalid:                "le prénom est requis et doit contenir au maximum 100 caractères",
-		MsgLastNameInvalid:                 "le nom est requis et doit contenir au maximum 100 caractères",
-		MsgPasswordLength:                  "le mot de passe doit contenir entre 8 et 72 octets",
-		MsgLoginRequired:                   "nom d'utilisateur ou email requis",
-		MsgLoginInvalid:                    "l'identifiant doit être une adresse email valide ou un nom d'utilisateur",
+		MsgEmailRequired:                   "email requis",
+		MsgValidEmailRequired:              "email invalide",
+		MsgUsernameRequired:                "nom d'utilisateur requis",
+		MsgUsernameTooShort:                "nom d'utilisateur trop court",
+		MsgUsernameTooLong:                 "nom d'utilisateur trop long",
+		MsgUsernameInvalidChars:            "nom d'utilisateur contient des caractères invalides",
+		MsgUsernameInvalid:                 "nom d'utilisateur invalide",
+		MsgFirstNameRequired:               "prénom requis",
+		MsgFirstNameTooLong:                "prénom trop long",
+		MsgFirstNameInvalid:                "prénom invalide",
+		MsgLastNameRequired:                "nom requis",
+		MsgLastNameTooLong:                 "nom trop long",
+		MsgLastNameInvalid:                 "nom invalide",
+		MsgPasswordTooShort:                "mot de passe trop court",
+		MsgPasswordLength:                  "longueur du mot de passe invalide",
+		MsgLoginRequired:                   "email ou nom d'utilisateur requis",
+		MsgLoginInvalid:                    "email ou nom d'utilisateur invalide",
 		MsgPasswordRequired:                "mot de passe requis",
 		MsgPasswordInvalid:                 "mot de passe invalide",
 		MsgEmailOrUsernameExists:           "email ou nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
-		MsgInvalidCredentials:              "nom d'utilisateur/email ou mot de passe invalide",
+		MsgInvalidCredentials:              "email, nom d'utilisateur ou mot de passe invalide",
 		MsgFailedLoadUser:                  "échec du chargement de l'utilisateur",
 		MsgFailedCreateToken:               "échec de la création du jeton",
 		MsgAuthServiceUnavailable:          "service d'authentification indisponible",
@@ -127,13 +149,13 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateOAuthState:          "échec de la création de l'état OAuth",
 		MsgFailedStartOAuth:                "échec du démarrage de OAuth %s",
 		MsgInvalidOAuthState:               "état OAuth invalide",
-		MsgOAuthDenied:                     "l'autorisation OAuth %s a été refusée",
+		MsgOAuthDenied:                     "autorisation OAuth refusée pour %s",
 		MsgFailedExchangeOAuthCode:         "échec de l'échange du code d'autorisation %s",
 		MsgFailedCreateOAuthUser:           "échec de la création de l'utilisateur OAuth",
 		MsgInvalidFrontendAuthCallbackURL:  "URL de callback d'authentification frontend invalide",
 		MsgFailedCreateAuthResponse:        "échec de la création de la réponse d'authentification",
-		MsgGrantTypeRequired:               "grant_type est requis",
-		MsgUnsupportedGrantType:            "seul le grant_type password est pris en charge",
+		MsgGrantTypeRequired:               "type de grant requis",
+		MsgUnsupportedGrantType:            "seul le grant type password est pris en charge",
 		MsgUsernamePasswordRequired:        "nom d'utilisateur et mot de passe requis",
 		MsgPasswordTooLong:                 "mot de passe trop long",
 		MsgInvalidUsernamePassword:         "nom d'utilisateur ou mot de passe invalide",
@@ -170,18 +192,28 @@ var translations = map[Locale]map[Message]string{
 	},
 	German: {
 		MsgInvalidJSONBody:                 "ungültiger JSON-Body",
-		MsgValidEmailRequired:              "gültige E-Mail-Adresse ist erforderlich",
-		MsgUsernameInvalid:                 "der Benutzername muss 3 bis 32 Zeichen lang sein und darf nur Buchstaben, Zahlen oder Unterstriche enthalten",
-		MsgFirstNameInvalid:                "first_name ist erforderlich und darf höchstens 100 Zeichen lang sein",
-		MsgLastNameInvalid:                 "last_name ist erforderlich und darf höchstens 100 Zeichen lang sein",
-		MsgPasswordLength:                  "das Passwort muss zwischen 8 und 72 Bytes lang sein",
-		MsgLoginRequired:                   "Benutzername oder E-Mail ist erforderlich",
-		MsgLoginInvalid:                    "Login muss eine gültige E-Mail-Adresse oder ein Benutzername sein",
+		MsgEmailRequired:                   "E-Mail ist erforderlich",
+		MsgValidEmailRequired:              "E-Mail ist ungültig",
+		MsgUsernameRequired:                "Benutzername ist erforderlich",
+		MsgUsernameTooShort:                "Benutzername ist zu kurz",
+		MsgUsernameTooLong:                 "Benutzername ist zu lang",
+		MsgUsernameInvalidChars:            "Benutzername enthält ungültige Zeichen",
+		MsgUsernameInvalid:                 "Benutzername ist ungültig",
+		MsgFirstNameRequired:               "Vorname ist erforderlich",
+		MsgFirstNameTooLong:                "Vorname ist zu lang",
+		MsgFirstNameInvalid:                "Vorname ist ungültig",
+		MsgLastNameRequired:                "Nachname ist erforderlich",
+		MsgLastNameTooLong:                 "Nachname ist zu lang",
+		MsgLastNameInvalid:                 "Nachname ist ungültig",
+		MsgPasswordTooShort:                "Passwort ist zu kurz",
+		MsgPasswordLength:                  "Passwortlänge ist ungültig",
+		MsgLoginRequired:                   "E-Mail oder Benutzername ist erforderlich",
+		MsgLoginInvalid:                    "E-Mail oder Benutzername ist ungültig",
 		MsgPasswordRequired:                "Passwort ist erforderlich",
 		MsgPasswordInvalid:                 "Passwort ist ungültig",
 		MsgEmailOrUsernameExists:           "E-Mail oder Benutzername existiert bereits",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
-		MsgInvalidCredentials:              "Benutzername/E-Mail oder Passwort ist ungültig",
+		MsgInvalidCredentials:              "E-Mail, Benutzername oder Passwort ist ungültig",
 		MsgFailedLoadUser:                  "Benutzer konnte nicht geladen werden",
 		MsgFailedCreateToken:               "Token konnte nicht erstellt werden",
 		MsgAuthServiceUnavailable:          "Authentifizierungsdienst ist nicht verfügbar",
@@ -194,17 +226,17 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedResetPassword:             "Passwort konnte nicht zurückgesetzt werden",
 		MsgPasswordResetSuccess:            "Passwort wurde zurückgesetzt",
 		MsgPasswordResetAccepted:           "falls die E-Mail existiert, wurde ein Link zur Passwort-Zurücksetzung gesendet",
-		MsgOAuthProviderNotConfigured:      "%s OAuth ist nicht konfiguriert",
+		MsgOAuthProviderNotConfigured:      "OAuth-Anbieter %s ist nicht konfiguriert",
 		MsgFailedCreateOAuthState:          "OAuth-State konnte nicht erstellt werden",
 		MsgFailedStartOAuth:                "%s OAuth konnte nicht gestartet werden",
 		MsgInvalidOAuthState:               "ungültiger OAuth-State",
-		MsgOAuthDenied:                     "%s OAuth-Autorisierung wurde abgelehnt",
+		MsgOAuthDenied:                     "OAuth-Autorisierung für %s wurde abgelehnt",
 		MsgFailedExchangeOAuthCode:         "%s Autorisierungscode konnte nicht ausgetauscht werden",
 		MsgFailedCreateOAuthUser:           "OAuth-Benutzer konnte nicht erstellt werden",
 		MsgInvalidFrontendAuthCallbackURL:  "Frontend-Auth-Callback-URL ist ungültig",
 		MsgFailedCreateAuthResponse:        "Auth-Antwort konnte nicht erstellt werden",
-		MsgGrantTypeRequired:               "grant_type ist erforderlich",
-		MsgUnsupportedGrantType:            "nur der password grant_type wird unterstützt",
+		MsgGrantTypeRequired:               "Grant Type ist erforderlich",
+		MsgUnsupportedGrantType:            "Nur password Grant Type wird unterstützt",
 		MsgUsernamePasswordRequired:        "Benutzername und Passwort sind erforderlich",
 		MsgPasswordTooLong:                 "Passwort ist zu lang",
 		MsgInvalidUsernamePassword:         "Benutzername oder Passwort ist ungültig",
@@ -315,9 +347,22 @@ func T(locale Locale, message Message, args ...any) string {
 		}
 	}
 	if len(args) == 0 {
-		return template
+		return capitalizeFirst(template)
 	}
-	return fmt.Sprintf(template, args...)
+	return capitalizeFirst(fmt.Sprintf(template, args...))
+}
+
+func capitalizeFirst(value string) string {
+	first, size := utf8.DecodeRuneInString(value)
+	if first == utf8.RuneError && size == 0 {
+		return value
+	}
+
+	upper := unicode.ToUpper(first)
+	if upper == first {
+		return value
+	}
+	return string(upper) + value[size:]
 }
 
 func fromTag(tag language.Tag) Locale {

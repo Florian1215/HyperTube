@@ -48,7 +48,7 @@ Validation errors use field-based messages instead of a top-level `message`:
     "code": "VALIDATION_ERROR",
     "fields": {
       "email": {
-        "message": "valid email is required"
+        "message": "Invalid email"
       }
     }
   }
@@ -140,14 +140,14 @@ Content-Type: application/json
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `BAD_REQUEST` | `invalid JSON body` |
-| 400 | `VALIDATION_ERROR` | `valid email is required` |
-| 400 | `VALIDATION_ERROR` | `username must be 3-32 characters and contain only letters, numbers, or underscores` |
-| 400 | `VALIDATION_ERROR` | `first_name is required and must be at most 100 characters` |
-| 400 | `VALIDATION_ERROR` | `last_name is required and must be at most 100 characters` |
-| 400 | `VALIDATION_ERROR` | `password must be between 8 and 72 bytes` |
-| 409 | `USER_EXISTS` | `email or username already exists` |
-| 500 | `INTERNAL_ERROR` | `failed to create user` or `failed to create token` |
+| 400 | `BAD_REQUEST` | `Invalid JSON body` |
+| 400 | `VALIDATION_ERROR` | `Email is required` or `Invalid email` |
+| 400 | `VALIDATION_ERROR` | `Username is required`, `Username is too short`, `Username is too long`, or `Username has invalid characters` |
+| 400 | `VALIDATION_ERROR` | `First name is required` or `First name is too long` |
+| 400 | `VALIDATION_ERROR` | `Last name is required` or `Last name is too long` |
+| 400 | `VALIDATION_ERROR` | `Password is too short` or `Password is too long` |
+| 409 | `USER_EXISTS` | `Email or username already exists` |
+| 500 | `INTERNAL_ERROR` | `Failed to create user` or `Failed to create token` |
 
 Example:
 
@@ -155,20 +155,21 @@ Example:
 {
   "error": {
     "code": "USER_EXISTS",
-    "message": "email or username already exists"
+    "message": "Email or username already exists"
   }
 }
 ```
 
 ### POST /auth/login
 
-Logs in an existing password user by email and returns a bearer token.
+Logs in an existing password user by email or username and returns a bearer token.
 
 #### Request body
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `email` | string | yes | Valid email address. Trimmed and lowercased before lookup. |
+| `email` | string | yes, unless `login` is provided | Valid email address or username. Trimmed before lookup. Email addresses are lowercased. |
+| `login` | string | no | Alternative to `email`; accepts an email address or username. |
 | `password` | string | yes | Existing password. Must be present and no longer than 72 bytes. |
 
 Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
@@ -213,11 +214,11 @@ Content-Type: application/json
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `BAD_REQUEST` | `invalid JSON body` |
-| 400 | `VALIDATION_ERROR` | `valid email is required` |
-| 400 | `VALIDATION_ERROR` | `password is required` |
-| 401 | `INVALID_CREDENTIALS` | `invalid email or password` |
-| 500 | `INTERNAL_ERROR` | `failed to load user` or `failed to create token` |
+| 400 | `BAD_REQUEST` | `Invalid JSON body` |
+| 400 | `VALIDATION_ERROR` | `Email is required`, `Email or username is required`, `Invalid email`, `Invalid email or username`, `Username is too short`, or `Username is too long` |
+| 400 | `VALIDATION_ERROR` | `Password is required` or `Password is too long` |
+| 401 | `INVALID_CREDENTIALS` | `Invalid email, username, or password` |
+| 500 | `INTERNAL_ERROR` | `Failed to load user` or `Failed to create token` |
 
 Example:
 
@@ -225,7 +226,7 @@ Example:
 {
   "error": {
     "code": "INVALID_CREDENTIALS",
-    "message": "invalid email or password"
+    "message": "Invalid email, username, or password"
   }
 }
 ```
@@ -271,7 +272,7 @@ Content-Type: application/json
 ```json
 {
   "data": {
-    "message": "if the email exists, a password reset link has been sent"
+    "message": "If the email exists, a password reset link has been sent"
   }
 }
 ```
@@ -280,15 +281,15 @@ Content-Type: application/json
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `BAD_REQUEST` | `invalid JSON body` |
-| 400 | `VALIDATION_ERROR` | `valid email is required` |
-| 503 | `EMAIL_NOT_CONFIGURED` | `password reset email is not configured` |
-| 500 | `INTERNAL_ERROR` | `authentication service is unavailable` |
-| 500 | `INTERNAL_ERROR` | `failed to load user` |
-| 500 | `INTERNAL_ERROR` | `failed to create password reset token` |
-| 500 | `INTERNAL_ERROR` | `failed to store password reset token` |
-| 500 | `INTERNAL_ERROR` | `password reset URL is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to send password reset email` |
+| 400 | `BAD_REQUEST` | `Invalid JSON body` |
+| 400 | `VALIDATION_ERROR` | `Email is required` or `Invalid email` |
+| 503 | `EMAIL_NOT_CONFIGURED` | `Password reset email is not configured` |
+| 500 | `INTERNAL_ERROR` | `Authentication service is unavailable` |
+| 500 | `INTERNAL_ERROR` | `Failed to load user` |
+| 500 | `INTERNAL_ERROR` | `Failed to create password reset token` |
+| 500 | `INTERNAL_ERROR` | `Failed to store password reset token` |
+| 500 | `INTERNAL_ERROR` | `Password reset URL is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to send password reset email` |
 
 Example:
 
@@ -296,7 +297,7 @@ Example:
 {
   "error": {
     "code": "EMAIL_NOT_CONFIGURED",
-    "message": "password reset email is not configured"
+    "message": "Password reset email is not configured"
   }
 }
 ```
@@ -336,7 +337,7 @@ Content-Type: application/json
 ```json
 {
   "data": {
-    "message": "password has been reset"
+    "message": "Password has been reset"
   }
 }
 ```
@@ -345,12 +346,12 @@ Content-Type: application/json
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `BAD_REQUEST` | `invalid JSON body` |
-| 400 | `INVALID_RESET_TOKEN` | `password reset link is invalid or expired` |
-| 400 | `VALIDATION_ERROR` | `password must be between 8 and 72 bytes` |
-| 400 | `VALIDATION_ERROR` | `password is invalid` |
-| 500 | `INTERNAL_ERROR` | `authentication service is unavailable` |
-| 500 | `INTERNAL_ERROR` | `failed to reset password` |
+| 400 | `BAD_REQUEST` | `Invalid JSON body` |
+| 400 | `INVALID_RESET_TOKEN` | `Password reset link is invalid or expired` |
+| 400 | `VALIDATION_ERROR` | `Password is too short` or `Password is too long` |
+| 400 | `VALIDATION_ERROR` | `Invalid password` |
+| 500 | `INTERNAL_ERROR` | `Authentication service is unavailable` |
+| 500 | `INTERNAL_ERROR` | `Failed to reset password` |
 
 Example:
 
@@ -358,7 +359,7 @@ Example:
 {
   "error": {
     "code": "INVALID_RESET_TOKEN",
-    "message": "password reset link is invalid or expired"
+    "message": "Password reset link is invalid or expired"
   }
 }
 ```
@@ -393,9 +394,9 @@ Set-Cookie: hypertube_oauth_42_state=<state>; Path=/; Max-Age=600; HttpOnly; Sam
 
 | Status | Code | Message |
 |--------|------|---------|
-| 503 | `OAUTH_NOT_CONFIGURED` | `42 OAuth is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to create OAuth state` |
-| 500 | `INTERNAL_ERROR` | `failed to start 42 OAuth` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider 42 is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to create OAuth state` |
+| 500 | `INTERNAL_ERROR` | `Failed to start 42 OAuth` |
 
 Example:
 
@@ -403,7 +404,7 @@ Example:
 {
   "error": {
     "code": "OAUTH_NOT_CONFIGURED",
-    "message": "42 OAuth is not configured"
+    "message": "OAuth provider 42 is not configured"
   }
 }
 ```
@@ -462,18 +463,18 @@ With `FRONTEND_AUTH_CALLBACK_URL`, callback errors redirect to the frontend:
 
 ```http
 HTTP/1.1 303 See Other
-Location: http://localhost:4200/auth/callback?error=INVALID_OAUTH_STATE&error_description=invalid+OAuth+state
+Location: http://localhost:4200/auth/callback?error=INVALID_OAUTH_STATE&error_description=Invalid+OAuth+state
 ```
 
 Without a frontend callback URL, errors use the standard JSON error envelope.
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `INVALID_OAUTH_STATE` | `invalid OAuth state` |
+| 400 | `INVALID_OAUTH_STATE` | `Invalid OAuth state` |
 | 401 | `OAUTH_DENIED` | Provider error value, for example `access_denied`. |
-| 502 | `OAUTH_EXCHANGE_FAILED` | `failed to exchange 42 authorization code` |
-| 503 | `OAUTH_NOT_CONFIGURED` | `42 OAuth is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to create OAuth user`, `failed to create token`, or invalid frontend callback configuration |
+| 502 | `OAUTH_EXCHANGE_FAILED` | `Failed to exchange 42 authorization code` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider 42 is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to create OAuth user`, `Failed to create token`, or invalid frontend callback configuration |
 
 ### GET /auth/github/login → GET /auth/github/callback
 
@@ -505,9 +506,9 @@ Set-Cookie: hypertube_oauth_github_state=<state>; Path=/; Max-Age=600; HttpOnly;
 
 | Status | Code | Message |
 |--------|------|---------|
-| 503 | `OAUTH_NOT_CONFIGURED` | `GitHub OAuth is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to create OAuth state` |
-| 500 | `INTERNAL_ERROR` | `failed to start GitHub OAuth` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider GitHub is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to create OAuth state` |
+| 500 | `INTERNAL_ERROR` | `Failed to start GitHub OAuth` |
 
 Example:
 
@@ -515,7 +516,7 @@ Example:
 {
   "error": {
     "code": "OAUTH_NOT_CONFIGURED",
-    "message": "GitHub OAuth is not configured"
+    "message": "OAuth provider GitHub is not configured"
   }
 }
 ```
@@ -581,11 +582,11 @@ Without a frontend callback URL, errors use the standard JSON error envelope.
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `INVALID_OAUTH_STATE` | `invalid OAuth state` |
+| 400 | `INVALID_OAUTH_STATE` | `Invalid OAuth state` |
 | 401 | `OAUTH_DENIED` | Provider error value, for example `access_denied`. |
-| 502 | `OAUTH_EXCHANGE_FAILED` | `failed to exchange GitHub authorization code` |
-| 503 | `OAUTH_NOT_CONFIGURED` | `GitHub OAuth is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to create OAuth user`, `failed to create token`, or invalid frontend callback configuration |
+| 502 | `OAUTH_EXCHANGE_FAILED` | `Failed to exchange GitHub authorization code` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider GitHub is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to create OAuth user`, `Failed to create token`, or invalid frontend callback configuration |
 
 ### GET /auth/gitlab/login -> GET /auth/gitlab/callback
 
@@ -617,9 +618,9 @@ Set-Cookie: hypertube_oauth_gitlab_state=<state>; Path=/; Max-Age=600; HttpOnly;
 
 | Status | Code | Message |
 |--------|------|---------|
-| 503 | `OAUTH_NOT_CONFIGURED` | `GitLab OAuth is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to create OAuth state` |
-| 500 | `INTERNAL_ERROR` | `failed to start GitLab OAuth` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider GitLab is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to create OAuth state` |
+| 500 | `INTERNAL_ERROR` | `Failed to start GitLab OAuth` |
 
 #### GET /auth/gitlab/callback
 
@@ -652,11 +653,11 @@ callback shape. Without a frontend callback URL, the success response is
 
 | Status | Code | Message |
 |--------|------|---------|
-| 400 | `INVALID_OAUTH_STATE` | `invalid OAuth state` |
+| 400 | `INVALID_OAUTH_STATE` | `Invalid OAuth state` |
 | 401 | `OAUTH_DENIED` | Provider error value, for example `access_denied`. |
-| 502 | `OAUTH_EXCHANGE_FAILED` | `failed to exchange GitLab authorization code` |
-| 503 | `OAUTH_NOT_CONFIGURED` | `GitLab OAuth is not configured` |
-| 500 | `INTERNAL_ERROR` | `failed to create OAuth user`, `failed to create token`, or invalid frontend callback configuration |
+| 502 | `OAUTH_EXCHANGE_FAILED` | `Failed to exchange GitLab authorization code` |
+| 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider GitLab is not configured` |
+| 500 | `INTERNAL_ERROR` | `Failed to create OAuth user`, `Failed to create token`, or invalid frontend callback configuration |
 
 ### POST /oauth/token
 
@@ -740,7 +741,7 @@ Example:
 ```json
 {
   "error": "invalid_grant",
-  "error_description": "invalid username or password"
+  "error_description": "Invalid username or password"
 }
 ```
 
@@ -809,7 +810,7 @@ Returns the curated list of featured movies.
 ### Error responses
 
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load movies" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load movies" } }
 ```
 
 ---
@@ -840,7 +841,7 @@ Returns movies available for direct streaming.
 ### Error responses
 
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load movies" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load movies" } }
 ```
 
 ---
@@ -878,10 +879,10 @@ Searches for movies by title. On first request, fetches from tracker sources, re
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "title": { "message": "title query parameter is required" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "title": { "message": "Title query parameter is required" } } } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to search movies" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to search movies" } }
 ```
 
 ---
@@ -915,10 +916,10 @@ No request body is used. The user is taken from the JWT.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load movies" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load movies" } }
 ```
 
 ---
@@ -965,13 +966,13 @@ Returns full metadata for a single movie. Summary, director, and cast are fetche
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "movie not found" } }
+{ "error": { "code": "NOT_FOUND", "message": "Movie not found" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load movie" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load movie" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to fetch movie details" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to fetch movie details" } }
 ```
 
 ---
@@ -1011,10 +1012,10 @@ Returns available torrent sources for a movie.
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "no tracker source found for this movie" } }
+{ "error": { "code": "NOT_FOUND", "message": "No tracker source found for this movie" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load tracker source" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load tracker source" } }
 ```
 
 ---
@@ -1049,10 +1050,10 @@ Returns comments posted on a movie, ordered by most recent first.
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "no comments" } }
+{ "error": { "code": "NOT_FOUND", "message": "No comments" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to acess comments" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to access comments" } }
 ```
 
 ---
@@ -1095,10 +1096,10 @@ Posts a new comment on a movie as the authenticated user. Requires
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to create comment" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to create comment" } }
 ```
 
 ---
@@ -1127,10 +1128,10 @@ Returns all comments across all movies.
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "comments not found" } }
+{ "error": { "code": "NOT_FOUND", "message": "Comments not found" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load comments" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load comments" } }
 ```
 
 ---
@@ -1162,10 +1163,10 @@ Returns a single comment by its ID.
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "comment not found" } }
+{ "error": { "code": "NOT_FOUND", "message": "Comment not found" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to load comment" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load comment" } }
 ```
 
 ---
@@ -1206,13 +1207,13 @@ user. Requires `Authorization: Bearer <access_token>`.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
 ```
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "comment not found" } }
+{ "error": { "code": "NOT_FOUND", "message": "Comment not found" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to update comment" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to update comment" } }
 ```
 
 ---
@@ -1241,8 +1242,8 @@ No request body is used. The user is taken from the JWT.
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "comment not found" } }
+{ "error": { "code": "NOT_FOUND", "message": "Comment not found" } }
 ```
 ```json
-{ "error": { "code": "INTERNAL_ERROR", "message": "failed to delete comment" } }
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to delete comment" } }
 ```

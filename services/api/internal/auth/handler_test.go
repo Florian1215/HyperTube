@@ -376,11 +376,11 @@ func TestRegisterValidationErrorReturnsFieldErrors(t *testing.T) {
 	}
 
 	wantFields := map[string]string{
-		"email":      "valid email is required",
-		"username":   "username must be 3-32 characters and contain only letters, numbers, or underscores",
-		"first_name": "first_name is required and must be at most 100 characters",
-		"last_name":  "last_name is required and must be at most 100 characters",
-		"password":   "password must be between 8 and 72 bytes",
+		"email":      "Invalid email",
+		"username":   "Username is too short",
+		"first_name": "First name is required",
+		"last_name":  "Last name is required",
+		"password":   "Password is too short",
 	}
 	for field, wantMessage := range wantFields {
 		got, ok := errorBody.Fields[field]
@@ -408,10 +408,13 @@ func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	if errorBody.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
 	}
-	if got := errorBody.Fields["login"].Message; got != "login must be a valid email address or username" {
-		t.Fatalf("expected login validation message, got %q", got)
+	if _, ok := errorBody.Fields["login"]; ok {
+		t.Fatalf("did not expect login field validation, got %+v", errorBody.Fields["login"])
 	}
-	if got := errorBody.Fields["password"].Message; got != "password is required" {
+	if got := errorBody.Fields["email"].Message; got != "Invalid email or username" {
+		t.Fatalf("expected email validation message, got %q", got)
+	}
+	if got := errorBody.Fields["password"].Message; got != "Password is required" {
 		t.Fatalf("expected password validation message, got %q", got)
 	}
 }
@@ -429,10 +432,10 @@ func TestRegisterValidationErrorUsesAcceptLanguage(t *testing.T) {
 		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
 	errorBody := decodeErrorEnvelope(t, rec).Error
-	if got := errorBody.Fields["email"].Message; got != "adresse email invalide" {
+	if got := errorBody.Fields["email"].Message; got != "Email invalide" {
 		t.Fatalf("expected French email message, got %q", got)
 	}
-	if got := errorBody.Fields["password"].Message; got != "le mot de passe doit contenir entre 8 et 72 octets" {
+	if got := errorBody.Fields["password"].Message; got != "Mot de passe trop court" {
 		t.Fatalf("expected French password message, got %q", got)
 	}
 }
@@ -452,7 +455,7 @@ func TestLoginInvalidCredentialsUsesAcceptLanguage(t *testing.T) {
 	if errorBody.Code != "INVALID_CREDENTIALS" {
 		t.Fatalf("expected INVALID_CREDENTIALS, got %q", errorBody.Code)
 	}
-	if got := errorBody.Message; got != "Benutzername/E-Mail oder Passwort ist ungültig" {
+	if got := errorBody.Message; got != "E-Mail, Benutzername oder Passwort ist ungültig" {
 		t.Fatalf("expected German invalid credentials message, got %q", got)
 	}
 }
@@ -707,7 +710,7 @@ func TestOAuthTokenErrorUsesAcceptLanguage(t *testing.T) {
 	if response.Error != "invalid_request" {
 		t.Fatalf("expected invalid_request, got %q", response.Error)
 	}
-	if response.ErrorDescription != "grant_type est requis" {
+	if response.ErrorDescription != "Type de grant requis" {
 		t.Fatalf("expected French OAuth error description, got %q", response.ErrorDescription)
 	}
 }
@@ -1006,7 +1009,7 @@ func TestFortyTwoCallbackRedirectsProviderErrorToFrontend(t *testing.T) {
 	if got := location.Query().Get("error"); got != "OAUTH_DENIED" {
 		t.Fatalf("expected OAUTH_DENIED, got %q", got)
 	}
-	if got := location.Query().Get("error_description"); got != "42 OAuth authorization was denied" {
+	if got := location.Query().Get("error_description"); got != "OAuth authorization was denied for 42" {
 		t.Fatalf("expected localized provider error description, got %q", got)
 	}
 
@@ -1041,7 +1044,7 @@ func TestFortyTwoCallbackErrorUsesStoredOAuthLocale(t *testing.T) {
 	if got := location.Query().Get("error"); got != "INVALID_OAUTH_STATE" {
 		t.Fatalf("expected INVALID_OAUTH_STATE, got %q", got)
 	}
-	if got := location.Query().Get("error_description"); got != "état OAuth invalide" {
+	if got := location.Query().Get("error_description"); got != "État OAuth invalide" {
 		t.Fatalf("expected French OAuth error description, got %q", got)
 	}
 }

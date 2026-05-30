@@ -86,7 +86,7 @@ func TestUpdateInvalidBodyReturnsFieldValidationError(t *testing.T) {
 	if body.Error.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
 	}
-	if got := body.Error.Fields["body"].Message; got != "invalid request body" {
+	if got := body.Error.Fields["body"].Message; got != "Invalid request body" {
 		t.Fatalf("expected body field validation, got %q", got)
 	}
 }

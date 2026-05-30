@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func stringPtr(value string) *string {
+	return &value
+}
+
 func TestValidateRegisterRequestNormalizesInput(t *testing.T) {
 	params, fields, ok := validateRegisterRequest(registerRequest{
 		Email:     " Alice@Example.COM ",
@@ -147,7 +151,7 @@ func TestValidateRegisterRequestCollectsMultipleInvalidFields(t *testing.T) {
 
 func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
 	login, fields, ok := validateLoginRequest(loginRequest{
-		Email:    " Alice@Example.COM ",
+		Email:    stringPtr(" Alice@Example.COM "),
 		Password: "correct-horse-battery",
 	})
 
@@ -161,7 +165,7 @@ func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
 
 func TestValidateLoginRequestAcceptsUsername(t *testing.T) {
 	login, fields, ok := validateLoginRequest(loginRequest{
-		Email:    "alice_1",
+		Login:    stringPtr("alice_1"),
 		Password: "correct-horse-battery",
 	})
 
@@ -178,9 +182,10 @@ func TestValidateLoginRequestRejectsInvalidInput(t *testing.T) {
 		req   loginRequest
 		field string
 	}{
-		{req: loginRequest{Email: "not-an-email!", Password: "correct-horse-battery"}, field: "login"},
-		{req: loginRequest{Email: "alice@example.com", Password: ""}, field: "password"},
-		{req: loginRequest{Email: "alice@example.com", Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
+		{req: loginRequest{Email: stringPtr("not-an-email"), Password: "correct-horse-battery"}, field: "email"},
+		{req: loginRequest{Login: stringPtr("not-an-email!"), Password: "correct-horse-battery"}, field: "login"},
+		{req: loginRequest{Email: stringPtr("alice@example.com"), Password: ""}, field: "password"},
+		{req: loginRequest{Email: stringPtr("alice@example.com"), Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
 	}
 
 	for _, tt := range tests {

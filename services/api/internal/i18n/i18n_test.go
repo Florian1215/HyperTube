@@ -22,14 +22,17 @@ func TestFromHeaderMatchesSupportedLanguages(t *testing.T) {
 }
 
 func TestTranslateMessages(t *testing.T) {
-	if got := T(French, MsgValidEmailRequired); got != "adresse email invalide" {
+	if got := T(French, MsgValidEmailRequired); got != "Email invalide" {
 		t.Fatalf("unexpected French message: %q", got)
 	}
-	if got := T(German, MsgInvalidCredentials); got != "Benutzername/E-Mail oder Passwort ist ungültig" {
+	if got := T(German, MsgInvalidCredentials); got != "E-Mail, Benutzername oder Passwort ist ungültig" {
 		t.Fatalf("unexpected German message: %q", got)
 	}
-	if got := T(English, MsgOAuthProviderNotConfigured, "GitHub"); got != "GitHub OAuth is not configured" {
+	if got := T(English, MsgOAuthProviderNotConfigured, "GitHub"); got != "OAuth provider GitHub is not configured" {
 		t.Fatalf("unexpected English message: %q", got)
+	}
+	if got := T(French, MsgFailedCreateUser); got != "Échec de la création de l'utilisateur" {
+		t.Fatalf("unexpected capitalized French message: %q", got)
 	}
 }
 

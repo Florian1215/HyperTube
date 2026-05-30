@@ -91,9 +91,9 @@ type registerRequest struct {
 }
 
 type loginRequest struct {
-	Email    string `json:"email,omitempty"`
-	Login    string `json:"login,omitempty"`
-	Password string `json:"password"`
+	Email    *string `json:"email,omitempty"`
+	Login    *string `json:"login,omitempty"`
+	Password string  `json:"password"`
 }
 
 type authResponse struct {
