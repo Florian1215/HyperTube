@@ -2,7 +2,7 @@
 
 import {iMovieDetails} from "@/types/movie";
 import React, {useEffect, useState} from "react";
-import {CommentSection} from "@/components/Comments";
+import CommentSection from "@/components/Comments";
 import MovieInfoSection from "@/app/[locale]/movies/[id]/MovieInfoSection";
 import MoviesHero from "@/components/MovieHero";
 import {getMovie} from "@/services/movies";
@@ -27,7 +27,7 @@ export default function MoviePage() {
                 setMovie(undefined);
             }
         }
-        loadMovie().then(r => console.log(r));
+        loadMovie();
     }, [id, locale]);
 
     if (movie === undefined)

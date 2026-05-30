@@ -17,40 +17,51 @@ import {iMovie} from "@/types/movie";
 import {MovieCard} from "@/components/MovieCard";
 import {useNotification} from "@/context/NotificationContext";
 import {Locale, useLocale, useTranslations} from "next-intl";
-import {getComments} from "@/services/comments";
+import {deleteComment, getComments, patchComment, postComment} from "@/services/comments";
 import {getMovie} from "@/services/movies";
 
 dayjs.extend(relativeTime);
 
 
-export function CommentSection({movie}: {movie: iMovie}) {
+function CommentSection({movie}: {movie: iMovie}) {
     const {user} = useAuth();
     const {addNotification} = useNotification();
     const {openModal} = useModal();
     const [actualComments, setComments] = useState<iComment[]>([]);
     const [index, setIndex] = useState(0);
     const [totalPage, setTotalPage] = useState(1);
+    const locale = useLocale() as Locale;
+    const t = useTranslations("comments");
+    const tSuccess = useTranslations("notifications.success");
+
     useEffect(() => {
         async function loadComments() {
             try {
                 const data = await getComments(movie.imdb_id);
                 setComments(data.data);
+                for (let i = 0; i < data.data.length; i++)
+                    data.data[i].user = {"id":15,"email":"sgsafg@okfoe","username":"sagsafg","first_name":"fokeow","last_name":"okpewog","profile_picture":null,"joined_at":1780086231180,"color":"purple","watch_history":[]};
                 computeTotalPage(data, setTotalPage);
             } catch (error) {
                 console.error(error);
             }
         }
-        loadComments().then(r => console.log(r));
+        loadComments();
     }, [movie.imdb_id]);
-    const t = useTranslations("comments");
-    const tSuccess = useTranslations("notifications.success");
-    const addNewComment = (newComment: iComment) => {setComments([...actualComments, newComment]);}
+
+    const addNewComment = (newComment: iComment) => {
+        postComment(locale, newComment.movie_id, newComment.content).then(() => {
+            setComments([...actualComments, newComment]);
+        });
+    }
+
     const updateComment = (commentId: number, newContent: string) => {
         setComments(actualComments.map((comment) => {
             if (comment.id === commentId) {
                 const newComment = structuredClone(comment);
                 newComment.content = newContent.replace('\n\n', '\n');
                 newComment.edited = true;
+                patchComment(locale, commentId, newComment.content);
                 return newComment;
             }
             else
@@ -58,7 +69,12 @@ export function CommentSection({movie}: {movie: iMovie}) {
         }));
         addNotification(tSuccess("commentChange"), "success");
     }
-    const deleteComment = (commentId: number) => {setComments(actualComments.filter(c => c.id !== commentId));}
+
+    const deleteDisplayComment = (commentId: number) => {
+        deleteComment(locale, commentId).then(() => {
+            setComments(actualComments.filter(c => c.id !== commentId));
+        });
+    }
 
     return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
@@ -82,11 +98,13 @@ export function CommentSection({movie}: {movie: iMovie}) {
                 <SmallButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</SmallButton>
             }
         </div>
-        <Comments user={user} totalPage={totalPage} comments={actualComments} updateComment={updateComment} deleteComment={deleteComment} index={index} setIndex={setIndex}/>
+        <Comments user={user} totalPage={totalPage} comments={actualComments} updateComment={updateComment} deleteComment={deleteDisplayComment} index={index} setIndex={setIndex}/>
     </div>);
 }
 
-export function Comments({user, totalPage, index, setIndex, comments, updateComment, deleteComment}: {user: iUser | null, totalPage: number, index: number, setIndex: (idx: number) => void, comments: iComment[], updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void}) {
+export default CommentSection
+
+export function Comments({user, totalPage, index, setIndex, comments, updateComment, deleteComment, profilePage = false}: {user: iUser | null, totalPage: number, index: number, setIndex: (idx: number) => void, comments: iComment[], updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void, profilePage?: boolean}) {
     const locale = useLocale();
     const t = useTranslations("comments");
     if (locale === "fr")
@@ -98,16 +116,16 @@ export function Comments({user, totalPage, index, setIndex, comments, updateComm
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
 
     if (!comments || comments.length === 0)
-        return (<p className="small-text">{t(deleteComment === undefined ? "noCommentsYet" : "noCommentsPrompt")}</p>);
+        return (<p className="small-text">{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</p>);
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col-reverse gap-6">
-            {comments.map((comment, index) => (<Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteComment}/>))}
+            {comments.map((comment, index) => (<Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteComment} profilePage={profilePage} />))}
         </div>
     </Pagination>);
 }
 
-function Comment({comment, currentUser, updateComment, deleteComment}: { comment: iComment, currentUser: iUser | null, updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void}) {
+function Comment({comment, currentUser, updateComment, deleteComment, profilePage = false}: { comment: iComment, currentUser: iUser | null, updateComment?: (commentId: number, newContent: string) => void, deleteComment?: (commentId: number) => void, profilePage?: boolean}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -126,8 +144,9 @@ function Comment({comment, currentUser, updateComment, deleteComment}: { comment
                 console.error(error);
             }
         }
-        loadMovie().then(r => console.log(r));
-    }, [comment.movie_id, locale]);
+        if (profilePage)
+            loadMovie();
+    }, [comment.movie_id, locale, profilePage]);
 
     if (currentUser && currentUser.id === comment.user.id)
         user = currentUser;
