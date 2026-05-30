@@ -20,6 +20,18 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
+func (s *Store) create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error) {
+	rows, err := s.db.Query(ctx, `
+		INSERT INTO comments (user_id, movie_id, content, updated_at)
+		VALUES ($1, $2, $3, NOW())
+		RETURNING *
+	`, userID, movieID, content)
+	if err != nil {
+		return models.Comment{}, err
+	}
+	return pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Comment])
+}
+
 func (s *Store) findByID(ctx context.Context, id string) (*models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
         SELECT id, user_id, movie_id, content, updated_at

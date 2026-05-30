@@ -22,10 +22,36 @@ func NewCommentsHandler(store CommentStore) *CommentsHandler {
 }
 
 type CommentStore interface {
+	create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error)
 	findByID(ctx context.Context, id string) (*models.Comment, error)
 	findAll(ctx context.Context) ([]models.Comment, error)
 	update(ctx context.Context, content string, id string, user_id int) (models.Comment, error)
 	delete(ctx context.Context, id string, user_id int) error
+}
+
+func (h *CommentsHandler) Create(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
+		return
+	}
+
+	var input struct {
+		Content string `json:"content"`
+		MovieID string `json:"movie_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		log.Println("decode err:", err)
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
+		return
+	}
+	comment, err := h.store.create(r.Context(), input.Content, input.MovieID, int(userID))
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateComment)
+		return
+	}
+	respond.Item(w, http.StatusCreated, comment)
 }
 
 func (h *CommentsHandler) List(w http.ResponseWriter, r *http.Request) {
