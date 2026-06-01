@@ -146,7 +146,7 @@ func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
 	}
 
 	return newRouter(
-		movies.NewMoviesHandler(nil, nil, nil),
+		movies.NewMoviesHandler(nil, nil, nil, nil),
 		comments.NewCommentsHandler(nil),
 		auth.NewHandler(nil, tokens),
 		tokens,

@@ -48,6 +48,13 @@ type Comment struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
+type CommentWithUser struct {
+	ID        int       `json:"id"`
+	User      UserSmall `json:"user"`
+	Content   string    `json:"content"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
 type MovieSearchRow struct {
 	Query      string    `json:"query"      db:"query"`
 	ImdbID     string    `json:"imdb_id"    db:"imdbid"`

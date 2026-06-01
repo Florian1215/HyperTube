@@ -123,6 +123,10 @@ func (s *memoryUserStore) FindOrCreateOAuthUser(_ context.Context, params OAuthU
 	return user, nil
 }
 
+func (s *memoryUserStore) FindUserByID(_ context.Context, id int) (models.User, error) {
+	return s.findUserByID(int64(id))
+}
+
 func (s *memoryUserStore) findUserByID(userID int64) (models.User, error) {
 	if user, ok := s.usersByID[userID]; ok {
 		return user, nil

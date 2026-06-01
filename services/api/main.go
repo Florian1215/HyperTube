@@ -61,10 +61,10 @@ func main() {
 		authOptions = append(authOptions, auth.WithPasswordResetMailer(passwordResetMailer))
 	}
 	authHandler := auth.NewHandler(authStore, tokenManager, authOptions...)
-
+	
 	movieStore := movies.NewStore(db)
 	commentStore := comments.NewStore(db)
-
+	
 	c411Client, err := c411.NewClient()
 	if err != nil {
 		log.Fatalf("init C411 client: %v", err)
@@ -77,11 +77,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("init TMDB client: %v", err)
 	}
-
+	
 	seedFeatured(ctx, c411Client, tmdbClient, movieStore)
-
+	
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
-	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient)
+	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient, authStore)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
 	streamHandler := stream.NewStreamHandler()
 
@@ -303,7 +303,6 @@ func getPasswordResetTTL() time.Duration {
 
 //go:embed mockup_front_stream.html
 var mockupHTML []byte
-
 
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {

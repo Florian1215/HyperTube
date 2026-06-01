@@ -40,6 +40,11 @@ func (s *fakeCommentStore) delete(ctx context.Context, id string, userID int) er
 	return s.deleteErr
 }
 
+func (s *fakeCommentStore) create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error) {
+	s.updateUserID = userID
+	return models.Comment{ID: 1, UserID: userID, Content: content}, nil	
+}
+
 func TestUpdateUsesAuthenticatedUserID(t *testing.T) {
 	store := &fakeCommentStore{}
 	handler := NewCommentsHandler(store)

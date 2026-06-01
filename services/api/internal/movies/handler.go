@@ -18,6 +18,7 @@ type MoviesHandler struct {
 	store     movieStore
 	searchers []MovieSearcher
 	tmdb      tmdbClient
+	userStore *auth.Store
 }
 
 type movieStore interface {
@@ -46,8 +47,8 @@ type tmdbClient interface {
 	FindByName(ctx context.Context, title string, year int) (models.Movie, error)
 }
 
-func NewMoviesHandler(store movieStore, searchers []MovieSearcher, tmdb tmdbClient) *MoviesHandler {
-	return &MoviesHandler{store: store, searchers: searchers, tmdb: tmdb}
+func NewMoviesHandler(store movieStore, searchers []MovieSearcher, tmdb tmdbClient, userStore *auth.Store) *MoviesHandler {
+	return &MoviesHandler{store: store, searchers: searchers, tmdb: tmdb, userStore: userStore}
 }
 
 // GetMovies returns a list of movies.
@@ -280,7 +281,22 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	respond.List(w, http.StatusOK, comments)
+	result := make([]models.CommentWithUser, 0, len(comments))
+	for _, comment := range comments {
+		user, err := h.userStore.FindUserByID(r.Context(), comment.UserID)
+		if err != nil {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to load User")
+			return
+		}
+		result = append(result, models.CommentWithUser{
+			ID:        comment.ID,
+			Content:   comment.Content,
+			UpdatedAt: comment.UpdatedAt,
+			User:      models.ToUserSmall(user),
+		})
+	}
+	respond.List(w, http.StatusOK, result)
 }
 
 // CreateComment posts a new comment on a movie.
