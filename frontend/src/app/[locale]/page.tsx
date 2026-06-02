@@ -44,7 +44,7 @@ export default function HomePage() {
     useEffect(() => {
         async function loadMovies() {
             try {
-                const data = await getMovies(locale);
+                const data = await getMovies(locale, 'featured');
                 for (let i = 0; i < data.data.length; i++)
                     data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/original/");
                 setMovies(data.data);
