@@ -35,15 +35,3 @@ func TestTranslateMessages(t *testing.T) {
 		t.Fatalf("unexpected capitalized French message: %q", got)
 	}
 }
-
-func TestTMDBLanguage(t *testing.T) {
-	if got := TMDBLanguage(French); got != "fr-FR" {
-		t.Fatalf("TMDBLanguage(French) = %q", got)
-	}
-	if got := TMDBLanguage(German); got != "de-DE" {
-		t.Fatalf("TMDBLanguage(German) = %q", got)
-	}
-	if got := TMDBLanguage(English); got != "en-US" {
-		t.Fatalf("TMDBLanguage(English) = %q", got)
-	}
-}

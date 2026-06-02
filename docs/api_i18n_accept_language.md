@@ -43,7 +43,6 @@ That package owns:
 - `Accept-Language` parsing and fallback behavior
 - message keys used by handlers
 - translations for user-facing API messages
-- TMDB language conversion, for example `fr` to `fr-FR`
 
 Handlers no longer need to know translation details. They choose a stable
 message key, and the response layer renders that key in the request language.
