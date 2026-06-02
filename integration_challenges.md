@@ -271,11 +271,8 @@ The frontend uses locales `en`, `fr`, and `de`.
 
 Recommendation:
 
-- Map frontend locales to TMDB language tags:
-  - `en` -> `en-US`
-  - `fr` -> `fr-FR`
-  - `de` -> `de-DE`
-- Pass the mapped language when loading movie details.
+- Pass the frontend locale unchanged when loading movie details.
+- Keep TMDB-specific language conversion inside the backend TMDB client.
 - Define fallback behavior if TMDB does not return localized text.
 
 ### 10. Streaming Is a Separate Security Problem

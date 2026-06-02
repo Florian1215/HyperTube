@@ -328,17 +328,6 @@ func (l Locale) String() string {
 	}
 }
 
-func TMDBLanguage(locale Locale) string {
-	switch locale {
-	case French:
-		return "fr-FR"
-	case German:
-		return "de-DE"
-	default:
-		return "en-US"
-	}
-}
-
 func T(locale Locale, message Message, args ...any) string {
 	template := string(message)
 	if localeTranslations, ok := translations[locale]; ok {

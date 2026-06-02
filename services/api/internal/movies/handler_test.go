@@ -268,8 +268,27 @@ func TestGetMoviesId_OK(t *testing.T) {
 	if body.Data.Director != "Denis Villeneuve" {
 		t.Errorf("expected director 'Denis Villeneuve', got %q", body.Data.Director)
 	}
-	if tmdb.lastLanguage != "fr-FR" {
-		t.Errorf("expected TMDB language fr-FR, got %q", tmdb.lastLanguage)
+	if tmdb.lastLanguage != "fr" {
+		t.Errorf("expected forwarded language fr, got %q", tmdb.lastLanguage)
+	}
+}
+
+func TestGetMoviesId_LanguageQueryFallback(t *testing.T) {
+	tmdb := &fakeTMDB{}
+	h := &MoviesHandler{tmdb: tmdb, store: &fakeStore{
+		movies: []models.Movie{{ImdbID: "693134"}},
+	}}
+
+	req := httptest.NewRequest(http.MethodGet, "/movies/693134?lang=de", nil)
+	req.SetPathValue("id", "693134")
+	rec := httptest.NewRecorder()
+	h.GetMoviesId(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	if tmdb.lastLanguage != "de" {
+		t.Errorf("expected forwarded language de, got %q", tmdb.lastLanguage)
 	}
 }
 

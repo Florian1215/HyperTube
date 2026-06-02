@@ -938,7 +938,7 @@ Returns full metadata for a single movie. Summary, director, and cast are fetche
 
 | Parameter | Type   | Required | Default  | Description                        |
 |-----------|--------|----------|----------|------------------------------------|
-| `lang`    | string | no       | `en-US`  | TMDB language code for the details |
+| `lang`    | string | no       | `en`     | App locale for the details (`en`, `fr`, or `de`) |
 
 ### Response
 

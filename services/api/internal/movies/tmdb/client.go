@@ -163,7 +163,7 @@ func (c *Client) FindByName(ctx context.Context, title string, year int) (models
 }
 
 func (c *Client) GetMovieDetails(ctx context.Context, tmdbID string, language string) (models.MovieDetails, error) {
-		switch language {
+	switch language {
 	case "de":
 		language = "de-DE"
 	case "en":
