@@ -91,6 +91,15 @@ docker compose up           # dev, no VPN
 docker compose --profile vpn up   # with VPN
 ```
 
+PostgreSQL initializes the schema from `db/` only when its Docker volume is
+created. After a schema change, reset the local development database before
+starting the stack again:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
 | Container | Port |
 |---|---|
 | `postgres` | 5432 |
