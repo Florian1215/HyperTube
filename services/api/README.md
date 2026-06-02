@@ -779,12 +779,45 @@ Serves a single `.ts` segment (e.g. `stream0.ts`). The player fetches these auto
 
 ## Movie and comment endpoints
 
-`GET /movies` is public. The remaining movie and comment endpoints in this
+`GET /movies` and `GET /movies/featured` are public. The remaining movie and comment endpoints in this
 section require `Authorization: Bearer <jwt>`.
 
-### GET /movies
+## GET /movies
 
-Returns the curated list of featured movies.
+Returns a list of tracker-wide popular movies.
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "imdb_id": "string",
+      "title": "string",
+      "year": "string",
+      "poster_url": "string",
+      "backdrop_url": "string",
+      "note": 8.1,
+      "genres": [878, 12, 18]
+    }
+  ],
+  "meta": { "total": 12, "page": 0, "per_page": 12 }
+}
+```
+
+> Only the card fields are returned. Full details are available via `GET /movies/{id}`.
+
+### Error responses
+
+```json
+{ "error": { "code": "INTERNAL_ERROR", "message": "Failed to load movies" } }
+```
+
+---
+
+## GET /movies/featured
+
+Returns a curated selection of movies.
 
 ### Response
 
