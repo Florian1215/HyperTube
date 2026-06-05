@@ -1,7 +1,7 @@
 import React from "react";
 import {EyeIcon} from "@/components/Icons";
 
-export default function Input({id, type, placeholder, value, onChange, className, errorMessage }: {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string, errorMessage?: string}) {
+export default function Input({id, type, placeholder, value, onChange, className, errorMessage, ref}: {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string, errorMessage?: string, ref?: any}) {
     const isPassword = type === "password";
     const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
@@ -10,7 +10,7 @@ export default function Input({id, type, placeholder, value, onChange, className
     }
 
     return (<div className={"flex flex-col w-full h-16 relative " + className}>
-        <input id={id} type={isPasswordVisible && isPassword ? "text" : type} placeholder=""
+        <input id={id} ref={ref} type={isPasswordVisible && isPassword ? "text" : type} placeholder=""
                value={value}
                onChange={(e) => onChange(e.target.value.trim())}
                className={"peer py-4 m-0 w-full h-8 bg-white  border-b focus:border-b-2 " + (errorMessage ? "border-b-red text-red" : "text-black")}/>
