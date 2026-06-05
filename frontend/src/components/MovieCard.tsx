@@ -12,7 +12,7 @@ import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 
 
-export function MoviesCard({movieSets, className} : {movieSets: iMovie[] | null, className?: string}) {
+export function MoviesCard({movieSets, className} : {movieSets?: iMovie[], className?: string}) {
     const {user} = useAuth();
 
     return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>

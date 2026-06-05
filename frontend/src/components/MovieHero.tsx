@@ -5,7 +5,7 @@ import {Link} from "@/i18n/navigation";
 import {SecondaryButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
 
-export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | string[], movie: iMovie | null, onClick?: () => void }) {
+export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | string[], movie?: iMovie, onClick?: () => void }) {
     const [index, setIndex] = useState(0);
     if (items.length === 0 && movie)
         items = [movie.backdrop_url];
@@ -25,13 +25,13 @@ export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | 
             {items.length > 0 ?
                 items.map((item, index) => (
                 <MovieHero key={index} movie={typeof item === "string" ? movie : item} backdrop={typeof item === "string" ? item : undefined} onClick={onClick} onClickLeft={slideLeft} onClickRight={slideRight}/>)) :
-                <MovieHero movie={null} onClickLeft={slideLeft} onClickRight={slideRight} />
+                <MovieHero movie={undefined} onClickLeft={slideLeft} onClickRight={slideRight} />
             }
         </div>
     </div>);
 }
 
-function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movie: iMovie | null, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string }) {
+function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movie?: iMovie, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string }) {
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
 
