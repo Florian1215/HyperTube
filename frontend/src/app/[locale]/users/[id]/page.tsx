@@ -19,7 +19,7 @@ export default function Page() {
 
     useEffect(() => {
         if (error) {
-            const node = handleError(error as ApiError, "Film");
+            const node = handleError(error as ApiError, "User");
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setErrorNode(node);
         }
