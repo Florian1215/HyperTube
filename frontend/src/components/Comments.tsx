@@ -20,6 +20,7 @@ import {Locale, useLocale, useTranslations} from "next-intl";
 import {deleteComment, patchComment, postComment, useComments} from "@/api/comments";
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {useMovie} from "@/api/movies";
+import Link from "next/link";
 
 dayjs.extend(relativeTime);
 
@@ -136,11 +137,11 @@ function Comment({comment, currentUser, updateComment, deleteComment, profilePag
         {(!updateComment && movie) && <div className="flex justify-center mb-3">
             <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={movie.data} /></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
-            <ProfilePicture user={user}/>
+            <Link href={`/users/${user.id}`}><ProfilePicture user={user}/></Link>
             <div className="w-full">
                 <div className="flex justify-between w-full">
                     <div>
-                        <span className="text-bold">{user.username}</span>
+                        <Link href={`/users/${user.id}`} className="text-bold hover:underline">{user.username}</Link>
                         <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs.unix(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
                     {
