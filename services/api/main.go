@@ -100,64 +100,8 @@ func connectDB(ctx context.Context) *pgxpool.Pool {
 	if err := db.Ping(ctx); err != nil {
 		log.Fatalf("ping db: %v", err)
 	}
-	ensureSchema(ctx, db)
 	log.Println("connected to database")
 	return db
-}
-
-func ensureSchema(ctx context.Context, db *pgxpool.Pool) {
-	if _, err := db.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS citext`); err != nil {
-		log.Fatalf("migrate citext extension: %v", err)
-	}
-	if _, err := db.Exec(ctx, `
-		ALTER TABLE users
-			ADD COLUMN IF NOT EXISTS email CITEXT,
-			ADD COLUMN IF NOT EXISTS first_name TEXT NOT NULL DEFAULT '',
-			ADD COLUMN IF NOT EXISTS last_name TEXT NOT NULL DEFAULT '',
-			ADD COLUMN IF NOT EXISTS password_hash TEXT,
-			ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-	`); err != nil {
-		log.Fatalf("migrate users auth columns: %v", err)
-	}
-	if _, err := db.Exec(ctx, `UPDATE users SET email = username || '@placeholder.invalid' WHERE email IS NULL`); err != nil {
-		log.Fatalf("migrate users email placeholders: %v", err)
-	}
-	if _, err := db.Exec(ctx, `
-		ALTER TABLE users
-			ALTER COLUMN email SET NOT NULL,
-			ALTER COLUMN first_name DROP DEFAULT,
-			ALTER COLUMN last_name DROP DEFAULT
-	`); err != nil {
-		log.Fatalf("migrate users auth column constraints: %v", err)
-	}
-	if _, err := db.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture TEXT`); err != nil {
-		log.Fatalf("migrate users.profile_picture: %v", err)
-	}
-	if _, err := db.Exec(ctx, `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key`); err != nil {
-		log.Fatalf("migrate users email constraint: %v", err)
-	}
-	if _, err := db.Exec(ctx, `DROP INDEX IF EXISTS users_email_key`); err != nil {
-		log.Fatalf("migrate users email index: %v", err)
-	}
-	if _, err := db.Exec(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS users_password_email_key ON users (email) WHERE COALESCE(password_hash, '') <> ''`); err != nil {
-		log.Fatalf("migrate users password email index: %v", err)
-	}
-	if _, err := db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS oauth_accounts (
-			id               SERIAL PRIMARY KEY,
-			user_id          INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			provider         TEXT        NOT NULL,
-			provider_user_id TEXT        NOT NULL,
-			provider_email   CITEXT,
-			created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			UNIQUE (provider, provider_user_id),
-			UNIQUE (user_id, provider)
-		)
-	`); err != nil {
-		log.Fatalf("migrate oauth_accounts: %v", err)
-	}
 }
 
 func seedFeatured(ctx context.Context, c411Client *c411.Client, tmdbClient *tmdb.Client, store *movies.Store) {
@@ -239,10 +183,7 @@ func newRouter(
 		r.Get("/movies", moviesHandler.GetMovies)
 
 		r.Group(func(r chi.Router) {
-			// Dev-only: keep formerly protected routes reachable while the frontend is built out.
-			// Switch back to auth.RequireAuth(tokenManager) before enabling production auth.
-			r.Use(auth.DevAuthenticateAs(1))
-			// r.Use(auth.RequireAuth(tokenManager))
+			r.Use(auth.RequireAuth(tokenManager))
 
 			r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
 			r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)

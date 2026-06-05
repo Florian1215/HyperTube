@@ -114,13 +114,12 @@ func (h *MoviesHandler) GetMoviesId(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-  
+
 	locale := i18n.FromRequest(r)
 	if r.Header.Get("Accept-Language") == "" && r.URL.Query().Get("lang") != "" {
 		locale = i18n.FromValue(r.URL.Query().Get("lang"))
 	}
-	language := i18n.TMDBLanguage(locale)
-	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, language)
+	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, locale.String())
 	if err != nil {
 		log.Printf("TMDB details error for TmdbID %s: %v", movie.TmdbID, err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedFetchMovieDetails)

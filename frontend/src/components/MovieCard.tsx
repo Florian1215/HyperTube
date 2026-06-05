@@ -12,7 +12,7 @@ import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 
 
-export function MoviesCard({movieSets, className} : {movieSets: iMovie[] | null, className?: string}) {
+export function MoviesCard({movieSets, className} : {movieSets?: iMovie[], className?: string}) {
     const {user} = useAuth();
 
     return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>
@@ -43,7 +43,7 @@ export function MovieCard({movie, user, className, showTitle = true} : {movie: i
     return (<Link href={"/movies/" + movie.imdb_id} className={containerClass + " " + className}>
         {!isLoaded && (<div className="custom-loading absolute inset-0" />)}
         <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-               width={1000} height={1000} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})} loading="eager"
+               width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
         />
         {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}}></div>}
@@ -81,7 +81,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
                     {movie && <Link href={"/movies/" + movie.imdb_id}>
                         <Image
                             className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-                            width={150} height={100} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}
+                            width={150} height={100} src={movie.backdrop_url.replace("/w500/", "/w300/")} alt={t("posterAlt", {title: movie.title})}
                             loading="eager"
                             onLoad={() => setIsLoaded(true)}
                         />

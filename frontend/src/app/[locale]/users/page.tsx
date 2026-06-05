@@ -1,113 +1,34 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
-import {MoviesCard} from "@/components/MovieCard";
-import ProfilePicture from "@/components/ProfilePicture";
-import {iUser} from "@/types/user";
-import ProfileTab from "@/app/[locale]/users/ProfileTab";
-import AuthTab from "@/app/[locale]/users/AuthTab";
-import {Comments} from "@/components/Comments";
+import React, {useEffect} from "react";
+import {ProfileTab, AvatarTab} from "@/components/profile/ProfileTab";
+import AuthTab from "@/components/profile/AuthTab";
 import {useAuth} from "@/context/AuthContext";
-import {iComment} from "@/types/comment";
-import Pagination, {computeTotalPage} from "@/components/Pagination";
-import {useSearchParams} from "next/navigation";
-import {Locale, useLocale, useTranslations} from "next-intl";
-import {iMovie} from "@/types/movie";
-import {getWatchedMovies} from "@/services/movies";
-import {getComments} from "@/services/comments";
+import ProfilePage, {tTab} from "@/components/profile/ProfilePage";
+import MovieHistoryTab from "@/components/profile/HistoryTab";
+import CommentsTab from "@/components/profile/CommentTab";
+import {useRouter} from "@/i18n/navigation";
 
 export default function Page() {
-    const tabs = {profile: ProfileTab, auth: AuthTab, history: MovieHistoryTab, comments: CommentsTab};
-    type tTab = keyof typeof tabs;
+    const {user, loading, updateUser} = useAuth();
+    const router = useRouter();
+    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsTab}];
 
-    const searchParams = useSearchParams();
-    const tabParam = searchParams.get("tab");
-    const initialTab: tTab = tabParam && tabParam in tabs ? (tabParam as tTab) : "profile"
-    const {user, updateUser} = useAuth();
-    const [activeTab, setActiveTab] = useState<tTab>(initialTab);
-    const t = useTranslations("profile.tabs");
-    const tProfile = useTranslations("profile");
-    const locale = useLocale();
+    useEffect(() => {
+        if (!loading && !user)
+            router.push("/");
+    }, [user, loading, router]);
+
+
     if (!user)
         return null;
-    const ActiveTab = tabs[activeTab];
-    const date = new Date(user.joined_at);
-    const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 
-    const switchTab = (tabName: keyof typeof tabs) => {
-        if (activeTab !== tabName)
-            setActiveTab(tabName);
+    if (user?.oauth_method && (user.oauth_method === "42" || user.oauth_method === "github"))
+        tabs.unshift({name: "avatar", comp: AvatarTab});
+    else {
+        tabs.unshift({name: "auth", comp: AuthTab});
+        tabs.unshift({name: "profile", comp: ProfileTab});
     }
-    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 sm:px-4 mb-10">
-        <div></div>
-        <div className="flex items-center gap-4 justify-center">
-            <ProfilePicture user={user} size={1}/>
-            <div className="flex flex-col items-start">
-                <h2>{user.first_name} {user.last_name[0]}.</h2>
-                <p className="uppercase">{tProfile("memberSince", {date: memberSince, username: user.username})}</p>
-            </div>
-        </div>
-        <div className="flex h-12 sm:h-16">
-            <div className="border-b border-r w-12"></div>
-            {(Object.keys(tabs) as Array<keyof typeof tabs>).map((tabName, index) => (<button
-                key={index}
-                className={"custom-condensed text-2xl sm:text-4xl tracking-wide sm:tracking-normal border-t border-r px-4 sm:px-12 xl:px-16 border-b text-nowrap" + (activeTab === tabName ? " border-b-white" : "")}
-                onClick={() => switchTab(tabName)}>{t(tabName)}</button>))}
-            <div className="border-b w-full"></div>
-        </div>
-        <ActiveTab user={user} updateUser={updateUser}/>
-    </div>);
-}
 
-function MovieHistoryTab() {
-    const [index, setIndex] = useState(0);
-    const changeIndex = (newIndex: number) => {setIndex(newIndex);}
-    const t = useTranslations("profile");
-    const [watchMovies, setWatchMovies] = useState<iMovie[] | null>(null);
-    const [totalPage, setTotalPage] = useState(1);
-    const locale = useLocale() as Locale;
-
-    useEffect(() => {
-        async function loadMovies() {
-            try {
-                const data = await getWatchedMovies(locale);
-                for (let i = 0; i < data.data.length; i++)
-                    data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/original/");
-                computeTotalPage(data, setTotalPage);
-                setWatchMovies(data.data);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        loadMovies();
-    }, [locale]);
-
-    if (!watchMovies || watchMovies.length === 0)
-        return (<p className="small-text">{t("noMoviesYet")}</p>);
-    return (<Pagination currenIndex={index} onClick={changeIndex} totalPage={totalPage}>
-        <MoviesCard movieSets={watchMovies}/>
-    </Pagination>);
-}
-
-function CommentsTab({user}: {user: iUser}) {
-    const [postComments, setPostComments] = useState<iComment[]>([]);
-    const [index, setIndex] = useState(0);
-    const [totalPage, setTotalPage] = useState(1);
-
-    useEffect(() => {
-        async function loadComments() {
-            try {
-                const data = await getComments();
-                computeTotalPage(data, setTotalPage);
-                setPostComments(data.data);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        loadComments();
-    }, []);
-
-    return (<div className="max-w-3xl w-full mx-auto">
-        <Comments user={user} comments={postComments} index={index} setIndex={setIndex} totalPage={totalPage} profilePage={true} />
-    </div>);
+    return <ProfilePage user={user} updateUser={updateUser} tabs={tabs} />;
 }

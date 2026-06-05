@@ -138,8 +138,6 @@ route safety, password reset, movie APIs, and comment ownership flows.
 - `/api/v1/health` only confirms that the process can answer HTTP requests. DB
   connectivity is validated during startup, but there is no separate readiness
   endpoint yet.
-- Startup runs a small compatibility migration for user profile/OAuth account
-  behavior in addition to the SQL files in `db/`.
 
 ## Defense Checklist
 

@@ -1,6 +1,6 @@
 import {Button} from "@/components/Buttons";
 import React from "react";
-import {handleOauth} from "@/services/auth";
+import {handleOauth} from "@/api/auth";
 
 export type tOauthService = "42" | "github";
 
