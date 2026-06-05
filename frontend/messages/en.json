@@ -36,8 +36,7 @@
     "directors": "Directors",
     "stars": "Stars",
     "synopsis": "Synopsis",
-    "posterAlt": "Poster of movie: {title}",
-    "noResult": "Film not found"
+    "posterAlt": "Poster of movie: {title}"
   },
   "comments": {
     "title": "Comments",
@@ -58,7 +57,8 @@
       "profile": "Profile",
       "auth": "Password",
       "history": "History",
-      "comments": "Comments"
+      "comments": "Comments",
+      "avatar": "Avatar"
     },
     "saveChanges": "Save changes",
     "selectNewAvatar": "Select new avatar",
@@ -80,7 +80,7 @@
   "auth": {
     "signin": {
       "title": "Sign in",
-      "email": "Email",
+      "login": "Email or username",
       "password": "Password",
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",
@@ -140,7 +140,9 @@
     "error": {
       "unknown": "An unexpected error occurred. Please try again.",
       "network": "Unable to contact the server. Please check your internet connection.",
-      "unauthorized": "You must be signed in to perform this action.",
+      "loginRequired": "You must be signed in to access this page.",
+      "notFoundFilm": "Film not found",
+      "notFoundUser": "User not found",
       "forbidden": "You do not have permission to perform this action.",
       "passwordIncorrect": "The current password is incorrect.",
       "passwordTooShort": "The password must contain at least 8 characters.",
