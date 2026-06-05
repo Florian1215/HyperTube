@@ -192,6 +192,8 @@ func newRouter(
 			r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
 			r.Get("/movies/{id}/comments", moviesHandler.GetComments)
 			r.Post("/movies/{id}/comments", moviesHandler.PostComment)
+			
+			r.Get("/comment", commentsHandler.List)
 
 			r.Post("/comments", commentsHandler.Create)
 			r.Get("/comments", commentsHandler.List)

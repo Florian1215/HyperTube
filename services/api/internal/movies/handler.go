@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/i18n"
@@ -165,7 +166,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		page = 0
 	}
 
-	// Warm path: search already in DB, serve directly
 	total, err := h.store.countSearchResults(r.Context(), title)
 	if err != nil {
 		log.Println("db err:", err)
@@ -187,7 +187,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Cold path: Scrape torrent sources
 	torrents, err := h.collectTorrents(r.Context(), title)
 	if err != nil {
 		log.Println("search err:", err)
@@ -224,7 +223,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Store the ordered search results so future pages can be served from DB
 	imdbIDs := make([]string, len(allMovies))
 	for i, m := range allMovies {
 		imdbIDs[i] = m.ImdbID
@@ -233,7 +231,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		log.Println("db err:", err)
 	}
 
-	// Return the sliced array
 	start := page * pagnationLimit
 	if start >= len(allMovies) {
 		respond.ListPaginated(w, http.StatusOK, []movieResponse{}, len(allMovies), page, pagnationLimit)
@@ -268,17 +265,34 @@ func (h *MoviesHandler) GetMovieTorrents(w http.ResponseWriter, r *http.Request)
 
 // ListComments returns comments for a movie.
 func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
-	imdbid := r.PathValue("id")
-	comments, err := h.store.listComments(r.Context(), imdbid)
+	movieID := r.PathValue("id")
+	if strings.TrimSpace(movieID) == "" {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		return
+	}
+
+	movie, err := h.store.findByID(r.Context(), movieID)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgNoComments)
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		} else {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovie)
+		}
+		return
+	}
+
+	comments, err := h.store.listComments(r.Context(), movie.ImdbID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			respond.List(w, http.StatusOK, []models.Comment{})
 		} else {
 			log.Println("db err:", err)
 			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
 		}
 		return
 	}
+
 	respond.List(w, http.StatusOK, comments)
 }
 
@@ -290,6 +304,23 @@ func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	movieID := r.PathValue("id")
+	if strings.TrimSpace(movieID) == "" {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		return
+	}
+
+	movie, err := h.store.findByID(r.Context(), movieID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		} else {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovie)
+		}
+		return
+	}
+
 	var input struct {
 		Content string `json:"content"`
 	}
@@ -298,16 +329,25 @@ func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
 		return
 	}
+
+	content := strings.TrimSpace(input.Content)
+	if content == "" {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return
+	}
+
 	comment := models.Comment{
 		UserID:  int(userID),
-		MovieID: r.PathValue("id"),
-		Content: input.Content,
+		MovieID: movie.ImdbID,
+		Content: content,
 	}
-	if comment, err := h.store.createComment(r.Context(), comment); err != nil {
+
+	comment, err = h.store.createComment(r.Context(), comment)
+	if err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateComment)
 		return
-	} else {
-		respond.Item(w, http.StatusCreated, comment)
 	}
+
+	respond.Item(w, http.StatusCreated, comment)
 }
