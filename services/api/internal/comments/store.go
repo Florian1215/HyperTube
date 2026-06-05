@@ -20,7 +20,7 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error) {
+func (s *Store) create(ctx context.Context, content string, movieID int, userID int) (models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
 		INSERT INTO comments (user_id, movie_id, content, updated_at)
 		VALUES ($1, $2, $3, NOW())
@@ -29,14 +29,16 @@ func (s *Store) create(ctx context.Context, content string, movieID string, user
 	if err != nil {
 		return models.Comment{}, err
 	}
+
 	return pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Comment])
 }
 
-func (s *Store) findByID(ctx context.Context, id string) (*models.Comment, error) {
+func (s *Store) findByID(ctx context.Context, id int) (*models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
-        SELECT id, user_id, movie_id, content, updated_at
-        FROM comments 
-        WHERE id = $1`, id)
+		SELECT id, user_id, movie_id, content, updated_at
+		FROM comments
+		WHERE id = $1
+	`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -48,14 +50,16 @@ func (s *Store) findByID(ctx context.Context, id string) (*models.Comment, error
 		}
 		return nil, err
 	}
+
 	return &comment, nil
 }
 
 func (s *Store) findAll(ctx context.Context) ([]models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
-        SELECT id, user_id, movie_id, content, updated_at
-        FROM comments 
-        ORDER BY updated_at DESC`)
+		SELECT id, user_id, movie_id, content, updated_at
+		FROM comments
+		ORDER BY updated_at DESC
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -67,41 +71,44 @@ func (s *Store) findAll(ctx context.Context) ([]models.Comment, error) {
 		}
 		return nil, err
 	}
+
 	return comments, nil
 }
 
-func (s *Store) update(ctx context.Context, content string, id string, user_id int) (models.Comment, error) {
+func (s *Store) update(ctx context.Context, content string, id int, userID int) (models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
 		UPDATE comments
 		SET content = $1, updated_at = NOW()
 		WHERE id = $2 AND user_id = $3
 		RETURNING *
-	`, content, id, user_id)
-
+	`, content, id, userID)
 	if err != nil {
 		return models.Comment{}, err
 	}
 
-	r, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Comment])
+	comment, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Comment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.Comment{}, ErrNotFound
 		}
 		return models.Comment{}, err
 	}
-	return r, nil
+
+	return comment, nil
 }
 
-func (s *Store) delete(ctx context.Context, id string, user_id int) error {
+func (s *Store) delete(ctx context.Context, id int, userID int) error {
 	tag, err := s.db.Exec(ctx, `
 		DELETE FROM comments
 		WHERE id = $1 AND user_id = $2
-	`, id, user_id)
+	`, id, userID)
 	if err != nil {
 		return err
 	}
+
 	if tag.RowsAffected() == 0 {
 		return ErrNotFound
 	}
+
 	return nil
 }

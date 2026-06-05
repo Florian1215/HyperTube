@@ -6,6 +6,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/i18n"
@@ -22,11 +24,19 @@ func NewCommentsHandler(store CommentStore) *CommentsHandler {
 }
 
 type CommentStore interface {
-	create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error)
-	findByID(ctx context.Context, id string) (*models.Comment, error)
+	create(ctx context.Context, content string, movieID int, userID int) (models.Comment, error)
+	findByID(ctx context.Context, id int) (*models.Comment, error)
 	findAll(ctx context.Context) ([]models.Comment, error)
-	update(ctx context.Context, content string, id string, user_id int) (models.Comment, error)
-	delete(ctx context.Context, id string, user_id int) error
+	update(ctx context.Context, content string, id int, userID int) (models.Comment, error)
+	delete(ctx context.Context, id int, userID int) error
+}
+
+func parsePositiveID(raw string) (int, bool) {
+	id, err := strconv.Atoi(raw)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+	return id, true
 }
 
 func (h *CommentsHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -45,12 +55,38 @@ func (h *CommentsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
 		return
 	}
-	comment, err := h.store.create(r.Context(), input.Content, input.MovieID, int(userID))
+
+	content := strings.TrimSpace(input.Content)
+	if content == "" {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return
+	}
+
+	rawMovieID := r.PathValue("movie_id")
+	if rawMovieID == "" {
+		rawMovieID = r.PathValue("id")
+	}
+	if rawMovieID == "" {
+		rawMovieID = input.MovieID
+	}
+
+	movieID, ok := parsePositiveID(rawMovieID)
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		return
+	}
+
+	comment, err := h.store.create(r.Context(), content, movieID, int(userID))
 	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+			return
+		}
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateComment)
 		return
 	}
+
 	respond.Item(w, http.StatusCreated, comment)
 }
 
@@ -65,11 +101,17 @@ func (h *CommentsHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	respond.List(w, http.StatusOK, comments)
 }
 
 func (h *CommentsHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+	id, ok := parsePositiveID(r.PathValue("id"))
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
+		return
+	}
+
 	comment, err := h.store.findByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -80,6 +122,7 @@ func (h *CommentsHandler) Get(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	respond.Item(w, http.StatusOK, comment)
 }
 
@@ -90,7 +133,12 @@ func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := r.PathValue("id")
+	id, ok := parsePositiveID(r.PathValue("id"))
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
+		return
+	}
+
 	var input struct {
 		Content string `json:"content"`
 	}
@@ -99,7 +147,14 @@ func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
 		return
 	}
-	comment, err := h.store.update(r.Context(), input.Content, id, int(userID))
+
+	content := strings.TrimSpace(input.Content)
+	if content == "" {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return
+	}
+
+	comment, err := h.store.update(r.Context(), content, id, int(userID))
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
@@ -109,6 +164,7 @@ func (h *CommentsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedUpdateComment)
 		return
 	}
+
 	respond.Item(w, http.StatusOK, comment)
 }
 
@@ -119,7 +175,12 @@ func (h *CommentsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := r.PathValue("id")
+	id, ok := parsePositiveID(r.PathValue("id"))
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgCommentNotFound)
+		return
+	}
+
 	err := h.store.delete(r.Context(), id, int(userID))
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -130,5 +191,6 @@ func (h *CommentsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedDeleteComment)
 		return
 	}
+
 	respond.Item(w, http.StatusOK, nil)
 }
