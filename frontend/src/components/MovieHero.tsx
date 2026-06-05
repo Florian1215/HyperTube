@@ -8,7 +8,7 @@ import {useTranslations} from "next-intl";
 export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | string[], movie?: iMovie, onClick?: () => void }) {
     const [index, setIndex] = useState(0);
     if (items.length === 0 && movie)
-        items = [movie.backdrop_url];
+        items = [movie.backdrop_url.replace("/w500/", "/w1280/")];
 
     const slideLeft = () => setIndex((prev) => (prev - 1 + items.length) % items.length);
     const slideRight = () => setIndex((prev) => (prev + 1) % items.length);
@@ -39,7 +39,7 @@ function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movi
         <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
             {movie && <Image className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
                              height={5000} loading="eager" onLoad={() => setIsLoaded(true)}
-                             src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}/>}
+                             src={movie.backdrop_url.replace("/w500/", "/original/")} alt={t("posterAlt", {title: movie.title})}/>}
             <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left"
                  onClick={onClickLeft}></div>
             {onClick ?
