@@ -36,8 +36,7 @@
     "directors": "Réalisateurs",
     "stars": "Acteurs",
     "synopsis": "Synopsis",
-    "posterAlt": "Affiche du film : {title}",
-    "noResult": "Film introuvable"
+    "posterAlt": "Affiche du film : {title}"
   },
   "comments": {
     "title": "Commentaires",
@@ -58,7 +57,8 @@
       "profile": "Profil",
       "auth": "Mot de passe",
       "history": "Historique",
-      "comments": "Commentaires"
+      "comments": "Commentaires",
+      "avatar": "Avatar"
     },
     "saveChanges": "Enregistrer les modifications",
     "selectNewAvatar": "Choisir un nouvel avatar",
@@ -80,7 +80,7 @@
   "auth": {
     "signin": {
       "title": "Connexion",
-      "email": "E-mail",
+      "login": "E-mail ou nom d'utilisateur",
       "password": "Mot de passe",
       "forgotPassword": "Mot de passe oublié ?",
       "submit": "Se connecter",
@@ -140,7 +140,9 @@
     "error": {
       "unknown": "Une erreur inattendue est survenue. Veuillez réessayer.",
       "network": "Impossible de contacter le serveur. Vérifiez votre connexion internet.",
-      "unauthorized": "Vous devez être connecté pour effectuer cette action.",
+      "loginRequired": "Vous devez être connecté pour accéder à cette page.",
+      "notFoundFilm": "Film introuvable",
+      "notFoundUser": "Utilisateur introuvable",
       "forbidden": "Vous n'avez pas les permissions nécessaires pour effectuer cette action.",
       "passwordIncorrect": "Le mot de passe actuel est incorrect.",
       "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",

@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import {useRouter, usePathname} from '@/i18n/navigation';
+import {useRouter, usePathname} from "@/i18n/navigation";
 import {routing, tLocale} from "@/i18n/request";
 import {useLocale} from "next-intl";
 import {useSearchParams} from "next/navigation";

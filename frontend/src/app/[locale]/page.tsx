@@ -10,12 +10,11 @@ import Section from "@/components/Section";
 import {useAuth} from "@/context/AuthContext";
 import {iUser} from "@/types/user";
 import {useResponsiveSize} from "@/context/utils";
-import {Locale, useLocale, useTranslations} from "next-intl";
-import {getMovies} from "@/services/movies";
+import {useTranslations} from "next-intl";
+import {useMovies} from "@/api/movies";
 
 export default function HomePage() {
     const {user} = useAuth();
-    const locale = useLocale() as Locale;
     const t = useTranslations("home");
     let continueWatching;
     const size = useResponsiveSize();
@@ -35,53 +34,25 @@ export default function HomePage() {
     else if (size === "xl")
         heightAnimationLogo = 300;
 
-    const [movies, setMovies] = useState<iMovie[] | null>(null);
-    const [moviesSets, setMoviesSets] = useState<iMovie[] | null>(null);
-    const [dirctedWatchMovies, setDirctedWatchMovies] = useState<iMovie[]>([]);
+    const {data: movies} = useMovies();
+    const {data: allDirctedWatchMovies} = useMovies("directstream", undefined, !!user);
+    const dirctedWatchMovies = filterAlreadyWatch(user, allDirctedWatchMovies?.data);
+    const moviesSets = filterAlreadyWatch(user, movies?.data);
     const mostRated = moviesSets ? structuredClone(moviesSets).sort((a, b) => b.note - a.note) : null;
     const popular = structuredClone(moviesSets);
-
-    useEffect(() => {
-        async function loadMovies() {
-            try {
-                const data = await getMovies(locale);
-                for (let i = 0; i < data.data.length; i++)
-                    data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/original/");
-                setMovies(data.data);
-                setMoviesSets(filterAlreadyWatch(user, data.data));
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        loadMovies();
-    }, [locale, user]);
-
-    useEffect(() => { // todo filter by film already watch
-        async function loadMovies() {
-            try {
-                const data = await getMovies(locale, "directstream");
-                for (let i = 0; i < data.data.length; i++)
-                    data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", "/w1280/");
-                setDirctedWatchMovies(data.data);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        loadMovies();
-    }, [locale]);
 
     if (user && movies) {
         continueWatching = user.watch_history
             .filter(h => h.watch_percent < 100)
-            .map(m => movies.find(mSearch => mSearch.imdb_id === m.movie_id))
+            .map(m => movies.data.find(mSearch => mSearch.imdb_id === m.movie_id))
             .filter(m => m !== undefined);
     }
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
         {movies ?
-            <MoviesHero items={movies.slice(0, 5)} movie={movies[0]}/> :
-            <MoviesHero items={[]} movie={null}/>}
+            <MoviesHero items={movies.data.slice(0, 5)} movie={movies.data[0]}/> :
+            <MoviesHero items={[]} movie={undefined}/>}
         <GenreTags genreCount={genreCount} className="justify-center w-full my-8"/>
 
         {(continueWatching && continueWatching.length > 0) &&
@@ -97,7 +68,7 @@ export default function HomePage() {
             <MoviesCard movieSets={mostRated.slice(0, moviesCount)}/>
         </Section>}
 
-        {dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
+        {dirctedWatchMovies && dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
             <MoviesCard movieSets={dirctedWatchMovies}/>
         </Section>}
 
@@ -162,7 +133,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
     </div>);
 }
 
-function filterAlreadyWatch(user: iUser | null, movies: iMovie[] | null) {
+function filterAlreadyWatch(user: iUser | null, movies?: iMovie[]) {
     if (!movies)
         return null;
     if (!user)

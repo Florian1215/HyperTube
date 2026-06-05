@@ -1,7 +1,7 @@
 import React, {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {useModal} from "@/context/ModalContext";
 import {useRouter} from "@/i18n/navigation";
-import {useGenres} from "@/context/useGenres";
+import {useGenres} from "@/hooks/useGenres";
 import {iGenre} from "@/types/genre";
 import {useLocale} from "next-intl";
 import {tLocale} from "@/i18n/request";
