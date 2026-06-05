@@ -22,6 +22,7 @@ export function useHandleError() {
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     return useCallback((error: ApiError, translation: "Film" | "User") => {
         if (error instanceof ApiError) {
             if (error.status === 401) {
@@ -29,12 +30,10 @@ export function useHandleError() {
                 return (<p className="small-text hover:underline hover:cursor-pointer" onClick={() =>
                     openModal({type: "signin"})
                 }>{tError("loginRequired")}</p>);
-            } else if (error.status === 404) {
+            } else if (error.status === 404)
                 return (<p className="small-text">{tError("notFound" + translation)}</p>);
-            }
-        } else {
+        } else
             addNotification(tError("network"), "error");
-        }
         return null;
-    }, [openModal, tError, addNotification]);
+    }, [tError]);
 }

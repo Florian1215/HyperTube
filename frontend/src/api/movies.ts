@@ -1,7 +1,6 @@
 import {apiClient, tListResponse, tResponse} from "@/api/client";
 import {iMovie, iMovieDetails} from "@/types/movie";
 import {useApiQuery} from "@/hooks/useApiQuery";
-import {ApiError} from "@/api/errors";
 
 function getMovie(movieId: string, locale: string) {
     return apiClient<tResponse<iMovieDetails>>(`/movies/${movieId}`, locale);

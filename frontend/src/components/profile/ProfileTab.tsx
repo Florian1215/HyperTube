@@ -7,14 +7,20 @@ import {Button, SmallButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
 
 
-export default function ProfileTab({user, updateUser}: {user: iUser, updateUser: (patch: Partial<iUser>) => void}) {
+export function ProfileTab({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
     return (<div className="flex flex-col sm:flex-row gap-14 sm:gap-20 xl:gap-30 max-w-9/10 xl:max-w-2/3 w-full justify-center items-center mx-auto">
         <ProfileSection user={user} updateUser={updateUser} />
         <AvatarSection user={user} updateUser={updateUser} />
     </div>);
 }
 
-function ProfileSection({user, updateUser}: {user: iUser, updateUser: (patch: Partial<iUser>) => void}) {
+export function AvatarTab({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
+    return (<div className="max-w-9/10 sm:max-w-1/2 xl:max-w-2/6 w-full mx-auto">
+        <AvatarSection user={user} updateUser={updateUser} />
+    </div>);
+}
+
+function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
     const { addNotification } = useNotification();
     const [email, setEmail] = useState("");
     const [firstname, setFirstname] = useState("");
@@ -49,7 +55,8 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser: (patch: Pa
             setUsername("");
         }
         if (isInfoChanged) {
-            updateUser(newUser);
+            if (updateUser)
+                updateUser(newUser);
             addNotification(tSuccess("infoChanged"), "success");
         }
     }
@@ -68,12 +75,12 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser: (patch: Pa
     </div>);
 }
 
-function AvatarSection({user, updateUser}: {user: iUser, updateUser: (patch: Partial<iUser>) => void}) {
+function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
     const colors = ["yellow", "pink", "green", "purple", "blue", "red"];
     const t = useTranslations("profile");
 
-    const handleNewPP = (newPP: string | null) => {updateUser({profile_picture: newPP});}
-    const handleSwitchColors = (newColor: string) => {updateUser({color: newColor});}
+    const handleNewPP = (newPP: string | null) => {if (updateUser) updateUser({profile_picture: newPP});}
+    const handleSwitchColors = (newColor: string) => {if (updateUser) updateUser({color: newColor});}
     const uploadNewPP = () => {handleNewPP("/images/profile_pictures.jpeg");}
 
     return (<div className="flex flex-col gap-2 items-center justify-center">
