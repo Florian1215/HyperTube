@@ -72,20 +72,15 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 	fields := validationErrors{}
 
-	field, rawLogin := loginFieldAndValue(req)
-	login := strings.TrimSpace(rawLogin)
+	login := strings.TrimSpace(req.Login)
 	if login == "" {
-		if field == "email" {
-			fields[field] = i18n.MsgEmailRequired
-		} else {
-			fields[field] = i18n.MsgLoginRequired
-		}
+		fields["login"] = i18n.MsgLoginRequired
 	} else {
 		identifier, validationMessage, ok := validateLoginIdentifier(login)
 		if ok {
 			login = identifier
 		} else {
-			fields[field] = validationMessage
+			fields["login"] = validationMessage
 		}
 	}
 	if req.Password == "" {
@@ -98,16 +93,6 @@ func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 		return "", fields, false
 	}
 	return login, nil, true
-}
-
-func loginFieldAndValue(req loginRequest) (string, string) {
-	if req.Login != nil {
-		return "login", *req.Login
-	}
-	if req.Email != nil {
-		return "email", *req.Email
-	}
-	return "email", ""
 }
 
 func validateLoginIdentifier(raw string) (string, i18n.Message, bool) {

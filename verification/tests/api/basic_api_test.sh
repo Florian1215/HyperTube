@@ -74,7 +74,7 @@ pretty_curl "POST" "$BASE_URL/auth/register" "$REGISTER_PAYLOAD"
 print_section "Login User"
 
 LOGIN_PAYLOAD='{
-  "email": "test@example.com",
+  "login": "test@example.com",
   "password": "password123"
 }'
 

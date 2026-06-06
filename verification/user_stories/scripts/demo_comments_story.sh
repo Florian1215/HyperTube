@@ -366,7 +366,7 @@ LOGIN_PAYLOAD="$(
   jq -n \
     --arg email "$DEMO_EMAIL" \
     --arg password "$DEMO_PASSWORD" \
-    '{email: $email, password: $password}'
+    '{login: $email, password: $password}'
 )"
 
 COMMENT_TEXT="Comment demo ${RUN_ID}: this movie deserves a discussion thread."

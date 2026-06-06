@@ -231,7 +231,7 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 		t.Fatal("stored hash must match original password")
 	}
 
-	loginBody := `{"email": "alice@example.com", "password": "correct-horse-battery"}`
+	loginBody := `{"login": "alice@example.com", "password": "correct-horse-battery"}`
 	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(loginBody))
 	loginRec := httptest.NewRecorder()
 
@@ -292,14 +292,14 @@ func TestRegisterAcceptsFrontendNameAliases(t *testing.T) {
 	}
 	assertNoFrontendNameAliasFields(t, registerRec)
 
-	loginBody := `{"email": "frontend_1", "password": "correct-horse-battery"}`
+	loginBody := `{"login": "frontend_1", "password": "correct-horse-battery"}`
 	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(loginBody))
 	loginRec := httptest.NewRecorder()
 
 	handler.Login(loginRec, loginReq)
 
 	if loginRec.Code != http.StatusOK {
-		t.Fatalf("expected username login through email field 200, got %d: %s", loginRec.Code, loginRec.Body.String())
+		t.Fatalf("expected username login 200, got %d: %s", loginRec.Code, loginRec.Body.String())
 	}
 }
 
@@ -395,7 +395,7 @@ func TestRegisterValidationErrorReturnsFieldErrors(t *testing.T) {
 
 func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":"not-an-email","password":""}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"login":"not-an-email!","password":""}`))
 	rec := httptest.NewRecorder()
 
 	handler.Login(rec, req)
@@ -408,14 +408,29 @@ func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	if errorBody.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
 	}
-	if _, ok := errorBody.Fields["login"]; ok {
-		t.Fatalf("did not expect login field validation, got %+v", errorBody.Fields["login"])
+	if _, ok := errorBody.Fields["email"]; ok {
+		t.Fatalf("did not expect email field validation, got %+v", errorBody.Fields["email"])
 	}
-	if got := errorBody.Fields["email"].Message; got != "Invalid email or username" {
-		t.Fatalf("expected email validation message, got %q", got)
+	if got := errorBody.Fields["login"].Message; got != "Invalid email or username" {
+		t.Fatalf("expected login validation message, got %q", got)
 	}
 	if got := errorBody.Fields["password"].Message; got != "Password is required" {
 		t.Fatalf("expected password validation message, got %q", got)
+	}
+}
+
+func TestLoginRejectsEmailField(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":"alice@example.com","password":"correct-horse-battery"}`))
+	rec := httptest.NewRecorder()
+
+	handler.Login(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeErrorEnvelope(t, rec).Error.Code; got != "BAD_REQUEST" {
+		t.Fatalf("expected BAD_REQUEST, got %q", got)
 	}
 }
 
@@ -442,7 +457,7 @@ func TestRegisterValidationErrorUsesAcceptLanguage(t *testing.T) {
 
 func TestLoginInvalidCredentialsUsesAcceptLanguage(t *testing.T) {
 	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":"missing@example.com","password":"right-password"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"login":"missing@example.com","password":"right-password"}`))
 	req.Header.Set("Accept-Language", "de")
 	rec := httptest.NewRecorder()
 
@@ -513,11 +528,11 @@ func TestLoginRejectsUnknownUserAndWrongPassword(t *testing.T) {
 	}{
 		{
 			name: "unknown user",
-			body: `{"email":"missing@example.com","password":"right-password"}`,
+			body: `{"login":"missing@example.com","password":"right-password"}`,
 		},
 		{
 			name: "wrong password",
-			body: `{"email":"alice@example.com","password":"wrong-password"}`,
+			body: `{"login":"alice@example.com","password":"wrong-password"}`,
 		},
 	}
 

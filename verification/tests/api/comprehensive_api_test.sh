@@ -356,10 +356,10 @@ register_payload() {
 }
 
 login_payload() {
-  local email="$1"
+  local login="$1"
   local password="$2"
 
-  jq -n --arg email "$email" --arg password "$password" '{email:$email, password:$password}'
+  jq -n --arg login "$login" --arg password "$password" '{login:$login, password:$password}'
 }
 
 extract_token_from_body() {
@@ -486,7 +486,7 @@ test_auth_validation_and_success() {
   expect_error_case \
     "Login rejects unknown JSON field" \
     "POST" "/auth/login" "400" "BAD_REQUEST" "invalid JSON body" \
-    '{"email":"extra@example.com","password":"password123","remember":true}'
+    '{"login":"extra@example.com","password":"password123","remember":true}'
 
   payload="$(login_payload "not-an-email!" "$test_password")"
   expect_error_case \
