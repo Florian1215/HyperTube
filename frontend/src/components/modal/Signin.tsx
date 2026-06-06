@@ -19,8 +19,10 @@ export default function Signin() {
     const [password, setPassword] = useState("");
     const [loginInput, setLoginInput] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [disableBtn, setDisableBtn] = useState(false);
     const t = useTranslations("auth.signin");
     const tSuccess = useTranslations("notifications.success");
+    const tError = useTranslations("validationErrors");
     const {execute} = useApiMutation(setErrors);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -34,30 +36,49 @@ export default function Signin() {
     if (activeModal.type !== "signin")
         return null;
 
+    const newSetterError = (value: Record<string, string>) => {
+        const newErrors = {...errors, ...value};
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length === 0 || Object.values(newErrors).every((value) => !value))
+            setDisableBtn(false);
+        else
+            setDisableBtn(true);
+    };
+
     const handleLogin = async () => {
         const makePostRequest = async () => {
-            return await execute((locale) => postLogin(locale, loginInput, password));
+            return await execute((locale) => postLogin(locale, loginInput.trim(), password));
         };
 
-        makePostRequest().then((data) => {
-            if (data) {
-                login(data.data.user, data.data.access_token);
-                closeModal();
-                addNotification(tSuccess("login"), "success");
-            }
-        })
+        if (loginInput.trim().length === 0 || password.length === 0) {
+            const requiredErrors: Record<string, string> = {};
+            if (loginInput.trim().length === 0)
+                requiredErrors["login"] = tError("requiredField");
+            if (password.length === 0)
+                requiredErrors["password"] = tError("requiredField");
+            setErrors(requiredErrors);
+            setDisableBtn(true);
+        } else {
+            makePostRequest().then((data) => {
+                if (data) {
+                    login(data.data.user, data.data.access_token);
+                    closeModal();
+                    addNotification(tSuccess("login"), "success");
+                }
+            })
+        }
     };
 
     return (<ModalLayout onClose={closeModal} title={t("title")}>
-        <Input id="login-signin" value={loginInput} onChange={setLoginInput} type="text" placeholder={t("login")} errorMessage={errors["login"]} ref={inputRef}></Input>
-        <Input id="password-signin" value={password} onChange={setPassword} type="password" placeholder={t("password")} errorMessage={errors["password"]}></Input>
-        <div className={"relative mb-4" + (errors["password"] ? " pt-5" : "")}>
+        <Input id="login-signin" value={loginInput} onChange={setLoginInput} type="text" placeholder={t("login")} requestErrorMessage={errors["login"]} setErrorsMessage={newSetterError} ref={inputRef}></Input>
+        <Input id="password-signin" value={password} onChange={setPassword} type="password" placeholder={t("password")} requestErrorMessage={errors["password"]} setErrorsMessage={newSetterError} ></Input>
+        <div className={"relative mb-4" + (errors["password"] ? " pt-3" : "")}>
             <SmallButton className="absolute bottom-1" onClick={() => {
                 closeModal();
                 openModal({type: "forgot-password"});
             }}>{t("forgotPassword")}</SmallButton>
         </div>
-        <Button className="h-8" onClick={handleLogin}>{t("submit")}</Button>
+        <Button className="h-8" onClick={handleLogin} disabled={disableBtn}>{t("submit")}</Button>
         <div className="flex gap-2 mt-5">
             <span className="text-sm">{t("noAccount")}</span>
             <SmallButton onClick={() => {
