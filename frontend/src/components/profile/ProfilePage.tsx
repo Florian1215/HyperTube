@@ -25,7 +25,7 @@ export default function ProfilePage({user, tabs, updateUser}: {user: iUser, tabs
     const locale = useLocale();
     const ActiveTab = tabs[activeTab].comp;
 
-    const date = new Date(user.joined_at);
+    const date = new Date(user.created_at);
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 
     const switchTab = (tabIdx: number) => {
