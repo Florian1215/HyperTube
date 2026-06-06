@@ -286,7 +286,7 @@ register_payload() {
 login_payload() {
   local password="$1"
 
-  jq -n --arg email "$RESET_EMAIL" --arg password "$password" '{email:$email, password:$password}'
+  jq -n --arg email "$RESET_EMAIL" --arg password "$password" '{login:$email, password:$password}'
 }
 
 request_reset_payload() {

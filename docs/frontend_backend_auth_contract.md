@@ -45,13 +45,13 @@ Supported backend-style payload:
 ## Login
 
 The project requirement says login must work with username and password. The
-current frontend still sends the login value in a JSON field named `email`.
+backend login endpoint accepts the login value in a JSON field named `login`.
 
-`POST /api/v1/auth/login` therefore accepts either:
+`POST /api/v1/auth/login` accepts either an email address or username in that
+field:
 
-- `{ "email": "user@example.test", "password": "..." }`
-- `{ "email": "demo_user", "password": "..." }`
 - `{ "login": "demo_user", "password": "..." }`
+- `{ "login": "user@example.test", "password": "..." }`
 
 ## Auth Response
 

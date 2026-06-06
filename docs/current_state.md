@@ -455,7 +455,7 @@ This section tracks the current repository state against the Hypertube subject. 
 
 - Required authentication coverage:
   - The subject requires at least two OAuth/Omniauth strategies. Only 42 OAuth is implemented in the backend.
-  - `/auth/login` currently validates email/password, while the subject explicitly requires username/password login. The OAuth password grant can look up by login, but the normal login endpoint and frontend do not yet cover this requirement cleanly.
+  - `/auth/login` accepts a `login` value that can be either an email address or username, plus a password.
 
 - Movie library behavior:
   - Infinite scroll is not implemented; the frontend uses a manual pagination component.

@@ -168,8 +168,7 @@ Logs in an existing password user by email or username and returns a bearer toke
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `email` | string | yes, unless `login` is provided | Valid email address or username. Trimmed before lookup. Email addresses are lowercased. |
-| `login` | string | no | Alternative to `email`; accepts an email address or username. |
+| `login` | string | yes | Accepts an email address or username. Trimmed before lookup. Email addresses are lowercased. |
 | `password` | string | yes | Existing password. Must be present and no longer than 72 bytes. |
 
 Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
@@ -184,7 +183,7 @@ Content-Type: application/json
 
 ```json
 {
-  "email": "ada@example.com",
+  "login": "ada@example.com",
   "password": "correct-horse-battery"
 }
 ```
@@ -215,7 +214,7 @@ Content-Type: application/json
 | Status | Code | Message |
 |--------|------|---------|
 | 400 | `BAD_REQUEST` | `Invalid JSON body` |
-| 400 | `VALIDATION_ERROR` | `Email is required`, `Email or username is required`, `Invalid email`, `Invalid email or username`, `Username is too short`, or `Username is too long` |
+| 400 | `VALIDATION_ERROR` | `Email or username is required`, `Invalid email`, `Invalid email or username`, `Username is too short`, or `Username is too long` |
 | 400 | `VALIDATION_ERROR` | `Password is required` or `Password is too long` |
 | 401 | `INVALID_CREDENTIALS` | `Invalid email, username, or password` |
 | 500 | `INTERNAL_ERROR` | `Failed to load user` or `Failed to create token` |
