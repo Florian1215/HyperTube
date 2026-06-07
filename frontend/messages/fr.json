@@ -136,6 +136,8 @@
     "lastnameTooLong": "Le nom est trop long.",
     "passwordTooShort": "Le mot de passe est trop court.",
     "passwordTooLong": "Le mot de passe est trop long.",
+    "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas.",
     "requiredField": "Ce champ est obligatoire."
   },
   "notifications": {
