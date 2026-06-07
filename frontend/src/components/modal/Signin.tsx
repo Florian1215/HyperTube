@@ -11,6 +11,7 @@ import {useTranslations} from "next-intl";
 import {OauthServices} from "@/components/OAuth";
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {postLogin} from "@/api/auth";
+import {useSetterError} from "@/hooks/useSetterError";
 
 export default function Signin() {
     const {openModal, activeModal, closeModal,} = useModal();
@@ -25,6 +26,7 @@ export default function Signin() {
     const tError = useTranslations("validationErrors");
     const {execute} = useApiMutation(setErrors);
     const inputRef = useRef<HTMLInputElement>(null);
+    const newSetterError = useSetterError(setErrors, setDisableBtn);
 
     useEffect(() => {
         const el = inputRef.current;
@@ -35,15 +37,6 @@ export default function Signin() {
 
     if (activeModal.type !== "signin")
         return null;
-
-    const newSetterError = (value: Record<string, string>) => {
-        const newErrors = {...errors, ...value};
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length === 0 || Object.values(newErrors).every((value) => !value))
-            setDisableBtn(false);
-        else
-            setDisableBtn(true);
-    };
 
     const handleLogin = async () => {
         const makePostRequest = async () => {
@@ -71,11 +64,10 @@ export default function Signin() {
 
     return (<ModalLayout onClose={closeModal} title={t("title")}>
         <Input id="login-signin" value={loginInput} onChange={setLoginInput} type="text" placeholder={t("login")} requestErrorMessage={errors["login"]} setErrorsMessage={newSetterError} ref={inputRef}></Input>
-        <Input id="password-signin" value={password} onChange={setPassword} type="password" placeholder={t("password")} requestErrorMessage={errors["password"]} setErrorsMessage={newSetterError} ></Input>
-        <div className={"relative mb-4" + (errors["password"] ? " pt-3" : "")}>
+        <Input id="password-signin" value={password} onChange={setPassword} type="password" placeholder={t("password")} requestErrorMessage={errors["password-signin"]} setErrorsMessage={newSetterError} ></Input>
+        <div className={"relative mb-4" + (errors["password-signin"] ? " pt-3" : "")}>
             <SmallButton className="absolute bottom-1" onClick={() => {
-                closeModal();
-                openModal({type: "forgot-password"});
+                closeModal(); openModal({type: "forgot-password"});
             }}>{t("forgotPassword")}</SmallButton>
         </div>
         <Button className="h-8" onClick={handleLogin} disabled={disableBtn}>{t("submit")}</Button>

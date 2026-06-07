@@ -11,6 +11,7 @@ import {OauthServices} from "@/components/OAuth";
 import {useNotification} from "@/context/NotificationContext";
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {postRegister} from "@/api/auth";
+import {useSetterError} from "@/hooks/useSetterError";
 
 export default function Register() {
     const {openModal, activeModal, closeModal} = useModal();
@@ -28,6 +29,7 @@ export default function Register() {
     const {addNotification} = useNotification();
     const {execute} = useApiMutation(setErrors);
     const inputRef = useRef<HTMLInputElement>(null);
+    const newSetterError = useSetterError(setErrors, setDisableBtn);
 
     useEffect(() => {
         const el = inputRef.current;
@@ -38,15 +40,6 @@ export default function Register() {
 
     if (activeModal.type !== "register")
         return null;
-
-    const newSetterError = (value: Record<string, string>) => {
-        const newErrors = {...errors, ...value};
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length === 0 || Object.values(newErrors).every((value) => !value))
-            setDisableBtn(false);
-        else
-            setDisableBtn(true);
-    };
 
     const handleRegister = async () => {
         const makePostRequest = async () => {
@@ -87,7 +80,7 @@ export default function Register() {
         </div>
 
         <Input id="username-register" value={username} onChange={setUsername} type="text" placeholder={t("username")} className={"max-w-2/3"} requestErrorMessage={errors["username"] || errors["login"]} setErrorsMessage={newSetterError}></Input>
-        <Input id="password-register" value={password} onChange={setPassword} type="password" placeholder={t("password")} className={"max-w-2/3"} requestErrorMessage={errors["password"]} setErrorsMessage={newSetterError}></Input>
+        <Input id="password-register" value={password} onChange={setPassword} type="password" placeholder={t("password")} className={"max-w-2/3"} requestErrorMessage={errors["password-register"]} setErrorsMessage={newSetterError}></Input>
 
         <Button className="h-8 mt-2" onClick={handleRegister} disabled={disableBtn}>{t("submit")}</Button>
 
