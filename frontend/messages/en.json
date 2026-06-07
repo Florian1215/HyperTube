@@ -129,13 +129,13 @@
   },
   "validationErrors": {
     "emailInvalid": "Invalid email address.",
-    "usernameTooShort": "Username must be at least 3 characters long.",
-    "usernameTooLong": "Username must be at most 32 characters long.",
-    "usernameInvalid": "Username can only contain letters, numbers and underscores.",
-    "firstnameTooLong": "Firstname must be at most 50 characters long.",
-    "lastnameTooLong": "Lastname must be at most 50 characters long.",
-    "passwordTooShort": "Password must be at least 8 characters long.",
-    "passwordTooLong": "Password must be at most 72 characters long.",
+    "usernameTooShort": "Username is too short.",
+    "usernameTooLong": "Username is too long.",
+    "usernameInvalid": "Username is invalid.",
+    "firstnameTooLong": "Firstname is too long.",
+    "lastnameTooLong": "Lastname is too long.",
+    "passwordTooShort": "Password is too short.",
+    "passwordTooLong": "Password is too long.",
     "requiredField": "This field is required."
   },
   "notifications": {
