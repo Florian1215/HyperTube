@@ -127,6 +127,19 @@
       "apply": "Anwenden"
     }
   },
+  "validationErrors": {
+    "emailInvalid": "Die E-Mail-Adresse ist ungültig.",
+    "usernameTooShort": "Der Benutzername ist zu kurz.",
+    "usernameTooLong": "Der Benutzername ist zu lang.",
+    "usernameInvalid": "Benutzername ungültig.",
+    "firstnameTooLong": "Der Vorname ist zu lang.",
+    "lastnameTooLong": "Der Nachname ist zu lang.",
+    "passwordTooShort": "Das Passwort ist zu kurz.",
+    "passwordTooLong": "Das Passwort ist zu lang.",
+    "passwordSameAsOld": "Das neue Passwort darf nicht mit dem alten Passwort übereinstimmen.",
+    "passwordsDontMatch": "Die Passwörter stimmen nicht überein.",
+    "requiredField": "Dieses Feld ist erforderlich."
+  },
   "notifications": {
     "success": {
       "passwordChanged": "Ihr Passwort wurde aktualisiert.",
@@ -138,40 +151,10 @@
       "accountCreatedSuccess": "Konto erfolgreich erstellt!"
     },
     "error": {
-      "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
       "network": "Der Server konnte nicht erreicht werden. Bitte überprüfen Sie Ihre Internetverbindung.",
-      "unauthorized": "Sie müssen angemeldet sein, um diese Aktion auszuführen.",
-      "forbidden": "Sie haben keine Berechtigung, diese Aktion auszuführen.",
       "loginRequired": "Sie müssen angemeldet sein, um fortzufahren.",
       "notFoundFilm": "Film nicht gefunden",
-      "notFoundUser": "Benutzer nicht gefunden",
-      "passwordIncorrect": "Das aktuelle Passwort ist falsch.",
-      "passwordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein.",
-      "passwordTooWeak": "Das Passwort ist zu schwach. Verwenden Sie eine Kombination aus Buchstaben, Zahlen und Sonderzeichen.",
-      "passwordMismatch": "Die Passwörter stimmen nicht überein.",
-      "passwordSameAsOld": "Das neue Passwort muss sich vom alten unterscheiden.",
-      "passwordChangeFailed": "Das Passwort konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
-      "emailInvalid": "Die E-Mail-Adresse ist ungültig.",
-      "emailAlreadyUsed": "Diese E-Mail-Adresse wird bereits verwendet.",
-      "emailChangeFailed": "Die E-Mail-Adresse konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
-      "emailVerificationFailed": "Die Bestätigungs-E-Mail konnte nicht gesendet werden.",
-      "emailTokenInvalid": "Der Bestätigungslink ist ungültig oder abgelaufen.",
-      "usernameTooShort": "Der Benutzername ist zu kurz.",
-      "usernameTooLong": "Der Benutzername ist zu lang.",
-      "usernameInvalid": "Der Benutzername enthält ungültige Zeichen.",
-      "usernameAlreadyUsed": "Dieser Benutzername wird bereits verwendet.",
-      "usernameChangeFailed": "Der Benutzername konnte nicht geändert werden.",
-      "firstnameTooShort": "Der Vorname ist zu kurz.",
-      "firstnameTooLong": "Der Vorname ist zu lang.",
-      "firstnameInvalid": "Der Vorname enthält ungültige Zeichen.",
-      "firstnameChangeFailed": "Der Vorname konnte nicht geändert werden.",
-      "lastnameTooShort": "Der Nachname ist zu kurz.",
-      "lastnameTooLong": "Der Nachname ist zu lang.",
-      "lastnameInvalid": "Der Nachname enthält ungültige Zeichen.",
-      "lastnameChangeFailed": "Der Nachname konnte nicht geändert werden.",
-      "requiredField": "Dieses Feld ist erforderlich.",
-      "requiredFields": "Bitte füllen Sie alle erforderlichen Felder aus.",
-      "missingFields": "Einige erforderliche Felder fehlen. Bitte überprüfen Sie das Formular."
+      "notFoundUser": "Benutzer nicht gefunden"
     }
   }
 }

@@ -127,6 +127,19 @@
       "apply": "Apply"
     }
   },
+  "validationErrors": {
+    "emailInvalid": "Invalid email address.",
+    "usernameTooShort": "Username is too short.",
+    "usernameTooLong": "Username is too long.",
+    "usernameInvalid": "Username is invalid.",
+    "firstnameTooLong": "Firstname is too long.",
+    "lastnameTooLong": "Lastname is too long.",
+    "passwordTooShort": "Password is too short.",
+    "passwordTooLong": "Password is too long.",
+    "passwordSameAsOld": "New password must be different from the current password.",
+    "passwordsDontMatch": "Passwords do not match.",
+    "requiredField": "This field is required."
+  },
   "notifications": {
     "success": {
       "passwordChanged": "Your password has been updated.",
@@ -138,39 +151,10 @@
       "accountCreatedSuccess": "Account successfully created!"
     },
     "error": {
-      "unknown": "An unexpected error occurred. Please try again.",
       "network": "Unable to contact the server. Please check your internet connection.",
       "loginRequired": "You must be signed in to access this page.",
       "notFoundFilm": "Film not found",
-      "notFoundUser": "User not found",
-      "forbidden": "You do not have permission to perform this action.",
-      "passwordIncorrect": "The current password is incorrect.",
-      "passwordTooShort": "The password must contain at least 8 characters.",
-      "passwordTooWeak": "The password is too weak. Use a combination of letters, numbers and special characters.",
-      "passwordMismatch": "Passwords do not match.",
-      "passwordSameAsOld": "The new password must be different from the old one.",
-      "passwordChangeFailed": "Unable to change the password. Please try again.",
-      "emailInvalid": "The email address is invalid.",
-      "emailAlreadyUsed": "This email address is already in use.",
-      "emailChangeFailed": "Unable to change the email address. Please try again.",
-      "emailVerificationFailed": "Unable to send the confirmation email.",
-      "emailTokenInvalid": "The confirmation link is invalid or expired.",
-      "usernameTooShort": "The username is too short.",
-      "usernameTooLong": "The username is too long.",
-      "usernameInvalid": "The username contains invalid characters.",
-      "usernameAlreadyUsed": "This username is already in use.",
-      "usernameChangeFailed": "Unable to change the username.",
-      "firstnameTooShort": "The firstname is too short.",
-      "firstnameTooLong": "The firstname is too long.",
-      "firstnameInvalid": "The firstname contains invalid characters.",
-      "firstnameChangeFailed": "Unable to change the firstname.",
-      "lastnameTooShort": "The lastname is too short.",
-      "lastnameTooLong": "The lastname is too long.",
-      "lastnameInvalid": "The lastname contains invalid characters.",
-      "lastnameChangeFailed": "Unable to change the lastname.",
-      "requiredField": "This field is required.",
-      "requiredFields": "Please fill in all required fields.",
-      "missingFields": "Some required fields are missing. Please check the form."
+      "notFoundUser": "User not found"
     }
   }
 }
