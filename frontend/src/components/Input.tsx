@@ -14,41 +14,40 @@ export default function Input({id, type, placeholder, value, onChange, className
     }
 
     const handleFieldVerification = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-        const newValue = e.target.value; // todo faire verification required
-        // todo add translation
+        const newValue = e.target.value;
 
         if (setErrorsMessage) {
             if (id.includes("email")) {
-                if (!emailRegex.test(newValue.trim()))
+                if (newValue && !emailRegex.test(newValue.trim()))
                     setErrorsMessage({"email": t("emailInvalid")});
                 else
                     setErrorsMessage({"email": ""});
             } else if (id.includes("firstname")) {
-                if (newValue.trim().length > 100)
+                if (newValue.trim().length > 30)
                     setErrorsMessage({"firstname": t("firstnameTooLong")});
                 else
                     setErrorsMessage({"firstname": ""});
             } else if (id.includes("lastname")) {
-                if (newValue.trim().length > 100)
+                if (newValue.trim().length > 30)
                     setErrorsMessage({"lastname": t("lastnameTooLong")});
                 else
                     setErrorsMessage({"lastname": ""});
             } else if (id.includes("username")) {
-                if (newValue.trim().length < 3)
+                if (newValue && newValue.trim().length < 3)
                     setErrorsMessage({"username": t("usernameTooShort")});
                 else if (newValue.trim().length > 32)
                     setErrorsMessage({"username": t("usernameTooLong")});
-                else if (!usernameRegex.test(newValue))
+                else if (newValue && !usernameRegex.test(newValue))
                     setErrorsMessage({"username": t("usernameInvalid")});
                 else
                     setErrorsMessage({"username": ""});
             } else if (id.includes("password")) {
-                if (newValue.length < 8)
-                    setErrorsMessage({"password": t("passwordTooShort")});
+                if (newValue && newValue.length < 8)
+                    setErrorsMessage({[id]: t("passwordTooShort")});
                 else if (newValue.length > 72)
-                    setErrorsMessage({"password": t("passwordTooLong")});
+                    setErrorsMessage({[id]: t("passwordTooLong")});
                 else
-                    setErrorsMessage({"password": ""});
+                    setErrorsMessage({[id]: ""});
             } else
                 setErrorsMessage({"login": ""});
         }
