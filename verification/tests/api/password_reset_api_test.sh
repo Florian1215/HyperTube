@@ -238,9 +238,9 @@ assert_jq_true() {
 
 validation_field_for_message() {
   case "$1" in
-    "valid email is required") printf 'email' ;;
-    "password must be between 8 and 72 bytes"|"password is invalid") printf 'password' ;;
-    "invalid request body") printf 'body' ;;
+    "Email is required"|"Invalid email") printf 'email' ;;
+    "Password is too short"|"Password is too long"|"Invalid password") printf 'password' ;;
+    "Invalid request body") printf 'body' ;;
   esac
 }
 
@@ -302,22 +302,22 @@ test_request_password_reset_route() {
 
   expect_error_case \
     "Password reset request rejects missing body" \
-    "POST" "/auth/password-reset" "400" "BAD_REQUEST" "invalid JSON body"
+    "POST" "/auth/password-reset" "400" "BAD_REQUEST" "Invalid JSON body"
 
   expect_error_case \
     "Password reset request rejects invalid JSON" \
-    "POST" "/auth/password-reset" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/password-reset" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{'
 
   expect_error_case \
     "Password reset request rejects unknown JSON field" \
-    "POST" "/auth/password-reset" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/password-reset" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{"email":"alice@example.com","role":"admin"}'
 
   payload="$(password_reset_payload "not-an-email")"
   expect_error_case \
     "Password reset request rejects invalid email" \
-    "POST" "/auth/password-reset" "400" "VALIDATION_ERROR" "valid email is required" \
+    "POST" "/auth/password-reset" "400" "VALIDATION_ERROR" "Invalid email" \
     "$payload"
 
   payload="$(password_reset_payload "missing-password-reset@example.test" "de")"
@@ -325,11 +325,11 @@ test_request_password_reset_route() {
   case "$LAST_STATUS" in
     202)
       pass "Password reset request accepts valid email without disclosing account existence: HTTP 202"
-      assert_jq_eq "Password reset request returns accepted message" '.data.message' "if the email exists, a password reset link has been sent"
+      assert_jq_eq "Password reset request returns accepted message" '.data.message' "If the email exists, a password reset link has been sent"
       ;;
     503)
       pass "Password reset request reports missing mailer when email is not configured: HTTP 503"
-      assert_error "Password reset request missing mailer" "EMAIL_NOT_CONFIGURED" "password reset email is not configured"
+      assert_error "Password reset request missing mailer" "EMAIL_NOT_CONFIGURED" "Password reset email is not configured"
       ;;
     *)
       fail "Password reset request: expected HTTP 202 or 503, got ${LAST_STATUS:-<none>}"
@@ -347,34 +347,34 @@ test_reset_password_route() {
 
   expect_error_case \
     "Reset password rejects missing body" \
-    "POST" "/auth/reset-password" "400" "BAD_REQUEST" "invalid JSON body"
+    "POST" "/auth/reset-password" "400" "BAD_REQUEST" "Invalid JSON body"
 
   expect_error_case \
     "Reset password rejects invalid JSON" \
-    "POST" "/auth/reset-password" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/reset-password" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{'
 
   expect_error_case \
     "Reset password rejects unknown JSON field" \
-    "POST" "/auth/reset-password" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/reset-password" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{"token":"unknown-reset-token-with-enough-length-123","password":"new-password","admin":true}'
 
   payload="$(reset_password_payload "short" "new-password")"
   expect_error_case \
     "Reset password rejects malformed token" \
-    "POST" "/auth/reset-password" "400" "INVALID_RESET_TOKEN" "password reset link is invalid or expired" \
+    "POST" "/auth/reset-password" "400" "INVALID_RESET_TOKEN" "Password reset link is invalid or expired" \
     "$payload"
 
   payload="$(reset_password_payload "$valid_format_token" "short")"
   expect_error_case \
     "Reset password rejects short password before consuming a token" \
-    "POST" "/auth/reset-password" "400" "VALIDATION_ERROR" "password must be between 8 and 72 bytes" \
+    "POST" "/auth/reset-password" "400" "VALIDATION_ERROR" "Password is too short" \
     "$payload"
 
   payload="$(reset_password_payload "$valid_format_token" "new-password")"
   expect_error_case \
     "Reset password rejects unknown or expired token" \
-    "POST" "/auth/reset-password" "400" "INVALID_RESET_TOKEN" "password reset link is invalid or expired" \
+    "POST" "/auth/reset-password" "400" "INVALID_RESET_TOKEN" "Password reset link is invalid or expired" \
     "$payload"
 }
 

@@ -237,8 +237,8 @@ test_frontend_register_contract() {
   if expect_status "Register accepts firstname/lastname aliases" "201"; then
     assert_jq_eq "Response includes canonical first_name" '.data.user.first_name' "Frontend"
     assert_jq_eq "Response includes canonical last_name" '.data.user.last_name' "Contract"
-    assert_jq_eq "Response includes frontend firstname alias" '.data.user.firstname' "Frontend"
-    assert_jq_eq "Response includes frontend lastname alias" '.data.user.lastname' "Contract"
+    assert_jq_true "Response omits frontend firstname alias" '(.data.user | has("firstname")) | not'
+    assert_jq_true "Response omits frontend lastname alias" '(.data.user | has("lastname")) | not'
     assert_jq_true "Response includes numeric joined_at" '.data.user.joined_at | type == "number" and . > 0'
     assert_jq_true "Response includes frontend watch_history array" '.data.user.watch_history | type == "array"'
     assert_jq_true "Response includes frontend color string" '.data.user.color | type == "string" and length > 0'

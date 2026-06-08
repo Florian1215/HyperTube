@@ -385,7 +385,7 @@ step_validate_reset_email() {
   request "POST" "$API_URL/auth/password-reset" "$payload"
   print_response
 
-  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message email)" == "valid email is required" ]]; then
+  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message email)" == "Invalid email" ]]; then
     record_result "Invalid reset email" "OK" "invalid email returned a field-based VALIDATION_ERROR"
     print_result "OK" "The API rejected the invalid email with an email field error."
     return 0
@@ -470,7 +470,7 @@ step_validate_new_password() {
   request "POST" "$API_URL/auth/reset-password" "$payload"
   print_response
 
-  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message password)" == "password must be between 8 and 72 bytes" ]]; then
+  if [[ "$REQUEST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message password)" == "Password is too short" ]]; then
     record_result "New password validation" "OK" "short password returned a field-based VALIDATION_ERROR"
     print_result "OK" "The API rejected the weak replacement password with a password field error."
     return 0
