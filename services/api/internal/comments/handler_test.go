@@ -17,6 +17,9 @@ type fakeCommentStore struct {
 	comments       []models.Comment
 	total          int
 	createMovieID  string
+	createUserID   int
+	createdContent string
+	createErr      error
 	updateUserID   int
 	updatedContent string
 	deleteUserID   int
@@ -27,6 +30,11 @@ type fakeCommentStore struct {
 
 func (s *fakeCommentStore) create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error) {
 	s.createMovieID = movieID
+	s.createUserID = userID
+	s.createdContent = content
+	if s.createErr != nil {
+		return models.Comment{}, s.createErr
+	}
 	return models.Comment{ID: 1, MovieID: movieID, UserID: userID, Content: content}, nil
 }
 
@@ -63,6 +71,74 @@ func (s *fakeCommentStore) update(ctx context.Context, content string, id int, u
 func (s *fakeCommentStore) delete(ctx context.Context, id int, userID int) error {
 	s.deleteUserID = userID
 	return s.deleteErr
+}
+
+func TestCreateUsesAuthenticatedUserIDAndPathMovieID(t *testing.T) {
+	store := &fakeCommentStore{}
+	handler := NewCommentsHandler(store)
+
+	req := httptest.NewRequest(http.MethodPost, "/movies/tt123/comments", strings.NewReader(`{"content":"  hello  ","user_id":999}`))
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(handler.Create)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.createMovieID != "tt123" {
+		t.Fatalf("expected movie id tt123, got %q", store.createMovieID)
+	}
+	if store.createUserID != 42 {
+		t.Fatalf("expected token user id 42, got %d", store.createUserID)
+	}
+	if store.createdContent != "hello" {
+		t.Fatalf("expected trimmed content, got %q", store.createdContent)
+	}
+
+	body := decodeCommentItemEnvelope(t, rec)
+	if body.Data.UserID != 42 {
+		t.Fatalf("expected response user id 42, got %d", body.Data.UserID)
+	}
+}
+
+func TestCreateRejectsMissingAuthenticatedUser(t *testing.T) {
+	handler := NewCommentsHandler(&fakeCommentStore{})
+
+	req := httptest.NewRequest(http.MethodPost, "/movies/tt123/comments", strings.NewReader(`{"content":"hello"}`))
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	handler.Create(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeCommentErrorEnvelope(t, rec).Error.Code; got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
+func TestCreateInvalidBodyReturnsFieldValidationError(t *testing.T) {
+	handler := NewCommentsHandler(&fakeCommentStore{})
+
+	req := httptest.NewRequest(http.MethodPost, "/movies/tt123/comments", strings.NewReader(`{"content":`))
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(handler.Create)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	errorBody := decodeCommentErrorEnvelope(t, rec).Error
+	if errorBody.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
+	}
+	if got := errorBody.Fields["body"].Message; got != "Invalid request body" {
+		t.Fatalf("expected body field validation, got %q", got)
+	}
 }
 
 func TestListReturnsPaginatedComments(t *testing.T) {
@@ -111,6 +187,30 @@ func TestGetInvalidIDReturnsNotFound(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
 	}
+	if got := decodeCommentErrorEnvelope(t, rec).Error.Code; got != "NOT_FOUND" {
+		t.Fatalf("expected NOT_FOUND, got %q", got)
+	}
+}
+
+func TestGetReturnsItemEnvelope(t *testing.T) {
+	store := &fakeCommentStore{
+		comment: &models.Comment{ID: 7, UserID: 42, MovieID: "tt123", Content: "hello"},
+	}
+	handler := NewCommentsHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/comments/7", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+
+	handler.Get(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeCommentItemEnvelope(t, rec)
+	if body.Data.ID != 7 || body.Data.MovieID != "tt123" || body.Data.Content != "hello" {
+		t.Fatalf("unexpected comment envelope: %+v", body.Data)
+	}
 }
 
 func TestGetMissingCommentReturnsNotFound(t *testing.T) {
@@ -124,6 +224,9 @@ func TestGetMissingCommentReturnsNotFound(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeCommentErrorEnvelope(t, rec).Error.Code; got != "NOT_FOUND" {
+		t.Fatalf("expected NOT_FOUND, got %q", got)
 	}
 }
 
@@ -317,4 +420,42 @@ func serveWithUser(t *testing.T, userID int64, next http.Handler) http.Handler {
 		r.Header.Set("Authorization", "Bearer "+token)
 		auth.RequireAuth(tokens)(next).ServeHTTP(w, r)
 	})
+}
+
+func decodeCommentItemEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
+	Data models.Comment `json:"data"`
+} {
+	t.Helper()
+
+	var body struct {
+		Data models.Comment `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body
+}
+
+func decodeCommentErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
+	Error struct {
+		Code   string `json:"code"`
+		Fields map[string]struct {
+			Message string `json:"message"`
+		} `json:"fields"`
+	} `json:"error"`
+} {
+	t.Helper()
+
+	var body struct {
+		Error struct {
+			Code   string `json:"code"`
+			Fields map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body
 }

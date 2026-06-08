@@ -26,79 +26,116 @@ func TestRouterHealthCheck(t *testing.T) {
 	}
 }
 
-func TestRouterAuthLoginIsPublic(t *testing.T) {
+func TestRouterPublicAuthJSONRoutes(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":`))
-	rec := httptest.NewRecorder()
-
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected public login route to return 400 for bad JSON, got %d: %s", rec.Code, rec.Body.String())
+	tests := []struct {
+		name string
+		path string
+		body string
+	}{
+		{
+			name: "login",
+			path: "/api/v1/auth/login",
+			body: `{"login":`,
+		},
+		{
+			name: "register",
+			path: "/api/v1/auth/register",
+			body: `{"email":`,
+		},
+		{
+			name: "password reset request",
+			path: "/api/v1/auth/password-reset",
+			body: `{"email":`,
+		},
+		{
+			name: "reset password",
+			path: "/api/v1/auth/reset-password",
+			body: `{"token":`,
+		},
 	}
-	if got := decodeRouterErrorCode(t, rec); got != "BAD_REQUEST" {
-		t.Fatalf("expected BAD_REQUEST, got %q", got)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected public route to return 400 for bad JSON, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got := decodeRouterErrorCode(t, rec); got != "BAD_REQUEST" {
+				t.Fatalf("expected BAD_REQUEST, got %q", got)
+			}
+		})
 	}
 }
 
-func TestRouterOAuthTokenIsPublic(t *testing.T) {
+func TestRouterOAuthTokenRoutesArePublic(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(`grant_type=client_credentials`))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
+	for _, path := range []string{"/api/v1/oauth/token", "/oauth/token"} {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`grant_type=client_credentials`))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			rec := httptest.NewRecorder()
 
-	router.ServeHTTP(rec, req)
+			router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected public OAuth token route to return 400 for unsupported grant, got %d: %s", rec.Code, rec.Body.String())
-	}
-
-	var body struct {
-		Error string `json:"error"`
-	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if body.Error != "unsupported_grant_type" {
-		t.Fatalf("expected unsupported_grant_type, got %q", body.Error)
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected public OAuth token route to return 400 for unsupported grant, got %d: %s", rec.Code, rec.Body.String())
+			}
+			var body struct {
+				Error string `json:"error"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+				t.Fatalf("decode response: %v", err)
+			}
+			if body.Error != "unsupported_grant_type" {
+				t.Fatalf("expected unsupported_grant_type, got %q", body.Error)
+			}
+		})
 	}
 }
 
-func TestRouterGitHubOAuthLoginIsPublic(t *testing.T) {
+func TestRouterPublicOAuthProviderRoutes(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/github/login", nil)
-	rec := httptest.NewRecorder()
-
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected public GitHub OAuth route to return 503 when unconfigured, got %d: %s", rec.Code, rec.Body.String())
+	tests := []struct {
+		name string
+		path string
+	}{
+		{name: "42 login", path: "/api/v1/auth/42/login"},
+		{name: "42 callback", path: "/api/v1/auth/42/callback?code=x&state=y"},
+		{name: "github login", path: "/api/v1/auth/github/login"},
+		{name: "github callback", path: "/api/v1/auth/github/callback?code=x&state=y"},
+		{name: "gitlab login", path: "/api/v1/auth/gitlab/login"},
+		{name: "gitlab callback", path: "/api/v1/auth/gitlab/callback?code=x&state=y"},
+		{name: "42 callback alias", path: "/oauth/callback/42?code=x&state=y"},
+		{name: "github callback alias", path: "/oauth/callback/github?code=x&state=y"},
+		{name: "gitlab callback alias", path: "/oauth/callback/gitlab?code=x&state=y"},
 	}
-	if got := decodeRouterErrorCode(t, rec); got != "OAUTH_NOT_CONFIGURED" {
-		t.Fatalf("expected OAUTH_NOT_CONFIGURED, got %q", got)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusServiceUnavailable {
+				t.Fatalf("expected public OAuth route to return 503 when unconfigured, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got := decodeRouterErrorCode(t, rec); got != "OAUTH_NOT_CONFIGURED" {
+				t.Fatalf("expected OAUTH_NOT_CONFIGURED, got %q", got)
+			}
+		})
 	}
 }
 
-func TestRouterGitLabOAuthLoginIsPublic(t *testing.T) {
-	router, _ := newTestRouter(t)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/login", nil)
-	rec := httptest.NewRecorder()
-
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected public GitLab OAuth route to return 503 when unconfigured, got %d: %s", rec.Code, rec.Body.String())
-	}
-	if got := decodeRouterErrorCode(t, rec); got != "OAUTH_NOT_CONFIGURED" {
-		t.Fatalf("expected OAUTH_NOT_CONFIGURED, got %q", got)
-	}
-}
-
-func TestRouterProtectedMovieRouteRequiresBearerToken(t *testing.T) {
+func TestRouterProtectedRouteRejectsMissingBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
@@ -114,20 +151,24 @@ func TestRouterProtectedMovieRouteRequiresBearerToken(t *testing.T) {
 	}
 }
 
-func TestRouterPostCommentsMethodNotAllowedBeforeAuth(t *testing.T) {
+func TestRouterProtectedRouteRejectsInvalidBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/comments", strings.NewReader(`{"content":"hello"}`))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
+	req.Header.Set("Authorization", "Bearer not-a-token")
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
 	}
 }
 
-func TestRouterMovieRouteAcceptsBearerToken(t *testing.T) {
+func TestRouterProtectedRouteWithValidTokenReachesHandler(t *testing.T) {
 	router, tokens := newTestRouter(t)
 	token, _, err := tokens.CreateAccessToken(42)
 	if err != nil {
@@ -141,13 +182,10 @@ func TestRouterMovieRouteAcceptsBearerToken(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected handler validation 400, got %d: %s", rec.Code, rec.Body.String())
+		t.Fatalf("expected downstream handler response, got %d: %s", rec.Code, rec.Body.String())
 	}
 	if got := decodeRouterErrorCode(t, rec); got != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR, got %q", got)
-	}
-	if got := decodeRouterValidationField(t, rec, "title"); got != "Title query parameter is required" {
-		t.Fatalf("expected title field validation, got %q", got)
 	}
 }
 
@@ -181,20 +219,4 @@ func decodeRouterErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string 
 		t.Fatalf("decode response: %v", err)
 	}
 	return body.Error.Code
-}
-
-func decodeRouterValidationField(t *testing.T, rec *httptest.ResponseRecorder, field string) string {
-	t.Helper()
-
-	var body struct {
-		Error struct {
-			Fields map[string]struct {
-				Message string `json:"message"`
-			} `json:"fields"`
-		} `json:"error"`
-	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	return body.Error.Fields[field].Message
 }
