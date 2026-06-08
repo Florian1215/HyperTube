@@ -2,7 +2,10 @@ import React, {useState} from "react";
 import {EyeIcon} from "@/components/Icons";
 import {useTranslations} from "next-intl";
 
-export default function Input({id, type, placeholder, value, onChange, className, requestErrorMessage, setErrorsMessage, ref}: {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string, requestErrorMessage?: string, setErrorsMessage?: any, ref?: any}) {
+export default function Input(
+    {id, type, placeholder, value, onChange, className, requestErrorMessage, setErrorsMessage, ref, onKeyDown}:
+    {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string, requestErrorMessage?: string, setErrorsMessage?: (errorMsg: Record<string, string>) => void, ref?: (el: HTMLInputElement) => void, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void}
+) {
     const isPassword = type === "password";
     const t = useTranslations("validationErrors");
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -55,10 +58,10 @@ export default function Input({id, type, placeholder, value, onChange, className
     }
 
     return (<div className={"flex flex-col w-full h-16 relative " + className}>
-        <input id={id} ref={ref} type={isPasswordVisible && isPassword ? "text" : type} placeholder=""
-               value={value}
-               onChange={handleFieldVerification}
-               className={"peer py-4 m-0 w-full h-8 bg-white  border-b focus:border-b-2 " + (requestErrorMessage ? "border-b-red text-red" : "text-black")}/>
+        <input id={id} type={isPasswordVisible && isPassword ? "text" : type} placeholder=""
+               value={value} onChange={handleFieldVerification} onKeyDown={onKeyDown} ref={ref}
+               className={"peer py-4 m-0 w-full h-8 bg-white  border-b focus:border-b-2 " + (requestErrorMessage ? "border-b-red text-red" : "text-black")}
+        />
         <label htmlFor={id}
                className={"pointer-events-none uppercase absolute text-xs font-sans bottom-15\
                    peer-focus:text-xs peer-focus:font-sans peer-focus:bottom-15\
