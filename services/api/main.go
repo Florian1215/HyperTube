@@ -182,28 +182,24 @@ func newRouter(
 
 		r.Get("/movies", moviesHandler.GetMovies)
 
-		r.Group(func(r chi.Router) {
-			r.Use(auth.RequireAuth(tokenManager))
+		requireAuth := auth.RequireAuth(tokenManager)
 
-			r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
-			r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
-			r.Get("/movies/search", moviesHandler.SearchMovies)
-			r.Get("/movies/{id}", moviesHandler.GetMoviesId)
-			r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
-			r.Get("/movies/{id}/comments", moviesHandler.GetComments)
-			r.Post("/movies/{id}/comments", moviesHandler.PostComment)
+		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
+		r.With(requireAuth).Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
+		r.With(requireAuth).Get("/movies/search", moviesHandler.SearchMovies)
+		r.With(requireAuth).Get("/movies/{id}", moviesHandler.GetMoviesId)
+		r.With(requireAuth).Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
+		r.With(requireAuth).Get("/movies/{id}/comments", moviesHandler.GetComments)
+		r.With(requireAuth).Post("/movies/{id}/comments", moviesHandler.PostComment)
 
-			r.Post("/comments", commentsHandler.Create)
-			r.Get("/comments", commentsHandler.List)
-			r.Get("/comments/{id}", commentsHandler.Get)
-			r.Patch("/comments/{id}", commentsHandler.Update)
-			r.Delete("/comments/{id}", commentsHandler.Delete)
+		r.With(requireAuth).Get("/comments", commentsHandler.List)
+		r.With(requireAuth).Get("/comments/{id}", commentsHandler.Get)
+		r.With(requireAuth).Patch("/comments/{id}", commentsHandler.Update)
+		r.With(requireAuth).Delete("/comments/{id}", commentsHandler.Delete)
 
-			r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
-			r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
-			r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
-
-		})
+		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
+		r.With(requireAuth).Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
+		r.With(requireAuth).Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
 	})
 
 	// Backward-compatible callback path for the original environment template.
@@ -244,7 +240,6 @@ func getPasswordResetTTL() time.Duration {
 
 //go:embed mockup_front_stream.html
 var mockupHTML []byte
-
 
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {

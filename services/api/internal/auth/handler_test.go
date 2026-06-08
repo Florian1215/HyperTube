@@ -397,6 +397,29 @@ func TestRegisterValidationErrorReturnsFieldErrors(t *testing.T) {
 	}
 }
 
+func TestRegisterInvalidFieldTypesReturnFieldErrors(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+	body := `{"email":6,"username":["test",5,false],"first_name":"Alice","last_name":false,"password":"correct-horse-battery"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	handler.Register(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if errorBody.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
+	}
+	for _, field := range []string{"email", "username", "last_name"} {
+		if _, ok := errorBody.Fields[field]; !ok {
+			t.Fatalf("expected field %q in validation response, got %+v", field, errorBody.Fields)
+		}
+	}
+}
+
 func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"login":"not-an-email!","password":""}`))
@@ -420,6 +443,49 @@ func TestLoginValidationErrorReturnsFieldErrors(t *testing.T) {
 	}
 	if got := errorBody.Fields["password"].Message; got != "Password is required" {
 		t.Fatalf("expected password validation message, got %q", got)
+	}
+}
+
+func TestLoginInvalidFieldTypesReturnFieldErrors(t *testing.T) {
+	tests := []struct {
+		name      string
+		body      string
+		wantField string
+	}{
+		{
+			name:      "login type",
+			body:      `{"login":454,"password":"password_testydoyrE"}`,
+			wantField: "login",
+		},
+		{
+			name:      "password type",
+			body:      `{"login":"alice@example.com","password":false}`,
+			wantField: "password",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+
+			handler.Login(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			errorBody := decodeErrorEnvelope(t, rec).Error
+			if errorBody.Code != "VALIDATION_ERROR" {
+				t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
+			}
+			if _, ok := errorBody.Fields[tt.wantField]; !ok {
+				t.Fatalf("expected field %q in validation response, got %+v", tt.wantField, errorBody.Fields)
+			}
+			if _, ok := errorBody.Fields["email"]; ok {
+				t.Fatalf("did not expect email validation field, got %+v", errorBody.Fields)
+			}
+		})
 	}
 }
 
