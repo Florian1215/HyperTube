@@ -19,3 +19,7 @@ export function useResponsiveSize() {
     }, []);
     return size;
 }
+
+export function hasError(error: Record<string, string>) {
+    return Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
+}
