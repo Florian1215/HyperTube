@@ -360,7 +360,7 @@ test_login_start() {
 
   if [[ "$LAST_STATUS" == "503" ]]; then
     pass "GitLab login reports missing provider configuration"
-    assert_error_envelope "GitLab login not configured response" "OAUTH_NOT_CONFIGURED" "GitLab OAuth is not configured"
+    assert_error_envelope "GitLab login not configured response" "OAUTH_NOT_CONFIGURED" "OAuth provider GitLab is not configured"
     skip "GitLab authorization redirect checks" "GITLAB_CLIENT_ID, GITLAB_CLIENT_SECRET, or GITLAB_REDIRECT_URL is not configured"
     return 0
   fi
@@ -406,10 +406,10 @@ test_callback_csrf_errors() {
   section "GitLab callback CSRF validation"
 
   request "GET" "/auth/gitlab/callback"
-  assert_redirect_or_error "Callback rejects missing state" "400" "INVALID_OAUTH_STATE" "invalid OAuth state"
+  assert_redirect_or_error "Callback rejects missing state" "400" "INVALID_OAUTH_STATE" "Invalid OAuth state"
 
   request "GET" "/auth/gitlab/callback?code=fake-code&state=wrong-state" "$STATE_COOKIE_NAME=expected-state"
-  assert_redirect_or_error "Callback rejects mismatched state" "400" "INVALID_OAUTH_STATE" "invalid OAuth state"
+  assert_redirect_or_error "Callback rejects mismatched state" "400" "INVALID_OAUTH_STATE" "Invalid OAuth state"
 }
 
 test_callback_denial() {
@@ -422,7 +422,7 @@ test_callback_denial() {
   cookie="${OAUTH_LOGIN_COOKIE:-$STATE_COOKIE_NAME=$state}"
 
   request "GET" "/auth/gitlab/callback?error=access_denied&state=$state" "$cookie"
-  assert_redirect_or_error "Callback handles denied GitLab consent" "401" "OAUTH_DENIED" "access_denied"
+  assert_redirect_or_error "Callback handles denied GitLab consent" "401" "OAUTH_DENIED" "OAuth authorization was denied for GitLab"
   assert_header_contains "Callback clears state cookie" "Set-Cookie" "$STATE_COOKIE_NAME="
 }
 

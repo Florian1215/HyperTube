@@ -280,14 +280,14 @@ assert_jq_eq() {
 
 validation_field_for_message() {
   case "$1" in
-    "valid email is required") printf 'email' ;;
-    "login must be a valid email address or username") printf 'login' ;;
-    "username must be 3-32 characters and contain only letters, numbers, or underscores") printf 'username' ;;
-    "first_name is required and must be at most 100 characters") printf 'first_name' ;;
-    "last_name is required and must be at most 100 characters") printf 'last_name' ;;
-    "password must be between 8 and 72 bytes"|"password is required"|"password is invalid") printf 'password' ;;
-    "title query parameter is required") printf 'title' ;;
-    "invalid request body") printf 'body' ;;
+    "Email is required"|"Invalid email") printf 'email' ;;
+    "Email or username is required"|"Invalid email or username") printf 'login' ;;
+    "Username is required"|"Username is too short"|"Username is too long"|"Username has invalid characters"|"Invalid username") printf 'username' ;;
+    "First name is required"|"First name is too long"|"Invalid first name") printf 'first_name' ;;
+    "Last name is required"|"Last name is too long"|"Invalid last name") printf 'last_name' ;;
+    "Password is too short"|"Password is too long"|"Password is required"|"Invalid password") printf 'password' ;;
+    "Title query parameter is required") printf 'title' ;;
+    "Invalid request body") printf 'body' ;;
   esac
 }
 
@@ -413,46 +413,46 @@ test_auth_validation_and_success() {
 
   expect_error_case \
     "Register rejects missing body" \
-    "POST" "/auth/register" "400" "BAD_REQUEST" "invalid JSON body"
+    "POST" "/auth/register" "400" "BAD_REQUEST" "Invalid JSON body"
 
   expect_error_case \
     "Register rejects invalid JSON" \
-    "POST" "/auth/register" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/register" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{'
 
   expect_error_case \
     "Register rejects unknown JSON field" \
-    "POST" "/auth/register" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/register" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{"email":"extra@example.com","username":"extrauser","first_name":"Extra","last_name":"Field","password":"password123","role":"admin"}'
 
   payload="$(register_payload "not-an-email" "valid_user" "Api" "Tester" "password123")"
   expect_error_case \
     "Register rejects invalid email" \
-    "POST" "/auth/register" "400" "VALIDATION_ERROR" "valid email is required" \
+    "POST" "/auth/register" "400" "VALIDATION_ERROR" "Invalid email" \
     "$payload"
 
   payload="$(register_payload "shortname@example.com" "ab" "Api" "Tester" "password123")"
   expect_error_case \
     "Register rejects short username" \
-    "POST" "/auth/register" "400" "VALIDATION_ERROR" "username must be 3-32 characters and contain only letters, numbers, or underscores" \
+    "POST" "/auth/register" "400" "VALIDATION_ERROR" "Username is too short" \
     "$payload"
 
   payload="$(register_payload "firstname@example.com" "firstname_user" "" "Tester" "password123")"
   expect_error_case \
     "Register rejects missing first_name" \
-    "POST" "/auth/register" "400" "VALIDATION_ERROR" "first_name is required and must be at most 100 characters" \
+    "POST" "/auth/register" "400" "VALIDATION_ERROR" "First name is required" \
     "$payload"
 
   payload="$(register_payload "lastname@example.com" "lastname_user" "Api" "" "password123")"
   expect_error_case \
     "Register rejects missing last_name" \
-    "POST" "/auth/register" "400" "VALIDATION_ERROR" "last_name is required and must be at most 100 characters" \
+    "POST" "/auth/register" "400" "VALIDATION_ERROR" "Last name is required" \
     "$payload"
 
   payload="$(register_payload "password@example.com" "password_user" "Api" "Tester" "short")"
   expect_error_case \
     "Register rejects short password" \
-    "POST" "/auth/register" "400" "VALIDATION_ERROR" "password must be between 8 and 72 bytes" \
+    "POST" "/auth/register" "400" "VALIDATION_ERROR" "Password is too short" \
     "$payload"
 
   payload="$(register_payload "$test_email" "$test_username" "Api" "Tester" "$test_password")"
@@ -480,40 +480,40 @@ test_auth_validation_and_success() {
 
   expect_error_case \
     "Login rejects missing body" \
-    "POST" "/auth/login" "400" "BAD_REQUEST" "invalid JSON body"
+    "POST" "/auth/login" "400" "BAD_REQUEST" "Invalid JSON body"
 
   expect_error_case \
     "Login rejects invalid JSON" \
-    "POST" "/auth/login" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/login" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{'
 
   expect_error_case \
     "Login rejects unknown JSON field" \
-    "POST" "/auth/login" "400" "BAD_REQUEST" "invalid JSON body" \
+    "POST" "/auth/login" "400" "BAD_REQUEST" "Invalid JSON body" \
     '{"login":"extra@example.com","password":"password123","remember":true}'
 
   payload="$(login_payload "not-an-email!" "$test_password")"
   expect_error_case \
     "Login rejects invalid username/email" \
-    "POST" "/auth/login" "400" "VALIDATION_ERROR" "login must be a valid email address or username" \
+    "POST" "/auth/login" "400" "VALIDATION_ERROR" "Invalid email or username" \
     "$payload"
 
   payload="$(login_payload "$normalized_email" "")"
   expect_error_case \
     "Login rejects missing password" \
-    "POST" "/auth/login" "400" "VALIDATION_ERROR" "password is required" \
+    "POST" "/auth/login" "400" "VALIDATION_ERROR" "Password is required" \
     "$payload"
 
   payload="$(login_payload "$normalized_email" "wrong-password")"
   expect_error_case \
     "Login rejects wrong password" \
-    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "invalid username/email or password" \
+    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "Invalid email, username, or password" \
     "$payload"
 
   payload="$(login_payload "missing-$run_id@example.com" "$test_password")"
   expect_error_case \
     "Login rejects unknown email" \
-    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "invalid username/email or password" \
+    "POST" "/auth/login" "401" "INVALID_CREDENTIALS" "Invalid email, username, or password" \
     "$payload"
 
   payload="$(login_payload "$uppercase_email" "$test_password")"
@@ -536,16 +536,16 @@ test_protected_route_errors() {
 
   expect_error_case \
     "Protected route rejects missing bearer token" \
-    "GET" "/movies/search?title=dune" "401" "UNAUTHORIZED" "missing bearer token"
+    "GET" "/movies/search?title=dune" "401" "UNAUTHORIZED" "Missing bearer token"
 
   expect_error_case \
     "Protected route rejects malformed auth scheme" \
-    "GET" "/movies/search?title=dune" "401" "UNAUTHORIZED" "missing bearer token" \
+    "GET" "/movies/search?title=dune" "401" "UNAUTHORIZED" "Missing bearer token" \
     "" "" "Token abc"
 
   expect_error_case \
     "Protected route rejects invalid bearer token" \
-    "GET" "/movies/search?title=dune" "401" "UNAUTHORIZED" "invalid bearer token" \
+    "GET" "/movies/search?title=dune" "401" "UNAUTHORIZED" "Invalid bearer token" \
     "" "" "Bearer not-a-valid-jwt"
 
   if [[ -z "$AUTH_TOKEN" ]]; then
@@ -555,23 +555,23 @@ test_protected_route_errors() {
 
   expect_error_case \
     "Search rejects missing title query" \
-    "GET" "/movies/search" "400" "VALIDATION_ERROR" "title query parameter is required" \
+    "GET" "/movies/search" "400" "VALIDATION_ERROR" "Title query parameter is required" \
     "" "$AUTH_TOKEN"
 
   expect_error_case \
     "Search rejects empty title query" \
-    "GET" "/movies/search?title=" "400" "VALIDATION_ERROR" "title query parameter is required" \
+    "GET" "/movies/search?title=" "400" "VALIDATION_ERROR" "Title query parameter is required" \
     "" "$AUTH_TOKEN"
 
   expect_error_case \
     "Movie detail rejects unknown imdb_id" \
-    "GET" "/movies/tt0000000" "404" "NOT_FOUND" "movie not found" \
+    "GET" "/movies/tt0000000" "404" "NOT_FOUND" "Movie not found" \
     "" "$AUTH_TOKEN"
 
   request "GET" "/movies/tt0000000/torrents" "" "$AUTH_TOKEN"
   if [[ "$LAST_STATUS" == "404" ]]; then
     pass "Unknown movie torrent route returns 404"
-    assert_error "Unknown movie torrent route" "NOT_FOUND" "no tracker source found for this movie"
+    assert_error "Unknown movie torrent route" "NOT_FOUND" "No tracker source found for this movie"
   elif expect_status "Unknown movie torrent route returns current empty-list envelope" "200"; then
     assert_list_envelope "Unknown movie torrent route"
     assert_jq_true "Unknown movie torrent route returns no torrents" '.data | length == 0'
@@ -740,12 +740,12 @@ test_authenticated_user_context_routes() {
   if [[ -n "$intruder_token" ]]; then
     expect_error_case \
       "Different authenticated user cannot update owned comment" \
-      "PATCH" "/comments/$USER_CONTEXT_COMMENT_ID" "404" "NOT_FOUND" "comment not found" \
+      "PATCH" "/comments/$USER_CONTEXT_COMMENT_ID" "404" "NOT_FOUND" "Comment not found" \
       "$(jq -n --arg content "intruder edit" '{content: $content}')" "$intruder_token"
 
     expect_error_case \
       "Different authenticated user cannot delete owned comment" \
-      "DELETE" "/comments/$USER_CONTEXT_COMMENT_ID" "404" "NOT_FOUND" "comment not found" \
+      "DELETE" "/comments/$USER_CONTEXT_COMMENT_ID" "404" "NOT_FOUND" "Comment not found" \
       "" "$intruder_token"
   fi
 
