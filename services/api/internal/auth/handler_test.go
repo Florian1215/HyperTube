@@ -41,13 +41,17 @@ func newMemoryUserStore() *memoryUserStore {
 }
 
 func (s *memoryUserStore) CreateUser(_ context.Context, params CreateUserParams) (models.User, error) {
+	var duplicateFields []string
 	if params.PasswordHash != "" {
 		if _, ok := s.usersByEmail[params.Email]; ok {
-			return models.User{}, ErrDuplicateUser
+			duplicateFields = append(duplicateFields, "email")
 		}
 	}
 	if _, ok := s.usersByUsername[params.Username]; ok {
-		return models.User{}, ErrDuplicateUser
+		duplicateFields = append(duplicateFields, "username")
+	}
+	if len(duplicateFields) > 0 {
+		return models.User{}, duplicateUserError(duplicateFields...)
 	}
 
 	s.nextID++
@@ -475,10 +479,10 @@ func TestLoginInvalidCredentialsUsesAcceptLanguage(t *testing.T) {
 	}
 }
 
-func TestRegisterDuplicateUserReturnsConflict(t *testing.T) {
+func TestRegisterDuplicateUserReturnsFieldConflict(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	body := `{
+	initialBody := `{
 		"email": "alice@example.com",
 		"username": "alice_1",
 		"first_name": "Alice",
@@ -486,22 +490,84 @@ func TestRegisterDuplicateUserReturnsConflict(t *testing.T) {
 		"password": "correct-horse-battery"
 	}`
 
-	firstReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(body))
+	firstReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(initialBody))
 	firstRec := httptest.NewRecorder()
 	handler.Register(firstRec, firstReq)
 	if firstRec.Code != http.StatusCreated {
 		t.Fatalf("expected initial register 201, got %d: %s", firstRec.Code, firstRec.Body.String())
 	}
 
-	secondReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(body))
-	secondRec := httptest.NewRecorder()
-	handler.Register(secondRec, secondReq)
-
-	if secondRec.Code != http.StatusConflict {
-		t.Fatalf("expected 409, got %d: %s", secondRec.Code, secondRec.Body.String())
+	tests := []struct {
+		name       string
+		body       string
+		wantFields map[string]string
+	}{
+		{
+			name: "email",
+			body: `{
+				"email": "alice@example.com",
+				"username": "alice_2",
+				"first_name": "Alice",
+				"last_name": "Example",
+				"password": "correct-horse-battery"
+			}`,
+			wantFields: map[string]string{
+				"email": "Email is already in use",
+			},
+		},
+		{
+			name: "username",
+			body: `{
+				"email": "alice2@example.com",
+				"username": "alice_1",
+				"first_name": "Alice",
+				"last_name": "Example",
+				"password": "correct-horse-battery"
+			}`,
+			wantFields: map[string]string{
+				"username": "Username is already in use",
+			},
+		},
+		{
+			name: "email and username",
+			body: initialBody,
+			wantFields: map[string]string{
+				"email":    "Email is already in use",
+				"username": "Username is already in use",
+			},
+		},
 	}
-	if got := decodeErrorEnvelope(t, secondRec).Error.Code; got != "USER_EXISTS" {
-		t.Fatalf("expected USER_EXISTS, got %q", got)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+			handler.Register(rec, req)
+
+			if rec.Code != http.StatusConflict {
+				t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
+			}
+
+			errorBody := decodeErrorEnvelope(t, rec).Error
+			if errorBody.Code != "ALREADY_EXIST_ERROR" {
+				t.Fatalf("expected ALREADY_EXIST_ERROR, got %q", errorBody.Code)
+			}
+			if errorBody.Message != "" {
+				t.Fatalf("expected duplicate response without top-level message, got %q", errorBody.Message)
+			}
+			if len(errorBody.Fields) != len(tt.wantFields) {
+				t.Fatalf("expected fields %+v, got %+v", tt.wantFields, errorBody.Fields)
+			}
+			for field, wantMessage := range tt.wantFields {
+				got, ok := errorBody.Fields[field]
+				if !ok {
+					t.Fatalf("expected field %q in duplicate response, got %+v", field, errorBody.Fields)
+				}
+				if got.Message != wantMessage {
+					t.Fatalf("expected %s message %q, got %q", field, wantMessage, got.Message)
+				}
+			}
+		})
 	}
 }
 

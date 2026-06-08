@@ -146,7 +146,7 @@ Content-Type: application/json
 | 400 | `VALIDATION_ERROR` | `First name is required` or `First name is too long` |
 | 400 | `VALIDATION_ERROR` | `Last name is required` or `Last name is too long` |
 | 400 | `VALIDATION_ERROR` | `Password is too short` or `Password is too long` |
-| 409 | `USER_EXISTS` | `Email or username already exists` |
+| 409 | `ALREADY_EXIST_ERROR` | Field errors for `email`, `username`, or both |
 | 500 | `INTERNAL_ERROR` | `Failed to create user` or `Failed to create token` |
 
 Example:
@@ -154,8 +154,15 @@ Example:
 ```json
 {
   "error": {
-    "code": "USER_EXISTS",
-    "message": "Email or username already exists"
+    "code": "ALREADY_EXIST_ERROR",
+    "fields": {
+      "email": {
+        "message": "Email is already in use"
+      },
+      "username": {
+        "message": "Username is already in use"
+      }
+    }
   }
 }
 ```

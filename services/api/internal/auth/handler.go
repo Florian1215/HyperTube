@@ -137,7 +137,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.CreateUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, ErrDuplicateUser) {
-			respond.LocalizedError(w, r, http.StatusConflict, "USER_EXISTS", i18n.MsgEmailOrUsernameExists)
+			writeDuplicateRegisterError(w, r, duplicateUserFields(err))
 			return
 		}
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateUser)
@@ -218,6 +218,29 @@ func writeValidationError(w http.ResponseWriter, r *http.Request, fields validat
 		responseFields[field] = respond.FieldError{Message: i18n.T(locale, message)}
 	}
 	respond.ValidationError(w, http.StatusBadRequest, responseFields)
+}
+
+func writeDuplicateRegisterError(w http.ResponseWriter, r *http.Request, fields []string) {
+	locale := i18n.FromRequest(r)
+	responseFields := respond.FieldErrors{}
+	if len(fields) == 0 {
+		fields = []string{"email", "username"}
+	}
+
+	for _, field := range fields {
+		switch field {
+		case "email":
+			responseFields[field] = respond.FieldError{Message: i18n.T(locale, i18n.MsgEmailAlreadyInUse)}
+		case "username":
+			responseFields[field] = respond.FieldError{Message: i18n.T(locale, i18n.MsgUsernameAlreadyInUse)}
+		}
+	}
+	if len(responseFields) == 0 {
+		responseFields["email"] = respond.FieldError{Message: i18n.T(locale, i18n.MsgEmailAlreadyInUse)}
+		responseFields["username"] = respond.FieldError{Message: i18n.T(locale, i18n.MsgUsernameAlreadyInUse)}
+	}
+
+	respond.ErrorWithFields(w, http.StatusConflict, "ALREADY_EXIST_ERROR", responseFields)
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
