@@ -30,7 +30,7 @@ export function useApiMutation(setErrorsAction?: (errors: Record<string, string>
                     openModal({type: "signin"});
                     return null;
                 } else if ((error.status === 401 || error.status === 409) && setErrorsAction) {
-                    setErrorsAction({"login": error.message});
+                    setErrorsAction({"login": error.message}); // todo replace by email field or username field
                     return null;
                 } else if (error.status === 404) {
                     router.push("/404");
