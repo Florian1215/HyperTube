@@ -21,6 +21,33 @@ var (
 	ErrInvalidPasswordResetToken = errors.New("invalid password reset token")
 )
 
+type DuplicateUserError struct {
+	Fields []string
+}
+
+func (e *DuplicateUserError) Error() string {
+	if len(e.Fields) == 0 {
+		return ErrDuplicateUser.Error()
+	}
+	return fmt.Sprintf("%s: %s", ErrDuplicateUser, strings.Join(e.Fields, ", "))
+}
+
+func (e *DuplicateUserError) Unwrap() error {
+	return ErrDuplicateUser
+}
+
+func duplicateUserError(fields ...string) error {
+	return &DuplicateUserError{Fields: fields}
+}
+
+func duplicateUserFields(err error) []string {
+	var duplicateErr *DuplicateUserError
+	if errors.As(err, &duplicateErr) {
+		return duplicateErr.Fields
+	}
+	return nil
+}
+
 type userStore interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (models.User, error)
 	FindUserByEmail(ctx context.Context, email string) (models.User, error)
@@ -71,11 +98,45 @@ func (s *Store) CreateUser(ctx context.Context, params CreateUserParams) (models
 	`, params.Email, params.Username, params.FirstName, params.LastName, nullableString(params.ProfilePicture), params.PasswordHash))
 	if err != nil {
 		if isUniqueViolation(err) {
-			return models.User{}, ErrDuplicateUser
+			fields, fieldErr := s.duplicateCreateUserFields(ctx, params)
+			if fieldErr != nil || len(fields) == 0 {
+				return models.User{}, ErrDuplicateUser
+			}
+			return models.User{}, duplicateUserError(fields...)
 		}
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func (s *Store) duplicateCreateUserFields(ctx context.Context, params CreateUserParams) ([]string, error) {
+	var emailExists bool
+	var usernameExists bool
+	err := s.db.QueryRow(ctx, `
+		SELECT
+			EXISTS (
+				SELECT 1
+				FROM users
+				WHERE email = $1 AND COALESCE(password_hash, '') <> ''
+			),
+			EXISTS (
+				SELECT 1
+				FROM users
+				WHERE username = $2
+			)
+	`, params.Email, params.Username).Scan(&emailExists, &usernameExists)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := make([]string, 0, 2)
+	if params.PasswordHash != "" && emailExists {
+		fields = append(fields, "email")
+	}
+	if usernameExists {
+		fields = append(fields, "username")
+	}
+	return fields, nil
 }
 
 func (s *Store) FindUserByEmail(ctx context.Context, email string) (models.User, error) {

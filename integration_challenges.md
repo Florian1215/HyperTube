@@ -114,7 +114,7 @@ use mock data.
 
 Integration requirements:
 
-- `POST /api/v1/auth/login` expects email and password.
+- `POST /api/v1/auth/login` expects login and password; login may be an email address or username.
 - The current frontend sign-in modal asks for username and password.
 - `POST /api/v1/auth/register` expects `first_name` and `last_name`, while the
   frontend local type uses `firstname` and `lastname`.

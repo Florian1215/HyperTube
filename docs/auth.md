@@ -139,7 +139,7 @@ All paths in this table are mounted under `/api/v1`.
 | Route | Status | Body | Success |
 |-------|--------|------|---------|
 | `POST /auth/register` | Active | JSON with `email`, `username`, `first_name`, `last_name`, `password` | `201` auth payload |
-| `POST /auth/login` | Active | JSON with `email`, `password` | `200` auth payload |
+| `POST /auth/login` | Active | JSON with `login`, `password` | `200` auth payload |
 | `POST /auth/password-reset` | Active when email is configured | JSON with `email`, optional `locale` | `202` generic accepted message |
 | `POST /auth/reset-password` | Active | JSON with `token`, `password` | `200` reset success message |
 | `GET /auth/42/login` | Active when 42 OAuth is configured | none | `302` redirect to 42, state cookie set |

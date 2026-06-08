@@ -356,10 +356,10 @@ register_payload() {
 }
 
 login_payload() {
-  local email="$1"
+  local login="$1"
   local password="$2"
 
-  jq -n --arg email "$email" --arg password "$password" '{email:$email, password:$password}'
+  jq -n --arg login "$login" --arg password "$password" '{login:$login, password:$password}'
 }
 
 extract_token_from_body() {
@@ -469,10 +469,14 @@ test_auth_validation_and_success() {
     REGISTERED_USER_ID="$(jq -r '.data.user.id // empty' "$LAST_BODY_FILE")"
   fi
 
-  expect_error_case \
-    "Register rejects duplicate email or username" \
-    "POST" "/auth/register" "409" "USER_EXISTS" "email or username already exists" \
-    "$payload"
+  request "POST" "/auth/register" "$payload"
+  if expect_status "Register rejects duplicate email and username" "409"; then
+    assert_jq_eq "Duplicate register error code" '.error.code' "ALREADY_EXIST_ERROR"
+    assert_jq_true "Duplicate register has field errors" '.error.fields | type == "object"'
+    assert_jq_true "Duplicate register has no top-level message" '.error | has("message") | not'
+    assert_jq_eq "Duplicate register email field message" '.error.fields.email.message' "Email is already in use"
+    assert_jq_eq "Duplicate register username field message" '.error.fields.username.message' "Username is already in use"
+  fi
 
   expect_error_case \
     "Login rejects missing body" \
@@ -486,7 +490,7 @@ test_auth_validation_and_success() {
   expect_error_case \
     "Login rejects unknown JSON field" \
     "POST" "/auth/login" "400" "BAD_REQUEST" "invalid JSON body" \
-    '{"email":"extra@example.com","password":"password123","remember":true}'
+    '{"login":"extra@example.com","password":"password123","remember":true}'
 
   payload="$(login_payload "not-an-email!" "$test_password")"
   expect_error_case \

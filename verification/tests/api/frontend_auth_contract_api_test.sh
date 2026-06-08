@@ -224,7 +224,7 @@ register_payload() {
 login_payload() {
   local login="$1"
 
-  jq -n --arg email "$login" --arg password "$PASSWORD" '{email: $email, password: $password}'
+  jq -n --arg login "$login" --arg password "$PASSWORD" '{login: $login, password: $password}'
 }
 
 test_frontend_register_contract() {
@@ -253,13 +253,13 @@ test_frontend_login_contract() {
 
   payload="$(login_payload "$EMAIL")"
   request "POST" "/auth/login" "$payload"
-  if expect_status "Login accepts email field with email address" "200"; then
+  if expect_status "Login accepts login field with email address" "200"; then
     assert_jq_eq "Email login returns the registered user" '.data.user.username' "$USERNAME"
   fi
 
   payload="$(login_payload "$USERNAME")"
   request "POST" "/auth/login" "$payload"
-  if expect_status "Login accepts email field with username value" "200"; then
+  if expect_status "Login accepts login field with username value" "200"; then
     assert_jq_eq "Username login returns the registered user" '.data.user.email' "$EMAIL"
   fi
 }

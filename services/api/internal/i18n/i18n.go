@@ -41,7 +41,8 @@ const (
 	MsgLoginInvalid                    Message = "invalid email or username"
 	MsgPasswordRequired                Message = "password is required"
 	MsgPasswordInvalid                 Message = "invalid password"
-	MsgEmailOrUsernameExists           Message = "email or username already exists"
+	MsgEmailAlreadyInUse               Message = "email is already in use"
+	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
 	MsgInvalidCredentials              Message = "invalid email, username, or password"
 	MsgFailedLoadUser                  Message = "failed to load user"
@@ -130,7 +131,8 @@ var translations = map[Locale]map[Message]string{
 		MsgLoginInvalid:                    "email ou nom d'utilisateur invalide",
 		MsgPasswordRequired:                "mot de passe requis",
 		MsgPasswordInvalid:                 "mot de passe invalide",
-		MsgEmailOrUsernameExists:           "email ou nom d'utilisateur déjà utilisé",
+		MsgEmailAlreadyInUse:               "email déjà utilisé",
+		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
 		MsgInvalidCredentials:              "email, nom d'utilisateur ou mot de passe invalide",
 		MsgFailedLoadUser:                  "échec du chargement de l'utilisateur",
@@ -211,7 +213,8 @@ var translations = map[Locale]map[Message]string{
 		MsgLoginInvalid:                    "E-Mail oder Benutzername ist ungültig",
 		MsgPasswordRequired:                "Passwort ist erforderlich",
 		MsgPasswordInvalid:                 "Passwort ist ungültig",
-		MsgEmailOrUsernameExists:           "E-Mail oder Benutzername existiert bereits",
+		MsgEmailAlreadyInUse:               "E-Mail wird bereits verwendet",
+		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
 		MsgInvalidCredentials:              "E-Mail, Benutzername oder Passwort ist ungültig",
 		MsgFailedLoadUser:                  "Benutzer konnte nicht geladen werden",
