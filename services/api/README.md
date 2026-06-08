@@ -1036,6 +1036,12 @@ Returns comments posted on a movie, ordered by most recent first.
 |-----------|--------|----------------------|
 | `id`      | string | IMDb ID of the movie |
 
+### Query parameters
+
+| Parameter | Type    | Required | Default | Description                    |
+|-----------|---------|----------|---------|--------------------------------|
+| `page`    | integer | no       | `0`     | Page index (0 is first page)   |
+
 ### Response
 
 ```json
@@ -1049,14 +1055,14 @@ Returns comments posted on a movie, ordered by most recent first.
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
-  "meta": { "total": 8, "page": 0, "per_page": 8 }
+  "meta": { "total": 8, "page": 0, "per_page": 12 }
 }
 ```
 
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "No comments" } }
+{ "error": { "code": "NOT_FOUND", "message": "Movie not found" } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to access comments" } }
@@ -1102,7 +1108,10 @@ Posts a new comment on a movie as the authenticated user. Requires
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "content": { "message": "Invalid request body" } } } }
+```
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Movie not found" } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to create comment" } }
@@ -1113,6 +1122,12 @@ Posts a new comment on a movie as the authenticated user. Requires
 ## GET /comments
 
 Returns all comments across all movies.
+
+### Query parameters
+
+| Parameter | Type    | Required | Default | Description                    |
+|-----------|---------|----------|---------|--------------------------------|
+| `page`    | integer | no       | `0`     | Page index (0 is first page)   |
 
 ### Response
 
@@ -1127,15 +1142,12 @@ Returns all comments across all movies.
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
-  "meta": { "total": 8, "page": 0, "per_page": 8 }
+  "meta": { "total": 8, "page": 0, "per_page": 12 }
 }
 ```
 
 ### Error responses
 
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Comments not found" } }
-```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to load comments" } }
 ```
@@ -1213,7 +1225,7 @@ user. Requires `Authorization: Bearer <access_token>`.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "content": { "message": "Invalid request body" } } } }
 ```
 ```json
 { "error": { "code": "NOT_FOUND", "message": "Comment not found" } }

@@ -98,7 +98,7 @@ func TestRouterGitLabOAuthLoginIsPublic(t *testing.T) {
 	}
 }
 
-func TestRouterDevMovieRoutesReachHandlerWithoutBearerToken(t *testing.T) {
+func TestRouterProtectedMovieRouteRequiresBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
@@ -106,22 +106,36 @@ func TestRouterDevMovieRoutesReachHandlerWithoutBearerToken(t *testing.T) {
 
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected handler validation 400, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if got := decodeRouterErrorCode(t, rec); got != "VALIDATION_ERROR" {
-		t.Fatalf("expected VALIDATION_ERROR, got %q", got)
-	}
-	if got := decodeRouterValidationField(t, rec, "title"); got != "Title query parameter is required" {
-		t.Fatalf("expected title field validation, got %q", got)
+	if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
 	}
 }
 
-func TestRouterMovieRouteStillAcceptsBearerTokenDuringDevAuth(t *testing.T) {
+func TestRouterPostCommentsMethodNotAllowedBeforeAuth(t *testing.T) {
 	router, _ := newTestRouter(t)
 
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/comments", strings.NewReader(`{"content":"hello"}`))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRouterMovieRouteAcceptsBearerToken(t *testing.T) {
+	router, tokens := newTestRouter(t)
+	token, _, err := tokens.CreateAccessToken(42)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
-	req.Header.Set("Authorization", "Bearer dev-token-is-ignored")
+	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)

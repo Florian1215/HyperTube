@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -116,8 +117,11 @@ type userResponse struct {
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if !decodeJSON(w, r, &req) {
+	req, decodingFields, ok := decodeRegisterRequest(w, r)
+	if !ok {
+		if len(decodingFields) > 0 {
+			writeValidationError(w, r, decodingFields)
+		}
 		return
 	}
 
@@ -148,8 +152,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
-	if !decodeJSON(w, r, &req) {
+	req, decodingFields, ok := decodeLoginRequest(w, r)
+	if !ok {
+		if len(decodingFields) > 0 {
+			writeValidationError(w, r, decodingFields)
+		}
 		return
 	}
 
@@ -260,4 +267,97 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	}
 
 	return true
+}
+
+func decodeRegisterRequest(w http.ResponseWriter, r *http.Request) (registerRequest, validationErrors, bool) {
+	body, ok := decodeJSONObject(w, r, map[string]struct{}{
+		"email":      {},
+		"username":   {},
+		"first_name": {},
+		"last_name":  {},
+		"firstname":  {},
+		"lastname":   {},
+		"password":   {},
+	})
+	if !ok {
+		return registerRequest{}, nil, false
+	}
+
+	fields := validationErrors{}
+	req := registerRequest{
+		Email:             decodeStringField(body, "email", fields),
+		Username:          decodeStringField(body, "username", fields),
+		FirstName:         decodeStringField(body, "first_name", fields),
+		LastName:          decodeStringField(body, "last_name", fields),
+		FrontendFirstName: decodeStringField(body, "firstname", fields),
+		FrontendLastName:  decodeStringField(body, "lastname", fields),
+		Password:          decodeStringField(body, "password", fields),
+	}
+	if len(fields) > 0 {
+		return req, fields, false
+	}
+	return req, nil, true
+}
+
+func decodeLoginRequest(w http.ResponseWriter, r *http.Request) (loginRequest, validationErrors, bool) {
+	body, ok := decodeJSONObject(w, r, map[string]struct{}{
+		"login":    {},
+		"password": {},
+	})
+	if !ok {
+		return loginRequest{}, nil, false
+	}
+
+	fields := validationErrors{}
+	req := loginRequest{
+		Login:    decodeStringField(body, "login", fields),
+		Password: decodeStringField(body, "password", fields),
+	}
+	if len(fields) > 0 {
+		return req, fields, false
+	}
+	return req, nil, true
+}
+
+func decodeJSONObject(w http.ResponseWriter, r *http.Request, allowedFields map[string]struct{}) (map[string]json.RawMessage, bool) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
+
+	decoder := json.NewDecoder(r.Body)
+	var body map[string]json.RawMessage
+	if err := decoder.Decode(&body); err != nil || body == nil {
+		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
+		return nil, false
+	}
+
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
+		return nil, false
+	}
+
+	for field := range body {
+		if _, ok := allowedFields[field]; !ok {
+			respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
+			return nil, false
+		}
+	}
+
+	return body, true
+}
+
+func decodeStringField(body map[string]json.RawMessage, field string, fields validationErrors) string {
+	raw, ok := body[field]
+	if !ok {
+		return ""
+	}
+	if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
+		fields[field] = i18n.MsgInvalidRequestBody
+		return ""
+	}
+
+	var value string
+	if err := json.Unmarshal(raw, &value); err != nil {
+		fields[field] = i18n.MsgInvalidRequestBody
+		return ""
+	}
+	return value
 }

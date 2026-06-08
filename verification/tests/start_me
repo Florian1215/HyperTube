@@ -9,7 +9,7 @@ API_TEST_DIR="$SCRIPT_DIR/api"
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 
-TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract")
+TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract" "issue-97")
 TEST_TITLES=(
   "Comprehensive API E2E"
   "OAuth2 Token API"
@@ -19,6 +19,7 @@ TEST_TITLES=(
   "Basic Curl Walkthrough"
   "Password Reset API"
   "Frontend Auth Contract API"
+  "Issue #97 Endpoint Regression"
 )
 TEST_FILES=(
   "comprehensive_api_test.sh"
@@ -29,6 +30,7 @@ TEST_FILES=(
   "basic_api_test.sh"
   "password_reset_api_test.sh"
   "frontend_auth_contract_api_test.sh"
+  "issue_97_endpoint_regression_test.sh"
 )
 TEST_DEPS=(
   "curl jq sed date tr"
@@ -38,6 +40,7 @@ TEST_DEPS=(
   "curl jq sed awk grep mktemp"
   "curl jq"
   "curl jq sed"
+  "curl jq sed date"
   "curl jq sed date"
 )
 TEST_DESCRIPTIONS=(
@@ -49,6 +52,7 @@ TEST_DESCRIPTIONS=(
   "Prints readable request/response examples for health, movie listing, movie lookup, torrent lookup, registration, and login. Best for quick manual inspection."
   "Validates password-reset request validation, missing-mailer behavior, reset-token validation, and invalid or expired token errors."
   "Validates that the API accepts the current frontend auth payloads and returns both backend and frontend-compatible user fields."
+  "Validates issue #97 fixes: auth field validation, email/name rules, method handling, comment 404 ordering, content validation, trimming, and comment pagination."
 )
 
 RESET=""
@@ -91,6 +95,7 @@ Tests:
   password-reset   Password reset route validation and invalid-token behavior.
   frontend-auth-contract
                    Current frontend registration/login contract compatibility.
+  issue-97         Endpoint regression checks for issue #97.
   all              Run every test in the order shown above.
 
 Environment:
@@ -226,6 +231,9 @@ resolve_test_index() {
       ;;
     8|frontend-auth-contract|frontend-auth|frontend|auth-contract|ui-auth)
       printf '7'
+      ;;
+    9|issue-97|issue97|endpoint-regression|fix-endpoint)
+      printf '8'
       ;;
     *)
       return 1
