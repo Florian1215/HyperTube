@@ -19,35 +19,3 @@ export function useResponsiveSize() {
     }, []);
     return size;
 }
-
-export function hasError(error: Record<string, string>) {
-    return Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
-}
-
-export function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>, index: number,
-                              fieldRefs: RefObject<HTMLInputElement[]>, submit: () => void,
-                              setFocusedIndex: (newIdx:number) => void,
-                              errors: Record<string, string>) {
-    if (e.key !== "Enter")
-        return ;
-    e.preventDefault();
-    const isLastField = index === fieldRefs.current.length - 1;
-    if (isLastField) {
-        if (hasError(errors)) {
-            const errorsKey = Object.keys(errors);
-            for (let i = 0; i < fieldRefs.current.length; i++) {
-                if (errors[errorsKey[i]]) {
-                    setFocusedIndex(i);
-                    return ;
-                }
-            }
-        }
-        submit();
-    }
-    else
-        setFocusedIndex(index + 1);
-}
-
-export function hasError(error: Record<string, string>) {
-    return Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
-}

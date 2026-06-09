@@ -7,7 +7,7 @@ import {useNotification} from "@/context/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import {tLocale} from "@/i18n/request";
 
-export function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void) {
+export function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, formType?: string) {
     const router = useRouter();
     const {openModal} = useModal();
     const locale = useLocale() as tLocale;
@@ -19,18 +19,18 @@ export function useApiMutation(setErrorsAction?: (errors: Record<string, string>
             return await callback(locale);
         } catch (error) {
             if (error instanceof ApiError) {
-                if (error.status === 400 && error.data.error.fields && setErrorsAction) {
+                if ((error.status === 400 || error.status === 409) && error.data.error.fields && setErrorsAction && formType) {
                     const newErrors: Record<string, string> = {};
                     Object.entries(error.data.error.fields).map(([key, value])=> {
-                        newErrors[key] = value.message;
+                        newErrors[key + "-" + formType] = value.message;
                     });
                     setErrorsAction(newErrors);
                     return null;
                 } else if (error.status === 401 && !setErrorsAction) {
                     openModal({type: "signin"});
                     return null;
-                } else if ((error.status === 401 || error.status === 409) && setErrorsAction) {
-                    setErrorsAction({"login": error.message}); // todo replace by email field or username field
+                } else if (error.status === 401 && setErrorsAction) {
+                    setErrorsAction({"login-signin": error.message});
                     return null;
                 } else if (error.status === 404) {
                     router.push("/404");

@@ -3,8 +3,8 @@ import {EyeIcon} from "@/components/Icons";
 import {useTranslations} from "next-intl";
 
 export default function Input(
-    {id, type, placeholder, value, onChange, className, requestErrorMessage, setErrorsMessage, ref, onKeyDown}:
-    {id: string, type: string, placeholder: string, value: string, onChange: (value: string) => void, className?: string, requestErrorMessage?: string, setErrorsMessage?: (errorMsg: Record<string, string>) => void, ref?: (el: HTMLInputElement) => void, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void}
+    {id, type, placeholder, value, onChange, idx, className, requestErrorMessage, setErrorsMessage, ref, onKeyDown}:
+    {id: string, type: string, placeholder: string, value: string, onChange: React.Dispatch<React.SetStateAction<string[]>>, idx: number, className?: string, requestErrorMessage?: string, setErrorsMessage?: (errorMsg: Record<string, string>) => void, ref?: (el: HTMLInputElement) => void, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void}
 ) {
     const isPassword = type === "password";
     const t = useTranslations("validationErrors");
@@ -20,41 +20,37 @@ export default function Input(
         const newValue = e.target.value;
 
         if (setErrorsMessage) {
+            let message = "";
+
             if (id.includes("email")) {
                 if (newValue && !emailRegex.test(newValue.trim()))
-                    setErrorsMessage({"email": t("emailInvalid")});
-                else
-                    setErrorsMessage({"email": ""});
-            } else if (id.includes("firstname")) {
+                    message = t("emailInvalid");
+            } else if (id.includes("first_name")) {
                 if (newValue.trim().length > 30)
-                    setErrorsMessage({"firstname": t("firstnameTooLong")});
-                else
-                    setErrorsMessage({"firstname": ""});
-            } else if (id.includes("lastname")) {
+                    message = t("firstnameTooLong");
+            } else if (id.includes("last_name")) {
                 if (newValue.trim().length > 30)
-                    setErrorsMessage({"lastname": t("lastnameTooLong")});
-                else
-                    setErrorsMessage({"lastname": ""});
+                    message = t("lastnameTooLong");
             } else if (id.includes("username")) {
                 if (newValue && newValue.trim().length < 3)
-                    setErrorsMessage({"username": t("usernameTooShort")});
+                    message = t("usernameTooShort");
                 else if (newValue.trim().length > 32)
-                    setErrorsMessage({"username": t("usernameTooLong")});
+                    message = t("usernameTooLong");
                 else if (newValue && !usernameRegex.test(newValue))
-                    setErrorsMessage({"username": t("usernameInvalid")});
-                else
-                    setErrorsMessage({"username": ""});
+                    message = t("usernameInvalid");
             } else if (id.includes("password")) {
                 if (newValue && newValue.length < 8)
-                    setErrorsMessage({[id]: t("passwordTooShort")});
+                    message = t("passwordTooShort");
                 else if (newValue.length > 72)
-                    setErrorsMessage({[id]: t("passwordTooLong")});
-                else
-                    setErrorsMessage({[id]: ""});
-            } else
-                setErrorsMessage({"login": ""});
+                    message = t("passwordTooLong");
+            }
+            setErrorsMessage({[id]: message});
         }
-        onChange(newValue);
+        onChange((prev) => {
+            const updated = [...prev];
+            updated[idx] = newValue;
+            return updated;
+        });
     }
 
     return (<div className={"flex flex-col w-full h-16 relative " + className}>
