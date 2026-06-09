@@ -20,7 +20,6 @@ type MoviesHandler struct {
 	store     movieStore
 	searchers []MovieSearcher
 	tmdb      tmdbClient
-	userStore *auth.Store
 }
 
 type movieStore interface {
@@ -53,8 +52,8 @@ type tmdbClient interface {
 	FindByName(ctx context.Context, title string, year int) (models.Movie, error)
 }
 
-func NewMoviesHandler(store movieStore, searchers []MovieSearcher, tmdb tmdbClient, userStore *auth.Store) *MoviesHandler {
-	return &MoviesHandler{store: store, searchers: searchers, tmdb: tmdb, userStore: userStore}
+func NewMoviesHandler(store movieStore, searchers []MovieSearcher, tmdb tmdbClient) *MoviesHandler {
+	return &MoviesHandler{store: store, searchers: searchers, tmdb: tmdb}
 }
 
 // GetMovies returns a list of movies.

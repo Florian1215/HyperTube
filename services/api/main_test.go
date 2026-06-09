@@ -274,7 +274,7 @@ func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserColorStore) 
 	}
 
 	return newRouter(
-		movies.NewMoviesHandler(nil, nil, nil, nil),
+		movies.NewMoviesHandler(nil, nil, nil),
 		comments.NewCommentsHandler(nil),
 		auth.NewHandler(nil, tokens),
 		users.NewHandler(userStore),

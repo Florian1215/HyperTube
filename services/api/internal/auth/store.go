@@ -50,7 +50,6 @@ func duplicateUserFields(err error) []string {
 
 type userStore interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (models.User, error)
-	FindUserByID(ctx context.Context, id int) (models.User, error)
 	FindUserByEmail(ctx context.Context, email string) (models.User, error)
 	FindUserByLogin(ctx context.Context, login string) (models.User, error)
 	FindOrCreateOAuthUser(ctx context.Context, params OAuthUserParams) (models.User, error)
@@ -155,21 +154,6 @@ func (s *Store) FindUserByEmail(ctx context.Context, email string) (models.User,
 		FROM users
 		WHERE email = $1 AND COALESCE(password_hash, '') <> ''
 	`, email))
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return models.User{}, ErrUserNotFound
-		}
-		return models.User{}, err
-	}
-	return user, nil
-}
-
-func (s *Store) FindUserByID(ctx context.Context, id int) (models.User, error) {
-	user, err := scanUser(s.db.QueryRow(ctx, `
-		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
-		FROM users
-		WHERE id = $1 AND COALESCE(password_hash, '') <> ''
-	`, id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.User{}, ErrUserNotFound
