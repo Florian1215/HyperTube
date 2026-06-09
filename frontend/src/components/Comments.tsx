@@ -34,10 +34,13 @@ export function CommentSection({movie}: {movie: iMovie}) {
     const t = useTranslations("comments");
     const {data} = useComments(movie.imdb_id, index);
 
+    // todo data.data[i].user = {"id":15,"email":"sgsafg@okfoe","username":"sagsafg","first_name":"fokeow","last_name":"okpewog","profile_picture":null,"created_at":1780086231180,"color":"purple","watch_history":[]};
     useEffect(() => {
         if (!data)
             return;
         const newData = structuredClone(data.data);
+        for (let i = 0; i < newData.length; i++)
+            newData[i].user = {"id":15,"email":"sgsafg@okfoe","oauth_method":"42","username":"sagsafg","first_name":"fokeow","last_name":"okpewog","profile_picture":null,"created_at":1780086231180,"color":"purple","watch_history":[]};
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setComments(newData);
         setTotalPage(computeTotalPage(data));
@@ -264,6 +267,7 @@ function NewComment({movie, onSubmit}: {movie: iMovie, onSubmit: (value: iCommen
 
         makePostRequest().then((data) => {
             if (data) {
+                data.data.user = {"id":15,"email":"sgsafg@okfoe","oauth_method":"42","username":"sagsafg","first_name":"fokeow","last_name":"okpewog","profile_picture":null,"created_at":1780086231180,"color":"purple","watch_history":[]};
                 const newComment = data.data as iComment;
                 setComment("");
                 setExpendComment(false);

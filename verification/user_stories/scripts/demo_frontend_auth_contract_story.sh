@@ -3,9 +3,9 @@
 # CLI demo walkthrough for the current frontend auth/backend contract.
 #
 # User story:
-#   As the unchanged frontend, I can send firstname/lastname during
-#   registration, keep using the login email field for either email or
-#   username, and still receive the user fields the UI currently reads.
+#   As an auth API consumer, I can send firstname/lastname during registration,
+#   log in through the canonical login field with either email or username, and
+#   still receive the user fields the UI currently reads.
 #
 # Usage:
 #   ./verification/user_stories/scripts/demo_frontend_auth_contract_story.sh
@@ -57,14 +57,14 @@ require_command sed
 require_command date
 
 heading "Frontend Auth Contract Journey"
-explain "This story keeps the frontend untouched and proves the API accepts the JSON shape the current UI already sends."
+explain "This story keeps the frontend untouched and proves the API accepts the current backend auth contract."
 
 printf '\n%sConfiguration:%s\n' "$BOLD" "$RESET"
 printf '  BASE_URL: %s\n' "$BASE_URL"
 printf '  API test: %s\n' "verification/tests/api/frontend_auth_contract_api_test.sh"
 
 heading "Run the contract checks"
-explain "The test registers with firstname/lastname, logs in with email, then logs in with username through the same email field."
+explain "The test registers with firstname/lastname, logs in with email, then logs in with username through the login field."
 
 (
   cd "$REPO_ROOT" || exit 1
@@ -74,7 +74,7 @@ status=$?
 
 heading "Story result"
 if [[ "$status" -eq 0 ]]; then
-  printf 'The unchanged frontend auth contract is supported by the backend.\n'
+  printf 'The backend auth contract is supported.\n'
 else
   printf 'The frontend auth contract failed. See the test output above for the exact request/response mismatch.\n'
 fi

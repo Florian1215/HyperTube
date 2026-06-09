@@ -7,10 +7,13 @@ func TestFromHeaderMatchesSupportedLanguages(t *testing.T) {
 		header string
 		want   Locale
 	}{
+		{header: "en", want: English},
+		{header: "en-US,en;q=0.9", want: English},
 		{header: "fr", want: French},
 		{header: "de-DE,de;q=0.9,en;q=0.8", want: German},
 		{header: "fr-CA,fr;q=0.9,en;q=0.8", want: French},
 		{header: "es", want: English},
+		{header: "not a language", want: English},
 		{header: "", want: English},
 	}
 

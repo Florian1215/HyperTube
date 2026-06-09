@@ -361,7 +361,7 @@ test_login_start() {
 
   if [[ "$LAST_STATUS" == "503" ]]; then
     pass "42 login reports missing provider configuration"
-    assert_error_envelope "42 login not configured response" "OAUTH_NOT_CONFIGURED" "42 OAuth is not configured"
+    assert_error_envelope "42 login not configured response" "OAUTH_NOT_CONFIGURED" "OAuth provider 42 is not configured"
     skip "42 authorization redirect checks" "FORTYTWO_CLIENT_ID, FORTYTWO_CLIENT_SECRET, or FORTYTWO_REDIRECT_URL is not configured"
     return 0
   fi
@@ -408,10 +408,10 @@ test_callback_csrf_errors() {
   section "42 callback CSRF validation"
 
   request "GET" "/auth/42/callback"
-  assert_redirect_or_error "Callback rejects missing state" "400" "INVALID_OAUTH_STATE" "invalid OAuth state"
+  assert_redirect_or_error "Callback rejects missing state" "400" "INVALID_OAUTH_STATE" "Invalid OAuth state"
 
   request "GET" "/auth/42/callback?code=fake-code&state=wrong-state" "$STATE_COOKIE_NAME=expected-state"
-  assert_redirect_or_error "Callback rejects mismatched state" "400" "INVALID_OAUTH_STATE" "invalid OAuth state"
+  assert_redirect_or_error "Callback rejects mismatched state" "400" "INVALID_OAUTH_STATE" "Invalid OAuth state"
 }
 
 test_callback_denial() {
@@ -424,7 +424,7 @@ test_callback_denial() {
   cookie="${OAUTH_LOGIN_COOKIE:-$STATE_COOKIE_NAME=$state}"
 
   request "GET" "/auth/42/callback?error=access_denied&state=$state" "$cookie"
-  assert_redirect_or_error "Callback handles denied 42 consent" "401" "OAUTH_DENIED" "access_denied"
+  assert_redirect_or_error "Callback handles denied 42 consent" "401" "OAUTH_DENIED" "OAuth authorization was denied for 42"
   assert_header_contains "Callback clears state cookie" "Set-Cookie" "$STATE_COOKIE_NAME="
 }
 

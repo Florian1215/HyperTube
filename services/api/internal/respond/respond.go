@@ -75,8 +75,12 @@ func LocalizedError(w http.ResponseWriter, r *http.Request, status int, code str
 }
 
 func ValidationError(w http.ResponseWriter, status int, fields FieldErrors) {
+	ErrorWithFields(w, status, "VALIDATION_ERROR", fields)
+}
+
+func ErrorWithFields(w http.ResponseWriter, status int, code string, fields FieldErrors) {
 	JSON(w, status, errorResponse{
-		Error: errorBody{Code: "VALIDATION_ERROR", Fields: fields},
+		Error: errorBody{Code: code, Fields: fields},
 	})
 }
 

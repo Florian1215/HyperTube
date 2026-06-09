@@ -6,18 +6,6 @@ import (
 	"time"
 )
 
-const testJWTSecret = "0123456789abcdef0123456789abcdef"
-
-func newTestTokenManager(t *testing.T) *TokenManager {
-	t.Helper()
-
-	tokens, err := NewTokenManager(testJWTSecret, "hypertube-test")
-	if err != nil {
-		t.Fatalf("new token manager: %v", err)
-	}
-	return tokens
-}
-
 func TestJWTValidToken(t *testing.T) {
 	tokens := newTestTokenManager(t)
 	now := time.Date(2026, 5, 6, 10, 0, 0, 0, time.UTC)

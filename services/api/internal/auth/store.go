@@ -21,6 +21,33 @@ var (
 	ErrInvalidPasswordResetToken = errors.New("invalid password reset token")
 )
 
+type DuplicateUserError struct {
+	Fields []string
+}
+
+func (e *DuplicateUserError) Error() string {
+	if len(e.Fields) == 0 {
+		return ErrDuplicateUser.Error()
+	}
+	return fmt.Sprintf("%s: %s", ErrDuplicateUser, strings.Join(e.Fields, ", "))
+}
+
+func (e *DuplicateUserError) Unwrap() error {
+	return ErrDuplicateUser
+}
+
+func duplicateUserError(fields ...string) error {
+	return &DuplicateUserError{Fields: fields}
+}
+
+func duplicateUserFields(err error) []string {
+	var duplicateErr *DuplicateUserError
+	if errors.As(err, &duplicateErr) {
+		return duplicateErr.Fields
+	}
+	return nil
+}
+
 type userStore interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (models.User, error)
 	FindUserByID(ctx context.Context, id int) (models.User, error)
@@ -42,6 +69,7 @@ type CreateUserParams struct {
 	LastName       string
 	ProfilePicture string
 	PasswordHash   string
+	Color          string
 }
 
 type OAuthUserParams struct {
@@ -65,23 +93,65 @@ func NewStore(db *pgxpool.Pool) *Store {
 }
 
 func (s *Store) CreateUser(ctx context.Context, params CreateUserParams) (models.User, error) {
+	color := strings.TrimSpace(params.Color)
+	if color == "" {
+		color = models.RandomUserColor()
+	}
+	if !models.IsValidUserColor(color) {
+		return models.User{}, fmt.Errorf("invalid user color: %q", params.Color)
+	}
+
 	user, err := scanUser(s.db.QueryRow(ctx, `
-		INSERT INTO users (email, username, first_name, last_name, profile_picture, password_hash)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
-	`, params.Email, params.Username, params.FirstName, params.LastName, nullableString(params.ProfilePicture), params.PasswordHash))
+		INSERT INTO users (email, username, first_name, last_name, profile_picture, password_hash, color)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
+	`, params.Email, params.Username, params.FirstName, params.LastName, nullableString(params.ProfilePicture), params.PasswordHash, color))
 	if err != nil {
 		if isUniqueViolation(err) {
-			return models.User{}, ErrDuplicateUser
+			fields, fieldErr := s.duplicateCreateUserFields(ctx, params)
+			if fieldErr != nil || len(fields) == 0 {
+				return models.User{}, ErrDuplicateUser
+			}
+			return models.User{}, duplicateUserError(fields...)
 		}
 		return models.User{}, err
 	}
 	return user, nil
 }
 
+func (s *Store) duplicateCreateUserFields(ctx context.Context, params CreateUserParams) ([]string, error) {
+	var emailExists bool
+	var usernameExists bool
+	err := s.db.QueryRow(ctx, `
+		SELECT
+			EXISTS (
+				SELECT 1
+				FROM users
+				WHERE email = $1 AND COALESCE(password_hash, '') <> ''
+			),
+			EXISTS (
+				SELECT 1
+				FROM users
+				WHERE username = $2
+			)
+	`, params.Email, params.Username).Scan(&emailExists, &usernameExists)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := make([]string, 0, 2)
+	if params.PasswordHash != "" && emailExists {
+		fields = append(fields, "email")
+	}
+	if usernameExists {
+		fields = append(fields, "username")
+	}
+	return fields, nil
+}
+
 func (s *Store) FindUserByEmail(ctx context.Context, email string) (models.User, error) {
 	user, err := scanUser(s.db.QueryRow(ctx, `
-		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
 		FROM users
 		WHERE email = $1 AND COALESCE(password_hash, '') <> ''
 	`, email))
@@ -117,7 +187,7 @@ func (s *Store) FindUserByLogin(ctx context.Context, login string) (models.User,
 	}
 
 	user, err := scanUser(s.db.QueryRow(ctx, `
-		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+		SELECT id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
 		FROM users
 		WHERE (email = $1 OR username = $2) AND COALESCE(password_hash, '') <> ''
 	`, email, login))
@@ -194,12 +264,13 @@ func createOAuthUser(ctx context.Context, q rowQuerier, params OAuthUserParams) 
 	if err != nil {
 		return models.User{}, err
 	}
+	color := models.RandomUserColor()
 
 	user, err := scanUser(q.QueryRow(ctx, `
-		INSERT INTO users (email, username, first_name, last_name, profile_picture, password_hash)
-		VALUES ($1, $2, $3, $4, $5, '')
-		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
-	`, params.Email, username, params.FirstName, params.LastName, nullableString(params.ProfilePicture)))
+		INSERT INTO users (email, username, first_name, last_name, profile_picture, password_hash, color)
+		VALUES ($1, $2, $3, $4, $5, '', $6)
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
+	`, params.Email, username, params.FirstName, params.LastName, nullableString(params.ProfilePicture), color))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return models.User{}, ErrDuplicateUser
@@ -242,7 +313,7 @@ func (s *Store) ResetPasswordWithToken(ctx context.Context, tokenHash string, pa
 		UPDATE users
 		SET password_hash = $1, updated_at = NOW()
 		WHERE id = $2
-		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
 	`, passwordHash, userID))
 	if err != nil {
 		return models.User{}, err
@@ -265,6 +336,7 @@ func scanUser(row pgx.Row) (models.User, error) {
 		&user.LastName,
 		&profilePicture,
 		&user.PasswordHash,
+		&user.Color,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -292,7 +364,7 @@ type execer interface {
 
 func findOAuthUserByAccount(ctx context.Context, q rowQuerier, provider string, providerUserID string) (models.User, error) {
 	user, err := scanUser(q.QueryRow(ctx, `
-		SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.profile_picture, COALESCE(u.password_hash, ''), u.created_at, u.updated_at
+		SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.profile_picture, COALESCE(u.password_hash, ''), u.color, u.created_at, u.updated_at
 		FROM users u
 		JOIN oauth_accounts oa ON oa.user_id = u.id
 		WHERE oa.provider = $1 AND oa.provider_user_id = $2
@@ -359,7 +431,7 @@ func applyOAuthProfile(ctx context.Context, q rowQuerier, user models.User, para
 		UPDATE users
 		SET username = $1, first_name = $2, last_name = $3, profile_picture = $4, updated_at = NOW()
 		WHERE id = $5
-		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), created_at, updated_at
+		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
 	`, username, firstName, lastName, nullableString(profilePicture), user.ID))
 	if err != nil {
 		return models.User{}, err

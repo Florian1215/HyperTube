@@ -1,10 +1,12 @@
-import React, {useState} from "react";
-import Input from "@/components/Input";
-import {iUser} from "@/types/user";
+import React from "react";
+import {iUser, iUserToken} from "@/types/user";
 import ProfilePicture from "@/components/ProfilePicture";
 import {useNotification} from "@/context/NotificationContext";
 import {Button, SmallButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
+import {tResponse} from "@/api/client";
+import Form from "@/components/Form";
+import {patchUser} from "@/api/users";
 
 
 export function ProfileTab({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
@@ -21,57 +23,21 @@ export function AvatarTab({user, updateUser}: {user: iUser, updateUser?: (patch:
 }
 
 function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
-    const { addNotification } = useNotification();
-    const [email, setEmail] = useState("");
-    const [firstname, setFirstname] = useState("");
-    const [lastname, setLastname] = useState("");
-    const [username, setUsername] = useState("");
+    const {addNotification} = useNotification();
     const t = useTranslations("profile.fields");
-    const tProfile = useTranslations("profile");
     const tSuccess = useTranslations("notifications.success");
 
-    const saveChange = () => {
-        const newUser = structuredClone(user);
-        let isInfoChanged = false;
-
-        if (email && email != user.email) {
-            newUser.email = email;
+    const handleUpdateUser = (data: tResponse<iUserToken>) => {
+        if (data.data.user.email !== user.email)
             addNotification(tSuccess("emailChanged"), "warning");
-            setEmail("");
-        }
-        if (firstname && firstname != user.first_name) {
-            isInfoChanged = true;
-            newUser.first_name = firstname;
-            setFirstname("");
-        }
-        if (lastname && lastname != user.last_name) {
-            isInfoChanged = true;
-            newUser.last_name = lastname;
-            setLastname("");
-        }
-        if (username && username != user.username) {
-            isInfoChanged = true;
-            newUser.username = username;
-            setUsername("");
-        }
-        if (isInfoChanged) {
-            if (updateUser)
-                updateUser(newUser);
-            addNotification(tSuccess("infoChanged"), "success");
-        }
-    }
+        if (updateUser)
+            updateUser(data.data.user);
+        addNotification(tSuccess("infoChanged"), "success");
+    };
 
     return (<div className="flex flex-col gap-4 items-start">
-        <Input id="profile-email" type="email" placeholder={t("email")} value={email} onChange={(newValue) => setEmail(newValue)}></Input>
-
-        <div className="flex gap-2 w-full">
-            <Input id="profile-firstname" type="firstname" placeholder={t("firstname")} value={firstname} onChange={(newValue) => setFirstname(newValue)}></Input>
-            <Input id="profile-lastname" type="lastname" placeholder={t("lastname")} value={lastname} onChange={(newValue) => setLastname(newValue)}></Input>
-        </div>
-
-        <Input id="profile-username" type="username" placeholder={t("username")} value={username} onChange={(newValue) => setUsername(newValue)} className={"max-w-3/5"}></Input>
-
-        <Button className="h-8" onClick={saveChange}>{tProfile("saveChanges")}</Button>
+        <Form formType={"update"} request={patchUser} handleRequest={handleUpdateUser} t={t}
+              fields={["email", "first_name", "last_name", "username"]} />
     </div>);
 }
 

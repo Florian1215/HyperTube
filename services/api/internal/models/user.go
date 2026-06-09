@@ -1,6 +1,29 @@
 package models
 
-import "time"
+import (
+	"crypto/rand"
+	"math/big"
+	"strings"
+	"time"
+)
+
+const (
+	UserColorYellow = "yellow"
+	UserColorPink   = "pink"
+	UserColorGreen  = "green"
+	UserColorPurple = "purple"
+	UserColorBlue   = "blue"
+	UserColorRed    = "red"
+)
+
+var AllowedUserColors = []string{
+	UserColorYellow,
+	UserColorPink,
+	UserColorGreen,
+	UserColorPurple,
+	UserColorBlue,
+	UserColorRed,
+}
 
 type User struct {
 	ID             int64     `json:"id"`
@@ -10,24 +33,25 @@ type User struct {
 	LastName       string    `json:"last_name"`
 	ProfilePicture string    `json:"profile_picture,omitempty"`
 	PasswordHash   string    `json:"-"`
+	Color          string    `json:"color"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-type UserSmall struct {
-	ID             int64  `json:"id"`
-	Username       string `json:"username"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	ProfilePicture string `json:"profile_picture,omitempty"`
+func IsValidUserColor(color string) bool {
+	color = strings.TrimSpace(color)
+	for _, allowed := range AllowedUserColors {
+		if color == allowed {
+			return true
+		}
+	}
+	return false
 }
 
-func ToUserSmall(u User) UserSmall {
-	return UserSmall{
-		ID:             u.ID,
-		Username:       u.Username,
-		FirstName:      u.FirstName,
-		LastName:       u.LastName,
-		ProfilePicture: u.ProfilePicture,
+func RandomUserColor() string {
+	index, err := rand.Int(rand.Reader, big.NewInt(int64(len(AllowedUserColors))))
+	if err != nil {
+		return UserColorPurple
 	}
+	return AllowedUserColors[index.Int64()]
 }

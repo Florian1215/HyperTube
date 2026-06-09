@@ -146,7 +146,7 @@ Content-Type: application/json
 | 400 | `VALIDATION_ERROR` | `First name is required` or `First name is too long` |
 | 400 | `VALIDATION_ERROR` | `Last name is required` or `Last name is too long` |
 | 400 | `VALIDATION_ERROR` | `Password is too short` or `Password is too long` |
-| 409 | `USER_EXISTS` | `Email or username already exists` |
+| 409 | `ALREADY_EXIST_ERROR` | Field errors for `email`, `username`, or both |
 | 500 | `INTERNAL_ERROR` | `Failed to create user` or `Failed to create token` |
 
 Example:
@@ -154,8 +154,15 @@ Example:
 ```json
 {
   "error": {
-    "code": "USER_EXISTS",
-    "message": "Email or username already exists"
+    "code": "ALREADY_EXIST_ERROR",
+    "fields": {
+      "email": {
+        "message": "Email is already in use"
+      },
+      "username": {
+        "message": "Username is already in use"
+      }
+    }
   }
 }
 ```
@@ -168,8 +175,7 @@ Logs in an existing password user by email or username and returns a bearer toke
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `email` | string | yes, unless `login` is provided | Valid email address or username. Trimmed before lookup. Email addresses are lowercased. |
-| `login` | string | no | Alternative to `email`; accepts an email address or username. |
+| `login` | string | yes | Accepts an email address or username. Trimmed before lookup. Email addresses are lowercased. |
 | `password` | string | yes | Existing password. Must be present and no longer than 72 bytes. |
 
 Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
@@ -184,7 +190,7 @@ Content-Type: application/json
 
 ```json
 {
-  "email": "ada@example.com",
+  "login": "ada@example.com",
   "password": "correct-horse-battery"
 }
 ```
@@ -215,7 +221,7 @@ Content-Type: application/json
 | Status | Code | Message |
 |--------|------|---------|
 | 400 | `BAD_REQUEST` | `Invalid JSON body` |
-| 400 | `VALIDATION_ERROR` | `Email is required`, `Email or username is required`, `Invalid email`, `Invalid email or username`, `Username is too short`, or `Username is too long` |
+| 400 | `VALIDATION_ERROR` | `Email or username is required`, `Invalid email`, `Invalid email or username`, `Username is too short`, or `Username is too long` |
 | 400 | `VALIDATION_ERROR` | `Password is required` or `Password is too long` |
 | 401 | `INVALID_CREDENTIALS` | `Invalid email, username, or password` |
 | 500 | `INTERNAL_ERROR` | `Failed to load user` or `Failed to create token` |
@@ -1030,6 +1036,12 @@ Returns comments posted on a movie, ordered by most recent first.
 |-----------|--------|----------------------|
 | `id`      | string | IMDb ID of the movie |
 
+### Query parameters
+
+| Parameter | Type    | Required | Default | Description                    |
+|-----------|---------|----------|---------|--------------------------------|
+| `page`    | integer | no       | `0`     | Page index (0 is first page)   |
+
 ### Response
 
 ```json
@@ -1043,14 +1055,14 @@ Returns comments posted on a movie, ordered by most recent first.
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
-  "meta": { "total": 8, "page": 0, "per_page": 8 }
+  "meta": { "total": 8, "page": 0, "per_page": 12 }
 }
 ```
 
 ### Error responses
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "No comments" } }
+{ "error": { "code": "NOT_FOUND", "message": "Movie not found" } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to access comments" } }
@@ -1096,7 +1108,10 @@ Posts a new comment on a movie as the authenticated user. Requires
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "content": { "message": "Invalid request body" } } } }
+```
+```json
+{ "error": { "code": "NOT_FOUND", "message": "Movie not found" } }
 ```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to create comment" } }
@@ -1107,6 +1122,12 @@ Posts a new comment on a movie as the authenticated user. Requires
 ## GET /comments
 
 Returns all comments across all movies.
+
+### Query parameters
+
+| Parameter | Type    | Required | Default | Description                    |
+|-----------|---------|----------|---------|--------------------------------|
+| `page`    | integer | no       | `0`     | Page index (0 is first page)   |
 
 ### Response
 
@@ -1121,15 +1142,12 @@ Returns all comments across all movies.
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
-  "meta": { "total": 8, "page": 0, "per_page": 8 }
+  "meta": { "total": 8, "page": 0, "per_page": 12 }
 }
 ```
 
 ### Error responses
 
-```json
-{ "error": { "code": "NOT_FOUND", "message": "Comments not found" } }
-```
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to load comments" } }
 ```
@@ -1207,7 +1225,7 @@ user. Requires `Authorization: Bearer <access_token>`.
 ### Error responses
 
 ```json
-{ "error": { "code": "VALIDATION_ERROR", "fields": { "body": { "message": "Invalid request body" } } } }
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "content": { "message": "Invalid request body" } } } }
 ```
 ```json
 { "error": { "code": "NOT_FOUND", "message": "Comment not found" } }

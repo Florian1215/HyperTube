@@ -16,6 +16,7 @@ import (
 	"hypertube/api/internal/movies/c411"
 	"hypertube/api/internal/movies/tmdb"
 	"hypertube/api/internal/stream"
+	"hypertube/api/internal/users"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -64,7 +65,8 @@ func main() {
 	
 	movieStore := movies.NewStore(db)
 	commentStore := comments.NewStore(db)
-	
+	userStore := users.NewStore(db)
+
 	c411Client, err := c411.NewClient()
 	if err != nil {
 		log.Fatalf("init C411 client: %v", err)
@@ -83,12 +85,13 @@ func main() {
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
 	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient, authStore)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
+	usersHandler := users.NewHandler(userStore)
 	streamHandler := stream.NewStreamHandler()
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
 	allowedOrigin := getEnv("CORS_ALLOWED_ORIGIN", "http://localhost:4200")
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler, allowedOrigin)))
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, usersHandler, tokenManager, streamHandler, allowedOrigin)))
 
 }
 
@@ -136,6 +139,7 @@ func newRouter(
 	moviesHandler *movies.MoviesHandler,
 	commentsHandler *comments.CommentsHandler,
 	authHandler *auth.Handler,
+	usersHandler *users.Handler,
 	tokenManager *auth.TokenManager,
 	streamHandler *stream.StreamHandler,
 	allowedOrigin string,
@@ -182,28 +186,26 @@ func newRouter(
 
 		r.Get("/movies", moviesHandler.GetMovies)
 
-		r.Group(func(r chi.Router) {
-			r.Use(auth.RequireAuth(tokenManager))
+		requireAuth := auth.RequireAuth(tokenManager)
 
-			r.Get("/movies/watched", moviesHandler.GetWatchedMovies)
-			r.Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
-			r.Get("/movies/search", moviesHandler.SearchMovies)
-			r.Get("/movies/{id}", moviesHandler.GetMoviesId)
-			r.Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
-			r.Get("/movies/{id}/comments", moviesHandler.GetComments)
-			r.Post("/movies/{id}/comments", moviesHandler.PostComment)
+		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
+		r.With(requireAuth).Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
+		r.With(requireAuth).Get("/movies/search", moviesHandler.SearchMovies)
+		r.With(requireAuth).Get("/movies/{id}", moviesHandler.GetMoviesId)
+		r.With(requireAuth).Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
+		r.With(requireAuth).Get("/movies/{id}/comments", moviesHandler.GetComments)
+		r.With(requireAuth).Post("/movies/{id}/comments", moviesHandler.PostComment)
 
-			r.Post("/comments", commentsHandler.Create)
-			r.Get("/comments", commentsHandler.List)
-			r.Get("/comments/{id}", commentsHandler.Get)
-			r.Patch("/comments/{id}", commentsHandler.Update)
-			r.Delete("/comments/{id}", commentsHandler.Delete)
+		r.With(requireAuth).Get("/comments", commentsHandler.List)
+		r.With(requireAuth).Get("/comments/{id}", commentsHandler.Get)
+		r.With(requireAuth).Patch("/comments/{id}", commentsHandler.Update)
+		r.With(requireAuth).Delete("/comments/{id}", commentsHandler.Delete)
 
-			r.Get("/stream/{id}", streamHandler.InitStream) // start torrent and prepapre for trancoding and streaming
-			r.Get("/stream/{id}/index", streamHandler.GetIndex) // serve the HLS index
-			r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+		r.With(requireAuth).Patch("/users/me/color", usersHandler.UpdateMyColor)
 
-		})
+		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
+		r.With(requireAuth).Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
+		r.With(requireAuth).Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
 	})
 
 	// Backward-compatible callback path for the original environment template.

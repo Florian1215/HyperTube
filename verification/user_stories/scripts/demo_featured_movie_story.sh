@@ -320,7 +320,7 @@ LOGIN_PAYLOAD="$(
   jq -n \
     --arg email "$DEMO_EMAIL" \
     --arg password "$DEMO_PASSWORD" \
-    '{email: $email, password: $password}'
+    '{login: $email, password: $password}'
 )"
 
 heading 1 "Health Check"

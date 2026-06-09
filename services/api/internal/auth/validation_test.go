@@ -5,10 +5,6 @@ import (
 	"testing"
 )
 
-func stringPtr(value string) *string {
-	return &value
-}
-
 func TestValidateRegisterRequestNormalizesInput(t *testing.T) {
 	params, fields, ok := validateRegisterRequest(registerRequest{
 		Email:     " Alice@Example.COM ",
@@ -112,6 +108,20 @@ func TestValidateRegisterRequestRejectsInvalidFields(t *testing.T) {
 				req.FirstName = strings.Repeat("a", maxNameLength+1)
 			},
 		},
+		{
+			name:  "invalid first name characters",
+			field: "first_name",
+			mutate: func(req *registerRequest) {
+				req.FirstName = "Alice🙂"
+			},
+		},
+		{
+			name:  "invalid last name characters",
+			field: "last_name",
+			mutate: func(req *registerRequest) {
+				req.LastName = "Example7"
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -125,6 +135,51 @@ func TestValidateRegisterRequestRejectsInvalidFields(t *testing.T) {
 			}
 			if fields[tt.field] == "" {
 				t.Fatalf("expected validation message for %q, got %+v", tt.field, fields)
+			}
+		})
+	}
+}
+
+func TestValidateRegisterRequestRejectsInvalidEmailRules(t *testing.T) {
+	valid := registerRequest{
+		Email:     "alice@example.com",
+		Username:  "alice_1",
+		FirstName: "Alice",
+		LastName:  "Example",
+		Password:  "correct-horse-battery",
+	}
+
+	tests := []struct {
+		name  string
+		email string
+	}{
+		{name: "prefix too long", email: strings.Repeat("a", 65) + "@example.com"},
+		{name: "prefix invalid character", email: "ali!ce@example.com"},
+		{name: "prefix starts with period", email: ".alice@example.com"},
+		{name: "prefix ends with period", email: "alice.@example.com"},
+		{name: "prefix consecutive periods", email: "ali..ce@example.com"},
+		{name: "domain too long", email: "alice@" + strings.Repeat("a", 250) + ".com"},
+		{name: "domain invalid character", email: "alice@exa_mple.com"},
+		{name: "domain missing tld", email: "alice@example"},
+		{name: "domain leading hyphen", email: "alice@-example.com"},
+		{name: "domain trailing hyphen", email: "alice@example-.com"},
+		{name: "tld too short", email: "alice@example.c"},
+		{name: "tld too long", email: "alice@example." + strings.Repeat("a", 64)},
+		{name: "tld non-letter", email: "alice@example.c0m"},
+		{name: "multiple at symbols", email: "alice@@example.com"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := valid
+			req.Email = tt.email
+
+			_, fields, ok := validateRegisterRequest(req)
+			if ok {
+				t.Fatalf("expected invalid request for %s", tt.email)
+			}
+			if fields["email"] == "" {
+				t.Fatalf("expected email validation message, got %+v", fields)
 			}
 		})
 	}
@@ -151,7 +206,7 @@ func TestValidateRegisterRequestCollectsMultipleInvalidFields(t *testing.T) {
 
 func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
 	login, fields, ok := validateLoginRequest(loginRequest{
-		Email:    stringPtr(" Alice@Example.COM "),
+		Login:    " Alice@Example.COM ",
 		Password: "correct-horse-battery",
 	})
 
@@ -165,7 +220,7 @@ func TestValidateLoginRequestNormalizesEmail(t *testing.T) {
 
 func TestValidateLoginRequestAcceptsUsername(t *testing.T) {
 	login, fields, ok := validateLoginRequest(loginRequest{
-		Login:    stringPtr("alice_1"),
+		Login:    "alice_1",
 		Password: "correct-horse-battery",
 	})
 
@@ -182,10 +237,10 @@ func TestValidateLoginRequestRejectsInvalidInput(t *testing.T) {
 		req   loginRequest
 		field string
 	}{
-		{req: loginRequest{Email: stringPtr("not-an-email"), Password: "correct-horse-battery"}, field: "email"},
-		{req: loginRequest{Login: stringPtr("not-an-email!"), Password: "correct-horse-battery"}, field: "login"},
-		{req: loginRequest{Email: stringPtr("alice@example.com"), Password: ""}, field: "password"},
-		{req: loginRequest{Email: stringPtr("alice@example.com"), Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
+		{req: loginRequest{Login: "not-an-email!", Password: "correct-horse-battery"}, field: "login"},
+		{req: loginRequest{Login: "alice@example.com", Password: ""}, field: "password"},
+		{req: loginRequest{Login: "alice@example.com", Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
+		{req: loginRequest{Password: "correct-horse-battery"}, field: "login"},
 	}
 
 	for _, tt := range tests {

@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_name     TEXT        NOT NULL,
     profile_picture TEXT,
     password_hash TEXT,
+    color         TEXT        NOT NULL DEFAULT 'purple' CHECK (color IN ('yellow', 'pink', 'green', 'purple', 'blue', 'red')),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -373,7 +373,7 @@ section "Bearer token reaches protected API handler"
 if [[ -n "$OAUTH_TOKEN" ]]; then
   request "GET" "/movies/search" "" "application/json" "$OAUTH_TOKEN"
   if expect_status "OAuth token is accepted by protected route middleware" "400"; then
-    assert_error_envelope "Protected route validation proves token reached handler" "VALIDATION_ERROR" "title query parameter is required"
+    assert_error_envelope "Protected route validation proves token reached handler" "VALIDATION_ERROR" "Title query parameter is required"
   fi
 else
   skip "Protected route token validation" "OAuth token was not available"
