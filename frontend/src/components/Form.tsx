@@ -13,9 +13,9 @@ export default function Form({formType, request, handleRequest, t, fields, handl
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
     const tError = useTranslations("validationErrors");
-    const {execute} = useApiMutation(setErrors, formType);
-    const fieldRefs = useRef<HTMLInputElement[]>([]);
     const [focusedIndex, setFocusedIndex] = useState((formType === "update" || formType === "auth")? -1 : 0);
+    const {execute} = useApiMutation(setErrors, setFocusedIndex, formType);
+    const fieldRefs = useRef<HTMLInputElement[]>([]);
 
     useEffect(() => {
         if (focusedIndex >= 0)
@@ -56,7 +56,6 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         if (isLastField) {
             if (hasError(errors)) {
                 for (let i = 0; i < fields.length; i++) {
-                    console.log("IDX", i, getId(i));
                     if (errors[getId(i)]) {
                         setFocusedIndex(i);
                         return ;
@@ -100,7 +99,8 @@ export default function Form({formType, request, handleRequest, t, fields, handl
                 if (data) {
                     handleRequest(data);
                     setFieldsValue(Array(fields.length).fill(""));
-                }
+                } else
+                    console.log("ERROR", errors);
             })
             fieldRefs.current[focusedIndex]?.blur();
             setFocusedIndex(-1);
