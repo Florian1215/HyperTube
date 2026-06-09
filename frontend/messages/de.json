@@ -60,14 +60,14 @@
       "comments": "Kommentare",
       "avatar": "Avatar"
     },
-    "saveChanges": "Änderungen speichern",
     "selectNewAvatar": "Neuen Avatar auswählen",
     "remove": "Entfernen",
     "noMoviesYet": "Sie haben noch keine Filme gesehen.",
     "fields": {
+      "submit": "Änderungen speichern",
       "email": "E-Mail",
-      "firstname": "Vorname",
-      "lastname": "Nachname",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
       "username": "Benutzername"
     }
   },
@@ -90,8 +90,8 @@
     "register": {
       "title": "Hypertube beitreten",
       "email": "E-Mail",
-      "firstname": "Vorname",
-      "lastname": "Nachname",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
       "username": "Benutzername",
       "password": "Passwort",
       "submit": "Registrieren",
@@ -104,9 +104,9 @@
       "submit": "Senden"
     },
     "changePassword": {
-      "current": "Aktuelles Passwort",
-      "new": "Neues Passwort",
-      "confirm": "Neues Passwort bestätigen",
+      "current-password": "Aktuelles Passwort",
+      "new-password": "Neues Passwort",
+      "confirm-new-password": "Neues Passwort bestätigen",
       "submit": "Ändern"
     },
     "oauth": {
@@ -138,7 +138,8 @@
     "passwordTooLong": "Das Passwort ist zu lang.",
     "passwordSameAsOld": "Das neue Passwort darf nicht mit dem alten Passwort übereinstimmen.",
     "passwordsDontMatch": "Die Passwörter stimmen nicht überein.",
-    "requiredField": "Dieses Feld ist erforderlich."
+    "requiredField": "Dieses Feld ist erforderlich.",
+    "atLeastOneField": "Bitte füllen Sie mindestens eines der Felder aus."
   },
   "notifications": {
     "success": {

@@ -1,13 +1,12 @@
-import React, {useState} from "react";
-import Input from "@/components/Input";
-import {iUser} from "@/types/user";
+import React from "react";
+import {iUser, iUserToken} from "@/types/user";
 import ProfilePicture from "@/components/ProfilePicture";
 import {useNotification} from "@/context/NotificationContext";
 import {Button, SmallButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
-import {useApiMutation} from "@/hooks/useApiMutation";
+import {tResponse} from "@/api/client";
+import Form from "@/components/Form";
 import {patchUser} from "@/api/users";
-import {useSetterError} from "@/hooks/useSetterError";
 
 
 export function ProfileTab({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
@@ -25,79 +24,20 @@ export function AvatarTab({user, updateUser}: {user: iUser, updateUser?: (patch:
 
 function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
     const {addNotification} = useNotification();
-    const [email, setEmail] = useState("");
-    const [firstname, setFirstname] = useState("");
-    const [lastname, setLastname] = useState("");
-    const [username, setUsername] = useState("");
     const t = useTranslations("profile.fields");
-    const tProfile = useTranslations("profile");
     const tSuccess = useTranslations("notifications.success");
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [disableBtn, setDisableBtn] = useState(false);
-    const {execute} = useApiMutation(setErrors);
-    const newSetterError = useSetterError(setErrors, setDisableBtn);
 
-    const handleUpdateUser = async () => {
-        const newUser: Record<string, string> = {};
-
-        if (email.trim().length !== 0)
-            newUser["email"] = email.trim();
-        if (firstname.trim().length !== 0)
-            newUser["first_name"] = firstname.trim();
-        if (lastname.trim().length !== 0)
-            newUser["last_name"] = lastname.trim();
-        if (username.trim().length !== 0)
-            newUser["username"] = username.trim();
-
-        const makePatchRequest = async () => {
-            return await execute((locale) => patchUser(locale, user.id, newUser));
-        };
-
-        if (newUser) {
-            if (updateUser)
-                updateUser(newUser);
-            if (newUser["email"]) {
-                addNotification(tSuccess("emailChanged"), "warning");
-                setEmail("");
-            }
-            if (newUser["username"])
-                setUsername("");
-            if (newUser["first_name"])
-                setEmail("");
-            if (newUser["last_name"])
-                setEmail("");
-            addNotification(tSuccess("infoChanged"), "success");
-            // makePatchRequest().then((data) => { // todo uncomment when endpoint work
-            //     if (data) {
-            //         if (updateUser)
-            //             updateUser(newUser);
-            //         if (newUser["email"]) {
-            //             addNotification(tSuccess("emailChanged"), "warning");
-            //             setEmail("");
-            //         }
-            //         if (newUser["username"])
-            //             setUsername("");
-            //         if (newUser["first_name"])
-            //             setEmail("");
-            //         if (newUser["last_name"])
-            //             setEmail("");
-            //         addNotification(tSuccess("infoChanged"), "success");
-            //     }
-            // })
-        }
+    const handleUpdateUser = (data: tResponse<iUserToken>) => {
+        if (data.data.user.email !== user.email)
+            addNotification(tSuccess("emailChanged"), "warning");
+        if (updateUser)
+            updateUser(data.data.user);
+        addNotification(tSuccess("infoChanged"), "success");
     };
 
     return (<div className="flex flex-col gap-4 items-start">
-        <Input id="profile-email" type="email" placeholder={t("email")} value={email} requestErrorMessage={errors["email"]} setErrorsMessage={newSetterError} onChange={(newValue) => setEmail(newValue)}></Input>
-
-        <div className="flex gap-2 w-full">
-            <Input id="profile-firstname" type="firstname" placeholder={t("firstname")} value={firstname} requestErrorMessage={errors["firstname"]} setErrorsMessage={newSetterError} onChange={(newValue) => setFirstname(newValue)}></Input>
-            <Input id="profile-lastname" type="lastname" placeholder={t("lastname")} value={lastname} requestErrorMessage={errors["lastname"]} setErrorsMessage={newSetterError} onChange={(newValue) => setLastname(newValue)}></Input>
-        </div>
-
-        <Input id="profile-username" type="username" placeholder={t("username")} value={username} requestErrorMessage={errors["username"]} setErrorsMessage={newSetterError} onChange={(newValue) => setUsername(newValue)} className={"max-w-3/5"}></Input>
-
-        <Button className="h-8" onClick={handleUpdateUser} disabled={disableBtn}>{tProfile("saveChanges")}</Button>
+        <Form formType={"update"} request={patchUser} handleRequest={handleUpdateUser} t={t}
+              fields={["email", "first_name", "last_name", "username"]} />
     </div>);
 }
 
