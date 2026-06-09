@@ -60,14 +60,14 @@
       "comments": "Comments",
       "avatar": "Avatar"
     },
-    "saveChanges": "Save changes",
     "selectNewAvatar": "Select new avatar",
     "remove": "Remove",
     "noMoviesYet": "You haven't seen any films yet.",
     "fields": {
+      "submit": "Save changes",
       "email": "Email",
-      "firstname": "Firstname",
-      "lastname": "Lastname",
+      "first_name": "Firstname",
+      "last_name": "Lastname",
       "username": "Username"
     }
   },
@@ -90,8 +90,8 @@
     "register": {
       "title": "Join Hypertube",
       "email": "Email",
-      "firstname": "Firstname",
-      "lastname": "Lastname",
+      "first_name": "Firstname",
+      "last_name": "Lastname",
       "username": "Username",
       "password": "Password",
       "submit": "Sign up",
@@ -104,9 +104,9 @@
       "submit": "Send"
     },
     "changePassword": {
-      "current": "Current password",
-      "new": "New password",
-      "confirm": "Confirm new password",
+      "current-password": "Current password",
+      "new-password": "New password",
+      "confirm-new-password": "Confirm new password",
       "submit": "Change"
     },
     "oauth": {
@@ -138,7 +138,8 @@
     "passwordTooLong": "Password is too long.",
     "passwordSameAsOld": "New password must be different from the current password.",
     "passwordsDontMatch": "Passwords do not match.",
-    "requiredField": "This field is required."
+    "requiredField": "This field is required.",
+    "atLeastOneField": "At least one field must be filled."
   },
   "notifications": {
     "success": {

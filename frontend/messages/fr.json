@@ -60,14 +60,14 @@
       "comments": "Commentaires",
       "avatar": "Avatar"
     },
-    "saveChanges": "Enregistrer les modifications",
     "selectNewAvatar": "Choisir un nouvel avatar",
     "remove": "Supprimer",
     "noMoviesYet": "Vous n'avez encore vu aucun film.",
     "fields": {
+      "submit": "Enregistrer les modifications",
       "email": "E-mail",
-      "firstname": "Prénom",
-      "lastname": "Nom",
+      "first_name": "Prénom",
+      "last_name": "Nom",
       "username": "Nom d'utilisateur"
     }
   },
@@ -90,8 +90,8 @@
     "register": {
       "title": "Rejoindre Hypertube",
       "email": "E-mail",
-      "firstname": "Prénom",
-      "lastname": "Nom",
+      "first_name": "Prénom",
+      "last_name": "Nom",
       "username": "Nom d'utilisateur",
       "password": "Mot de passe",
       "submit": "S'inscrire",
@@ -138,7 +138,8 @@
     "passwordTooLong": "Le mot de passe est trop long.",
     "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
     "passwordsDontMatch": "Les mots de passe ne correspondent pas.",
-    "requiredField": "Ce champ est obligatoire."
+    "requiredField": "Ce champ est obligatoire.",
+    "atLeastOneField": "Au moins un champ doit être rempli."
   },
   "notifications": {
     "success": {
