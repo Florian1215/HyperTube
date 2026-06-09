@@ -32,7 +32,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
     const [totalPage, setTotalPage] = useState(1);
     const locale = useLocale() as Locale;
     const t = useTranslations("comments");
-    const {data} = useComments();
+    const {data} = useComments(movie.imdb_id, index);
 
     // todo data.data[i].user = {"id":15,"email":"sgsafg@okfoe","username":"sagsafg","first_name":"fokeow","last_name":"okpewog","profile_picture":null,"created_at":1780086231180,"color":"purple","watch_history":[]};
     useEffect(() => {

@@ -62,7 +62,7 @@ func main() {
 		authOptions = append(authOptions, auth.WithPasswordResetMailer(passwordResetMailer))
 	}
 	authHandler := auth.NewHandler(authStore, tokenManager, authOptions...)
-
+	
 	movieStore := movies.NewStore(db)
 	commentStore := comments.NewStore(db)
 	userStore := users.NewStore(db)
@@ -79,11 +79,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("init TMDB client: %v", err)
 	}
-
+	
 	seedFeatured(ctx, c411Client, tmdbClient, movieStore)
-
+	
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
-	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient)
+	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient, authStore)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
 	usersHandler := users.NewHandler(userStore)
 	streamHandler := stream.NewStreamHandler()

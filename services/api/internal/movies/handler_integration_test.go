@@ -33,12 +33,11 @@ func setupTestServer(t *testing.T) *httptest.Server {
 	}
 
 	store := NewStore(db)
-	handler := NewMoviesHandler(store, nil, nil)
+	handler := NewMoviesHandler(store, nil, nil, nil)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /movies", handler.GetMovies)
 	mux.HandleFunc("GET /movies/{id}", handler.GetMoviesId)
-
 	return httptest.NewServer(mux)
 }
 
