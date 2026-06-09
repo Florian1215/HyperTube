@@ -16,6 +16,7 @@ import (
 	"hypertube/api/internal/movies/c411"
 	"hypertube/api/internal/movies/tmdb"
 	"hypertube/api/internal/stream"
+	"hypertube/api/internal/users"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -64,6 +65,7 @@ func main() {
 
 	movieStore := movies.NewStore(db)
 	commentStore := comments.NewStore(db)
+	userStore := users.NewStore(db)
 
 	c411Client, err := c411.NewClient()
 	if err != nil {
@@ -83,12 +85,13 @@ func main() {
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
 	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
+	usersHandler := users.NewHandler(userStore)
 	streamHandler := stream.NewStreamHandler()
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
 	allowedOrigin := getEnv("CORS_ALLOWED_ORIGIN", "http://localhost:4200")
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, tokenManager, streamHandler, allowedOrigin)))
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, usersHandler, tokenManager, streamHandler, allowedOrigin)))
 
 }
 
@@ -136,6 +139,7 @@ func newRouter(
 	moviesHandler *movies.MoviesHandler,
 	commentsHandler *comments.CommentsHandler,
 	authHandler *auth.Handler,
+	usersHandler *users.Handler,
 	tokenManager *auth.TokenManager,
 	streamHandler *stream.StreamHandler,
 	allowedOrigin string,
@@ -196,6 +200,8 @@ func newRouter(
 		r.With(requireAuth).Get("/comments/{id}", commentsHandler.Get)
 		r.With(requireAuth).Patch("/comments/{id}", commentsHandler.Update)
 		r.With(requireAuth).Delete("/comments/{id}", commentsHandler.Delete)
+
+		r.With(requireAuth).Patch("/users/me/color", usersHandler.UpdateMyColor)
 
 		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
 		r.With(requireAuth).Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index

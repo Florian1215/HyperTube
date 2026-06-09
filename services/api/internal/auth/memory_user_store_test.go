@@ -4,12 +4,47 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"hypertube/api/internal/models"
 )
 
 func TestMemoryUserStoreFindMissing(t *testing.T) {
 	_, err := newMemoryUserStore().FindUserByEmail(context.Background(), "missing@example.com")
 	if !errors.Is(err, ErrUserNotFound) {
 		t.Fatalf("expected ErrUserNotFound, got %v", err)
+	}
+}
+
+func TestMemoryUserStoreAssignsValidColor(t *testing.T) {
+	user, err := newMemoryUserStore().CreateUser(context.Background(), CreateUserParams{
+		Email:        "color@example.com",
+		Username:     "color_user",
+		FirstName:    "Color",
+		LastName:     "User",
+		PasswordHash: "hash",
+	})
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+	if !models.IsValidUserColor(user.Color) {
+		t.Fatalf("expected valid color, got %q", user.Color)
+	}
+}
+
+func TestMemoryUserStorePreservesExplicitColor(t *testing.T) {
+	user, err := newMemoryUserStore().CreateUser(context.Background(), CreateUserParams{
+		Email:        "blue@example.com",
+		Username:     "blue_user",
+		FirstName:    "Blue",
+		LastName:     "User",
+		PasswordHash: "hash",
+		Color:        models.UserColorBlue,
+	})
+	if err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+	if user.Color != models.UserColorBlue {
+		t.Fatalf("expected blue, got %q", user.Color)
 	}
 }
 
@@ -45,5 +80,42 @@ func TestOAuthUsersWithSameEmailStaySeparateByProvider(t *testing.T) {
 	}
 	if githubUser.FirstName != "Git" || githubUser.LastName != "Hub" {
 		t.Fatalf("expected GitHub profile fields, got %+v", githubUser)
+	}
+}
+
+func TestMemoryUserStoreOAuthProfileRefreshPreservesColor(t *testing.T) {
+	store := newMemoryUserStore()
+
+	firstUser, err := store.FindOrCreateOAuthUser(context.Background(), OAuthUserParams{
+		Provider:       githubProvider,
+		ProviderUserID: "github-id",
+		Email:          "oauth@example.com",
+		Username:       "oauth_user",
+		FirstName:      "Old",
+		LastName:       "Name",
+	})
+	if err != nil {
+		t.Fatalf("create OAuth user: %v", err)
+	}
+	if !models.IsValidUserColor(firstUser.Color) {
+		t.Fatalf("expected valid OAuth color, got %q", firstUser.Color)
+	}
+
+	refreshedUser, err := store.FindOrCreateOAuthUser(context.Background(), OAuthUserParams{
+		Provider:       githubProvider,
+		ProviderUserID: "github-id",
+		Email:          "oauth@example.com",
+		Username:       "oauth_user",
+		FirstName:      "New",
+		LastName:       "Profile",
+	})
+	if err != nil {
+		t.Fatalf("refresh OAuth user: %v", err)
+	}
+	if refreshedUser.Color != firstUser.Color {
+		t.Fatalf("expected OAuth refresh to preserve color %q, got %q", firstUser.Color, refreshedUser.Color)
+	}
+	if refreshedUser.FirstName != "New" || refreshedUser.LastName != "Profile" {
+		t.Fatalf("expected refreshed profile fields, got %+v", refreshedUser)
 	}
 }

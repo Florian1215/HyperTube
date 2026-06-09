@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"hypertube/api/internal/models"
 )
 
 func TestRegisterAndLoginHappyPath(t *testing.T) {
@@ -40,7 +42,7 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if registerResponse.Data.User.JoinedAt == 0 {
 		t.Fatal("expected joined_at compatibility field")
 	}
-	if registerResponse.Data.User.Color == "" || registerResponse.Data.User.WatchHistory == nil {
+	if !models.IsValidUserColor(registerResponse.Data.User.Color) || registerResponse.Data.User.WatchHistory == nil {
 		t.Fatal("expected frontend profile compatibility fields")
 	}
 	if registerResponse.Data.AccessToken == "" {
@@ -75,6 +77,9 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if loginResponse.Data.User.ID != registerResponse.Data.User.ID {
 		t.Fatalf("expected login user id %d, got %d", registerResponse.Data.User.ID, loginResponse.Data.User.ID)
 	}
+	if loginResponse.Data.User.Color != registerResponse.Data.User.Color {
+		t.Fatalf("expected login color %q, got %q", registerResponse.Data.User.Color, loginResponse.Data.User.Color)
+	}
 	if _, err := tokens.ValidateAccessToken(loginResponse.Data.AccessToken); err != nil {
 		t.Fatalf("login token should validate: %v", err)
 	}
@@ -92,6 +97,38 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	usernameLoginResponse := decodeAuthEnvelope(t, usernameLoginRec)
 	if usernameLoginResponse.Data.User.ID != registerResponse.Data.User.ID {
 		t.Fatalf("expected username login user id %d, got %d", registerResponse.Data.User.ID, usernameLoginResponse.Data.User.ID)
+	}
+}
+
+func TestLoginReturnsPersistedUserColor(t *testing.T) {
+	store := newMemoryUserStore()
+	passwordHash, err := HashPassword("right-password")
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	if _, err := store.CreateUser(context.Background(), CreateUserParams{
+		Email:        "blue@example.com",
+		Username:     "blue_user",
+		FirstName:    "Blue",
+		LastName:     "User",
+		PasswordHash: passwordHash,
+		Color:        models.UserColorBlue,
+	}); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	handler := NewHandler(store, newTestTokenManager(t))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"login":"blue@example.com","password":"right-password"}`))
+	rec := httptest.NewRecorder()
+
+	handler.Login(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	response := decodeAuthEnvelope(t, rec)
+	if response.Data.User.Color != models.UserColorBlue {
+		t.Fatalf("expected stored color blue, got %q", response.Data.User.Color)
 	}
 }
 

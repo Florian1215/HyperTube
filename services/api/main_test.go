@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	"hypertube/api/internal/comments"
 	"hypertube/api/internal/movies"
 	"hypertube/api/internal/stream"
+	"hypertube/api/internal/users"
 )
 
 func TestRouterHealthCheck(t *testing.T) {
@@ -189,7 +191,81 @@ func TestRouterProtectedRouteWithValidTokenReachesHandler(t *testing.T) {
 	}
 }
 
+func TestRouterUserColorRouteRequiresBearerToken(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected missing token 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
+func TestRouterUserColorRouteRejectsInvalidBearerToken(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+	req.Header.Set("Authorization", "Bearer not-a-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected invalid token 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
+func TestRouterUserColorRouteWithValidTokenReachesHandler(t *testing.T) {
+	userStore := &routerUserColorStore{}
+	router, tokens := newTestRouterWithUsersStore(t, userStore)
+	token, _, err := tokens.CreateAccessToken(42)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected users handler response, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if userStore.userID != 42 {
+		t.Fatalf("expected user id 42, got %d", userStore.userID)
+	}
+	if userStore.color != "green" {
+		t.Fatalf("expected color green, got %q", userStore.color)
+	}
+
+	var body struct {
+		Data struct {
+			Color string `json:"color"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Color != "green" {
+		t.Fatalf("expected response color green, got %q", body.Data.Color)
+	}
+}
+
 func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
+	return newTestRouterWithUsersStore(t, &routerUserColorStore{})
+}
+
+func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserColorStore) (http.Handler, *auth.TokenManager) {
 	t.Helper()
 
 	tokens, err := auth.NewTokenManager("0123456789abcdef0123456789abcdef", "hypertube-test")
@@ -201,10 +277,22 @@ func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
 		movies.NewMoviesHandler(nil, nil, nil),
 		comments.NewCommentsHandler(nil),
 		auth.NewHandler(nil, tokens),
+		users.NewHandler(userStore),
 		tokens,
 		stream.NewStreamHandler(),
 		"http://localhost:4200",
 	), tokens
+}
+
+type routerUserColorStore struct {
+	userID int64
+	color  string
+}
+
+func (s *routerUserColorStore) UpdateMyColor(_ context.Context, userID int64, color string) (string, error) {
+	s.userID = userID
+	s.color = color
+	return color, nil
 }
 
 func decodeRouterErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string {
