@@ -54,6 +54,14 @@ func (s *memoryUserStore) CreateUser(_ context.Context, params CreateUserParams)
 		return models.User{}, duplicateUserError(duplicateFields...)
 	}
 
+	color := strings.TrimSpace(params.Color)
+	if color == "" {
+		color = models.RandomUserColor()
+	}
+	if !models.IsValidUserColor(color) {
+		return models.User{}, fmt.Errorf("invalid user color: %q", params.Color)
+	}
+
 	s.nextID++
 	now := time.Now().UTC()
 	user := models.User{
@@ -64,6 +72,7 @@ func (s *memoryUserStore) CreateUser(_ context.Context, params CreateUserParams)
 		LastName:       params.LastName,
 		ProfilePicture: params.ProfilePicture,
 		PasswordHash:   params.PasswordHash,
+		Color:          color,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

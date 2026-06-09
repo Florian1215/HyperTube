@@ -44,6 +44,9 @@ const (
 	MsgEmailAlreadyInUse               Message = "email is already in use"
 	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
+	MsgUserNotFound                    Message = "user not found"
+	MsgInvalidUserColor                Message = "invalid user color"
+	MsgFailedUpdateUserColor           Message = "failed to update user color"
 	MsgInvalidCredentials              Message = "invalid email, username, or password"
 	MsgFailedLoadUser                  Message = "failed to load user"
 	MsgFailedCreateToken               Message = "failed to create token"
@@ -134,6 +137,9 @@ var translations = map[Locale]map[Message]string{
 		MsgEmailAlreadyInUse:               "email déjà utilisé",
 		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
+		MsgUserNotFound:                    "utilisateur introuvable",
+		MsgInvalidUserColor:                "couleur utilisateur invalide",
+		MsgFailedUpdateUserColor:           "échec de la mise à jour de la couleur utilisateur",
 		MsgInvalidCredentials:              "email, nom d'utilisateur ou mot de passe invalide",
 		MsgFailedLoadUser:                  "échec du chargement de l'utilisateur",
 		MsgFailedCreateToken:               "échec de la création du jeton",
@@ -216,6 +222,9 @@ var translations = map[Locale]map[Message]string{
 		MsgEmailAlreadyInUse:               "E-Mail wird bereits verwendet",
 		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
+		MsgUserNotFound:                    "Benutzer nicht gefunden",
+		MsgInvalidUserColor:                "Benutzerfarbe ist ungültig",
+		MsgFailedUpdateUserColor:           "Benutzerfarbe konnte nicht aktualisiert werden",
 		MsgInvalidCredentials:              "E-Mail, Benutzername oder Passwort ist ungültig",
 		MsgFailedLoadUser:                  "Benutzer konnte nicht geladen werden",
 		MsgFailedCreateToken:               "Token konnte nicht erstellt werden",

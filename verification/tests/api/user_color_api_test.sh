@@ -39,6 +39,7 @@ PASSED=0
 FAILED=0
 SKIPPED=0
 TOKEN=""
+INITIAL_COLOR=""
 
 RESET=""
 BOLD=""
@@ -260,6 +261,29 @@ assert_jq_true() {
   return 1
 }
 
+assert_jq_allowed_color() {
+  local name="$1"
+  local filter="$2"
+  local actual
+  local allowed
+
+  actual="$(jq -r "$filter" "$LAST_BODY_FILE" 2>"$TMP_DIR/jq_error")"
+  if [[ $? -eq 0 ]]; then
+    for allowed in "${ALLOWED_COLORS[@]}"; do
+      if [[ "$actual" == "$allowed" ]]; then
+        pass "$name"
+        return 0
+      fi
+    done
+  fi
+
+  fail "$name: expected one of '${ALLOWED_COLORS[*]}', got '${actual:-<jq failed>}'"
+  if [[ -s "$TMP_DIR/jq_error" ]]; then
+    sed 's/^/  jq: /' "$TMP_DIR/jq_error"
+  fi
+  return 1
+}
+
 register_payload() {
   jq -n \
     --arg email "$TEST_EMAIL" \
@@ -269,7 +293,7 @@ register_payload() {
 }
 
 login_payload() {
-  jq -n --arg email "$TEST_EMAIL" --arg password "$TEST_PASSWORD" '{email:$email, password:$password}'
+  jq -n --arg login "$TEST_EMAIL" --arg password "$TEST_PASSWORD" '{login:$login, password:$password}'
 }
 
 color_payload() {
@@ -288,7 +312,8 @@ config_line "ALLOWED_COLORS" "${ALLOWED_COLORS[*]}"
 section "Setup: register a password user"
 request "POST" "/auth/register" "$(register_payload)"
 if expect_status "Register user for color checks" "201"; then
-  assert_jq_eq "New users receive purple as the default color" '.data.user.color' "purple"
+  assert_jq_allowed_color "New users receive a valid random profile color" '.data.user.color'
+  INITIAL_COLOR="$(jq -r '.data.user.color // empty' "$LAST_BODY_FILE")"
   assert_jq_true "Register returns an access token" '.data.access_token | type == "string" and length > 20'
   TOKEN="$(jq -r '.data.access_token // empty' "$LAST_BODY_FILE")"
 fi
@@ -327,8 +352,8 @@ if [[ -n "$TOKEN" ]]; then
   fi
 
   request "POST" "/auth/login" "$(login_payload)"
-  if expect_status "Rejected requests do not change the stored default" "200"; then
-    assert_jq_eq "Default remains purple after rejected updates" '.data.user.color' "purple"
+  if expect_status "Rejected requests do not change the stored color" "200"; then
+    assert_jq_eq "Stored color remains unchanged after rejected updates" '.data.user.color' "$INITIAL_COLOR"
   fi
 else
   skip "Authenticated validation checks" "registration token was not available"
@@ -357,6 +382,7 @@ section "Summary"
 config_line "Passed" "$PASSED"
 config_line "Failed" "$FAILED"
 config_line "Skipped" "$SKIPPED"
+config_line "Initial color" "${INITIAL_COLOR:-<unknown>}"
 config_line "Final color" "red"
 
 if [[ "$FAILED" -ne 0 ]]; then

@@ -204,6 +204,10 @@ func toUserResponse(user models.User) userResponse {
 	if user.ProfilePicture != "" {
 		profilePicture = &user.ProfilePicture
 	}
+	color := user.Color
+	if !models.IsValidUserColor(color) {
+		color = models.UserColorPurple
+	}
 	return userResponse{
 		ID:             user.ID,
 		Email:          user.Email,
@@ -213,7 +217,7 @@ func toUserResponse(user models.User) userResponse {
 		ProfilePicture: profilePicture,
 		CreatedAt:      user.CreatedAt.Format(time.RFC3339),
 		JoinedAt:       user.CreatedAt.UnixMilli(),
-		Color:          "purple",
+		Color:          color,
 		WatchHistory:   []any{},
 	}
 }
