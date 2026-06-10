@@ -10,6 +10,7 @@ import (
 
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/comments"
+	"hypertube/api/internal/models"
 	"hypertube/api/internal/movies"
 	"hypertube/api/internal/stream"
 	"hypertube/api/internal/users"
@@ -191,10 +192,10 @@ func TestRouterProtectedRouteWithValidTokenReachesHandler(t *testing.T) {
 	}
 }
 
-func TestRouterUserColorRouteRequiresBearerToken(t *testing.T) {
+func TestRouterUserRouteRequiresBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/42", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
@@ -207,10 +208,10 @@ func TestRouterUserColorRouteRequiresBearerToken(t *testing.T) {
 	}
 }
 
-func TestRouterUserColorRouteRejectsInvalidBearerToken(t *testing.T) {
+func TestRouterUserRouteRejectsInvalidBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/42", nil)
 	req.Header.Set("Authorization", "Bearer not-a-token")
 	rec := httptest.NewRecorder()
 
@@ -224,15 +225,15 @@ func TestRouterUserColorRouteRejectsInvalidBearerToken(t *testing.T) {
 	}
 }
 
-func TestRouterUserColorRouteWithValidTokenReachesHandler(t *testing.T) {
-	userStore := &routerUserColorStore{}
+func TestRouterUserRouteWithValidTokenReachesHandler(t *testing.T) {
+	userStore := &routerUserStore{}
 	router, tokens := newTestRouterWithUsersStore(t, userStore)
 	token, _, err := tokens.CreateAccessToken(42)
 	if err != nil {
 		t.Fatalf("create token: %v", err)
 	}
 
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/7", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 
@@ -241,31 +242,28 @@ func TestRouterUserColorRouteWithValidTokenReachesHandler(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected users handler response, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if userStore.userID != 42 {
-		t.Fatalf("expected user id 42, got %d", userStore.userID)
-	}
-	if userStore.color != "green" {
-		t.Fatalf("expected color green, got %q", userStore.color)
+	if userStore.requestedID != 7 {
+		t.Fatalf("expected handler to query id 7, got %d", userStore.requestedID)
 	}
 
 	var body struct {
 		Data struct {
-			Color string `json:"color"`
+			ID int64 `json:"id"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.Color != "green" {
-		t.Fatalf("expected response color green, got %q", body.Data.Color)
+	if body.Data.ID != 7 {
+		t.Fatalf("expected response id 7, got %d", body.Data.ID)
 	}
 }
 
 func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
-	return newTestRouterWithUsersStore(t, &routerUserColorStore{})
+	return newTestRouterWithUsersStore(t, &routerUserStore{})
 }
 
-func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserColorStore) (http.Handler, *auth.TokenManager) {
+func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserStore) (http.Handler, *auth.TokenManager) {
 	t.Helper()
 
 	tokens, err := auth.NewTokenManager("0123456789abcdef0123456789abcdef", "hypertube-test")
@@ -274,7 +272,7 @@ func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserColorStore) 
 	}
 
 	return newRouter(
-		movies.NewMoviesHandler(nil, nil, nil),
+		movies.NewMoviesHandler(nil, nil, nil, nil),
 		comments.NewCommentsHandler(nil),
 		auth.NewHandler(nil, tokens),
 		users.NewHandler(userStore),
@@ -284,15 +282,17 @@ func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserColorStore) 
 	), tokens
 }
 
-type routerUserColorStore struct {
-	userID int64
-	color  string
+type routerUserStore struct {
+	requestedID int64
 }
 
-func (s *routerUserColorStore) UpdateMyColor(_ context.Context, userID int64, color string) (string, error) {
-	s.userID = userID
-	s.color = color
-	return color, nil
+func (s *routerUserStore) ListUsers(_ context.Context) ([]models.User, error) {
+	return nil, nil
+}
+
+func (s *routerUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {
+	s.requestedID = id
+	return models.User{ID: id, Username: "alice"}, nil
 }
 
 func decodeRouterErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string {

@@ -83,7 +83,7 @@ func main() {
 	seedFeatured(ctx, c411Client, tmdbClient, movieStore)
 
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
-	moviesHandler := movies.NewMoviesHandler(movieStore, searchers, tmdbClient)
+	moviesHandler := movies.NewMoviesHandler(movieStore, userStore, searchers, tmdbClient)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
 	usersHandler := users.NewHandler(userStore)
 	streamHandler := stream.NewStreamHandler()
@@ -201,7 +201,8 @@ func newRouter(
 		r.With(requireAuth).Patch("/comments/{id}", commentsHandler.Update)
 		r.With(requireAuth).Delete("/comments/{id}", commentsHandler.Delete)
 
-		r.With(requireAuth).Patch("/users/me/color", usersHandler.UpdateMyColor)
+		r.With(requireAuth).Get("/users", usersHandler.ListUsers)
+		r.With(requireAuth).Get("/users/{id}", usersHandler.GetUser)
 
 		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
 		r.With(requireAuth).Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index

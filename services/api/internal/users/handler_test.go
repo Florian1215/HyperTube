@@ -9,126 +9,154 @@ import (
 	"strings"
 	"testing"
 
-	"hypertube/api/internal/auth"
 	"hypertube/api/internal/models"
 )
 
-func TestUpdateMyColorStoresAuthenticatedUserColor(t *testing.T) {
-	store := &fakeColorStore{}
+func TestListUsersReturnsUserSmallList(t *testing.T) {
+	store := &fakeUserStore{list: []models.User{
+		{ID: 1, Username: "alice", Email: "alice@example.com", PasswordHash: "secret", Color: models.UserColorGreen},
+		{ID: 2, Username: "bob", Email: "bob@example.com", PasswordHash: "hunter2", Color: models.UserColorBlue},
+	}}
 	handler := NewHandler(store)
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":" green "}`))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
 	rec := httptest.NewRecorder()
 
-	auth.DevAuthenticateAs(42)(http.HandlerFunc(handler.UpdateMyColor)).ServeHTTP(rec, req)
+	handler.ListUsers(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !store.called {
-		t.Fatal("expected store to be called")
-	}
-	if store.userID != 42 {
-		t.Fatalf("expected user id 42, got %d", store.userID)
-	}
-	if store.color != models.UserColorGreen {
-		t.Fatalf("expected stored color green, got %q", store.color)
-	}
 
 	var body struct {
-		Data updateColorResponse `json:"data"`
+		Data []models.UserSmall `json:"data"`
+		Meta struct {
+			Total int `json:"total"`
+		} `json:"meta"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.Color != models.UserColorGreen {
-		t.Fatalf("expected response color green, got %q", body.Data.Color)
+	if len(body.Data) != 2 {
+		t.Fatalf("expected 2 users, got %d", len(body.Data))
+	}
+	if body.Meta.Total != 2 {
+		t.Fatalf("expected total 2, got %d", body.Meta.Total)
+	}
+	if body.Data[0].Username != "alice" || body.Data[1].Username != "bob" {
+		t.Fatalf("unexpected users: %+v", body.Data)
+	}
+	if body.Data[0].Color != models.UserColorGreen {
+		t.Fatalf("expected first user color green, got %q", body.Data[0].Color)
+	}
+	if raw := rec.Body.String(); strings.Contains(raw, "secret") || strings.Contains(raw, "alice@example.com") {
+		t.Fatalf("response leaked sensitive data: %s", raw)
 	}
 }
 
-func TestUpdateMyColorRequiresAuthContext(t *testing.T) {
-	handler := NewHandler(&fakeColorStore{})
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(`{"color":"green"}`))
+func TestListUsersEmpty(t *testing.T) {
+	handler := NewHandler(&fakeUserStore{list: []models.User{}})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
 	rec := httptest.NewRecorder()
 
-	handler.UpdateMyColor(rec, req)
+	handler.ListUsers(rec, req)
 
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
-	}
-	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "UNAUTHORIZED" {
-		t.Fatalf("expected UNAUTHORIZED, got %q", got)
-	}
-}
-
-func TestUpdateMyColorRejectsInvalidJSON(t *testing.T) {
-	tests := []struct {
-		name string
-		body string
-	}{
-		{name: "malformed", body: `{"color":`},
-		{name: "unknown field", body: `{"color":"green","user_id":999}`},
-		{name: "multiple documents", body: `{"color":"green"} {}`},
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := &fakeColorStore{}
-			handler := NewHandler(store)
-			rec := serveUpdateMyColor(t, handler, tt.body)
-
-			if rec.Code != http.StatusBadRequest {
-				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
-			}
-			errorBody := decodeUsersErrorEnvelope(t, rec).Error
-			if errorBody.Code != "VALIDATION_ERROR" {
-				t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
-			}
-			if got := errorBody.Fields["body"].Message; got != "Invalid JSON body" {
-				t.Fatalf("expected invalid body message, got %q", got)
-			}
-			if store.called {
-				t.Fatal("store must not be called for invalid JSON")
-			}
-		})
+	var body struct {
+		Data []models.UserSmall `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 0 {
+		t.Fatalf("expected empty list, got %+v", body.Data)
 	}
 }
 
-func TestUpdateMyColorRejectsInvalidColors(t *testing.T) {
-	tests := []struct {
-		name string
-		body string
-	}{
-		{name: "empty", body: `{"color":""}`},
-		{name: "whitespace", body: `{"color":"   "}`},
-		{name: "unsupported", body: `{"color":"orange"}`},
-		{name: "raw css", body: `{"color":"#747AF5"}`},
-		{name: "uppercase", body: `{"color":"Purple"}`},
+func TestListUsersStoreErrorReturnsInternalError(t *testing.T) {
+	handler := NewHandler(&fakeUserStore{err: errors.New("db down")})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ListUsers(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := &fakeColorStore{}
-			handler := NewHandler(store)
-			rec := serveUpdateMyColor(t, handler, tt.body)
-
-			if rec.Code != http.StatusBadRequest {
-				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
-			}
-			errorBody := decodeUsersErrorEnvelope(t, rec).Error
-			if errorBody.Code != "VALIDATION_ERROR" {
-				t.Fatalf("expected VALIDATION_ERROR, got %q", errorBody.Code)
-			}
-			if got := errorBody.Fields["color"].Message; got != "Invalid user color" {
-				t.Fatalf("expected invalid color message, got %q", got)
-			}
-			if store.called {
-				t.Fatal("store must not be called for invalid color")
-			}
-		})
+	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
 	}
 }
 
-func TestUpdateMyColorMapsStoreErrors(t *testing.T) {
+func TestGetUserReturnsUserSmall(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {
+			ID:           42,
+			Email:        "alice@example.com",
+			Username:     "alice",
+			FirstName:    "Alice",
+			LastName:     "Liddell",
+			Color:        models.UserColorGreen,
+			PasswordHash: "secret",
+		},
+	}}
+	handler := NewHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/42", nil)
+	req.SetPathValue("id", "42")
+	rec := httptest.NewRecorder()
+
+	handler.GetUser(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data models.UserSmall `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.ID != 42 {
+		t.Fatalf("expected id 42, got %d", body.Data.ID)
+	}
+	if body.Data.Username != "alice" {
+		t.Fatalf("expected username alice, got %q", body.Data.Username)
+	}
+	if body.Data.Color != models.UserColorGreen {
+		t.Fatalf("expected color green, got %q", body.Data.Color)
+	}
+
+	// UserSmall must not leak sensitive fields.
+	if raw := rec.Body.String(); strings.Contains(raw, "secret") || strings.Contains(raw, "alice@example.com") {
+		t.Fatalf("response leaked sensitive data: %s", raw)
+	}
+}
+
+func TestGetUserInvalidIDReturnsNotFound(t *testing.T) {
+	handler := NewHandler(&fakeUserStore{})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/abc", nil)
+	req.SetPathValue("id", "abc")
+	rec := httptest.NewRecorder()
+
+	handler.GetUser(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "NOT_FOUND" {
+		t.Fatalf("expected NOT_FOUND, got %q", got)
+	}
+}
+
+func TestGetUserMapsStoreErrors(t *testing.T) {
 	tests := []struct {
 		name       string
 		err        error
@@ -141,8 +169,13 @@ func TestUpdateMyColorMapsStoreErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(&fakeColorStore{err: tt.err})
-			rec := serveUpdateMyColor(t, handler, `{"color":"green"}`)
+			handler := NewHandler(&fakeUserStore{err: tt.err})
+
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/users/42", nil)
+			req.SetPathValue("id", "42")
+			rec := httptest.NewRecorder()
+
+			handler.GetUser(rec, req)
 
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
@@ -154,30 +187,27 @@ func TestUpdateMyColorMapsStoreErrors(t *testing.T) {
 	}
 }
 
-func serveUpdateMyColor(t *testing.T, handler *Handler, body string) *httptest.ResponseRecorder {
-	t.Helper()
-
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me/color", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	auth.DevAuthenticateAs(42)(http.HandlerFunc(handler.UpdateMyColor)).ServeHTTP(rec, req)
-	return rec
+type fakeUserStore struct {
+	users map[int64]models.User
+	list  []models.User
+	err   error
 }
 
-type fakeColorStore struct {
-	called bool
-	userID int64
-	color  string
-	err    error
-}
-
-func (s *fakeColorStore) UpdateMyColor(_ context.Context, userID int64, color string) (string, error) {
-	s.called = true
-	s.userID = userID
-	s.color = color
+func (s *fakeUserStore) ListUsers(_ context.Context) ([]models.User, error) {
 	if s.err != nil {
-		return "", s.err
+		return nil, s.err
 	}
-	return color, nil
+	return s.list, nil
+}
+
+func (s *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {
+	if s.err != nil {
+		return models.User{}, s.err
+	}
+	if u, ok := s.users[id]; ok {
+		return u, nil
+	}
+	return models.User{}, ErrUserNotFound
 }
 
 func decodeUsersErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {

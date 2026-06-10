@@ -2,92 +2,64 @@ package users
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
-	"strings"
+	"strconv"
 
-	"hypertube/api/internal/auth"
 	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
 	"hypertube/api/internal/respond"
 )
 
-const maxJSONBodyBytes = 1 << 20
-
-type colorStore interface {
-	UpdateMyColor(ctx context.Context, userID int64, color string) (string, error)
+type userStore interface {
+	ListUsers(ctx context.Context) ([]models.User, error)
+	FindUserByID(ctx context.Context, id int64) (models.User, error)
 }
 
 type Handler struct {
-	store colorStore
+	store userStore
 }
 
-type updateColorRequest struct {
-	Color string `json:"color"`
-}
-
-type updateColorResponse struct {
-	Color string `json:"color"`
-}
-
-func NewHandler(store colorStore) *Handler {
+func NewHandler(store userStore) *Handler {
 	return &Handler{store: store}
 }
 
-func (h *Handler) UpdateMyColor(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.UserIDFromContext(r.Context())
-	if !ok {
-		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
+// ListUsers returns every user as a UserSmall list.
+func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := h.store.ListUsers(r.Context())
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
 		return
 	}
 
-	req, ok := decodeUpdateColorRequest(w, r)
-	if !ok {
+	result := make([]models.UserSmall, 0, len(users))
+	for _, u := range users {
+		result = append(result, models.ToUserSmall(u))
+	}
+
+	respond.List(w, http.StatusOK, result)
+}
+
+// GetUser returns the public profile (UserSmall) for the user with the given id.
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgUserNotFound)
 		return
 	}
 
-	color := strings.TrimSpace(req.Color)
-	if !models.IsValidUserColor(color) {
-		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "color", i18n.MsgInvalidUserColor)
-		return
-	}
-
-	updatedColor, err := h.store.UpdateMyColor(r.Context(), userID, color)
+	user, err := h.store.FindUserByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgUserNotFound)
 			return
 		}
 		log.Println("db err:", err)
-		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedUpdateUserColor)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
 		return
 	}
 
-	respond.Data(w, http.StatusOK, updateColorResponse{Color: updatedColor})
+	respond.Data(w, http.StatusOK, models.ToUserSmall(user))
 }
-
-func decodeUpdateColorRequest(w http.ResponseWriter, r *http.Request) (updateColorRequest, bool) {
-	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
-
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
-	var req updateColorRequest
-	if err := decoder.Decode(&req); err != nil {
-		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidJSONBody)
-		return updateColorRequest{}, false
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidJSONBody)
-		return updateColorRequest{}, false
-	}
-
-	return req, true
-}
-
-func List(w http.ResponseWriter, r *http.Request)   {}
-func Get(w http.ResponseWriter, r *http.Request)    {}
-func Update(w http.ResponseWriter, r *http.Request) {}
