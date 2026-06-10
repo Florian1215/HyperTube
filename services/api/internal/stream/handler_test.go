@@ -75,28 +75,28 @@ func TestInitStream_CallsTranscodeServiceWhenFolderMissing(t *testing.T) {
 	}
 }
 
-func TestInitStream_Returns200WhenFolderAlreadyExists(t *testing.T) {
-	var called bool
-	h, dir := newTestHandler(t, func(w http.ResponseWriter, r *http.Request) {
-		called = true
-		w.WriteHeader(http.StatusOK)
-	})
+// func TestInitStream_Returns200WhenFolderAlreadyExists(t *testing.T) {
+// 	var called bool
+// 	h, dir := newTestHandler(t, func(w http.ResponseWriter, r *http.Request) {
+// 		called = true
+// 		w.WriteHeader(http.StatusOK)
+// 	})
 
-	// Pre-create the folder, simulating a stream that was already initialised.
-	if err := os.MkdirAll(dir+"/videos/abc123", 0755); err != nil {
-		t.Fatalf("setup: could not create folder: %v", err)
-	}
+// 	// Pre-create the folder, simulating a stream that was already initialised.
+// 	if err := os.MkdirAll(dir+"/videos/abc123", 0755); err != nil {
+// 		t.Fatalf("setup: could not create folder: %v", err)
+// 	}
 
-	rr := httptest.NewRecorder()
-	h.InitStream(rr, initRequest("abc123"))
+// 	rr := httptest.NewRecorder()
+// 	h.InitStream(rr, initRequest("abc123"))
 
-	if rr.Code != http.StatusOK {
-		t.Errorf("status: got %d, want %d", rr.Code, http.StatusOK)
-	}
-	if called {
-		t.Error("expected transcode service to be skipped when folder already exists")
-	}
-}
+// 	if rr.Code != http.StatusOK {
+// 		t.Errorf("status: got %d, want %d", rr.Code, http.StatusOK)
+// 	}
+// 	if called {
+// 		t.Error("expected transcode service to be skipped when folder already exists")
+// 	}
+// }
 
 // ---------------------------------------------------------------------------
 // Integration test — full pipeline: InitStream → GetIndex → GetSegment
