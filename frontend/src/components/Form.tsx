@@ -143,7 +143,7 @@ function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
     const {callbackUrl} = useAuth();
     const pathname = usePathname();
 
-    return (<button title={title + " " + oauth} onClick={() => handleOauth(oauth, callbackUrl || pathname)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
+    return (<button type="button" title={title + " " + oauth} onClick={() => handleOauth(oauth, callbackUrl || pathname)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
         <OAuthIcon oauth={oauth} />
     </button>)
 }
