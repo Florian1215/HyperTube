@@ -1,6 +1,6 @@
 "use client";
 
-import { useModal } from "@/context/ModalContext";
+import {useModal} from "@/context/ModalContext";
 import {AuthModalLayout} from "@/components/modal/Layout";
 import React from "react";
 import {useAuth} from "@/context/AuthContext";

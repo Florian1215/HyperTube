@@ -131,8 +131,8 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         </div>}
         <div className="flex gap-2">
             <Button onClick={onSubmit} disabled={disableBtn} className={formType === "reset-password" ? "w-full" : ""}>{t("submit")}</Button>
-            { showOAuth && <OauthServices oauth={"42"} title={t("oAuth")} />}
-            { showOAuth && <OauthServices oauth={"github"} title={t("oAuth")} />}
+            {showOAuth && <OauthServices oauth={"42"} title={t("oAuth")} />}
+            {showOAuth && <OauthServices oauth={"github"} title={t("oAuth")} />}
         </div>
     </form>)
 }

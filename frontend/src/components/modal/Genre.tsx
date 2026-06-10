@@ -1,6 +1,6 @@
 "use client";
 
-import { useModal } from "@/context/ModalContext";
+import {useModal} from "@/context/ModalContext";
 import ModalLayout from "@/components/modal/Layout";
 import React, {useEffect, useState} from "react";
 import GenreTags from "@/components/GenreTags";

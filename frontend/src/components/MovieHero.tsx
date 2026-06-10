@@ -5,7 +5,7 @@ import {SecondaryButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
 import LinkLoginRequired from "@/components/Link";
 
-export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | string[], movie?: iMovie, onClick?: () => void }) {
+export default function MoviesHero({items, movie, onClick}: {items: iMovie[] | string[], movie?: iMovie, onClick?: () => void}) {
     const [index, setIndex] = useState(0);
     if (items.length === 0 && movie)
         items = [movie.backdrop_url.replace("/w500/", "/w1280/")];
@@ -31,7 +31,7 @@ export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | 
     </div>);
 }
 
-function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movie?: iMovie, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string }) {
+function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: {movie?: iMovie, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string}) {
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
 

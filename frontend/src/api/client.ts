@@ -1,6 +1,6 @@
 import {ApiError} from "@/api/errors";
 
-type ApiOptions = RequestInit & { body?: unknown; };
+type ApiOptions = RequestInit & {body?: unknown};
 export const API_URL = "http://localhost:8080/api/v1";
 
 export type tListResponse<T> = {

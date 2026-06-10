@@ -6,7 +6,7 @@ import {iGenre} from "@/types/genre";
 import {useLocale} from "next-intl";
 import {tLocale} from "@/i18n/request";
 
-export default function GenreTags({genreIds, genreCount, className = "", limit, setFilterGenre}: { genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
+export default function GenreTags({genreIds, genreCount, className = "", limit, setFilterGenre}: {genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
     let addLimit = false;
     const {openModal, closeModal} = useModal();
 
@@ -39,7 +39,7 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
     </div>);
 }
 
-function GenreTag({children, closeModal, setFilterGenre}: { children: iGenre, closeModal?: () => void, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>> }) {
+function GenreTag({children, closeModal, setFilterGenre}: {children: iGenre, closeModal?: () => void, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
 
     const handleClick = () => {

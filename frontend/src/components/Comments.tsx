@@ -114,7 +114,7 @@ export function Comments({user, comments, setComments, index, setIndex, totalPag
     </Pagination>);
 }
 
-function Comment({comment, currentUser, updateComment, deleteComment, profilePage = false}: { comment: iComment, currentUser: iUser | null, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void, profilePage?: boolean}) {
+function Comment({comment, currentUser, updateComment, deleteComment, profilePage = false}: {comment: iComment, currentUser: iUser | null, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void, profilePage?: boolean}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
