@@ -66,7 +66,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
                 user !== null ?
                 <div className="flex gap-2 sm:gap-4">
                     <ProfilePicture user={user}/>
-                    <NewComment onSubmit={addNewComment} movie={movie}></NewComment>
+                    <NewComment user={user} onSubmit={addNewComment} movie={movie} ></NewComment>
                 </div> :
                 <SmallButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</SmallButton>
             }
@@ -245,7 +245,7 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComme
     </div>);
 }
 
-function NewComment({movie, onSubmit}: {movie: iMovie, onSubmit: (value: iComment) => void}) {
+function NewComment({user, movie, onSubmit}: {user: iUser, movie: iMovie, onSubmit: (value: iComment) => void}) {
     const [expendComment, setExpendComment] = useState(false);
     const [comment, setComment] = useState("");
     const t = useTranslations("comments");
@@ -264,6 +264,7 @@ function NewComment({movie, onSubmit}: {movie: iMovie, onSubmit: (value: iCommen
 
         makePostRequest().then((data) => {
             if (data) {
+                data.data.user = user;
                 const newComment = data.data as iComment;
                 setComment("");
                 setExpendComment(false);
