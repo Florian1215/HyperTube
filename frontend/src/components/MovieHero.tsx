@@ -35,7 +35,7 @@ function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movi
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
 
-    return (<div className="px-4 sm:px-6 min-w-full">
+    return (<div className={"px-4 sm:px-6 min-w-full" + (movie === undefined ? " pb-4 sm:pb-6" : "")}>
         <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
             {movie && <Image className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
                              height={5000} loading="eager" onLoad={() => setIsLoaded(true)}
