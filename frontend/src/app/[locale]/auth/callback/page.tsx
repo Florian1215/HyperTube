@@ -3,7 +3,7 @@
 import React, {useEffect} from "react";
 import {useAuth} from "@/context/AuthContext";
 import {useTranslations} from "next-intl";
-import {useRouter} from "next/navigation";
+import {useRouter} from "@/i18n/navigation";
 
 export default function OAuthCallbackPage() {
     const t = useTranslations("auth.oauth");
