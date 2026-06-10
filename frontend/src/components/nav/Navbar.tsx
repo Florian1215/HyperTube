@@ -37,7 +37,7 @@ export default function Navbar() {
     },] : [{
         name: "", icon: HypertubResponsiveLogo, href: "/",}, {
         name: t("search"), icon: SearchIcon, href: "/movies",}, {
-        name: t("signIn"), icon: UserIcon, action: () => openModal({type: "signin"}),}, {
+        name: t("signin"), icon: UserIcon, action: () => openModal({type: "signin"}),}, {
         name: t("createAccount"), icon: RegisterIcon, action: () => openModal({type: "register"}),}, {
         name: "", icon: LanguageIcon, hover: LanguageDropdown,
     },];

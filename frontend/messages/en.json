@@ -3,7 +3,7 @@
     "search": "Search",
     "account": "Account",
     "logout": "Logout",
-    "signIn": "Sign in",
+    "signin": "Sign in",
     "createAccount": "Create account"
   },
   "language": {
@@ -85,7 +85,8 @@
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",
       "noAccount": "Don't have an account yet?",
-      "register": "Create one"
+      "register": "Create one",
+      "oAuth": "Sign in with"
     },
     "register": {
       "title": "Join Hypertube",
@@ -96,7 +97,8 @@
       "password": "Password",
       "submit": "Sign up",
       "haveAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "signin": "Sign in",
+      "oAuth": "Sign up with"
     },
     "forgotPassword": {
       "title": "Reset password",
