@@ -50,7 +50,7 @@ function InfoPeoplesMovie({name, items}: { name: string, items: string[] }) {
     return (<InfoMovie name={name}>
         <p>
             {items.map((i, index) => (<span key={index}>
-                    <span className="custom-underline hover:cursor-pointer">{i}</span>
+                    <button className="custom-underline">{i}</button>
                 {index < items.length - 1 && " ,   "}
                 </span>))}
         </p>

@@ -138,7 +138,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
 }
 
 function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
-    return (<div title={title + " " + oauth} onClick={() => handleOauth(oauth)} className="flex items-center justify-center size-10 hover:cursor-pointer hover:bg-black-hover bg-black">
+    return (<button title={title + " " + oauth} onClick={() => handleOauth(oauth)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
         <OAuthIcon oauth={oauth} />
-    </div>)
+    </button>)
 }
