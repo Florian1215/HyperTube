@@ -5,6 +5,10 @@ import {postLogin, postRegister} from "@/api/auth";
 import {useModal} from "@/context/ModalContext";
 import {tResponse} from "@/api/client";
 import {iUserToken} from "@/types/user";
+import {useAuth} from "@/context/AuthContext";
+import {useRouter} from "@/i18n/navigation";
+import {useNotification} from "@/context/NotificationContext";
+import {useTranslations} from "next-intl";
 
 type AuthModalType = "signin" | "register";
 
@@ -22,13 +26,27 @@ export default function ModalLayout({children, onClose, title}: {children: React
     </div>);
 }
 
-export function AuthModalLayout({type, t, handleRequest, handleForgotPassword}: {type: AuthModalType, t: (key: string) => string, handleRequest: (data: tResponse<iUserToken>) => void, handleForgotPassword?: () => void}) {
+export function AuthModalLayout({type, t, handleForgotPassword}: {type: AuthModalType, t: (key: string) => string, handleForgotPassword?: () => void}) {
     const {openModal, closeModal} = useModal();
     const isReg = type === "register";
     const otherType: AuthModalType = isReg ? "signin" : "register";
+    const {addNotification} = useNotification();
+    const router = useRouter();
+    const {login, callbackUrl, setCallbackUrl} = useAuth();
+    const tSuccess = useTranslations("notifications.success");
 
-    return (<ModalLayout onClose={closeModal} title={t("title")}>
-        <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleRequest} t={t} handleForgotPassword={handleForgotPassword}
+    const handleLoginRegister = (data: tResponse<iUserToken>) => {
+        login(data.data.user, data.data.access_token);
+        closeModal();
+        if (callbackUrl) {
+            router.push(callbackUrl);
+            setCallbackUrl(null);
+        }
+        addNotification(tSuccess(isReg ? "accountCreatedSuccess" : "login"), "success");
+    };
+
+    return (<ModalLayout onClose={() => {setCallbackUrl(null); closeModal();}} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>
+        <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t} handleForgotPassword={handleForgotPassword}
               fields={isReg ? ["email", "first_name", "last_name", "username", "password"] : ["login", "password"]} />
         <div className="flex gap-2 mt-2">
             <span className="text-sm">{t(isReg ? "haveAccount" : "noAccount")}</span>
