@@ -27,9 +27,9 @@ export function useHandleError() {
         if (error instanceof ApiError) {
             if (error.status === 401) {
                 openModal({type: "signin"});
-                return (<p className="small-text hover:underline hover:cursor-pointer" onClick={() =>
+                return (<button className="w-full"><p className="small-text hover:underline" onClick={() =>
                     openModal({type: "signin"})
-                }>{tError("loginRequired")}</p>);
+                }>{tError("loginRequired")}</p></button>);
             } else if (error.status === 404)
                 return (<p className="small-text">{tError("notFound" + translation)}</p>);
         } else
