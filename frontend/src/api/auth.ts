@@ -1,6 +1,6 @@
 import {API_URL, apiClient, tResponse} from "@/api/client";
 import {iUserToken} from "@/types/user";
-import {tOauthService} from "@/components/OAuth";
+import {tOauthService} from "@/components/Form";
 
 export function postLogin(locale: string, data: string[]) {
     return apiClient<tResponse<iUserToken>>("/auth/login", locale, {method: "POST", body: JSON.stringify({login: data[0].trim(), password: data[1]})});

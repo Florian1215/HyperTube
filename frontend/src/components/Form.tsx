@@ -5,24 +5,29 @@ import {useTranslations} from "next-intl";
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {tResponse} from "@/api/client";
 import {iUserToken} from "@/types/user";
+import {handleOauth} from "@/api/auth";
+import {OAuthIcon} from "@/components/Icons";
 
+export type tOauthService = "42" | "github";
+type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password";
 type formType = "auth" | "update" |  "signin" | "register" | "reset-password";
 
-export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword}: {formType: formType, request: (locale: string, data: string[]) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken>) => void, t: (key: string) => string, fields: string[], handleForgotPassword?: () => void}) {
+export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword}: {formType: formType, request: (locale: string, data: string[]) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
     const tError = useTranslations("validationErrors");
-    const {execute} = useApiMutation(setErrors, formType);
-    const fieldRefs = useRef<HTMLInputElement[]>([]);
     const [focusedIndex, setFocusedIndex] = useState((formType === "update" || formType === "auth")? -1 : 0);
+    const {execute} = useApiMutation(setErrors, setFocusedIndex, formType);
+    const fieldRefs = useRef<HTMLInputElement[]>([]);
+    const showOAuth = formType === "signin" || formType === "register";
 
     useEffect(() => {
         if (focusedIndex >= 0)
             fieldRefs.current[focusedIndex]?.focus();
     }, [focusedIndex]);
 
-    const getId = (field: string | number) => (typeof field  === "string" ? field : fields[field]) + "-" + formType;
+    const getId = (field: fieldType | number) => (typeof field  === "number" ? fields[field] : field) + "-" + formType;
     const hasError = (error: Record<string, string>) => Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
 
     const newSetterError = (value: Record<string, string>) => {
@@ -56,7 +61,6 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         if (isLastField) {
             if (hasError(errors)) {
                 for (let i = 0; i < fields.length; i++) {
-                    console.log("IDX", i, getId(i));
                     if (errors[getId(i)]) {
                         setFocusedIndex(i);
                         return ;
@@ -90,7 +94,6 @@ export default function Form({formType, request, handleRequest, t, fields, handl
                     if (!focusIsSet) {
                         focusIsSet = true;
                         setFocusedIndex(idx);
-                        console.log("FOCUS", fieldsValue, requiredErrors, errors, idx);
                     }
                 }
             })
@@ -107,9 +110,9 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         }
     };
 
-    const RenderInput = (type: string, idx: number, className?: string) =>
-        <Input key={idx} id={getId(type)} type={type === "password" ? "password" : "text"} placeholder={t(type)}
-               value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className}
+    const RenderInput = (type: fieldType, idx: number, className?: string) =>
+        <Input key={idx} id={getId(type)} type={type.includes("password") ? "password" : "text"} placeholder={t(type)}
+               value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className + ((type === "username" || (formType === "register" && type === "password")) ? " max-w-2/3" : "")}
                requestErrorMessage={errors[getId(type)]} setErrorsMessage={newSetterError} ref={(el: HTMLInputElement) => {fieldRefs.current[idx] = el;}}
                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)}></Input>;
 
@@ -126,6 +129,16 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         {handleForgotPassword && <div className={"relative mb-4" + (errors["password-signin"] ? " pt-3" : "")}>
             <SmallButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</SmallButton>
         </div>}
-        <Button onClick={onSubmit} disabled={disableBtn} className={formType === "reset-password" ? "w-full" : ""}>{t("submit")}</Button>
+        <div className="flex gap-2">
+            <Button onClick={onSubmit} disabled={disableBtn} className={formType === "reset-password" ? "w-full" : ""}>{t("submit")}</Button>
+            { showOAuth && <OauthServices oauth={"42"} title={t("oAuth")} />}
+            { showOAuth && <OauthServices oauth={"github"} title={t("oAuth")} />}
+        </div>
     </form>)
+}
+
+function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
+    return (<div title={title + " " + oauth} onClick={() => handleOauth(oauth)} className="flex items-center justify-center size-10 hover:cursor-pointer hover:bg-black-hover bg-black">
+        <OAuthIcon oauth={oauth} />
+    </div>)
 }

@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import {tOauthService} from "@/components/Form";
 
 export function CrossIcon({color="black", size=30, className=""}) {
     const fullColor = `var(--color-${color})`;
@@ -261,5 +262,21 @@ export function TrashIcon({color="red", size=20}) {
         <path d="M21.9375 4.80042L18.2373 26.9996H4.7627L1.0625 4.80042H21.9375Z" stroke={fullColor} strokeWidth="1.8"/>
         <path d="M2 9.90002L21 9.90002" stroke={fullColor} strokeWidth="1.8"/>
         <path d="M15 3.90002V0.900024H7V3.90002" stroke={fullColor} strokeWidth="1.8"/>
+    </svg>);
+}
+
+export function OAuthIcon({oauth, color="white", size=30}: {oauth: tOauthService, color?: string, size?: number}) {
+    const fullColor = `var(--color-${color})`;
+
+    if (oauth === "42") {
+        return (<svg width={size} height={size} viewBox="0 0 67 43" fill="none" xmlns="http://www.w3.org/2000/svg" className="pt-0.5">
+            <path d="M37.0271 0H24.6828L0 22.1433V31.1061H24.6828V42.1777H37.0271V22.1433H12.3385L37.0271 0Z" fill={fullColor}/>
+            <path d="M42.3171 11.0716L54.6556 0H42.3171V11.0716Z" fill={fullColor}/>
+            <path d="M66.9999 11.0716V0H54.6556V11.0716L42.3171 22.1433V33.2149H54.6556V22.1433L66.9999 11.0716Z" fill={fullColor}/>
+            <path d="M66.999 22.1435L54.655 33.2152H66.999V22.1435Z" fill={fullColor}/>
+        </svg>);
+    }
+    return (<svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fillRule="evenodd" clipRule="evenodd" d="M16 0C7.16 0 0 7.16 0 16C0 23.08 4.58 29.06 10.94 31.18C11.74 31.32 12.04 30.84 12.04 30.42C12.04 30.04 12.02 28.78 12.02 27.44C8 28.18 6.96 26.46 6.64 25.56C6.46 25.1 5.68 23.68 5 23.3C4.44 23 3.64 22.26 4.98 22.24C6.24 22.22 7.14 23.4 7.44 23.88C8.88 26.3 11.18 25.62 12.1 25.2C12.24 24.16 12.66 23.46 13.12 23.06C9.56 22.66 5.84 21.28 5.84 15.16C5.84 13.42 6.46 11.98 7.48 10.86C7.32 10.46 6.76 8.82 7.64 6.62C7.64 6.62 8.98 6.2 12.04 8.26C13.32 7.9 14.68 7.72 16.04 7.72C17.4 7.72 18.76 7.9 20.04 8.26C23.1 6.18 24.44 6.62 24.44 6.62C25.32 8.82 24.76 10.46 24.6 10.86C25.62 11.98 26.24 13.4 26.24 15.16C26.24 21.3 22.5 22.66 18.94 23.06C19.52 23.56 20.02 24.52 20.02 26.02C20.02 28.16 20 29.88 20 30.42C20 30.84 20.3 31.34 21.1 31.18C27.42 29.06 32 23.06 32 16C32 7.16 24.84 0 16 0V0Z" fill={fullColor} />
     </svg>);
 }

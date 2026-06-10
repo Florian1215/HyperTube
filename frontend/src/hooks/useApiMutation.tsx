@@ -7,7 +7,7 @@ import {useNotification} from "@/context/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import {tLocale} from "@/i18n/request";
 
-export function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, formType?: string) {
+export function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string) {
     const router = useRouter();
     const {openModal} = useModal();
     const locale = useLocale() as tLocale;
@@ -21,8 +21,14 @@ export function useApiMutation(setErrorsAction?: (errors: Record<string, string>
             if (error instanceof ApiError) {
                 if ((error.status === 400 || error.status === 409) && error.data.error.fields && setErrorsAction && formType) {
                     const newErrors: Record<string, string> = {};
-                    Object.entries(error.data.error.fields).map(([key, value])=> {
+                    let setNewFocus = false;
+
+                    Object.entries(error.data.error.fields).map(([key, value], idx)=> {
                         newErrors[key + "-" + formType] = value.message;
+                        if (!setNewFocus && setFocusedIndex) {
+                            setNewFocus = true;
+                            setFocusedIndex(idx);
+                        }
                     });
                     setErrorsAction(newErrors);
                     return null;
