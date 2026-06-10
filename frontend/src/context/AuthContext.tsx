@@ -1,6 +1,6 @@
 "use client";
 
-import {createContext, useContext, useEffect, useState, ReactNode,} from "react";
+import {createContext, useContext, useEffect, useState, ReactNode} from "react";
 import {iUser} from "@/types/user";
 
 interface AuthContextType {
@@ -9,6 +9,8 @@ interface AuthContextType {
     logout: () => void;
     loading: boolean;
     updateUser: (patch: Partial<iUser>) => void;
+    callbackUrl: string | null
+    setCallbackUrl: (callbackUrl: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({children,}: { children: ReactNode; }) {
     const [user, setUser] = useState<iUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const userData = localStorage.getItem("user");
@@ -58,7 +61,7 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
     };
 
     return (<AuthContext.Provider
-        value={{user, login, logout, loading, updateUser}}>
+        value={{user, login, logout, loading, updateUser, callbackUrl, setCallbackUrl}}>
         {children}
     </AuthContext.Provider>);
 }
