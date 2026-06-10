@@ -7,7 +7,7 @@ import GenreTags from "@/components/GenreTags";
 import {CheckFillIcon} from "@/components/Icons";
 import {Button} from "@/components/Buttons";
 import {useLocale, useTranslations} from "next-intl";
-import {useGenres} from "../../hooks/useGenres";
+import {useGenres} from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
 import {iGenre} from "@/types/genre";
 
