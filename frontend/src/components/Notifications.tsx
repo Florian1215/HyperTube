@@ -3,10 +3,10 @@
 import React from "react";
 import {tNotification, useNotification} from "@/context/NotificationContext";
 import {CheckIcon} from "@/components/Icons";
-import {CloseButton} from "./Buttons";
+import {CloseButton} from "@/components/Buttons";
 
 export const NotificationList = () => {
-    const { notifications, removeNotification } = useNotification();
+    const {notifications, removeNotification} = useNotification();
 
     return (<div className="fixed top-5 right-5 z-60 flex flex-col gap-4 max-w-9/10">
             {notifications.map((notification) => (
@@ -19,7 +19,7 @@ export const NotificationList = () => {
         </div>);
 };
 
-const NotificationItem = ({notification, onClose}: { notification: tNotification; onClose: (id: string) => void;}) => {
+const NotificationItem = ({notification, onClose}: {notification: tNotification; onClose: (id: string) => void;}) => {
     const bgColors = {success: "green", warning: "yellow", error: "red", info: "purple"};
 
     return (<div className={`flex justify-between custom-shadow-s border bg-${bgColors[notification.type]}`}>

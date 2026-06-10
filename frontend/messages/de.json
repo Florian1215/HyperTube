@@ -80,6 +80,7 @@
   "auth": {
     "signin": {
       "title": "Anmelden",
+      "titleLoginRequired": "Melden Sie sich an, um fortzufahren",
       "login": "E-Mail oder Benutzername",
       "password": "Passwort",
       "forgotPassword": "Passwort vergessen?",
@@ -90,6 +91,7 @@
     },
     "register": {
       "title": "Hypertube beitreten",
+      "titleLoginRequired": "Erstellen Sie ein Konto, um fortzufahren",
       "email": "E-Mail",
       "first_name": "Vorname",
       "last_name": "Nachname",
@@ -154,6 +156,7 @@
       "accountCreatedSuccess": "Konto erfolgreich erstellt!"
     },
     "error": {
+      "unknown": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
       "network": "Der Server konnte nicht erreicht werden. Bitte überprüfen Sie Ihre Internetverbindung.",
       "loginRequired": "Sie müssen angemeldet sein, um fortzufahren.",
       "notFoundFilm": "Film nicht gefunden",

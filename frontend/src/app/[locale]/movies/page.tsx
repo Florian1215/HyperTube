@@ -49,9 +49,9 @@ export default function Page() {
         const newValue = e === undefined ? "" : e.target.value.toLowerCase()
         setSearchValue(newValue);
     }
-    const handleSetViewType = (value: tViewType) => { setViewType(value); }
-    const changeSort = (type: tSort, side: boolean) => { setSort({type, side}); }
-    const changeIndex = (newIndex: number) => {setIndex(newIndex);}
+    const handleSetViewType = (value: tViewType) => setViewType(value);
+    const changeSort = (type: tSort, side: boolean) => setSort({type, side});
+    const changeIndex = (newIndex: number) => setIndex(newIndex);
 
     return (<div className="flex flex-col gap-4 mx-2 md:mx-4 xl:mx-6">
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />

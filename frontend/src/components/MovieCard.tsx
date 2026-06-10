@@ -2,7 +2,7 @@ import Image from "next/image";
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
 import React, {Dispatch, SetStateAction, useState} from "react";
-import {Button} from "./Buttons";
+import {Button} from "@/components/Buttons";
 import {StarIcon} from "@/components/Icons";
 import GenreTags from "@/components/GenreTags";
 import {useRouter} from "@/i18n/navigation";

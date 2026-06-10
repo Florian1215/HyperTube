@@ -2,7 +2,7 @@ type tDataErrorResponse = {
     error: {
         code: string
         message?: string
-        fields?: Record<string, { message: string }>
+        fields?: Record<string, {message: string}>
     }
 };
 
