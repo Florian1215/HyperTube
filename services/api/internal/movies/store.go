@@ -172,7 +172,7 @@ func (s *Store) UpsertTorrent(ctx context.Context, ts models.Torrent) error {
 	_, err := s.db.Exec(ctx, `
 		INSERT INTO torrents (imdbid, source, year, title, url, quality, size, language, seeds)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		ON CONFLICT (imdbid, url) DO NOTHING
+		ON CONFLICT ON CONSTRAINT torrents_pkey DO NOTHING
 	`, ts.ImdbID, ts.Source, ts.Year, ts.Title, ts.URL, ts.Quality, ts.Size, ts.Language, ts.Seeds)
 	return err
 }
