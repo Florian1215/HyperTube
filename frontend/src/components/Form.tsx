@@ -7,6 +7,8 @@ import {tResponse} from "@/api/client";
 import {iUserToken} from "@/types/user";
 import {handleOauth} from "@/api/auth";
 import {OAuthIcon} from "@/components/Icons";
+import {useAuth} from "@/context/AuthContext";
+import {usePathname} from "@/i18n/navigation";
 
 export type tOauthService = "42" | "github";
 type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password";
@@ -138,7 +140,10 @@ export default function Form({formType, request, handleRequest, t, fields, handl
 }
 
 function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
-    return (<button title={title + " " + oauth} onClick={() => handleOauth(oauth)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
+    const {callbackUrl} = useAuth();
+    const pathname = usePathname();
+
+    return (<button title={title + " " + oauth} onClick={() => handleOauth(oauth, callbackUrl || pathname)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
         <OAuthIcon oauth={oauth} />
     </button>)
 }
