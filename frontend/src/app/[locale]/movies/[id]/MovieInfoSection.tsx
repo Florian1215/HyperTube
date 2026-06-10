@@ -35,7 +35,7 @@ export default function MovieInfoSection({movie} : {movie: iMovieDetails}) {
 }
 
 
-function InfoMovie({children, name}: { children: React.ReactNode, name: string }) {
+function InfoMovie({children, name}: {children: React.ReactNode, name: string}) {
     return (<div className="flex gap-4">
         <div className={"flex justify-end w-1/4 md:w-1/3 xl:w-1/2"}>
             <span className="font-bold">{name}</span>
@@ -46,7 +46,7 @@ function InfoMovie({children, name}: { children: React.ReactNode, name: string }
     </div>);
 }
 
-function InfoPeoplesMovie({name, items}: { name: string, items: string[] }) {
+function InfoPeoplesMovie({name, items}: {name: string, items: string[]}) {
     return (<InfoMovie name={name}>
         <p>
             {items.map((i, index) => (<span key={index}>

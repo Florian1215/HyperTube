@@ -80,6 +80,7 @@
   "auth": {
     "signin": {
       "title": "Sign in",
+      "titleLoginRequired": "Sign in to continue",
       "login": "Email or username",
       "password": "Password",
       "forgotPassword": "Forgot password?",
@@ -90,6 +91,7 @@
     },
     "register": {
       "title": "Join Hypertube",
+      "titleLoginRequired": "Create an account to continue",
       "email": "Email",
       "first_name": "Firstname",
       "last_name": "Lastname",
@@ -154,6 +156,7 @@
       "accountCreatedSuccess": "Account successfully created!"
     },
     "error": {
+      "unknown": "An error occurred. Please try again later.",
       "network": "Unable to contact the server. Please check your internet connection.",
       "loginRequired": "You must be signed in to access this page.",
       "notFoundFilm": "Film not found",

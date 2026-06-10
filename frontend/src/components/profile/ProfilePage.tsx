@@ -8,7 +8,7 @@ import {useLocale, useTranslations} from "next-intl";
 
 export type tTab = {
     name: string
-    comp: ({user, updateUser}: { user: iUser, updateUser?: (patch: Partial<iUser>) => void; }) => JSX.Element }[];
+    comp: ({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void; }) => JSX.Element}[];
 
 export default function ProfilePage({user, tabs, updateUser}: {user: iUser, tabs: tTab, updateUser?: (patch: Partial<iUser>) => void}) {
     const searchParams = useSearchParams();

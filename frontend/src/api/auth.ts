@@ -14,6 +14,10 @@ export function postResetPassword(locale: string, data: string[]) {
     return apiClient<tResponse<iUserToken>>("/auth/password-reset", locale, {method: "POST", body: JSON.stringify({email: data[0].trim()})});
 }
 
-export function handleOauth(oatuhCompany: tOauthService) {
-    window.location.href = `${API_URL}/auth/${oatuhCompany}/login`;
+export function handleOauth(oatuhCompany: tOauthService, href: string | null) {
+    let endpoint = `${API_URL}/auth/${oatuhCompany}/login`;
+
+    if (href !== null)
+        endpoint += `?href=${href}`;
+    window.location.href = endpoint; // todo test and handle
 }

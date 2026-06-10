@@ -24,12 +24,12 @@ export default function Pagination({children, currenIndex, totalPage, onClick} :
 
     return (<div className="w-full mb-4">
         {children}
-        { totalPage > 1 &&
+        {totalPage > 1 &&
             <div className="flex w-full gap-2 justify-center my-4">
                 <button className="mt-1" onClick={handleLeftArrow} onMouseEnter={() => setLeftColor(currenIndex === 0 ? "gray" : "black")} onMouseLeave={() => setLeftColor("gray")}>
                     <LeftIcon color={leftColor}/>
                 </button>
-                {Array.from({ length: totalPage }, (_, i) => (
+                {Array.from({length: totalPage}, (_, i) => (
                     <button key={i} className={"custom-condensed text-2xl leading-6 " + (i === currenIndex ? "text-black font-bold" : "text-gray hover:underline")} onClick={() => {onClick(i)}}>
                         {i}
                     </button>

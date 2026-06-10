@@ -57,7 +57,7 @@ function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Pa
             className={user.profile_picture ? "text-red  custom-underline-red" : "custom-no-underline"}
             onClick={() => handleNewPP(null)}>{t("remove")}</SmallButton>
 
-        { !user.profile_picture && (
+        {!user.profile_picture && (
             <div className="grid grid-cols-3 gap-2 mt-4">
                 {colors.map((color, index) => (
                     <ProfilePicture

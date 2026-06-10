@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import {useRouter} from "next/navigation";
 import {ApiError} from "@/api/errors";
 import {useModal} from "@/context/ModalContext";
 import {useNotification} from "@/context/NotificationContext";
@@ -48,5 +48,5 @@ export function useApiMutation(setErrorsAction?: (errors: Record<string, string>
             return null;
         }
     }
-    return { execute };
+    return {execute};
 }

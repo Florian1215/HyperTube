@@ -3,7 +3,7 @@
 import React, {useEffect} from "react";
 import {useAuth} from "@/context/AuthContext";
 import {useTranslations} from "next-intl";
-import {useRouter} from "next/navigation";
+import {useRouter} from "@/i18n/navigation";
 
 export default function OAuthCallbackPage() {
     const t = useTranslations("auth.oauth");
@@ -22,7 +22,7 @@ export default function OAuthCallbackPage() {
         const user = JSON.parse(decodeURIComponent(decodeURIComponent(userEncoded)));
         login(user, token);
         router.push("/");
-    }, [login, router]);
+    }, []);
 
     return (<p className="small-text">{t("loadingAuth")}</p>);
 }
