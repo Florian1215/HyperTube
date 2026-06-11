@@ -16,7 +16,7 @@ import {EditIcon, TrashIcon} from "@/components/Icons";
 import {iMovie} from "@/types/movie";
 import {MovieCard} from "@/components/MovieCard";
 import {useNotification} from "@/context/NotificationContext";
-import {Locale, useLocale, useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {deleteComment, patchComment, postComment, useComments} from "@/api/comments";
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {useMovie} from "@/api/movies";
@@ -30,7 +30,6 @@ export function CommentSection({movie}: {movie: iMovie}) {
     const [actualComments, setComments] = useState<iComment[]>([]);
     const [index, setIndex] = useState(0);
     const [totalPage, setTotalPage] = useState(1);
-    const locale = useLocale() as Locale;
     const t = useTranslations("comments");
     const {data} = useComments(movie.imdb_id, index);
 
@@ -43,11 +42,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
         setTotalPage(computeTotalPage(data));
     }, [data]);
 
-    const addNewComment = (newComment: iComment) => {
-        postComment(locale, newComment.movie_id, newComment.content).then(() => {
-            setComments([...actualComments, newComment]);
-        });
-    }
+    const addNewComment = (newComment: iComment) => setComments([newComment, ...actualComments]);
 
     return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
