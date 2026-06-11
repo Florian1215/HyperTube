@@ -244,6 +244,7 @@ function NewComment({user, movie, onSubmit}: {user: iUser, movie: iMovie, onSubm
     const t = useTranslations("comments");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const {execute} = useApiMutation(setErrors);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const handleComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (expendComment)
@@ -261,13 +262,14 @@ function NewComment({user, movie, onSubmit}: {user: iUser, movie: iMovie, onSubm
                 const newComment = data.data as iComment;
                 setComment("");
                 setExpendComment(false);
+                textareaRef?.current?.blur();
                 onSubmit(newComment);
             }
         })
     }
 
     return (<div className="flex flex-col items-center w-full gap-2">
-        <textarea className={"border w-full block px-3 py-1.5" + (errors["content"] ? " border-red text-red" : "")}
+        <textarea ref={textareaRef} className={"border w-full block px-3 py-1.5" + (errors["content"] ? " border-red text-red" : "")}
                   style={{resize: expendComment ? "vertical" : "none"}}
                   maxLength={1000} rows={expendComment ? 5 : 1}
                   placeholder={expendComment ? "" : t("writeComment")}
