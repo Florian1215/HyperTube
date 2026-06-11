@@ -1,5 +1,11 @@
 import {tOauthService} from "@/components/Form";
 
+export interface iToken {
+    access_token: string
+    token_type: "Bearer"
+    expires_in: number
+}
+
 export interface iUserToken {
     user: iUser
     access_token: string

@@ -1,4 +1,5 @@
 import {ApiError} from "@/api/errors";
+import {postToken} from "@/api/auth";
 
 type ApiOptions = RequestInit & {body?: unknown};
 export const API_URL = "http://localhost:8080/api/v1";
@@ -39,7 +40,17 @@ export async function apiClient<T>(endpoint: string, locale?: string, options?: 
     );
 
     const data = await response.json().catch(() => null);
-    if (!response.ok)
-        throw new ApiError(response.status, data);
-    return data;
+    console.log(options?.method || "GET", endpoint, response.status, "=>", data);
+    if (!response.ok) {
+        if (response.status === 401 && data.error.code === "TOKEN_EXPIRED") {
+            console.warn("TOKEN EXPIRED");
+            return postToken(locale, localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!).email : "", localStorage.getItem("password") || "").then((res) => {
+                console.warn("GET NEW TOKEN, RETRY REQUEST");
+                localStorage.setItem("token", res.access_token);
+                return apiClient<T>(endpoint, locale, options);
+            });
+        } else
+            throw new ApiError(response.status, data);
+    } else
+        return data;
 }
