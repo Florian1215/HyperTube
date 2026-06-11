@@ -103,8 +103,8 @@ export function Comments({user, comments, setComments, index, setIndex, totalPag
         return (<p className="small-text">{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</p>);
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
-        <div className="flex flex-col-reverse gap-6">
-            {comments.map((comment, index) => (<Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment} profilePage={profilePage} />))}
+        <div className="flex flex-col gap-6">
+            {comments.map((comment, index) => <Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment} profilePage={profilePage} />)}
         </div>
     </Pagination>);
 }
