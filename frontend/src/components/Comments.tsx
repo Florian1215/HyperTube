@@ -94,9 +94,7 @@ export function Comments({user, comments, setComments, index, setIndex, totalPag
     }
 
     const deleteDisplayComment = (commentId: number) => {
-        deleteComment(locale, commentId).then(() => {
-            setComments(comments.filter(c => c.id !== commentId));
-        });
+        deleteComment(locale, commentId).then(() => setComments(comments.filter(c => c.id !== commentId)));
     }
 
     if (!comments || comments.length === 0)
