@@ -16,7 +16,7 @@ import {EditIcon, TrashIcon} from "@/components/Icons";
 import {iMovie} from "@/types/movie";
 import {MovieCard} from "@/components/MovieCard";
 import {useNotification} from "@/context/NotificationContext";
-import {Locale, useLocale, useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {deleteComment, patchComment, postComment, useComments} from "@/api/comments";
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {useMovie} from "@/api/movies";
@@ -30,7 +30,6 @@ export function CommentSection({movie}: {movie: iMovie}) {
     const [actualComments, setComments] = useState<iComment[]>([]);
     const [index, setIndex] = useState(0);
     const [totalPage, setTotalPage] = useState(1);
-    const locale = useLocale() as Locale;
     const t = useTranslations("comments");
     const {data} = useComments(movie.imdb_id, index);
 
@@ -43,11 +42,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
         setTotalPage(computeTotalPage(data));
     }, [data]);
 
-    const addNewComment = (newComment: iComment) => {
-        postComment(locale, newComment.movie_id, newComment.content).then(() => {
-            setComments([...actualComments, newComment]);
-        });
-    }
+    const addNewComment = (newComment: iComment) => setComments([newComment, ...actualComments]);
 
     return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
@@ -99,17 +94,15 @@ export function Comments({user, comments, setComments, index, setIndex, totalPag
     }
 
     const deleteDisplayComment = (commentId: number) => {
-        deleteComment(locale, commentId).then(() => {
-            setComments(comments.filter(c => c.id !== commentId));
-        });
+        deleteComment(locale, commentId).then(() => setComments(comments.filter(c => c.id !== commentId)));
     }
 
     if (!comments || comments.length === 0)
         return (<p className="small-text">{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</p>);
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
-        <div className="flex flex-col-reverse gap-6">
-            {comments.map((comment, index) => (<Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment} profilePage={profilePage} />))}
+        <div className="flex flex-col gap-6">
+            {comments.map((comment, index) => <Comment key={index} currentUser={user} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment} profilePage={profilePage} />)}
         </div>
     </Pagination>);
 }
@@ -139,7 +132,7 @@ function Comment({comment, currentUser, updateComment, deleteComment, profilePag
                 <div className="flex justify-between w-full">
                     <div>
                         <Link href={`/users/${user.id}`} className="text-bold hover:underline">{user.username}</Link>
-                        <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs.unix(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
+                        <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
                     {
                         (currentUser !== null && comment.user.id === currentUser.id && showSettingBtn) &&
@@ -251,6 +244,7 @@ function NewComment({user, movie, onSubmit}: {user: iUser, movie: iMovie, onSubm
     const t = useTranslations("comments");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const {execute} = useApiMutation(setErrors);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const handleComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (expendComment)
@@ -268,13 +262,14 @@ function NewComment({user, movie, onSubmit}: {user: iUser, movie: iMovie, onSubm
                 const newComment = data.data as iComment;
                 setComment("");
                 setExpendComment(false);
+                textareaRef?.current?.blur();
                 onSubmit(newComment);
             }
         })
     }
 
     return (<div className="flex flex-col items-center w-full gap-2">
-        <textarea className={"border w-full block px-3 py-1.5" + (errors["content"] ? " border-red text-red" : "")}
+        <textarea ref={textareaRef} className={"border w-full block px-3 py-1.5" + (errors["content"] ? " border-red text-red" : "")}
                   style={{resize: expendComment ? "vertical" : "none"}}
                   maxLength={1000} rows={expendComment ? 5 : 1}
                   placeholder={expendComment ? "" : t("writeComment")}
