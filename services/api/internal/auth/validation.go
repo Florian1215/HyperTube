@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"net/mail"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"hypertube/api/internal/i18n"
 )
@@ -17,6 +17,8 @@ const (
 )
 
 var usernameCharsPattern = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
+var emailPrefixPattern = regexp.MustCompile(`^[A-Za-z0-9._+\-]+$`)
+var emailDomainPattern = regexp.MustCompile(`^[A-Za-z0-9.\-]+$`)
 
 type validationErrors map[string]i18n.Message
 
@@ -41,6 +43,8 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 		fields["first_name"] = i18n.MsgFirstNameRequired
 	} else if len(firstName) > maxNameLength {
 		fields["first_name"] = i18n.MsgFirstNameTooLong
+	} else if !validPersonName(firstName) {
+		fields["first_name"] = i18n.MsgFirstNameInvalid
 	}
 
 	lastName := strings.TrimSpace(req.LastName)
@@ -51,6 +55,8 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 		fields["last_name"] = i18n.MsgLastNameRequired
 	} else if len(lastName) > maxNameLength {
 		fields["last_name"] = i18n.MsgLastNameTooLong
+	} else if !validPersonName(lastName) {
+		fields["last_name"] = i18n.MsgLastNameInvalid
 	}
 
 	if validationMessage, ok := validatePassword(req.Password); !ok {
@@ -72,20 +78,15 @@ func validateRegisterRequest(req registerRequest) (CreateUserParams, validationE
 func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 	fields := validationErrors{}
 
-	field, rawLogin := loginFieldAndValue(req)
-	login := strings.TrimSpace(rawLogin)
+	login := strings.TrimSpace(req.Login)
 	if login == "" {
-		if field == "email" {
-			fields[field] = i18n.MsgEmailRequired
-		} else {
-			fields[field] = i18n.MsgLoginRequired
-		}
+		fields["login"] = i18n.MsgLoginRequired
 	} else {
 		identifier, validationMessage, ok := validateLoginIdentifier(login)
 		if ok {
 			login = identifier
 		} else {
-			fields[field] = validationMessage
+			fields["login"] = validationMessage
 		}
 	}
 	if req.Password == "" {
@@ -98,16 +99,6 @@ func validateLoginRequest(req loginRequest) (string, validationErrors, bool) {
 		return "", fields, false
 	}
 	return login, nil, true
-}
-
-func loginFieldAndValue(req loginRequest) (string, string) {
-	if req.Login != nil {
-		return "login", *req.Login
-	}
-	if req.Email != nil {
-		return "email", *req.Email
-	}
-	return "email", ""
 }
 
 func validateLoginIdentifier(raw string) (string, i18n.Message, bool) {
@@ -174,10 +165,62 @@ func normalizeEmail(raw string) (string, bool) {
 		return "", false
 	}
 
-	address, err := mail.ParseAddress(email)
-	if err != nil || address.Address != email {
+	if !validEmail(email) {
 		return "", false
 	}
 
 	return email, true
+}
+
+func validEmail(email string) bool {
+	if strings.Count(email, "@") != 1 {
+		return false
+	}
+
+	parts := strings.Split(email, "@")
+	prefix, domain := parts[0], parts[1]
+	if len(prefix) == 0 || len(prefix) > 64 {
+		return false
+	}
+	if strings.HasPrefix(prefix, ".") || strings.HasSuffix(prefix, ".") || strings.Contains(prefix, "..") {
+		return false
+	}
+	if !emailPrefixPattern.MatchString(prefix) {
+		return false
+	}
+
+	if len(domain) == 0 || len(domain) > 253 {
+		return false
+	}
+	if !emailDomainPattern.MatchString(domain) || !strings.Contains(domain, ".") {
+		return false
+	}
+
+	labels := strings.Split(domain, ".")
+	for _, label := range labels {
+		if label == "" || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
+			return false
+		}
+	}
+
+	tld := labels[len(labels)-1]
+	if len(tld) < 2 || len(tld) > 63 {
+		return false
+	}
+	for _, r := range tld {
+		if !unicode.IsLetter(r) || r > 127 {
+			return false
+		}
+	}
+	return true
+}
+
+func validPersonName(name string) bool {
+	for _, r := range name {
+		if unicode.IsLetter(r) || r == ' ' || r == '-' || r == '\'' {
+			continue
+		}
+		return false
+	}
+	return true
 }

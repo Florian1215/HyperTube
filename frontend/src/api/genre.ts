@@ -22,9 +22,9 @@ export async function fetchGenres(language: string): Promise<tResponseGenre> {
     }
     catch {
         if (language === "fr")
-            return { genres: frGenres };
+            return {genres: frGenres};
         if (language === "de")
-            return { genres: deGenres };
-        return { genres: enGenres };
+            return {genres: deGenres};
+        return {genres: enGenres};
     }
 }

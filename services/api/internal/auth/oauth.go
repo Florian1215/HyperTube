@@ -701,6 +701,7 @@ func (h *Handler) loginOAuth(w http.ResponseWriter, r *http.Request, provider oa
 		return
 	}
 
+	redirectPath := oauthRedirectFromRequest(r)
 	state, err := newOAuthState()
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateOAuthState))
@@ -719,6 +720,9 @@ func (h *Handler) loginOAuth(w http.ResponseWriter, r *http.Request, provider oa
 
 	http.SetCookie(w, oauthStateCookie(r, stateCookieName, state, int(oauthStateTTL.Seconds())))
 	http.SetCookie(w, oauthLocaleCookie(r, stateCookieName, locale.String(), int(oauthStateTTL.Seconds())))
+	if redirectPath != "" {
+		http.SetCookie(w, oauthRedirectCookie(r, stateCookieName, redirectPath, int(oauthStateTTL.Seconds())))
+	}
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
@@ -747,6 +751,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 		h.redirectOAuthError(w, r, http.StatusBadRequest, "INVALID_OAUTH_STATE", i18n.T(locale, i18n.MsgInvalidOAuthState))
 		return
 	}
+	redirectPath := oauthRedirectFromCookie(r, stateCookieName)
 	h.clearOAuthState(w, r, stateCookieName)
 
 	identity, err := provider.Exchange(r.Context(), code)
@@ -777,7 +782,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 		return
 	}
 
-	h.writeOAuthSuccess(w, r, user, locale)
+	h.writeOAuthSuccess(w, r, user, locale, redirectPath)
 }
 
 func profileImageURL(image fortyTwoProfileImage) string {
@@ -799,7 +804,7 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User, locale i18n.Locale) {
+func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User, locale i18n.Locale, redirectPath string) {
 	token, _, err := h.tokens.CreateAccessToken(user.ID)
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateToken))
@@ -835,6 +840,9 @@ func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user
 	fragment.Set("token_type", response.TokenType)
 	fragment.Set("expires_in", strconv.FormatInt(response.ExpiresIn, 10))
 	fragment.Set("user", string(userJSON))
+	if redirectPath != "" {
+		fragment.Set("redirect", redirectPath)
+	}
 	callbackURL.Fragment = fragment.Encode()
 
 	http.Redirect(w, r, callbackURL.String(), http.StatusSeeOther)
@@ -868,6 +876,7 @@ func validOAuthState(r *http.Request, cookieName string, state string) bool {
 func (h *Handler) clearOAuthState(w http.ResponseWriter, r *http.Request, cookieName string) {
 	http.SetCookie(w, oauthStateCookie(r, cookieName, "", -1))
 	http.SetCookie(w, oauthLocaleCookie(r, cookieName, "", -1))
+	http.SetCookie(w, oauthRedirectCookie(r, cookieName, "", -1))
 }
 
 func oauthStateCookie(r *http.Request, name string, value string, maxAge int) *http.Cookie {
@@ -894,6 +903,59 @@ func oauthLocaleCookie(r *http.Request, stateCookieName string, value string, ma
 	}
 }
 
+func oauthRedirectCookie(r *http.Request, stateCookieName string, value string, maxAge int) *http.Cookie {
+	cookieValue := ""
+	if maxAge >= 0 && value != "" {
+		cookieValue = url.QueryEscape(value)
+	}
+	return &http.Cookie{
+		Name:     oauthRedirectCookieName(stateCookieName),
+		Value:    cookieValue,
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   isSecureRequest(r),
+	}
+}
+
+func oauthRedirectFromRequest(r *http.Request) string {
+	raw := strings.TrimSpace(r.URL.Query().Get("redirect"))
+	if raw == "" {
+		raw = strings.TrimSpace(r.URL.Query().Get("href"))
+	}
+	if raw == "" || !validOAuthRedirectPath(raw) {
+		return ""
+	}
+	return raw
+}
+
+func oauthRedirectFromCookie(r *http.Request, stateCookieName string) string {
+	cookie, err := r.Cookie(oauthRedirectCookieName(stateCookieName))
+	if err != nil || cookie.Value == "" {
+		return ""
+	}
+	value, err := url.QueryUnescape(cookie.Value)
+	if err != nil || !validOAuthRedirectPath(value) {
+		return ""
+	}
+	return value
+}
+
+func validOAuthRedirectPath(value string) bool {
+	if strings.ContainsAny(value, "\r\n\t\\") {
+		return false
+	}
+	parsed, err := url.Parse(value)
+	if err != nil {
+		return false
+	}
+	return parsed.Scheme == "" &&
+		parsed.Host == "" &&
+		strings.HasPrefix(value, "/") &&
+		!strings.HasPrefix(value, "//")
+}
+
 func oauthLocaleFromRequest(r *http.Request, stateCookieName string) i18n.Locale {
 	if locale := strings.TrimSpace(r.URL.Query().Get("locale")); locale != "" {
 		return i18n.FromValue(locale)
@@ -906,6 +968,10 @@ func oauthLocaleFromRequest(r *http.Request, stateCookieName string) i18n.Locale
 
 func oauthLocaleCookieName(stateCookieName string) string {
 	return stateCookieName + "_locale"
+}
+
+func oauthRedirectCookieName(stateCookieName string) string {
+	return stateCookieName + "_redirect"
 }
 
 func isSecureRequest(r *http.Request) bool {

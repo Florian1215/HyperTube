@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/i18n"
@@ -16,6 +18,7 @@ import (
 
 type MoviesHandler struct {
 	store     movieStore
+	userStore userStore
 	searchers []MovieSearcher
 	tmdb      tmdbClient
 }
@@ -27,7 +30,8 @@ type movieStore interface {
 	UpsertMovie(ctx context.Context, m models.Movie) error
 	UpsertTorrent(ctx context.Context, ts models.Torrent) error
 	findTorrent(ctx context.Context, imdbID string) ([]models.Torrent, error)
-	listComments(ctx context.Context, imdbID string) ([]models.Comment, error)
+	listComments(ctx context.Context, imdbID string, limit, offset int) ([]models.Comment, error)
+	countComments(ctx context.Context, imdbID string) (int, error)
 	createComment(ctx context.Context, c models.Comment) (models.Comment, error)
 	countSearchResults(ctx context.Context, query string) (int, error)
 	upsertSearchResults(ctx context.Context, query string, imdbIDs []string) error
@@ -35,6 +39,13 @@ type movieStore interface {
 	listWatched(ctx context.Context, userID int) ([]models.Movie, error)
 	listDirectStream(ctx context.Context) ([]models.Movie, error)
 }
+
+type userStore interface {
+	FindUserByID(ctx context.Context, id int64) (models.User, error)
+}
+
+const commentPageLimit = 12
+const maxJSONBodyBytes = 1 << 20
 
 type MovieSearcher interface {
 	SearchByTitle(ctx context.Context, title string) ([]models.Torrent, error)
@@ -47,8 +58,8 @@ type tmdbClient interface {
 	FindByName(ctx context.Context, title string, year int) (models.Movie, error)
 }
 
-func NewMoviesHandler(store movieStore, searchers []MovieSearcher, tmdb tmdbClient) *MoviesHandler {
-	return &MoviesHandler{store: store, searchers: searchers, tmdb: tmdb}
+func NewMoviesHandler(store movieStore, userStore userStore, searchers []MovieSearcher, tmdb tmdbClient) *MoviesHandler {
+	return &MoviesHandler{store: store, userStore: userStore, searchers: searchers, tmdb: tmdb}
 }
 
 // GetDefaultMovies returns a list of tracker wide popular movies.
@@ -182,7 +193,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		page = 0
 	}
 
-	// Warm path: search already in DB, serve directly
 	total, err := h.store.countSearchResults(r.Context(), title)
 	if err != nil {
 		log.Println("db err:", err)
@@ -204,7 +214,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Cold path: Scrape torrent sources
 	torrents, err := h.collectTorrents(r.Context(), title)
 	if err != nil {
 		log.Println("search err:", err)
@@ -241,7 +250,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Store the ordered search results so future pages can be served from DB
 	imdbIDs := make([]string, len(allMovies))
 	for i, m := range allMovies {
 		imdbIDs[i] = m.ImdbID
@@ -250,7 +258,6 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		log.Println("db err:", err)
 	}
 
-	// Return the sliced array
 	start := page * pagnationLimit
 	if start >= len(allMovies) {
 		respond.ListPaginated(w, http.StatusOK, []movieResponse{}, len(allMovies), page, pagnationLimit)
@@ -285,18 +292,55 @@ func (h *MoviesHandler) GetMovieTorrents(w http.ResponseWriter, r *http.Request)
 
 // ListComments returns comments for a movie.
 func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
-	imdbid := r.PathValue("id")
-	comments, err := h.store.listComments(r.Context(), imdbid)
+	movieID := r.PathValue("id")
+	if strings.TrimSpace(movieID) == "" {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		return
+	}
+
+	movie, err := h.store.findByID(r.Context(), movieID)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgNoComments)
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
 		} else {
 			log.Println("db err:", err)
-			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovie)
 		}
 		return
 	}
-	respond.List(w, http.StatusOK, comments)
+	
+	page := parsePage(r)
+	total, err := h.store.countComments(r.Context(), movie.ImdbID)
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
+		return
+	}
+	
+	comments, err := h.store.listComments(r.Context(), movie.ImdbID, commentPageLimit, page*commentPageLimit)
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
+		return
+	}
+	
+	result := make([]models.CommentWithUser, 0, len(comments))
+	for _, comment := range comments {
+		user, err := h.userStore.FindUserByID(r.Context(), int64(comment.UserID))
+		if err != nil {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to load User")
+			return
+		}
+		result = append(result, models.CommentWithUser{
+			ID:        comment.ID,
+			Content:   comment.Content,
+			UpdatedAt: comment.UpdatedAt,
+			User:      models.ToUserSmall(user),
+		})
+	}
+	
+	respond.ListPaginated(w, http.StatusOK, result, total, page, commentPageLimit)
 }
 
 // CreateComment posts a new comment on a movie.
@@ -307,24 +351,87 @@ func (h *MoviesHandler) PostComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var input struct {
-		Content string `json:"content"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		log.Println("decode err:", err)
-		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
+	movieID := r.PathValue("id")
+	if strings.TrimSpace(movieID) == "" {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
 		return
 	}
+
+	movie, err := h.store.findByID(r.Context(), movieID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		} else {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovie)
+		}
+		return
+	}
+
+	content, ok := decodeCommentContent(w, r)
+	if !ok {
+		return
+	}
+
 	comment := models.Comment{
 		UserID:  int(userID),
-		MovieID: r.PathValue("id"),
-		Content: input.Content,
+		MovieID: movie.ImdbID,
+		Content: content,
 	}
-	if comment, err := h.store.createComment(r.Context(), comment); err != nil {
+
+	comment, err = h.store.createComment(r.Context(), comment)
+	if err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateComment)
 		return
-	} else {
-		respond.Item(w, http.StatusCreated, comment)
 	}
+
+	respond.Item(w, http.StatusCreated, comment)
+}
+
+func parsePage(r *http.Request) int {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 0 {
+		return 0
+	}
+	return page
+}
+
+func decodeCommentContent(w http.ResponseWriter, r *http.Request) (string, bool) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
+
+	decoder := json.NewDecoder(r.Body)
+	var body map[string]json.RawMessage
+	if err := decoder.Decode(&body); err != nil || body == nil {
+		log.Println("decode err:", err)
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
+		return "", false
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "body", i18n.MsgInvalidRequestBody)
+		return "", false
+	}
+
+	raw, ok := body["content"]
+	if !ok {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return "", false
+	}
+	if strings.TrimSpace(string(raw)) == "null" {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return "", false
+	}
+
+	var content string
+	if err := json.Unmarshal(raw, &content); err != nil {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return "", false
+	}
+
+	content = strings.TrimSpace(content)
+	if content == "" {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "content", i18n.MsgInvalidRequestBody)
+		return "", false
+	}
+	return content, true
 }

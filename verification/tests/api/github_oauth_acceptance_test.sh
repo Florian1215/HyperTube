@@ -419,7 +419,7 @@ verify_github_token_is_accepted() {
     return 1
   fi
 
-  if [[ "$LAST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message title)" == "title query parameter is required" ]]; then
+  if [[ "$LAST_STATUS" == "400" && "$(error_code)" == "VALIDATION_ERROR" && "$(validation_field_message title)" == "Title query parameter is required" ]]; then
     pass "Protected route accepted the JWT and reached field-based handler validation"
     return 0
   fi

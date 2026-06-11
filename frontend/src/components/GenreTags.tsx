@@ -1,12 +1,12 @@
 import React, {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {useModal} from "@/context/ModalContext";
 import {useRouter} from "@/i18n/navigation";
-import {useGenres} from "@/context/useGenres";
+import {useGenres} from "@/hooks/useGenres";
 import {iGenre} from "@/types/genre";
 import {useLocale} from "next-intl";
 import {tLocale} from "@/i18n/request";
 
-export default function GenreTags({genreIds, genreCount, className = "", limit, setFilterGenre}: { genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
+export default function GenreTags({genreIds, genreCount, className = "", limit, setFilterGenre}: {genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
     let addLimit = false;
     const {openModal, closeModal} = useModal();
 
@@ -16,7 +16,7 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRandomGenres([...data ? data.genres : []].sort(() => Math.random() - 0.5).slice(0, genreCount));
+        setRandomGenres([...(data?.genres ?? [])].sort(() => Math.random() - 0.5).slice(0, genreCount));
     }, [data, genreCount]);
 
     if (!data?.genres)
@@ -39,7 +39,7 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
     </div>);
 }
 
-function GenreTag({children, closeModal, setFilterGenre}: { children: iGenre, closeModal?: () => void, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>> }) {
+function GenreTag({children, closeModal, setFilterGenre}: {children: iGenre, closeModal?: () => void, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
 
     const handleClick = () => {

@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from "react";
 import Image from "next/image";
 import {iMovie} from "@/types/movie";
-import {Link} from "@/i18n/navigation";
 import {SecondaryButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
+import LinkLoginRequired from "@/components/Link";
 
-export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | string[], movie: iMovie | null, onClick?: () => void }) {
+export default function MoviesHero({items, movie, onClick}: {items: iMovie[] | string[], movie?: iMovie, onClick?: () => void}) {
     const [index, setIndex] = useState(0);
     if (items.length === 0 && movie)
-        items = [movie.backdrop_url];
+        items = [movie.backdrop_url.replace("/w500/", "/w1280/")];
 
     const slideLeft = () => setIndex((prev) => (prev - 1 + items.length) % items.length);
     const slideRight = () => setIndex((prev) => (prev + 1) % items.length);
@@ -25,32 +25,32 @@ export default function MoviesHero({items, movie, onClick}: { items: iMovie[] | 
             {items.length > 0 ?
                 items.map((item, index) => (
                 <MovieHero key={index} movie={typeof item === "string" ? movie : item} backdrop={typeof item === "string" ? item : undefined} onClick={onClick} onClickLeft={slideLeft} onClickRight={slideRight}/>)) :
-                <MovieHero movie={null} onClickLeft={slideLeft} onClickRight={slideRight} />
+                <MovieHero movie={undefined} onClickLeft={slideLeft} onClickRight={slideRight} />
             }
         </div>
     </div>);
 }
 
-function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movie: iMovie | null, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string }) {
+function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: {movie?: iMovie, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string}) {
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
 
-    return (<div className="px-4 sm:px-6 min-w-full">
+    return (<div className={"px-4 sm:px-6 min-w-full" + (movie === undefined ? " pb-4 sm:pb-6" : "")}>
         <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
             {movie && <Image className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
                              height={5000} loading="eager" onLoad={() => setIsLoaded(true)}
-                             src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}/>}
+                             src={movie.backdrop_url.replace("/w500/", "/original/")} alt={t("posterAlt", {title: movie.title})}/>}
             <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left"
                  onClick={onClickLeft}></div>
             {onClick ?
                 <div className="h-full w-full z-20 absolute custom-cursor-play" onClick={onClick}></div>
-                : (movie && <Link href={"/movies/" + movie.imdb_id} className="h-full w-full z-20 absolute"></Link>)
+                : (movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="h-full w-full z-20 absolute" />)
             }
             <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right"
                  onClick={onClickRight}></div>
             <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
                 <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
-                {movie && <Link href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
+                {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
                     {
                         backdrop === undefined ?
                             <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
@@ -58,7 +58,7 @@ function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: { movi
                             </h1> :
                             <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={() => console.log("watch movie")}>{t("watch")}</SecondaryButton>
                     }
-                </Link>}
+                </LinkLoginRequired>}
             </div>
         </div>
     </div>);

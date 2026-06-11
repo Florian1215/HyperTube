@@ -224,7 +224,7 @@ register_payload() {
 login_payload() {
   local login="$1"
 
-  jq -n --arg email "$login" --arg password "$PASSWORD" '{email: $email, password: $password}'
+  jq -n --arg login "$login" --arg password "$PASSWORD" '{login: $login, password: $password}'
 }
 
 test_frontend_register_contract() {
@@ -237,8 +237,8 @@ test_frontend_register_contract() {
   if expect_status "Register accepts firstname/lastname aliases" "201"; then
     assert_jq_eq "Response includes canonical first_name" '.data.user.first_name' "Frontend"
     assert_jq_eq "Response includes canonical last_name" '.data.user.last_name' "Contract"
-    assert_jq_eq "Response includes frontend firstname alias" '.data.user.firstname' "Frontend"
-    assert_jq_eq "Response includes frontend lastname alias" '.data.user.lastname' "Contract"
+    assert_jq_true "Response omits frontend firstname alias" '(.data.user | has("firstname")) | not'
+    assert_jq_true "Response omits frontend lastname alias" '(.data.user | has("lastname")) | not'
     assert_jq_true "Response includes numeric joined_at" '.data.user.joined_at | type == "number" and . > 0'
     assert_jq_true "Response includes frontend watch_history array" '.data.user.watch_history | type == "array"'
     assert_jq_true "Response includes frontend color string" '.data.user.color | type == "string" and length > 0'
@@ -253,13 +253,13 @@ test_frontend_login_contract() {
 
   payload="$(login_payload "$EMAIL")"
   request "POST" "/auth/login" "$payload"
-  if expect_status "Login accepts email field with email address" "200"; then
+  if expect_status "Login accepts login field with email address" "200"; then
     assert_jq_eq "Email login returns the registered user" '.data.user.username' "$USERNAME"
   fi
 
   payload="$(login_payload "$USERNAME")"
   request "POST" "/auth/login" "$payload"
-  if expect_status "Login accepts email field with username value" "200"; then
+  if expect_status "Login accepts login field with username value" "200"; then
     assert_jq_eq "Username login returns the registered user" '.data.user.email' "$EMAIL"
   fi
 }

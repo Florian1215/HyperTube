@@ -15,6 +15,8 @@ import (
 
 type fakeStore struct {
 	movies            []models.Movie
+	comments          []models.Comment
+	commentTotal      int
 	err               error
 	listWatchedUserID int
 	createdComment    models.Comment
@@ -49,8 +51,15 @@ func (f *fakeStore) findTorrent(ctx context.Context, imdbID string) ([]models.To
 	return nil, nil
 }
 
-func (s *fakeStore) listComments(ctx context.Context, imdbId string) ([]models.Comment, error) {
-	return nil, nil
+func (s *fakeStore) listComments(ctx context.Context, imdbId string, limit, offset int) ([]models.Comment, error) {
+	return s.comments, nil
+}
+
+func (s *fakeStore) countComments(ctx context.Context, imdbId string) (int, error) {
+	if s.commentTotal != 0 {
+		return s.commentTotal, nil
+	}
+	return len(s.comments), nil
 }
 
 func (s *fakeStore) createComment(ctx context.Context, c models.Comment) (models.Comment, error) {
@@ -78,6 +87,17 @@ func (s *fakeStore) listWatched(ctx context.Context, user_id int) ([]models.Movi
 
 func (s *fakeStore) listDirectStream(ctx context.Context) ([]models.Movie, error) {
 	return nil, nil
+}
+
+type fakeUserStore struct {
+	users map[int64]models.User
+}
+
+func (f *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {
+	if u, ok := f.users[id]; ok {
+		return u, nil
+	}
+	return models.User{}, ErrNotFound
 }
 
 type fakeTMDB struct {
@@ -325,6 +345,93 @@ func TestGetMoviesId_NotFound(t *testing.T) {
 	}
 }
 
+func TestGetCommentsReturnsNotFoundForMissingMovie(t *testing.T) {
+	h := &MoviesHandler{store: &fakeStore{}}
+
+	req := httptest.NewRequest(http.MethodGet, "/movies/tt404/comments", nil)
+	req.SetPathValue("id", "tt404")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetComments)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGetCommentsReturnsPaginatedComments(t *testing.T) {
+	h := &MoviesHandler{
+		store: &fakeStore{
+			movies:       []models.Movie{{ImdbID: "tt123"}},
+			comments:     []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
+			commentTotal: 25,
+		},
+		userStore: &fakeUserStore{users: map[int64]models.User{
+			42: {ID: 42, Username: "alice"},
+		}},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/movies/tt123/comments?page=0", nil)
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetComments)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data []models.Comment `json:"data"`
+		Meta struct {
+			Total   int `json:"total"`
+			Page    int `json:"page"`
+			PerPage int `json:"per_page"`
+		} `json:"meta"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Meta.Total != 25 || body.Meta.Page != 0 || body.Meta.PerPage != commentPageLimit {
+		t.Fatalf("unexpected meta: %+v", body.Meta)
+	}
+}
+
+func TestGetCommentsIncludesUserColor(t *testing.T) {
+	h := &MoviesHandler{
+		store: &fakeStore{
+			movies:   []models.Movie{{ImdbID: "tt123"}},
+			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
+		},
+		userStore: &fakeUserStore{users: map[int64]models.User{
+			42: {ID: 42, Username: "alice", Color: models.UserColorGreen},
+		}},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/movies/tt123/comments?page=0", nil)
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetComments)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data []models.CommentWithUser `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(body.Data))
+	}
+	if got := body.Data[0].User.Color; got != models.UserColorGreen {
+		t.Fatalf("expected comment user color %q, got %q", models.UserColorGreen, got)
+	}
+}
+
 func TestGetWatchedMoviesUsesAuthenticatedUserID(t *testing.T) {
 	store := &fakeStore{}
 	h := &MoviesHandler{store: store}
@@ -343,10 +450,10 @@ func TestGetWatchedMoviesUsesAuthenticatedUserID(t *testing.T) {
 }
 
 func TestPostCommentUsesAuthenticatedUserIDAndPathMovieID(t *testing.T) {
-	store := &fakeStore{}
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt123"}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPost, "/movies/tt123/comments", strings.NewReader(`{"user_id":999,"movie_id":"tt999","content":"hello"}`))
+	req := httptest.NewRequest(http.MethodPost, "/movies/tt123/comments", strings.NewReader(`{"user_id":999,"movie_id":"tt999","content":"  hello  "}`))
 	req.SetPathValue("id", "tt123")
 	rec := httptest.NewRecorder()
 
@@ -360,6 +467,55 @@ func TestPostCommentUsesAuthenticatedUserIDAndPathMovieID(t *testing.T) {
 	}
 	if store.createdComment.MovieID != "tt123" {
 		t.Fatalf("expected path movie id tt123, got %q", store.createdComment.MovieID)
+	}
+	if store.createdComment.Content != "hello" {
+		t.Fatalf("expected trimmed content, got %q", store.createdComment.Content)
+	}
+}
+
+func TestPostCommentMissingMovieWinsOverInvalidBody(t *testing.T) {
+	h := &MoviesHandler{store: &fakeStore{}}
+
+	req := httptest.NewRequest(http.MethodPost, "/movies/tt404/comments", strings.NewReader(`{"content":436}`))
+	req.SetPathValue("id", "tt404")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PostComment)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPostCommentInvalidContentTypeReturnsContentFieldValidationError(t *testing.T) {
+	h := &MoviesHandler{store: &fakeStore{movies: []models.Movie{{ImdbID: "tt123"}}}}
+
+	req := httptest.NewRequest(http.MethodPost, "/movies/tt123/comments", strings.NewReader(`{"content":436}`))
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PostComment)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Error struct {
+			Code   string `json:"code"`
+			Fields map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if got := body.Error.Fields["content"].Message; got != "Invalid request body" {
+		t.Fatalf("expected content field validation, got %q", got)
 	}
 }
 

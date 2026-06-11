@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,23 +9,6 @@ import (
 	"testing"
 	"time"
 )
-
-type fakePasswordResetMailer struct {
-	calls     int
-	toEmail   string
-	toName    string
-	resetURL  string
-	expiresIn time.Duration
-}
-
-func (m *fakePasswordResetMailer) SendPasswordReset(_ context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration) error {
-	m.calls++
-	m.toEmail = toEmail
-	m.toName = toName
-	m.resetURL = resetURL
-	m.expiresIn = expiresIn
-	return nil
-}
 
 func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
 	store := newMemoryUserStore()
@@ -358,18 +340,4 @@ func TestResetPasswordRejectsInvalidPasswordAndTokens(t *testing.T) {
 			}
 		})
 	}
-}
-
-func decodePasswordResetEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
-	Data passwordResetResponse `json:"data"`
-} {
-	t.Helper()
-
-	var body struct {
-		Data passwordResetResponse `json:"data"`
-	}
-	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	return body
 }

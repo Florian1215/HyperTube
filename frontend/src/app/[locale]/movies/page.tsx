@@ -11,9 +11,9 @@ import {useSearchParams} from "next/navigation";
 import Pagination, {computeTotalPage} from "@/components/Pagination";
 import {useResponsiveSize} from "@/context/utils";
 import {useLocale, useTranslations} from "next-intl";
-import {getMovies} from "@/services/movies";
-import {useGenres} from "@/context/useGenres";
+import {useGenres} from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
+import {useMovies} from "@/api/movies";
 
 type tViewType = | "grid" | "list";
 type tSort = "title" | "genre" | "grade" | "year";
@@ -33,60 +33,31 @@ export default function Page() {
         genre = data.genres.find(e => e.id == genreId);
     const mostRated = searchParams.get("sort");
     const query = searchParams.get("q");
-    const [searchValue, setSearchValue] = useState(query === null ? "" : query);
-    const [previusSearchValue, setPreviusSearchValue] = useState("");
+    const [searchValue, setSearchValue] = useState(query ?? "");
     const [viewType, setViewType] = useState<tViewType>(genre === undefined && mostRated === null ? "grid" : "list");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [index, setIndex] = useState(0);
-    const [totalPage, setTotalPage] = useState(1);
-    const [movies, setMovies] = useState<iMovie[] | null>(null);
-
-
-    useEffect(() => {
-        const controller = new AbortController();
-        const timeout = setTimeout(async () => {
-            try {
-                setMovies(null);
-                if (previusSearchValue !== searchValue)
-                    setIndex(0);
-                const data = await getMovies(locale, searchValue, index, controller.signal);
-                for (let i = 0; i < data.data.length; i++) {
-                    data.data[i].backdrop_url = data.data[i].backdrop_url.replace("/w500/", viewType === "grid" ? "/w1280/" : "/w300/");
-                }
-                setPreviusSearchValue(searchValue);
-                computeTotalPage(data, setTotalPage);
-                setMovies(data.data);
-            } catch (error: unknown) {
-                if (error instanceof DOMException && error.name === "AbortError")
-                    return;
-                console.error(error);
-            }
-        }, 300);
-
-        return () => {
-            controller.abort();
-            clearTimeout(timeout);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [index, locale, searchValue]);
+    const {data: movies} = useMovies(searchValue, index);
+    const totalPage = computeTotalPage(movies);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setViewType(genre === undefined && mostRated === null ? "grid" : "list");
     }, [genre, mostRated]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e === undefined ? "" : e.target.value.toLowerCase()
+        const newValue = e?.target.value.toLowerCase() ?? "";
         setSearchValue(newValue);
     }
-    const handleSetViewType = (value: tViewType) => { setViewType(value); }
-    const changeSort = (type: tSort, side: boolean) => { setSort({type, side}); }
-    const changeIndex = (newIndex: number) => {setIndex(newIndex);}
+    const handleSetViewType = (value: tViewType) => setViewType(value);
+    const changeSort = (type: tSort, side: boolean) => setSort({type, side});
+    const changeIndex = (newIndex: number) => setIndex(newIndex);
 
     return (<div className="flex flex-col gap-4 mx-2 md:mx-4 xl:mx-6">
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />
         <Filter viewType={viewType} onClick={handleSetViewType}/>
         <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} >
-            <Results movies={movies} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+            <Results movies={movies?.data} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
         </Pagination>
     </div>);
 }
@@ -115,7 +86,7 @@ function Filter({viewType, onClick}: {viewType: tViewType, onClick: (value: tVie
     </div>);
 }
 
-function Results({movies, viewType, sort, changeSort, genre}: {movies: iMovie[] | null, viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
+function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[], viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
     const {openModal} = useModal();
     const [filterGenre, setFilterGenre] = useState<iGenre[]>(genre === undefined ? [] : [genre])
     const size = useResponsiveSize();

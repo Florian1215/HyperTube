@@ -1,3 +1,11 @@
+import {tOauthService} from "@/components/Form";
+
+export interface iToken {
+    access_token: string
+    token_type: "Bearer"
+    expires_in: number
+}
+
 export interface iUserToken {
     user: iUser
     access_token: string
@@ -11,8 +19,9 @@ export interface iUser {
     first_name: string
     last_name: string
     email: string
+    oauth_method: tOauthService // todo handle
     color: string
     profile_picture: null | string
     watch_history: {movie_id: string, watch_percent: number}[]
-    joined_at: number
+    created_at: number
 }

@@ -1,18 +1,18 @@
 import Image from "next/image";
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
-import {Link} from "@/i18n/navigation";
 import React, {Dispatch, SetStateAction, useState} from "react";
-import {Button} from "./Buttons";
+import {Button} from "@/components/Buttons";
 import {StarIcon} from "@/components/Icons";
 import GenreTags from "@/components/GenreTags";
 import {useRouter} from "@/i18n/navigation";
 import {useAuth} from "@/context/AuthContext";
 import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
+import LinkLoginRequired from "@/components/Link";
 
 
-export function MoviesCard({movieSets, className} : {movieSets: iMovie[] | null, className?: string}) {
+export function MoviesCard({movieSets, className} : {movieSets?: iMovie[], className?: string}) {
     const {user} = useAuth();
 
     return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>
@@ -40,10 +40,10 @@ export function MovieCard({movie, user, className, showTitle = true} : {movie: i
             <div className="custom-loading"/>
         </div>);
     }
-    return (<Link href={"/movies/" + movie.imdb_id} className={containerClass + " " + className}>
+    return (<LinkLoginRequired href={"/movies/" + movie.imdb_id} className={containerClass + " " + className}>
         {!isLoaded && (<div className="custom-loading absolute inset-0" />)}
         <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-               width={1000} height={1000} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})} loading="eager"
+               width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
         />
         {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}}></div>}
@@ -60,7 +60,7 @@ export function MovieCard({movie, user, className, showTitle = true} : {movie: i
                 </h3>
             }
         </div>
-    </Link>);
+    </LinkLoginRequired>);
 }
 
 export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
@@ -78,21 +78,21 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
             <td className="p-2 xl:p-4">
                 <div className="border overflow-hidden aspect-3/2">
                     {!isLoaded && (<div className="custom-loading absolute inset-0" />)}
-                    {movie && <Link href={"/movies/" + movie.imdb_id}>
+                    {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
                         <Image
                             className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-                            width={150} height={100} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}
+                            width={150} height={100} src={movie.backdrop_url.replace("/w500/", "/w300/")} alt={t("posterAlt", {title: movie.title})}
                             loading="eager"
                             onLoad={() => setIsLoaded(true)}
                         />
-                    </Link>}
+                    </LinkLoginRequired>}
                 </div>
             </td>
             <td className="sm:pl-3">
-                {movie ? <Link href={"/movies/" + movie.imdb_id} className="flex gap-1 sm:gap-2">
+                {movie ? <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="flex gap-1 sm:gap-2">
                     <h1 className="hover:underline decoration-2 underline-offset-3 text-nowrap">{title}</h1>
                     <span className="responsive-text-hairline">{movie.year}</span>
-                </Link> :
+                </LinkLoginRequired> :
                     <div className="h-17">
                         <div className={"custom-loading " + randomWidth} />
                     </div>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useModal } from "@/context/ModalContext";
+import {useModal} from "@/context/ModalContext";
 import ModalLayout from "@/components/modal/Layout";
 import React, {useEffect, useState} from "react";
 import GenreTags from "@/components/GenreTags";
 import {CheckFillIcon} from "@/components/Icons";
 import {Button} from "@/components/Buttons";
 import {useLocale, useTranslations} from "next-intl";
-import {useGenres} from "@/context/useGenres";
+import {useGenres} from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
 import {iGenre} from "@/types/genre";
 

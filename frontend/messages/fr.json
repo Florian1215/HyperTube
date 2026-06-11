@@ -3,7 +3,7 @@
     "search": "Rechercher",
     "account": "Compte",
     "logout": "Déconnexion",
-    "signIn": "Connexion",
+    "signin": "Connexion",
     "createAccount": "Créer un compte"
   },
   "language": {
@@ -36,8 +36,7 @@
     "directors": "Réalisateurs",
     "stars": "Acteurs",
     "synopsis": "Synopsis",
-    "posterAlt": "Affiche du film : {title}",
-    "noResult": "Film introuvable"
+    "posterAlt": "Affiche du film : {title}"
   },
   "comments": {
     "title": "Commentaires",
@@ -58,16 +57,17 @@
       "profile": "Profil",
       "auth": "Mot de passe",
       "history": "Historique",
-      "comments": "Commentaires"
+      "comments": "Commentaires",
+      "avatar": "Avatar"
     },
-    "saveChanges": "Enregistrer les modifications",
     "selectNewAvatar": "Choisir un nouvel avatar",
     "remove": "Supprimer",
     "noMoviesYet": "Vous n'avez encore vu aucun film.",
     "fields": {
+      "submit": "Enregistrer les modifications",
       "email": "E-mail",
-      "firstname": "Prénom",
-      "lastname": "Nom",
+      "first_name": "Prénom",
+      "last_name": "Nom",
       "username": "Nom d'utilisateur"
     }
   },
@@ -80,33 +80,43 @@
   "auth": {
     "signin": {
       "title": "Connexion",
-      "email": "E-mail",
+      "titleLoginRequired": "Connectez-vous pour continuer",
+      "login": "E-mail ou nom d'utilisateur",
       "password": "Mot de passe",
       "forgotPassword": "Mot de passe oublié ?",
       "submit": "Se connecter",
       "noAccount": "Vous n'avez pas encore de compte ?",
-      "register": "Inscrivez-vous"
+      "register": "Inscrivez-vous",
+      "oAuth": "Connectez-vous avec"
     },
     "register": {
       "title": "Rejoindre Hypertube",
+      "titleLoginRequired": "Créez un compte pour continuer",
       "email": "E-mail",
-      "firstname": "Prénom",
-      "lastname": "Nom",
+      "first_name": "Prénom",
+      "last_name": "Nom",
       "username": "Nom d'utilisateur",
       "password": "Mot de passe",
       "submit": "S'inscrire",
       "haveAccount": "Vous avez déjà un compte ?",
-      "signIn": "Connectez-vous"
+      "signin": "Connectez-vous",
+      "oAuth": "Inscrivez-vous avec"
     },
     "forgotPassword": {
       "title": "Réinitialiser le mot de passe",
       "email": "E-mail",
       "submit": "Envoyer"
     },
+    "resetPassword": {
+      "title": "Définir un nouveau mot de passe",
+      "new-password": "Nouveau mot de passe",
+      "confirm-new-password": "Confirmer le nouveau mot de passe",
+      "submit": "Définir le mot de passe"
+    },
     "changePassword": {
-      "current": "Mot de passe actuel",
-      "new": "Nouveau mot de passe",
-      "confirm": "Confirmer le nouveau mot de passe",
+      "current-password": "Mot de passe actuel",
+      "new-password": "Nouveau mot de passe",
+      "confirm-new-password": "Confirmer le nouveau mot de passe",
       "submit": "Modifier"
     },
     "oauth": {
@@ -127,9 +137,26 @@
       "apply": "Appliquer"
     }
   },
+  "validationErrors": {
+    "emailInvalid": "L'adresse e-mail n'est pas valide.",
+    "usernameTooShort": "Le nom d'utilisateur est trop court.",
+    "usernameTooLong": "Le nom d'utilisateur est trop long.",
+    "usernameInvalid": "Nom d’utilisateur invalide.",
+    "firstnameTooLong": "Le prénom est trop long.",
+    "firstnameInvalid": "Le prénom est invalide.",
+    "lastnameTooLong": "Le nom est trop long.",
+    "lastnameInvalid": "Le nom est invalide.",
+    "passwordTooShort": "Le mot de passe est trop court.",
+    "passwordTooLong": "Le mot de passe est trop long.",
+    "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas.",
+    "requiredField": "Ce champ est obligatoire.",
+    "atLeastOneField": "Au moins un champ doit être rempli."
+  },
   "notifications": {
     "success": {
       "passwordChanged": "Votre mot de passe a bien été modifié.",
+      "newPasswordSet": "Votre nouveau mot de passe a été défini, vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
       "emailChanged": "Votre adresse e-mail a été modifiée. Un e-mail de confirmation vient de vous être envoyé pour valider ce changement.",
       "emailResetPassword": "Un e-mail vient de vous être envoyé pour réinitialiser votre mot de passe.",
       "infoChanged": "Vos informations ont bien été mises à jour.",
@@ -138,37 +165,14 @@
       "accountCreatedSuccess": "Compte créé avec succès !"
     },
     "error": {
-      "unknown": "Une erreur inattendue est survenue. Veuillez réessayer.",
+      "unknown": "Une erreur est survenue. Veuillez réessayer plus tard.",
       "network": "Impossible de contacter le serveur. Vérifiez votre connexion internet.",
-      "unauthorized": "Vous devez être connecté pour effectuer cette action.",
-      "forbidden": "Vous n'avez pas les permissions nécessaires pour effectuer cette action.",
-      "passwordIncorrect": "Le mot de passe actuel est incorrect.",
-      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
-      "passwordTooWeak": "Le mot de passe est trop faible. Utilisez une combinaison de lettres, chiffres et caractères spéciaux.",
-      "passwordMismatch": "Les mots de passe ne correspondent pas.",
-      "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
-      "passwordChangeFailed": "Impossible de modifier le mot de passe. Veuillez réessayer.",
-      "emailInvalid": "L'adresse e-mail n'est pas valide.",
-      "emailAlreadyUsed": "Cette adresse e-mail est déjà utilisée.",
-      "emailChangeFailed": "Impossible de modifier l'adresse e-mail. Veuillez réessayer.",
-      "emailVerificationFailed": "Impossible d'envoyer l'e-mail de confirmation.",
-      "emailTokenInvalid": "Le lien de confirmation est invalide ou expiré.",
-      "usernameTooShort": "Le nom d'utilisateur est trop court.",
-      "usernameTooLong": "Le nom d'utilisateur est trop long.",
-      "usernameInvalid": "Le nom d'utilisateur contient des caractères invalides.",
-      "usernameAlreadyUsed": "Ce nom d'utilisateur est déjà utilisé.",
-      "usernameChangeFailed": "Impossible de modifier le nom d'utilisateur.",
-      "firstnameTooShort": "Le prénom est trop court.",
-      "firstnameTooLong": "Le prénom est trop long.",
-      "firstnameInvalid": "Le prénom contient des caractères invalides.",
-      "firstnameChangeFailed": "Impossible de modifier le prénom.",
-      "lastnameTooShort": "Le nom est trop court.",
-      "lastnameTooLong": "Le nom est trop long.",
-      "lastnameInvalid": "Le nom contient des caractères invalides.",
-      "lastnameChangeFailed": "Impossible de modifier le nom.",
-      "requiredField": "Ce champ est obligatoire.",
-      "requiredFields": "Veuillez remplir tous les champs obligatoires.",
-      "missingFields": "Certains champs obligatoires sont manquants. Veuillez vérifier le formulaire."
+      "loginRequired": "Vous devez être connecté pour accéder à cette page.",
+      "notFoundFilm": "Film introuvable",
+      "notFoundUser": "Utilisateur introuvable",
+      "missingToken": "Token manquant.",
+      "invalidToken": "Token invalide ou expiré.",
+      "invalidQueryParameter": "Paramètre de requête invalide."
     }
   }
 }

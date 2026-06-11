@@ -441,7 +441,7 @@ print_response "$HTTP_STATUS" "$HTTP_BODY" "$HTTP_HEADERS" "$CURL_ERROR"
 if [[ "$HTTP_STATUS" == "503" && "$(jq -r '.error.code // empty' <<<"$HTTP_BODY" 2>/dev/null)" == "OAUTH_NOT_CONFIGURED" ]]; then
   record_result "Start 42 sign-in" "FAIL" "42 OAuth credentials are missing from the backend environment."
   print_result "FAIL" "Set FORTYTWO_CLIENT_ID, FORTYTWO_CLIENT_SECRET, and FORTYTWO_REDIRECT_URL in .env, then restart the API."
-  abort_critical "42 OAuth is not configured."
+  abort_critical "OAuth provider 42 is not configured."
 fi
 
 if [[ "$HTTP_STATUS" != "302" ]]; then

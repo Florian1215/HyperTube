@@ -1,16 +1,15 @@
-import React from "react";
+import React, {useState} from "react";
 import {CrossIcon} from "@/components/Icons";
 
 export function Button({children, onClick, className, disabled=false}: {children: React.ReactNode, onClick: () => void, className?: string, disabled?: boolean}) {
     return (<button
-        disabled={disabled}
-        onClick={onClick}
+        disabled={disabled} onClick={onClick} type="button"
         className={"uppercase text-nowrap px-5 xl:px-5 h-10 text-white text-sm sm:text-base xl:text-lg " + (disabled ? "bg-gray " : "bg-black hover:bg-black-hover ") + className}
     >{children}</button>);
 }
 
 export function CloseButton({onClick, size = 30, className, disabled=false}: {onClick: () => void, size?: number, className?: string, disabled?: boolean}) {
-    const [isHover, setIsHover] = React.useState(false);
+    const [isHover, setIsHover] = useState(false);
     let color;
 
     if (disabled)

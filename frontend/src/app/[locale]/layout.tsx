@@ -11,11 +11,12 @@ import React from "react";
 import {AuthProvider} from "@/context/AuthContext";
 import ForgotPassword from "@/components/modal/ForgotPassword";
 import {DeleteCommentModal} from "@/components/modal/DeleteComment";
-import {hasLocale, NextIntlClientProvider} from 'next-intl';
+import {hasLocale, NextIntlClientProvider} from "next-intl";
 import {routing} from "@/i18n/request";
 import {notFound} from "next/navigation";
 import {getLocale, getMessages} from "next-intl/server";
 import Providers from "@/app/providers";
+import ResetPassword from "@/components/modal/ResetPassword";
 
 export default async function RootLayout({children, params}: {children: React.ReactNode, params: Promise<{locale: string}>}) {
     const {locale} = await params;
@@ -43,6 +44,7 @@ export default async function RootLayout({children, params}: {children: React.Re
                         <GenreModal/>
                         <FilterGenreModal/>
                         <ForgotPassword/>
+                        <ResetPassword/>
                         <DeleteCommentModal/>
 
                         {children}

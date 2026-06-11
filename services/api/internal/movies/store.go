@@ -196,7 +196,7 @@ func (s *Store) UpsertTorrent(ctx context.Context, ts models.Torrent) error {
 	_, err := s.db.Exec(ctx, `
 		INSERT INTO torrents (imdbid, source, year, title, url, quality, size, language, seeds)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		ON CONFLICT (imdbid, url) DO NOTHING
+		ON CONFLICT ON CONSTRAINT torrents_pkey DO NOTHING
 	`, ts.ImdbID, ts.Source, ts.Year, ts.Title, ts.URL, ts.Quality, ts.Size, ts.Language, ts.Seeds)
 	return err
 }
@@ -210,23 +210,30 @@ func (s *Store) UpsertDefault(ctx context.Context, imdbId string, position int) 
 	return err
 }
 
-func (s *Store) listComments(ctx context.Context, imdbId string) ([]models.Comment, error) {
+func (s *Store) listComments(ctx context.Context, imdbId string, limit, offset int) ([]models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT * FROM comments
 		WHERE movie_id = $1
 		ORDER BY updated_at DESC
-	`, imdbId)
+		LIMIT $2 OFFSET $3
+	`, imdbId, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	comments, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Comment])
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
-		}
 		return nil, err
 	}
 	return comments, nil
+}
+
+func (s *Store) countComments(ctx context.Context, imdbId string) (int, error) {
+	var total int
+	err := s.db.QueryRow(ctx, `
+		SELECT COUNT(*) FROM comments
+		WHERE movie_id = $1
+	`, imdbId).Scan(&total)
+	return total, err
 }
 
 func (s *Store) createComment(ctx context.Context, c models.Comment) (models.Comment, error) {

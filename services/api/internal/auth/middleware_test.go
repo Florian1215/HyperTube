@@ -135,6 +135,73 @@ func TestRequireAuthRejectsExpiredBearerToken(t *testing.T) {
 	}
 }
 
+func TestRequireAuthRejectsWrongIssuer(t *testing.T) {
+	tokenIssuer, err := NewTokenManager(testJWTSecret, "issuer-a")
+	if err != nil {
+		t.Fatalf("new issuer a token manager: %v", err)
+	}
+	middlewareIssuer, err := NewTokenManager(testJWTSecret, "issuer-b")
+	if err != nil {
+		t.Fatalf("new issuer b token manager: %v", err)
+	}
+	token, _, err := tokenIssuer.CreateAccessToken(42)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	nextCalled := false
+	handler := RequireAuth(middlewareIssuer)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if nextCalled {
+		t.Fatal("next handler must not be called with a wrong issuer token")
+	}
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeMiddlewareErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
+func TestRequireAuthRejectsNonPositiveUserID(t *testing.T) {
+	tokens := newTestTokenManager(t)
+	token, _, err := tokens.CreateAccessToken(0)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	nextCalled := false
+	handler := RequireAuth(tokens)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if nextCalled {
+		t.Fatal("next handler must not be called with a non-positive user id token")
+	}
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeMiddlewareErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
 func TestDevAuthenticateAsSetsContextUserID(t *testing.T) {
 	nextCalled := false
 	handler := DevAuthenticateAs(7)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

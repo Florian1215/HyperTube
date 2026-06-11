@@ -19,7 +19,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-export const NotificationProvider = ({children,}: { children: ReactNode }) => {
+export const NotificationProvider = ({children}: {children: ReactNode}) => {
     const [notifications, setNotifications] = useState<tNotification[]>([]);
 
     const addNotification = (message: string, type: tNotificationType = "info") => {

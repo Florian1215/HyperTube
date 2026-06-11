@@ -1,9 +1,8 @@
 "use client";
 
-import {createContext, useContext, useEffect, useState, ReactNode,} from "react";
+import {createContext, useContext, useEffect, useState, ReactNode} from "react";
 import {iUser} from "@/types/user";
-import {tErrorResponse} from "@/services/api";
-import {tNotificationType} from "@/context/NotificationContext";
+import {useRouter} from "@/i18n/navigation";
 
 interface AuthContextType {
     user: iUser | null;
@@ -11,13 +10,17 @@ interface AuthContextType {
     logout: () => void;
     loading: boolean;
     updateUser: (patch: Partial<iUser>) => void;
+    callbackUrl: string | null
+    setCallbackUrl: (callbackUrl: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({children,}: { children: ReactNode; }) {
+export function AuthProvider({children}: {children: ReactNode}) {
     const [user, setUser] = useState<iUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const userData = localStorage.getItem("user");
@@ -44,8 +47,10 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
 
     const logout = () => {
         localStorage.removeItem("token");
+        localStorage.removeItem("password");
         localStorage.removeItem("user");
         setUser(null);
+        router.push("/");
     };
 
     const updateUser = (patch: Partial<iUser>) => {
@@ -60,7 +65,7 @@ export function AuthProvider({children,}: { children: ReactNode; }) {
     };
 
     return (<AuthContext.Provider
-        value={{user, login, logout, loading, updateUser}}>
+        value={{user, login, logout, loading, updateUser, callbackUrl, setCallbackUrl}}>
         {children}
     </AuthContext.Provider>);
 }
@@ -70,19 +75,4 @@ export function useAuth() {
     if (!context)
         throw new Error("useAuth must be used inside AuthProvider");
     return context;
-}
-
-export function handleErrorRequest(err: tErrorResponse, addNotification: (message: string, type?: tNotificationType) => void, setErrors: (newError: Record<string, string>) => void, networkErrorMsg: string) {
-    if (!err?.data)
-        addNotification(networkErrorMsg, "error");
-    else if (err.data.error.fields) {
-        const newErrors: Record<string, string> = {};
-
-        Object.entries(err.data.error.fields).map(([key, value])=> {
-            newErrors[key] = value.message;
-        });
-        setErrors(newErrors);
-    }
-    else
-        addNotification(`${err.status} - ${err.data.error.message}`, "error");
 }
