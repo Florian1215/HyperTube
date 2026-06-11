@@ -129,8 +129,8 @@ func seedFeatured(ctx context.Context, c411Client *c411.Client, tmdbClient *tmdb
 		if err = store.UpsertTorrent(ctx, torrent); err != nil {
 			log.Printf("startup: failed to store torrent %s: %v", torrent.Title, err)
 		}
-		if err = store.UpsertFeatured(ctx, torrent.ImdbID, i); err != nil {
-			log.Printf("startup: failed to store featured torrent %s: %v", torrent.Title, err)
+		if err = store.UpsertDefault(ctx, torrent.ImdbID, i); err != nil {
+			log.Printf("startup: failed to store default torrent %s: %v", torrent.Title, err)
 		}
 	}
 }
@@ -184,7 +184,8 @@ func newRouter(
 
 		r.Post("/oauth/token", authHandler.OAuthToken)
 
-		r.Get("/movies", moviesHandler.GetMovies)
+		r.Get("/movies", moviesHandler.GetDefaultMovies)
+		r.Get("/movies/featured", moviesHandler.GetFeaturedMovies)
 
 		requireAuth := auth.RequireAuth(tokenManager)
 
