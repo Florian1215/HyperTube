@@ -66,6 +66,239 @@ func TestFortyTwoLoginStoresOAuthLocaleCookie(t *testing.T) {
 	}
 }
 
+func TestValidOAuthRedirectPath(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  bool
+	}{
+		{name: "movie path", value: "/movies/123", want: true},
+		{name: "path with query", value: "/movies/123?tab=comments&page=2", want: true},
+		{name: "user path", value: "/users/42", want: true},
+		{name: "external url", value: "https://evil.example", want: false},
+		{name: "protocol relative url", value: "//evil.example", want: false},
+		{name: "javascript url", value: "javascript:alert(1)", want: false},
+		{name: "relative without slash", value: "movies/123", want: false},
+		{name: "backslash path", value: `/\evil.example`, want: false},
+		{name: "empty", value: "", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := validOAuthRedirectPath(tt.value); got != tt.want {
+				t.Fatalf("validOAuthRedirectPath(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOAuthRedirectCookieRoundTrip(t *testing.T) {
+	tests := []string{
+		"/movies/123",
+		"/movies/123?tab=comments&page=2",
+	}
+
+	for _, redirectPath := range tests {
+		t.Run(redirectPath, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login", nil)
+			cookie := oauthRedirectCookie(req, oauthStateCookieName, redirectPath, int(oauthStateTTL.Seconds()))
+			if cookie.Name != oauthRedirectCookieName(oauthStateCookieName) {
+				t.Fatalf("expected redirect cookie name %q, got %q", oauthRedirectCookieName(oauthStateCookieName), cookie.Name)
+			}
+			if !cookie.HttpOnly {
+				t.Fatal("redirect cookie must be HttpOnly")
+			}
+			if cookie.SameSite != http.SameSiteLaxMode {
+				t.Fatalf("expected SameSite=Lax, got %v", cookie.SameSite)
+			}
+			if cookie.Value == redirectPath {
+				t.Fatalf("expected encoded redirect cookie value, got raw value %q", cookie.Value)
+			}
+
+			callbackReq := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback", nil)
+			callbackReq.AddCookie(cookie)
+			if got := oauthRedirectFromCookie(callbackReq, oauthStateCookieName); got != redirectPath {
+				t.Fatalf("expected redirect round trip %q, got %q", redirectPath, got)
+			}
+		})
+	}
+}
+
+func TestFortyTwoLoginStoresOAuthRedirectCookie(t *testing.T) {
+	provider := &fakeOAuthProvider{authURL: "https://api.intra.42.fr/oauth/authorize"}
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t), WithFortyTwoOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login?redirect=/movies/123", nil)
+	rec := httptest.NewRecorder()
+
+	handler.LoginFortyTwo(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if provider.lastState == "" {
+		t.Fatal("expected generated OAuth state")
+	}
+	location := rec.Header().Get("Location")
+	if !strings.Contains(location, "state="+provider.lastState) {
+		t.Fatalf("expected redirect location to include state, got %q", location)
+	}
+	if cookie := findCookie(t, rec, oauthStateCookieName); cookie.Value != provider.lastState {
+		t.Fatalf("expected state cookie %q, got %q", provider.lastState, cookie.Value)
+	}
+	redirectCookie := findCookie(t, rec, oauthRedirectCookieName(oauthStateCookieName))
+	redirectValue, err := url.QueryUnescape(redirectCookie.Value)
+	if err != nil {
+		t.Fatalf("decode redirect cookie: %v", err)
+	}
+	if redirectValue != "/movies/123" {
+		t.Fatalf("expected redirect cookie /movies/123, got %q", redirectValue)
+	}
+}
+
+func TestFortyTwoLoginStoresOAuthRedirectCookieFromHref(t *testing.T) {
+	provider := &fakeOAuthProvider{authURL: "https://api.intra.42.fr/oauth/authorize"}
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t), WithFortyTwoOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login?href=/movies/123", nil)
+	rec := httptest.NewRecorder()
+
+	handler.LoginFortyTwo(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+	}
+	redirectCookie := findCookie(t, rec, oauthRedirectCookieName(oauthStateCookieName))
+	redirectValue, err := url.QueryUnescape(redirectCookie.Value)
+	if err != nil {
+		t.Fatalf("decode redirect cookie: %v", err)
+	}
+	if redirectValue != "/movies/123" {
+		t.Fatalf("expected redirect cookie /movies/123, got %q", redirectValue)
+	}
+}
+
+func TestOAuthRedirectQueryTakesPrecedenceOverHref(t *testing.T) {
+	provider := &fakeOAuthProvider{authURL: "https://api.intra.42.fr/oauth/authorize"}
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t), WithFortyTwoOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login?redirect=/movies/123&href=/users/42", nil)
+	rec := httptest.NewRecorder()
+
+	handler.LoginFortyTwo(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+	}
+	redirectCookie := findCookie(t, rec, oauthRedirectCookieName(oauthStateCookieName))
+	redirectValue, err := url.QueryUnescape(redirectCookie.Value)
+	if err != nil {
+		t.Fatalf("decode redirect cookie: %v", err)
+	}
+	if redirectValue != "/movies/123" {
+		t.Fatalf("expected redirect cookie /movies/123, got %q", redirectValue)
+	}
+}
+
+func TestFortyTwoLoginIgnoresUnsafeOAuthRedirects(t *testing.T) {
+	unsafeRedirects := []string{
+		"https://evil.example",
+		"//evil.example",
+		"javascript:alert(1)",
+		"movies/123",
+		`/\evil.example`,
+	}
+
+	for _, redirectPath := range unsafeRedirects {
+		t.Run(redirectPath, func(t *testing.T) {
+			provider := &fakeOAuthProvider{authURL: "https://api.intra.42.fr/oauth/authorize"}
+			handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t), WithFortyTwoOAuth(provider))
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login?redirect="+url.QueryEscape(redirectPath), nil)
+			rec := httptest.NewRecorder()
+
+			handler.LoginFortyTwo(rec, req)
+
+			if rec.Code != http.StatusFound {
+				t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if optionalCookie(rec, oauthRedirectCookieName(oauthStateCookieName)) != nil {
+				t.Fatalf("expected no redirect cookie for unsafe redirect %q", redirectPath)
+			}
+			if cookie := findCookie(t, rec, oauthStateCookieName); cookie.Value != provider.lastState {
+				t.Fatalf("expected state cookie %q, got %q", provider.lastState, cookie.Value)
+			}
+		})
+	}
+}
+
+func TestUnsafeOAuthRedirectDoesNotFallBackToHref(t *testing.T) {
+	provider := &fakeOAuthProvider{authURL: "https://api.intra.42.fr/oauth/authorize"}
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t), WithFortyTwoOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/login?redirect="+url.QueryEscape("https://evil.example")+"&href="+url.QueryEscape("/movies/123"), nil)
+	rec := httptest.NewRecorder()
+
+	handler.LoginFortyTwo(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if optionalCookie(rec, oauthRedirectCookieName(oauthStateCookieName)) != nil {
+		t.Fatal("expected no redirect cookie when redirect is unsafe, even with safe href")
+	}
+	if cookie := findCookie(t, rec, oauthStateCookieName); cookie.Value != provider.lastState {
+		t.Fatalf("expected state cookie %q, got %q", provider.lastState, cookie.Value)
+	}
+}
+
+func TestOAuthLoginStoresProviderRedirectCookies(t *testing.T) {
+	tests := []struct {
+		name            string
+		stateCookieName string
+		login           func(http.ResponseWriter, *http.Request)
+	}{
+		{
+			name:            "github",
+			stateCookieName: githubOAuthStateCookieName,
+			login: NewHandler(
+				newMemoryUserStore(),
+				newTestTokenManager(t),
+				WithGitHubOAuth(&fakeOAuthProvider{authURL: "https://github.com/login/oauth/authorize"}),
+			).LoginGitHub,
+		},
+		{
+			name:            "gitlab",
+			stateCookieName: gitlabOAuthStateCookieName,
+			login: NewHandler(
+				newMemoryUserStore(),
+				newTestTokenManager(t),
+				WithGitLabOAuth(&fakeOAuthProvider{authURL: "https://gitlab.com/oauth/authorize"}),
+			).LoginGitLab,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/"+tt.name+"/login?redirect=/movies/123", nil)
+			rec := httptest.NewRecorder()
+
+			tt.login(rec, req)
+
+			if rec.Code != http.StatusFound {
+				t.Fatalf("expected 302, got %d: %s", rec.Code, rec.Body.String())
+			}
+			redirectCookie := findCookie(t, rec, oauthRedirectCookieName(tt.stateCookieName))
+			redirectValue, err := url.QueryUnescape(redirectCookie.Value)
+			if err != nil {
+				t.Fatalf("decode redirect cookie: %v", err)
+			}
+			if redirectValue != "/movies/123" {
+				t.Fatalf("expected redirect cookie /movies/123, got %q", redirectValue)
+			}
+		})
+	}
+}
+
 func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 	store := newMemoryUserStore()
 	tokens := newTestTokenManager(t)
@@ -180,6 +413,111 @@ func TestFortyTwoCallbackRedirectsToFrontendWithTokenFragment(t *testing.T) {
 	}
 }
 
+func TestFortyTwoCallbackRedirectsToFrontendWithRequestedRedirect(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	provider := &fakeOAuthProvider{
+		identity: OAuthIdentity{
+			Provider:       fortyTwoProvider,
+			ProviderUserID: "12345",
+			Email:          "ft.user@example.com",
+			Username:       "ft_user",
+			FirstName:      "Forty",
+			LastName:       "Two",
+		},
+	}
+	handler := NewHandler(
+		store,
+		tokens,
+		WithFortyTwoOAuth(provider),
+		WithFrontendAuthCallbackURL("http://frontend.local/auth/callback"),
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback?code=valid-code&state=test-state", nil)
+	req.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "test-state"})
+	req.AddCookie(oauthRedirectCookie(req, oauthStateCookieName, "/movies/123", int(oauthStateTTL.Seconds())))
+	rec := httptest.NewRecorder()
+
+	handler.CallbackFortyTwo(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303, got %d: %s", rec.Code, rec.Body.String())
+	}
+	location, err := url.Parse(rec.Header().Get("Location"))
+	if err != nil {
+		t.Fatalf("parse redirect location: %v", err)
+	}
+	if location.Scheme != "http" || location.Host != "frontend.local" || location.Path != "/auth/callback" {
+		t.Fatalf("unexpected redirect location: %q", location.String())
+	}
+	fragment, err := url.ParseQuery(location.Fragment)
+	if err != nil {
+		t.Fatalf("parse redirect fragment: %v", err)
+	}
+	if _, err := tokens.ValidateAccessToken(fragment.Get("access_token")); err != nil {
+		t.Fatalf("redirect access token should validate: %v", err)
+	}
+	if fragment.Get("token_type") != "Bearer" {
+		t.Fatalf("expected Bearer token type, got %q", fragment.Get("token_type"))
+	}
+	if fragment.Get("expires_in") == "" {
+		t.Fatal("expected expires_in fragment")
+	}
+	if fragment.Get("user") == "" {
+		t.Fatal("expected user fragment")
+	}
+	if got := fragment.Get("redirect"); got != "/movies/123" {
+		t.Fatalf("expected redirect fragment /movies/123, got %q", got)
+	}
+	if cookie := findCookie(t, rec, oauthRedirectCookieName(oauthStateCookieName)); cookie.MaxAge >= 0 {
+		t.Fatalf("expected OAuth redirect cookie to be cleared, got MaxAge=%d", cookie.MaxAge)
+	}
+}
+
+func TestFortyTwoCallbackPreservesOAuthRedirectQueryString(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	provider := &fakeOAuthProvider{
+		identity: OAuthIdentity{
+			Provider:       fortyTwoProvider,
+			ProviderUserID: "12345",
+			Email:          "ft.user@example.com",
+			Username:       "ft_user",
+			FirstName:      "Forty",
+			LastName:       "Two",
+		},
+	}
+	handler := NewHandler(
+		store,
+		tokens,
+		WithFortyTwoOAuth(provider),
+		WithFrontendAuthCallbackURL("http://frontend.local/auth/callback"),
+	)
+
+	redirectPath := "/movies/123?tab=comments&page=2"
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback?code=valid-code&state=test-state", nil)
+	req.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "test-state"})
+	req.AddCookie(oauthRedirectCookie(req, oauthStateCookieName, redirectPath, int(oauthStateTTL.Seconds())))
+	rec := httptest.NewRecorder()
+
+	handler.CallbackFortyTwo(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303, got %d: %s", rec.Code, rec.Body.String())
+	}
+	location, err := url.Parse(rec.Header().Get("Location"))
+	if err != nil {
+		t.Fatalf("parse redirect location: %v", err)
+	}
+	fragment, err := url.ParseQuery(location.Fragment)
+	if err != nil {
+		t.Fatalf("parse redirect fragment: %v", err)
+	}
+	if got := fragment.Get("redirect"); got != redirectPath {
+		t.Fatalf("expected redirect fragment %q, got %q", redirectPath, got)
+	}
+}
+
 func TestFortyTwoCallbackRedirectsProviderErrorToFrontend(t *testing.T) {
 	handler := NewHandler(
 		newMemoryUserStore(),
@@ -190,6 +528,7 @@ func TestFortyTwoCallbackRedirectsProviderErrorToFrontend(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback?error=access_denied&state=test-state", nil)
 	req.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "test-state"})
+	req.AddCookie(oauthRedirectCookie(req, oauthStateCookieName, "/movies/123", int(oauthStateTTL.Seconds())))
 	rec := httptest.NewRecorder()
 
 	handler.CallbackFortyTwo(rec, req)
@@ -207,10 +546,17 @@ func TestFortyTwoCallbackRedirectsProviderErrorToFrontend(t *testing.T) {
 	if got := location.Query().Get("error_description"); got != "OAuth authorization was denied for 42" {
 		t.Fatalf("expected localized provider error description, got %q", got)
 	}
+	if got := location.Query().Get("redirect"); got != "" {
+		t.Fatalf("expected provider error redirect URL without redirect query, got %q", got)
+	}
 
 	cookie := findCookie(t, rec, oauthStateCookieName)
 	if cookie.MaxAge >= 0 {
 		t.Fatalf("expected OAuth state cookie to be cleared, got MaxAge=%d", cookie.MaxAge)
+	}
+	redirectCookie := findCookie(t, rec, oauthRedirectCookieName(oauthStateCookieName))
+	if redirectCookie.MaxAge >= 0 {
+		t.Fatalf("expected OAuth redirect cookie to be cleared, got MaxAge=%d", redirectCookie.MaxAge)
 	}
 }
 
@@ -258,6 +604,31 @@ func TestFortyTwoCallbackRejectsInvalidState(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestFortyTwoCallbackRejectsInvalidStateClearsOAuthRedirectCookie(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	provider := &fakeOAuthProvider{identity: OAuthIdentity{Provider: fortyTwoProvider, ProviderUserID: "1", Username: "ft"}}
+	handler := NewHandler(store, tokens, WithFortyTwoOAuth(provider))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback?code=valid-code&state=bad-state", nil)
+	req.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "good-state"})
+	req.AddCookie(oauthRedirectCookie(req, oauthStateCookieName, "/movies/123", int(oauthStateTTL.Seconds())))
+	rec := httptest.NewRecorder()
+
+	handler.CallbackFortyTwo(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeErrorEnvelope(t, rec).Error.Code; got != "INVALID_OAUTH_STATE" {
+		t.Fatalf("expected INVALID_OAUTH_STATE, got %q", got)
+	}
+	redirectCookie := findCookie(t, rec, oauthRedirectCookieName(oauthStateCookieName))
+	if redirectCookie.MaxAge >= 0 {
+		t.Fatalf("expected OAuth redirect cookie to be cleared, got MaxAge=%d", redirectCookie.MaxAge)
 	}
 }
 
