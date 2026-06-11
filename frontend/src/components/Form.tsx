@@ -31,6 +31,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
 
     const getId = (field: fieldType | number) => (typeof field  === "number" ? fields[field] : field) + "-" + formType;
     const hasError = (error: Record<string, string>) => Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
+    const newSetterErrorUtils = (field: fieldType | number, error?: string) => newSetterError({[getId(field)]: error ? tError(error) : ""});
 
     const newSetterError = (value: Record<string, string>) => {
         setErrors((prevErrors) => {
@@ -42,18 +43,21 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         });
     };
 
-    // const setNewPasswordError = (value: string) => { todo handle
-    //     if (oldPassword == value)
-    //         newSetterError({"new-password": tError("passwordSameAsOld")});
-    //     if (confirmNewpassword && confirmNewpassword != value)
-    //         newSetterError({"confirm-new-password": tError("passwordsDontMatch")});
-    //     setNewPassword(value);
-    // }
-    // const setConfirmNewPasswordError = (value: string) => {
-    //     if (newPassword != value)
-    //         newSetterError({"confirm-new-password": tError("passwordsDontMatch")});
-    //     setConfirmNewPassword(value);
-    // }
+    useEffect(() => {
+        if (formType === "auth" && fieldsValue[0]) {
+            if (fieldsValue[0] == fieldsValue[1])
+                newSetterErrorUtils("new-password", "passwordSameAsOld");
+            else if (errors[getId("new-password")] == tError("passwordSameAsOld"))
+                newSetterErrorUtils("new-password")
+        }
+
+        if ((formType === "auth" || formType === "set-new-password") && fieldsValue.at(-1) && fieldsValue.at(-2)) {
+            if (fieldsValue.at(-1) != fieldsValue.at(-2))
+                newSetterErrorUtils("confirm-new-password", "passwordsDontMatch");
+            else if (errors[getId("confirm-new-password")] == tError("passwordsDontMatch"))
+                newSetterErrorUtils("confirm-new-password");
+        }
+    }, [fieldsValue]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
         if (e.key !== "Enter")
@@ -85,7 +89,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         const requiredErrors: Record<string, string> = {};
 
         if (formType === "update" && fieldsValue.filter((v) => v.trim().length !== 0).length === 0) {
-            newSetterError({[getId(0)]: tError("atLeastOneField")});
+            newSetterErrorUtils(0, "atLeastOneField")
             setFocusedIndex(0);
         } else if (formType !== "update" && fieldsValue.filter((v) => v.trim().length === 0).length !== 0) {
             let focusIsSet = false;
