@@ -19,8 +19,8 @@ export default function LanguageDropdown(Icon: ({selected}: {selected: boolean})
         setIsOpen(false);
     }
 
-    return (<button
-        className="flex items-center"
+    return (<div
+        className="flex items-center hover:cursor-pointer"
         onMouseEnter={() => (setIsOpen(true))}
         onMouseLeave={() => (setIsOpen(false))}>
 
@@ -32,5 +32,5 @@ export default function LanguageDropdown(Icon: ({selected}: {selected: boolean})
                 ))}
             </div>
         </div>}
-    </button>);
+    </div>);
 }
