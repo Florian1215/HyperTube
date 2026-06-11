@@ -1,6 +1,7 @@
 import {apiClient, tListResponse, tResponse} from "@/api/client";
 import {iMovie, iMovieDetails} from "@/types/movie";
 import {useApiQuery} from "@/hooks/useApiQuery";
+import {useDebounce} from "use-debounce";
 
 function getMovie(movieId: string, locale: string) {
     return apiClient<tResponse<iMovieDetails>>(`/movies/${movieId}`, locale);
@@ -26,9 +27,11 @@ function getMovies(locale: string, search_title?: string, page?: number, signal?
 }
 
 export function useMovies(search_title?: string, page?: number, enabled = true) {
+    const [debouncedQuery] = useDebounce(search_title ?? "", 200);
+
     return useApiQuery(
-        ["movies", search_title ? search_title : "", page ? String(page) : ""],
-        (locale, signal) => getMovies(locale, search_title, page, signal),
+        ["movies", debouncedQuery, page ? String(page) : "1"],
+        (locale, signal) => getMovies(locale, debouncedQuery, page, signal),
         enabled
     );
 }
