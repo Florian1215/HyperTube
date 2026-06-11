@@ -3,7 +3,7 @@
 import React, {createContext, Dispatch, SetStateAction, useContext, useState} from "react";
 import {iGenre} from "@/types/genre";
 
-type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "forgot-password" | "delete-comment" | null;
+type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-comment" | null;
 
 interface ModalState {
     type: ModalType;
@@ -12,6 +12,7 @@ interface ModalState {
     setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>
     commentId?: number
     deleteComment?: (commentId: number) => void
+    token?: string
 }
 
 interface ModalContextType {

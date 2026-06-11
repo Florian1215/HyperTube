@@ -107,6 +107,12 @@
       "email": "E-Mail",
       "submit": "Senden"
     },
+    "resetPassword": {
+      "title": "Neues Passwort festlegen",
+      "new-password": "Neues Passwort",
+      "confirm-new-password": "Neues Passwort bestätigen",
+      "submit": "Ändern"
+    },
     "changePassword": {
       "current-password": "Aktuelles Passwort",
       "new-password": "Neues Passwort",
@@ -148,6 +154,7 @@
   "notifications": {
     "success": {
       "passwordChanged": "Ihr Passwort wurde aktualisiert.",
+      "newPasswordSet": "Ihr neues Passwort wurde festgelegt, Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
       "emailChanged": "Ihre E-Mail-Adresse wurde aktualisiert. Eine Bestätigungs-E-Mail wurde gesendet, um die Änderung zu bestätigen.",
       "emailResetPassword": "Eine E-Mail zum Zurücksetzen Ihres Passworts wurde gesendet.",
       "infoChanged": "Ihre Profilinformationen wurden aktualisiert.",
@@ -160,7 +167,9 @@
       "network": "Der Server konnte nicht erreicht werden. Bitte überprüfen Sie Ihre Internetverbindung.",
       "loginRequired": "Sie müssen angemeldet sein, um fortzufahren.",
       "notFoundFilm": "Film nicht gefunden",
-      "notFoundUser": "Benutzer nicht gefunden"
+      "notFoundUser": "Benutzer nicht gefunden",
+      "missingToken": "Token fehlt.",
+      "invalidToken": "Token ungültig oder abgelaufen."
     }
   }
 }

@@ -11,10 +11,10 @@ import {useAuth} from "@/context/AuthContext";
 import {usePathname} from "@/i18n/navigation";
 
 export type tOauthService = "42" | "github";
-type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password";
-type formType = "auth" | "update" |  "signin" | "register" | "reset-password";
+type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
+type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
 
-export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword}: {formType: formType, request: (locale: string, data: string[]) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void}) {
+export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword, token}: {formType: formType, request: (locale: string, data: string[], token?: string) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, token?: string}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
@@ -77,7 +77,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
 
     const onSubmit = () => {
         const makeRequest = async () => {
-            return await execute((locale) => request(locale, fieldsValue));
+            return await execute((locale) => request(locale, fieldsValue, token));
         };
 
         if (disableBtn)
@@ -132,7 +132,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
             <SmallButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</SmallButton>
         </div>}
         <div className="flex gap-2">
-            <Button onClick={onSubmit} disabled={disableBtn} className={formType === "reset-password" ? "w-full" : ""}>{t("submit")}</Button>
+            <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
             {showOAuth && <OauthServices oauth={"42"} title={t("oAuth")} />}
             {showOAuth && <OauthServices oauth={"github"} title={t("oAuth")} />}
         </div>
