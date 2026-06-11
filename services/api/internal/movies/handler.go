@@ -18,6 +18,7 @@ import (
 
 type MoviesHandler struct {
 	store     movieStore
+	userStore userStore
 	searchers []MovieSearcher
 	tmdb      tmdbClient
 }
@@ -38,6 +39,10 @@ type movieStore interface {
 	listDirectStream(ctx context.Context) ([]models.Movie, error)
 }
 
+type userStore interface {
+	FindUserByID(ctx context.Context, id int64) (models.User, error)
+}
+
 const commentPageLimit = 12
 const maxJSONBodyBytes = 1 << 20
 
@@ -52,8 +57,8 @@ type tmdbClient interface {
 	FindByName(ctx context.Context, title string, year int) (models.Movie, error)
 }
 
-func NewMoviesHandler(store movieStore, searchers []MovieSearcher, tmdb tmdbClient) *MoviesHandler {
-	return &MoviesHandler{store: store, searchers: searchers, tmdb: tmdb}
+func NewMoviesHandler(store movieStore, userStore userStore, searchers []MovieSearcher, tmdb tmdbClient) *MoviesHandler {
+	return &MoviesHandler{store: store, userStore: userStore, searchers: searchers, tmdb: tmdb}
 }
 
 // GetMovies returns a list of movies.
@@ -286,7 +291,7 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
+	
 	page := parsePage(r)
 	total, err := h.store.countComments(r.Context(), movie.ImdbID)
 	if err != nil {
@@ -294,15 +299,31 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
 		return
 	}
-
+	
 	comments, err := h.store.listComments(r.Context(), movie.ImdbID, commentPageLimit, page*commentPageLimit)
 	if err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
 		return
 	}
-
-	respond.ListPaginated(w, http.StatusOK, comments, total, page, commentPageLimit)
+	
+	result := make([]models.CommentWithUser, 0, len(comments))
+	for _, comment := range comments {
+		user, err := h.userStore.FindUserByID(r.Context(), int64(comment.UserID))
+		if err != nil {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to load User")
+			return
+		}
+		result = append(result, models.CommentWithUser{
+			ID:        comment.ID,
+			Content:   comment.Content,
+			UpdatedAt: comment.UpdatedAt,
+			User:      models.ToUserSmall(user),
+		})
+	}
+	
+	respond.ListPaginated(w, http.StatusOK, result, total, page, commentPageLimit)
 }
 
 // CreateComment posts a new comment on a movie.

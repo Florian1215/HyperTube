@@ -38,6 +38,22 @@ type User struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+type UserSmall struct {
+	ID             int64  `json:"id"`
+	Username       string `json:"username"`
+	ProfilePicture string `json:"profile_picture,omitempty"`
+	Color          string `json:"color"`
+}
+
+func ToUserSmall(u User) UserSmall {
+	return UserSmall{
+		ID:             u.ID,
+		Username:       u.Username,
+		ProfilePicture: u.ProfilePicture,
+		Color:          u.Color,
+	}
+}
+
 func IsValidUserColor(color string) bool {
 	color = strings.TrimSpace(color)
 	for _, allowed := range AllowedUserColors {

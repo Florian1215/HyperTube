@@ -85,6 +85,17 @@ func (s *fakeStore) listDirectStream(ctx context.Context) ([]models.Movie, error
 	return nil, nil
 }
 
+type fakeUserStore struct {
+	users map[int64]models.User
+}
+
+func (f *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {
+	if u, ok := f.users[id]; ok {
+		return u, nil
+	}
+	return models.User{}, ErrNotFound
+}
+
 type fakeTMDB struct {
 	lastLanguage string
 }
@@ -345,11 +356,16 @@ func TestGetCommentsReturnsNotFoundForMissingMovie(t *testing.T) {
 }
 
 func TestGetCommentsReturnsPaginatedComments(t *testing.T) {
-	h := &MoviesHandler{store: &fakeStore{
-		movies:       []models.Movie{{ImdbID: "tt123"}},
-		comments:     []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
-		commentTotal: 25,
-	}}
+	h := &MoviesHandler{
+		store: &fakeStore{
+			movies:       []models.Movie{{ImdbID: "tt123"}},
+			comments:     []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
+			commentTotal: 25,
+		},
+		userStore: &fakeUserStore{users: map[int64]models.User{
+			42: {ID: 42, Username: "alice"},
+		}},
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "/movies/tt123/comments?page=0", nil)
 	req.SetPathValue("id", "tt123")
@@ -374,6 +390,41 @@ func TestGetCommentsReturnsPaginatedComments(t *testing.T) {
 	}
 	if body.Meta.Total != 25 || body.Meta.Page != 0 || body.Meta.PerPage != commentPageLimit {
 		t.Fatalf("unexpected meta: %+v", body.Meta)
+	}
+}
+
+func TestGetCommentsIncludesUserColor(t *testing.T) {
+	h := &MoviesHandler{
+		store: &fakeStore{
+			movies:   []models.Movie{{ImdbID: "tt123"}},
+			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
+		},
+		userStore: &fakeUserStore{users: map[int64]models.User{
+			42: {ID: 42, Username: "alice", Color: models.UserColorGreen},
+		}},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/movies/tt123/comments?page=0", nil)
+	req.SetPathValue("id", "tt123")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetComments)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data []models.CommentWithUser `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(body.Data))
+	}
+	if got := body.Data[0].User.Color; got != models.UserColorGreen {
+		t.Fatalf("expected comment user color %q, got %q", models.UserColorGreen, got)
 	}
 }
 
