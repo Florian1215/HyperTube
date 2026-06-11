@@ -33,7 +33,7 @@ export default function Page() {
         genre = data.genres.find(e => e.id == genreId);
     const mostRated = searchParams.get("sort");
     const query = searchParams.get("q");
-    const [searchValue, setSearchValue] = useState(query === null ? "" : query);
+    const [searchValue, setSearchValue] = useState(query ?? "");
     const [viewType, setViewType] = useState<tViewType>(genre === undefined && mostRated === null ? "grid" : "list");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [index, setIndex] = useState(0);
@@ -46,7 +46,7 @@ export default function Page() {
     }, [genre, mostRated]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e === undefined ? "" : e.target.value.toLowerCase()
+        const newValue = e?.target.value.toLowerCase() ?? "";
         setSearchValue(newValue);
     }
     const handleSetViewType = (value: tViewType) => setViewType(value);
