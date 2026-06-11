@@ -7,13 +7,13 @@ import {useModal} from "@/context/ModalContext";
 import {useAuth} from "@/context/AuthContext";
 import {Link, usePathname, useRouter} from "@/i18n/navigation";
 
-export function useApiQuery<T>(key: string[], fn: (locale: string) => Promise<T>, enabled = true) {
+export function useApiQuery<T>(key: string[], fn: (locale: string, signal?: AbortSignal) => Promise<T>, enabled = true) {
     const locale = useLocale();
     const queryKey = [...key, locale];
 
     return useQuery({
         queryKey: queryKey,
-        queryFn: () => fn(locale),
+        queryFn: ({signal}) => fn(locale, signal),
         enabled: enabled && !!locale,
         retry: false
     });

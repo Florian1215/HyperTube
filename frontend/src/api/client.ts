@@ -36,6 +36,7 @@ export async function apiClient<T>(endpoint: string, locale?: string, options?: 
             body: options?.body
                 ? options.body
                 : undefined,
+            signal: options?.signal,
         }
     );
 

@@ -14,7 +14,7 @@ export function useMovie(movieId: string, enabled = true) {
     );
 }
 
-function getMovies(locale: string, search_title?: string, page?: number) {
+function getMovies(locale: string, search_title?: string, page?: number, signal?: AbortSignal) {
     let endpoint = "/movies";
     if (search_title === "directstream")
         endpoint += "/directstream"
@@ -22,13 +22,13 @@ function getMovies(locale: string, search_title?: string, page?: number) {
         endpoint += "/watched"
     else if (search_title)
         endpoint += `/search?title=${search_title}&page=${page}`;
-    return apiClient<tListResponse<iMovie[]>>(endpoint, locale);
+    return apiClient<tListResponse<iMovie[]>>(endpoint, locale, {signal});
 }
 
 export function useMovies(search_title?: string, page?: number, enabled = true) {
     return useApiQuery(
         ["movies", search_title ? search_title : "", page ? String(page) : ""],
-        (locale) => getMovies(locale, search_title, page),
+        (locale, signal) => getMovies(locale, search_title, page, signal),
         enabled
     );
 }
