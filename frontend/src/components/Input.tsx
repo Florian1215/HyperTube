@@ -11,7 +11,7 @@ export default function Input(
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     const emailRegex = /^(?=.{1,64}@)(?!.*\.\.)([a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*)@(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
-    const nameRegex = /^[\p{L}]+(?:[ '-][\p{L}]+)*$/u;
+    const nameRegex = /^\p{L}+(?:[ '-]\p{L}+)*$/u;
 
     const handleTogglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
