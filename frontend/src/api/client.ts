@@ -40,16 +40,17 @@ export async function apiClient<T>(endpoint: string, locale?: string, options?: 
     );
 
     const data = await response.json().catch(() => null);
+    console.log(options?.method || "GET", endpoint, response.status, "=>", data);
     if (!response.ok) {
         if (response.status === 401 && data.error.code === "TOKEN_EXPIRED") {
-            postToken(locale, localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!).email : "", localStorage.getItem("password") || "").then((res) => {
+            console.warn("TOKEN EXPIRED");
+            return postToken(locale, localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!).email : "", localStorage.getItem("password") || "").then((res) => {
+                console.warn("GET NEW TOKEN, RETRY REQUEST");
                 localStorage.setItem("token", res.access_token);
-                apiClient(endpoint, locale, options).then((data) => {
-                    return data;
-                });
+                return apiClient<T>(endpoint, locale, options);
             });
-        }
-        throw new ApiError(response.status, data);
-    }
-    return data;
+        } else
+            throw new ApiError(response.status, data);
+    } else
+        return data;
 }
