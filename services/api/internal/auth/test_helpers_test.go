@@ -305,6 +305,15 @@ func findCookie(t *testing.T, rec *httptest.ResponseRecorder, name string) *http
 	return nil
 }
 
+func optionalCookie(rec *httptest.ResponseRecorder, name string) *http.Cookie {
+	for _, cookie := range rec.Result().Cookies() {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	return nil
+}
+
 type fakePasswordResetMailer struct {
 	calls     int
 	toEmail   string
