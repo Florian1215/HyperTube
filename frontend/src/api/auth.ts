@@ -24,10 +24,10 @@ export function postToken(locale: string, login: string, password: string) {
     return apiClient<iToken>("/oauth/token", locale, {method: "POST", body: JSON.stringify({username: login, password: password, grant_type: 'password'})});
 }
 
-export function handleOauth(oatuhCompany: tOauthService, href: string | null) {
+export function handleOauth(oatuhCompany: tOauthService, redirect: string | null) {
     let endpoint = `${API_URL}/auth/${oatuhCompany}/login`;
 
-    if (href !== null)
-        endpoint += `?href=${href}`;
+    if (redirect !== null)
+        endpoint += `?redirect=${redirect}`;
     window.location.href = endpoint; // todo test and handle
 }

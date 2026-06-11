@@ -171,7 +171,8 @@
       "notFoundFilm": "Film nicht gefunden",
       "notFoundUser": "Benutzer nicht gefunden",
       "missingToken": "Token fehlt.",
-      "invalidToken": "Token ungültig oder abgelaufen."
+      "invalidToken": "Token ungültig oder abgelaufen.",
+      "invalidQueryParameter": "Ungültiger Abfrageparameter."
     }
   }
 }

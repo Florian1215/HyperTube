@@ -171,7 +171,8 @@
       "notFoundFilm": "Film introuvable",
       "notFoundUser": "Utilisateur introuvable",
       "missingToken": "Token manquant.",
-      "invalidToken": "Token invalide ou expiré."
+      "invalidToken": "Token invalide ou expiré.",
+      "invalidQueryParameter": "Paramètre de requête invalide."
     }
   }
 }
