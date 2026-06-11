@@ -3,7 +3,7 @@ import {iUser, iUserToken} from "@/types/user";
 import {useApiQuery} from "@/hooks/useApiQuery";
 
 function getUser(userId: string, locale: string) {
-    return apiClient<tResponse<iUser>>(locale, `/users/${userId}`);
+    return apiClient<tResponse<iUser>>(`/users/${userId}`, locale);
 }
 
 export function patchUser(locale: string, data: string[]) {
