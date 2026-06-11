@@ -9,7 +9,7 @@ import {tLocale} from "@/i18n/request";
 
 export function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string) {
     const router = useRouter();
-    const {openModal} = useModal();
+    const {openModal, closeModal} = useModal();
     const locale = useLocale() as tLocale;
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
@@ -31,6 +31,10 @@ export function useApiMutation(setErrorsAction?: (errors: Record<string, string>
                         }
                     });
                     setErrorsAction(newErrors);
+                    return null;
+                } else if (error.data.error.code === "INVALID_RESET_TOKEN") {
+                    closeModal();
+                    addNotification(tError("invalidToken"), "error");
                     return null;
                 } else if (error.status === 401 && !setErrorsAction) {
                     openModal({type: "signin"});

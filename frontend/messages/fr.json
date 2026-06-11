@@ -107,10 +107,16 @@
       "email": "E-mail",
       "submit": "Envoyer"
     },
+    "resetPassword": {
+      "title": "Définir un nouveau mot de passe",
+      "new-password": "Nouveau mot de passe",
+      "confirm-new-password": "Confirmer le nouveau mot de passe",
+      "submit": "Définir le mot de passe"
+    },
     "changePassword": {
-      "current": "Mot de passe actuel",
-      "new": "Nouveau mot de passe",
-      "confirm": "Confirmer le nouveau mot de passe",
+      "current-password": "Mot de passe actuel",
+      "new-password": "Nouveau mot de passe",
+      "confirm-new-password": "Confirmer le nouveau mot de passe",
       "submit": "Modifier"
     },
     "oauth": {
@@ -137,7 +143,9 @@
     "usernameTooLong": "Le nom d'utilisateur est trop long.",
     "usernameInvalid": "Nom d’utilisateur invalide.",
     "firstnameTooLong": "Le prénom est trop long.",
+    "firstnameInvalid": "Le prénom est invalide.",
     "lastnameTooLong": "Le nom est trop long.",
+    "lastnameInvalid": "Le nom est invalide.",
     "passwordTooShort": "Le mot de passe est trop court.",
     "passwordTooLong": "Le mot de passe est trop long.",
     "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
@@ -148,6 +156,7 @@
   "notifications": {
     "success": {
       "passwordChanged": "Votre mot de passe a bien été modifié.",
+      "newPasswordSet": "Votre nouveau mot de passe a été défini, vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
       "emailChanged": "Votre adresse e-mail a été modifiée. Un e-mail de confirmation vient de vous être envoyé pour valider ce changement.",
       "emailResetPassword": "Un e-mail vient de vous être envoyé pour réinitialiser votre mot de passe.",
       "infoChanged": "Vos informations ont bien été mises à jour.",
@@ -160,7 +169,9 @@
       "network": "Impossible de contacter le serveur. Vérifiez votre connexion internet.",
       "loginRequired": "Vous devez être connecté pour accéder à cette page.",
       "notFoundFilm": "Film introuvable",
-      "notFoundUser": "Utilisateur introuvable"
+      "notFoundUser": "Utilisateur introuvable",
+      "missingToken": "Token manquant.",
+      "invalidToken": "Token invalide ou expiré."
     }
   }
 }

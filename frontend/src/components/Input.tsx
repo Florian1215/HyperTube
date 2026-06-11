@@ -11,6 +11,7 @@ export default function Input(
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     const emailRegex = /^(?=.{1,64}@)(?!.*\.\.)([a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*)@(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
+    const nameRegex = /^\p{L}+(?:[ '-]\p{L}+)*$/u;
 
     const handleTogglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
@@ -22,19 +23,20 @@ export default function Input(
         if (setErrorsMessage) {
             let message = "";
 
+            const tNewValue = newValue.trim();
             if (id.includes("email")) {
-                if (newValue && !emailRegex.test(newValue.trim()))
+                if (tNewValue && !emailRegex.test(tNewValue))
                     message = t("emailInvalid");
-            } else if (id.includes("first_name")) {
-                if (newValue.trim().length > 30)
-                    message = t("firstnameTooLong");
-            } else if (id.includes("last_name")) {
-                if (newValue.trim().length > 30)
-                    message = t("lastnameTooLong");
+            } else if (id.includes("last_name") || id.includes("first_name")) {
+                const field = id.includes("last_name") ? "firstname" : "lastname";
+                if (tNewValue.length > 30)
+                    message = t(field + "TooLong");
+                else if (tNewValue && !nameRegex.test(tNewValue))
+                    message = t(field + "Invalid");
             } else if (id.includes("username")) {
-                if (newValue && newValue.trim().length < 3)
+                if (tNewValue && tNewValue.length < 3)
                     message = t("usernameTooShort");
-                else if (newValue.trim().length > 32)
+                else if (tNewValue.length > 32)
                     message = t("usernameTooLong");
                 else if (newValue && !usernameRegex.test(newValue))
                     message = t("usernameInvalid");
@@ -62,7 +64,7 @@ export default function Input(
                className={"pointer-events-none uppercase absolute text-xs font-sans bottom-15\
                    peer-focus:text-xs peer-focus:font-sans peer-focus:bottom-15\
                    peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl" + (requestErrorMessage ? " text-red" : "")}>{placeholder}</label>
-        {isPassword && (<button className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={requestErrorMessage ? "red" : "black"}/></button>)}
+        {isPassword && (<button type="button" className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={requestErrorMessage ? "red" : "black"}/></button>)}
         {requestErrorMessage && <span className="text-xs text-red">{requestErrorMessage}</span>}
     </div>
     );

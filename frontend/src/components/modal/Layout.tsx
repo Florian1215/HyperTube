@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import {CloseButton, SmallButton} from "@/components/Buttons";
 import Form from "@/components/Form";
 import {postLogin, postRegister} from "@/api/auth";
@@ -13,6 +13,17 @@ import {useTranslations} from "next-intl";
 type AuthModalType = "signin" | "register";
 
 export default function ModalLayout({children, onClose, title}: {children: React.ReactNode, onClose: () => void, title: string}) {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape")
+                onClose();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [onClose]);
+
     return (<div onClick={onClose} className="fixed inset-0 flex justify-center items-center z-50 bg-black/50">
         <div onClick={(e) => e.stopPropagation()} className="p-6 bg-white custom-shadow-m border min-w-9/10 sm:min-w-90 max-w-9/10 sm:max-w-none">
             <div className="flex flex-col items-start">
