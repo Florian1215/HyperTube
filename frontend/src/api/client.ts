@@ -33,9 +33,8 @@ export async function apiClient<T>(endpoint: string, locale?: string, options?: 
                     Authorization: `Bearer ${token}`,
                 }),
             },
-            body: options?.body
-                ? options.body
-                : undefined,
+            body: options?.body,
+            signal: options?.signal,
         }
     );
 

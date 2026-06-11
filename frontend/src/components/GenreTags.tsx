@@ -16,7 +16,7 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRandomGenres([...data ? data.genres : []].sort(() => Math.random() - 0.5).slice(0, genreCount));
+        setRandomGenres([...(data?.genres ?? [])].sort(() => Math.random() - 0.5).slice(0, genreCount));
     }, [data, genreCount]);
 
     if (!data?.genres)
