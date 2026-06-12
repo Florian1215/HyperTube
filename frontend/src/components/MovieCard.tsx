@@ -11,16 +11,24 @@ import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 import LinkLoginRequired from "@/components/Link";
 import LoadingText from "@/components/LoadingText";
+import {useResponsiveSize} from "@/context/utils";
 
 
-export function MoviesCard({movieSets, className} : {movieSets?: iMovie[], className?: string}) {
+export function MoviesCard({movieSets, setLimit, className} : {movieSets?: iMovie[], setLimit?: boolean, className?: string}) {
     const {user} = useAuth();
+    const size = useResponsiveSize();
+
+    let moviesCount = 4;
+    if (size === "xl")
+        moviesCount = 3;
+    else if (size === "xs")
+        moviesCount = 2;
 
     return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>
         {
             movieSets ?
-                movieSets.map((movie) => (<MovieCard key={movie.imdb_id} movie={movie} user={user} />)) :
-                [...Array(3)].map((_, i) => (<MovieCard key={i} movie={null} user={user} />))
+                (setLimit ? movieSets.slice(0, moviesCount) : movieSets).map((movie) => (<MovieCard key={movie.imdb_id} movie={movie} user={user} />)) :
+                [...Array(moviesCount)].map((_, i) => (<MovieCard key={i} movie={null} user={user} />))
         }
     </div>);
 }

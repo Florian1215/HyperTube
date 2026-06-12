@@ -29,12 +29,6 @@ export default function HomePage() {
     else if (size === "xl")
         genreCount = 8;
 
-    let moviesCount = 4;
-    if (size === "xl")
-        moviesCount = 3;
-    else if (size === "xs")
-        moviesCount = 2;
-
     let heightAnimationLogo = 100;
     if (size === "md")
         heightAnimationLogo = 200;
@@ -75,28 +69,28 @@ export default function HomePage() {
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
         <MoviesHero movies={shuffleArray(featured).slice(0, 5)} />
-        <GenreTags genreCount={genreCount} className="justify-center w-full my-8"/>
+        <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching && continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href="/users?tab=history">
-                <MoviesCard movieSets={continueWatching.slice(0, moviesCount)} />
+                <MoviesCard movieSets={continueWatching} setLimit={true} />
             </Section>}
 
             {(featured && featured.length > 0) && <Section title={t("featured")} href="/movies?q=featured">
-                <MoviesCard movieSets={shuffleArray(featured).slice(0, moviesCount)}/>
+                <MoviesCard movieSets={shuffleArray(featured)} setLimit={true} />
             </Section>}
 
             {(popular && popular.length > 0) && <Section title={t("popular")} href="/movies?q=popular">
-                <MoviesCard movieSets={shuffleArray(popular).slice(0, moviesCount)}/>
+                <MoviesCard movieSets={shuffleArray(popular)} setLimit={true} />
             </Section>}
 
             {(mostRated && mostRated.length > 0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
-                <MoviesCard movieSets={shuffleArray(mostRated).slice(0, moviesCount)}/>
+                <MoviesCard movieSets={shuffleArray(mostRated)} setLimit={true} />
             </Section>}
 
             {dirctedWatchMovies && dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
-                <MoviesCard movieSets={dirctedWatchMovies}/>
+                <MoviesCard movieSets={dirctedWatchMovies} setLimit={true} />
             </Section>}
         </div>
 
