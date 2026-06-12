@@ -12,6 +12,7 @@ import {iUser} from "@/types/user";
 import {useResponsiveSize} from "@/context/utils";
 import {useTranslations} from "next-intl";
 import {useMovies} from "@/api/movies";
+import Colors from "@/components/Colors";
 
 export default function HomePage() {
     const {user} = useAuth();
@@ -89,15 +90,7 @@ export default function HomePage() {
             <MoviesCard movieSets={dirctedWatchMovies}/>
         </Section>}
 
-        {/* todo make componant */}
-        <div className={"flex w-full" + ((!popular && !mostRated) ? " pt-4 sm:pt-6" : "")}>
-            <div className="h-4 w-full bg-yellow hover:bg-yellow-hover"></div>
-            <div className="h-4 w-full bg-pink hover:bg-pink-hover"></div>
-            <div className="h-4 w-full bg-green hover:bg-green-hover"></div>
-            <div className="h-4 w-full bg-purple hover:bg-purple-hover"></div>
-            <div className="h-4 w-full bg-blue hover:bg-blue-hover"></div>
-            <div className="h-4 w-full bg-red hover:bg-red-hover"></div>
-        </div>
+        <Colors className={(!popular && !mostRated) ? "pt-4 sm:pt-6" : ""} />
     </div>);
 }
 
