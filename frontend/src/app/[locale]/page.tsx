@@ -19,19 +19,26 @@ export default function HomePage() {
     const t = useTranslations("home");
     let continueWatching;
     const size = useResponsiveSize();
+
     let genreCount = 3;
     if (size === "md")
-        genreCount = 5;
+        genreCount = 4;
+    else if (size === "lg")
+        genreCount = 6;
     else if (size === "xl")
-        genreCount = 7;
-    let moviesCount = 3;
-    if (size === "md")
-        moviesCount = 4;
+        genreCount = 8;
+
+    let moviesCount = 4;
+    if (size === "xl")
+        moviesCount = 3;
     else if (size === "xs")
         moviesCount = 2;
+
     let heightAnimationLogo = 100;
     if (size === "md")
         heightAnimationLogo = 200;
+    else if (size === "lg")
+        heightAnimationLogo = 250;
     else if (size === "xl")
         heightAnimationLogo = 300;
 
