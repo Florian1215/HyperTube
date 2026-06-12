@@ -15,7 +15,7 @@ export default function MoviesHero({items, movie, onClick}: {items: iMovie[] | s
     useEffect(() => {
         const interval = setInterval(() => {
             setIndex((prev) => (prev + 1) % items.length);
-        }, 4000);
+        }, 6000);
         return () => clearInterval(interval);
     }, [items.length]);
 

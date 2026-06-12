@@ -37,7 +37,7 @@ export default function Page() {
     const [viewType, setViewType] = useState<tViewType>(genre === undefined && mostRated === null ? "grid" : "list");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [index, setIndex] = useState(0);
-    const {data: movies} = useMovies(searchValue, index);
+    const {data: movies} = useMovies(searchValue.trim(), index);
     const totalPage = computeTotalPage(movies);
 
     useEffect(() => {

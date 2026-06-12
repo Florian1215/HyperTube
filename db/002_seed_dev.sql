@@ -5,7 +5,7 @@ INSERT INTO users (email, username, first_name, last_name, password_hash, profil
     ('alice@example.local', 'alice', 'Alice', 'Example', '', NULL),
     ('bob@example.local', 'bob', 'Bob', 'Example', '', NULL),
     ('charlie@example.local', 'charlie', 'Charlie', 'Example', '', NULL),
-    ('diana@example.local', 'diana', 'Diana', 'Example', '', NULL)
+    ('diana@example.local', 'diana', 'Diana', 'Example', '', NULL);
 
 INSERT INTO movies (imdbid, tmdbid, title, year, poster_url, backdrop_url, note, genre, summary) VALUES
     ('tt1612774', '45649', 'Rubber', '2010',
