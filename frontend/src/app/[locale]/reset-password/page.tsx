@@ -17,7 +17,6 @@ export default function Page() {
     const {user, loading} = useAuth();
     const tError = useTranslations("notifications.error");
 
-
     useEffect(() => {
         if (!loading) {
             if (!user) {
