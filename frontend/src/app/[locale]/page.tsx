@@ -3,7 +3,7 @@
 import {iMovie} from "@/types/movie";
 import React, {useEffect, useState} from "react";
 import {MoviesCard} from "@/components/MovieCard";
-import MoviesHero from "@/components/MovieHero";
+import {MoviesHero} from "@/components/MovieHero";
 import {HypertubeLogo} from "@/components/Icons";
 import GenreTags from "@/components/GenreTags";
 import Section from "@/components/Section";
@@ -51,7 +51,9 @@ export default function HomePage() {
             .filter(m => m !== undefined);
     }
 
-    const shuffleArray = (array: iMovie[]) => {
+    const shuffleArray = (array: iMovie[] | null) => {
+        if (array === null)
+            return [];
         const shuffled = [...array];
         for (let i = shuffled.length - 1; i > 0; i--) {
             // eslint-disable-next-line react-hooks/purity
@@ -64,9 +66,7 @@ export default function HomePage() {
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        {featured ?
-            <MoviesHero items={shuffleArray(featured).slice(0, 5)} movie={featured[0]}/> :
-            <MoviesHero items={[]} movie={undefined}/>}
+        <MoviesHero movies={shuffleArray(featured).slice(0, 5)} />
         <GenreTags genreCount={genreCount} className="justify-center w-full my-8"/>
 
         {(continueWatching && continueWatching.length > 0) &&
