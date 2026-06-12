@@ -6,6 +6,9 @@
     --color-black-hover: #383838;
     --color-gray: #878787;
 
+    --color-gray-loading: #D8D8D8;
+    --color-white-loading: #ECECEC;
+
     --color-yellow: #FFD600;
     --color-pink: #FFA5F5;
     --color-green: #00F475;
@@ -95,40 +98,18 @@
 .animate-marquee {animation: marquee 8s linear infinite;}
 
 .custom-loading {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background: #ececec;
-    overflow: hidden;
+    @apply relative size-full overflow-hidden bg-gray;
+    animation: loading-pulse 2s ease-in-out infinite;
 }
 
-.custom-loading::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -80%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,0.7),
-            transparent
-    );
-    transform: skewX(-20deg);
-    animation: shimmer 2s linear infinite;
+@keyframes loading-pulse {
+    0% {background-color: var(--color-gray-loading)}
+    50% {background-color: var(--color-white-loading);}
+    100% {background-color: var(--color-gray-loading)}
 }
 
 @keyframes shimmer {
-    0% {
-        left: -80%;
-    }
-
-    55% {
-        left: 120%;
-    }
-
-    100% {
-        left: 120%;
-    }
+    0% {left: -80%;}
+    55% {left: 120%;}
+    100% {left: 120%;}
 }

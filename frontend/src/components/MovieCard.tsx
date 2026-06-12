@@ -10,6 +10,7 @@ import {useAuth} from "@/context/AuthContext";
 import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 import LinkLoginRequired from "@/components/Link";
+import LoadingText from "@/components/LoadingText";
 
 
 export function MoviesCard({movieSets, className} : {movieSets?: iMovie[], className?: string}) {
@@ -69,8 +70,6 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
     const t = useTranslations("movie");
     let title = movie?.title;
     const [isLoaded, setIsLoaded] = useState(false);
-    const maxWidths = ["max-w-40", "max-w-70", "max-w-100", "max-w-130", "max-w-150"]
-    const [randomWidth] = useState(() => maxWidths[Math.floor(Math.random() * maxWidths.length)]);
 
     if (title && title.length > 20)
         title = title.slice(0, 18) + "...";
@@ -95,10 +94,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
                     <h1 className="hover:underline decoration-2 underline-offset-3 text-nowrap">{title}</h1>
                     <span className="responsive-text-hairline">{movie.year}</span>
                 </LinkLoginRequired> :
-                    <div className="h-17">
-                        <div className={"custom-loading " + randomWidth} />
-                    </div>
-                }
+                    <LoadingText />}
             </td>
             <td></td>
             <td className="hidden lg:table-cell">

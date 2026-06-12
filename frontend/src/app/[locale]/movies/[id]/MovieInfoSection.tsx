@@ -2,15 +2,22 @@ import {iMovieDetails} from "@/types/movie";
 import GenreTags from "@/components/GenreTags";
 import React from "react";
 import {useTranslations} from "next-intl";
+import LoadingText from "@/components/LoadingText";
 
-export default function MovieInfoSection({movie} : {movie: iMovieDetails}) {
+export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
     const t = useTranslations("movie");
 
     const getLenght = () => {
+        if (!movie)
+            return "0h";
+
         const hours = Math.floor(movie.runtime_minutes / 60);
         const minutes = movie.runtime_minutes % 60;
         return (`${hours}h${minutes > 10 ? "" : "0"}${minutes}`);
     }
+
+    if (!movie)
+        return (<LoadingText center={true} />);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
         <h1 className="relative mx-auto mb-2">{movie.title}
