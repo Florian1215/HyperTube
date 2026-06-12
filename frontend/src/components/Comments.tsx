@@ -45,7 +45,7 @@ export function CommentSection({movie}: {movie: iMovie}) {
 
     const addNewComment = (newComment: iComment) => setComments([newComment, ...actualComments]);
 
-    return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7 mb-10">
+    return (<div className="mx-auto max-w-2xl w-9/10 flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
             <h1 className="text-center">{t("title")}</h1>
             <Colors className="mt-1 sm:mt-2" />
