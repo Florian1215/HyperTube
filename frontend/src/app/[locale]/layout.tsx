@@ -17,6 +17,7 @@ import {notFound} from "next/navigation";
 import {getLocale, getMessages} from "next-intl/server";
 import Providers from "@/app/providers";
 import ResetPassword from "@/components/modal/ResetPassword";
+import Colors from "@/components/Colors";
 
 export default async function RootLayout({children, params}: {children: React.ReactNode, params: Promise<{locale: string}>}) {
     const {locale} = await params;
@@ -30,29 +31,35 @@ export default async function RootLayout({children, params}: {children: React.Re
     return (<html lang={currentLocale}>
     <body>
 
-    <NextIntlClientProvider locale={currentLocale} messages={messages}>
-        <Providers>
-            <AuthProvider>
-                <NotificationProvider>
-                    <ModalProvider>
-                        <NotificationList/>
+    <div className="fixed inset-0 -z-10">
+        <Colors heigth={"h-full"} />
+    </div>
 
-                        <Navbar/>
+    <div className="bg-white min-h-screen">
+        <NextIntlClientProvider locale={currentLocale} messages={messages}>
+            <Providers>
+                <AuthProvider>
+                    <NotificationProvider>
+                        <ModalProvider>
+                            <NotificationList/>
 
-                        <SigninModal/>
-                        <RegisterModal/>
-                        <GenreModal/>
-                        <FilterGenreModal/>
-                        <ForgotPassword/>
-                        <ResetPassword/>
-                        <DeleteCommentModal/>
+                            <Navbar/>
 
-                        {children}
-                    </ModalProvider>
-                </NotificationProvider>
-            </AuthProvider>
-        </Providers>
-    </NextIntlClientProvider>
+                            <SigninModal/>
+                            <RegisterModal/>
+                            <GenreModal/>
+                            <FilterGenreModal/>
+                            <ForgotPassword/>
+                            <ResetPassword/>
+                            <DeleteCommentModal/>
+
+                            {children}
+                        </ModalProvider>
+                    </NotificationProvider>
+                </AuthProvider>
+            </Providers>
+        </NextIntlClientProvider>
+    </div>
 
     </body>
     </html>);
