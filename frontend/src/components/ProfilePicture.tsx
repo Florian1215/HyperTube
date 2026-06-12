@@ -28,6 +28,7 @@ export default function ProfilePicture({user, onClick, size = 0, color, classNam
         className = className + ` hover:bg-${color}-hover`;
 
     return (<button className={`relative overflow-hidden rounded-full bg-${color} ${sizes[size]} flex items-center justify-center border shrink-0 ` + className} onClick={onClick}>
+        <div className="custom-noise" />
         {children}
     </button>);
 }

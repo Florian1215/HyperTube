@@ -48,6 +48,7 @@ export function MovieCard({movie, user, className, showTitle = true} : {movie: i
         />
         {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}}></div>}
         <div className="absolute inset-0 p-4 flex items-end">
+            <div className="custom-noise" />
             {
                 watchingPercent === 100 ?
                 <div className="size-full absolute inset-0 bg-black/60"></div> :
@@ -76,8 +77,9 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
 
     return (<tr className="border-b group">
             <td className="p-2 xl:p-4">
-                <div className="border overflow-hidden aspect-3/2">
-                    {!isLoaded && (<div className="custom-loading absolute inset-0" />)}
+                <div className="border overflow-hidden aspect-3/2 relative">
+                    <div className="custom-noise" />
+                    {!isLoaded && (<div className="custom-loading" />)}
                     {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
                         <Image
                             className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}

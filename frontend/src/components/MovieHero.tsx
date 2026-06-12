@@ -49,6 +49,7 @@ function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: {movie
             <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right"
                  onClick={onClickRight}></div>
             <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
+                <div className="custom-noise" />
                 <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
                 {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
                     {
