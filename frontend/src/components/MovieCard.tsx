@@ -83,7 +83,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
                     {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
                         <Image
                             className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-                            width={150} height={100} src={movie.backdrop_url.replace("/w500/", "/w300/")} alt={t("posterAlt", {title: movie.title})}
+                            width={600} height={400} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}
                             loading="eager"
                             onLoad={() => setIsLoaded(true)}
                         />
