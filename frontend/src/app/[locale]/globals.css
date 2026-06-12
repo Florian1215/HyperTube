@@ -78,10 +78,15 @@
     border: 1px solid var(--color-black);
 }
 
-.custom-noise {
-    @apply size-full absolute inset-0 pointer-events-none opacity-50 bg-repeat mix-blend-overlay;
+.custom-noise, .custom-noise-bg {
+    @apply size-full absolute inset-0 pointer-events-none opacity-45 bg-repeat mix-blend-overlay;
     background-image: url("/noise.png");
     filter: contrast(140%) brightness(120%);
+}
+
+.custom-noise-bg {
+    @apply mix-blend-color-burn;
+    filter: contrast(140%) brightness(50%);
 }
 
 /* --------------------------------------------------- ANIMATION ---------------------------------------------------- */

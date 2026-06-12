@@ -34,6 +34,7 @@ export default function ModalLayout({children, onClose, title}: {children: React
                 {children}
             </div>
         </div>
+        <div className="custom-noise-bg" />
     </div>);
 }
 
