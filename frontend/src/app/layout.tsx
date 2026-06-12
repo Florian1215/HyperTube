@@ -11,20 +11,13 @@ import React from "react";
 import {AuthProvider} from "@/context/AuthContext";
 import ForgotPassword from "@/components/modal/ForgotPassword";
 import {DeleteCommentModal} from "@/components/modal/DeleteComment";
-import {hasLocale, NextIntlClientProvider} from "next-intl";
-import {routing} from "@/i18n/request";
-import {notFound} from "next/navigation";
+import {NextIntlClientProvider} from "next-intl";
 import {getLocale, getMessages} from "next-intl/server";
 import Providers from "@/app/providers";
 import ResetPassword from "@/components/modal/ResetPassword";
 import Colors from "@/components/Colors";
 
-export default async function RootLayout({children, params}: {children: React.ReactNode, params: Promise<{locale: string}>}) {
-    const {locale} = await params;
-    if (!hasLocale(routing.locales, locale)) {
-        notFound();
-    }
-
+export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
     const currentLocale = await getLocale();
 

@@ -173,7 +173,8 @@
       "notFoundUser": "User not found",
       "missingToken": "Token is missing.",
       "invalidToken": "Token is invalid or has expired.",
-      "invalidQueryParameter": "Invalid query parameter."
+      "invalidQueryParameter": "Invalid query parameter.",
+      "notFound": "Page '{path}' not found."
     }
   }
 }
