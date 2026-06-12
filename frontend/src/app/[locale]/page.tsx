@@ -13,6 +13,7 @@ import {useResponsiveSize} from "@/context/utils";
 import {useTranslations} from "next-intl";
 import {useMovies} from "@/api/movies";
 import Colors from "@/components/Colors";
+import {useModal} from "@/context/ModalContext";
 
 export default function HomePage() {
     const {user} = useAuth();
@@ -104,11 +105,14 @@ export default function HomePage() {
 }
 
 function AnimateLogo({maxHeight}: {maxHeight: number}) {
+    const {activeModal} = useModal();
     const minHeight = maxHeight / 5;
     const [logoHeight, setLogoHeight] = useState(maxHeight);
     const [logoWidth, setLogoWidth] = useState(0);
 
     useEffect(() => {
+        if (activeModal.type !== null)
+            return ;
         let virtualScroll = 0;
 
         const handleWheel = (e: WheelEvent) => {
@@ -125,7 +129,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
         };
         window.addEventListener("wheel", handleWheel, {passive: false,});
         return () => {window.removeEventListener("wheel", handleWheel);};
-    }, [maxHeight, minHeight]);
+    }, [activeModal, maxHeight, minHeight]);
 
     useEffect(() => {
         setLogoHeight(maxHeight);
