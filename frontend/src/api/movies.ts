@@ -19,6 +19,8 @@ function getMovies(locale: string, search_title?: string, page?: number, signal?
     let endpoint = "/movies";
     if (search_title === "directstream")
         endpoint += "/directstream"
+    else if (search_title === "featured")
+        endpoint += "/featured"
     else if (search_title === "watched")
         endpoint += "/watched"
     else if (search_title)

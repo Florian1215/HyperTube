@@ -35,11 +35,13 @@ export default function HomePage() {
         heightAnimationLogo = 300;
 
     const {data: movies} = useMovies();
+    const {data: featuredMovies} = useMovies("featured");
     const {data: allDirctedWatchMovies} = useMovies("directstream", undefined, !!user);
+    const featured = filterAlreadyWatch(user, featuredMovies?.data);
     const dirctedWatchMovies = filterAlreadyWatch(user, allDirctedWatchMovies?.data);
-    const moviesSets = filterAlreadyWatch(user, movies?.data);
-    const mostRated = moviesSets ? structuredClone(moviesSets).sort((a, b) => b.note - a.note) : null;
-    const popular = structuredClone(moviesSets);
+    const moviesSets = filterAlreadyWatch(user, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined);
+    const mostRated = moviesSets ? moviesSets.filter((film) => film.note > 7) : null;
+    const popular = filterAlreadyWatch(user, movies?.data);
 
     if (user && movies) {
         continueWatching = user.watch_history
@@ -48,10 +50,21 @@ export default function HomePage() {
             .filter(m => m !== undefined);
     }
 
+    const shuffleArray = (array: iMovie[]) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            // eslint-disable-next-line react-hooks/purity
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+
+    };
+
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        {movies ?
-            <MoviesHero items={movies.data.slice(0, 5)} movie={movies.data[0]}/> :
+        {featured ?
+            <MoviesHero items={shuffleArray(featured).slice(0, 5)} movie={featured[0]}/> :
             <MoviesHero items={[]} movie={undefined}/>}
         <GenreTags genreCount={genreCount} className="justify-center w-full my-8"/>
 
@@ -60,12 +73,16 @@ export default function HomePage() {
             <MoviesCard movieSets={continueWatching.slice(0, moviesCount)} />
         </Section>}
 
-        {(popular && popular.length >0) && <Section title={t("popular")} href="/movies/">
-            <MoviesCard movieSets={popular.slice(0, moviesCount)}/>
+        {(featured && featured.length >0) && <Section title={t("featured")} href="/movies?q=featured">
+            <MoviesCard movieSets={shuffleArray(featured).slice(0, moviesCount)}/>
+        </Section>}
+
+        {(popular && popular.length >0) && <Section title={t("popular")} href="/movies?q=popular">
+            <MoviesCard movieSets={shuffleArray(popular).slice(0, moviesCount)}/>
         </Section>}
 
         {(mostRated && mostRated.length >0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
-            <MoviesCard movieSets={mostRated.slice(0, moviesCount)}/>
+            <MoviesCard movieSets={shuffleArray(mostRated).slice(0, moviesCount)}/>
         </Section>}
 
         {dirctedWatchMovies && dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">

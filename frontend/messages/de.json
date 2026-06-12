@@ -12,6 +12,7 @@
   },
   "home": {
     "continueWatching": "Weiter ansehen",
+    "featured": "Empfohlen",
     "popular": "Beliebt",
     "mostRated": "Am besten bewertet",
     "directStream": "Direkt-Streaming"
