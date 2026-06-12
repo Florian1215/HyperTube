@@ -1,37 +1,51 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import Image from "next/image";
 import {iMovie} from "@/types/movie";
 import {SecondaryButton} from "@/components/Buttons";
 import {useTranslations} from "next-intl";
 import LinkLoginRequired from "@/components/Link";
 
-export default function MoviesHero({items, movie, onClick}: {items: iMovie[] | string[], movie?: iMovie, onClick?: () => void}) {
+export function MoviesHero({movies, onClick}: {movies: iMovie[], onClick?: () => void}) {
     const [index, setIndex] = useState(0);
-    if (items.length === 0 && movie)
-        items = [movie.backdrop_url.replace("/w500/", "/w1280/")];
+    const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-    const slideLeft = () => setIndex((prev) => (prev - 1 + items.length) % items.length);
-    const slideRight = () => setIndex((prev) => (prev + 1) % items.length);
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setIndex((prev) => (prev + 1) % items.length);
+    const startInterval = useCallback(() => {
+        if (intervalRef.current)
+            clearInterval(intervalRef.current);
+
+        intervalRef.current = setInterval(() => {
+            setIndex((prev) => (prev + 1) % movies.length);
         }, 6000);
-        return () => clearInterval(interval);
-    }, [items.length]);
+    }, [movies.length]);
+
+    const slide = (side: number) => {
+        if (side > 0)
+            setIndex((prev) => (prev + 1) % movies.length);
+        else
+            setIndex((prev) => (prev - 1 + movies.length) % movies.length);
+        startInterval();
+    };
+
+    useEffect(() => {
+        if (!movies.length)
+            return;
+        startInterval();
+        return () => clearInterval(intervalRef.current);
+    }, [movies.length, startInterval]);
 
     return (<div className="overflow-hidden w-full">
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
-            {items.length > 0 ?
-                items.map((item, index) => (
-                <MovieHero key={index} movie={typeof item === "string" ? movie : item} backdrop={typeof item === "string" ? item : undefined} onClick={onClick} onClickLeft={slideLeft} onClickRight={slideRight}/>)) :
-                <MovieHero movie={undefined} onClickLeft={slideLeft} onClickRight={slideRight} />
+            {movies.length > 0 ?
+                movies.map((movie, index) => (
+                <MovieHero key={index} movie={movie} onClick={onClick} onSlide={slide} />)) :
+                <MovieHero movie={undefined} />
             }
         </div>
     </div>);
 }
 
-function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: {movie?: iMovie, onClick?: () => void, onClickLeft: () => void, onClickRight: () => void, backdrop?: string}) {
+export function MovieHero({movie, onClick, onSlide}: {movie?: iMovie, onClick?: () => void, onSlide?: (side: number) => void}) {
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -40,19 +54,20 @@ function MovieHero({movie, onClick, onClickLeft, onClickRight, backdrop}: {movie
             {movie && <Image className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
                              height={5000} loading="eager" onLoad={() => setIsLoaded(true)}
                              src={movie.backdrop_url.replace("/w500/", "/original/")} alt={t("posterAlt", {title: movie.title})}/>}
-            <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left"
-                 onClick={onClickLeft}></div>
+            {onSlide && <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left"
+                  onClick={() => onSlide(-1)}></div>}
             {onClick ?
                 <div className="h-full w-full z-20 absolute custom-cursor-play" onClick={onClick}></div>
                 : (movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="h-full w-full z-20 absolute" />)
             }
-            <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right"
-                 onClick={onClickRight}></div>
+            {onSlide && <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right"
+                 onClick={() => onSlide(1)}></div>}
             <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
+                <div className="custom-noise" />
                 <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
                 {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
                     {
-                        backdrop === undefined ?
+                        onSlide ?
                             <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
                                 <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
                             </h1> :

@@ -10,16 +10,25 @@ import {useAuth} from "@/context/AuthContext";
 import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 import LinkLoginRequired from "@/components/Link";
+import LoadingText from "@/components/LoadingText";
+import {useResponsiveSize} from "@/context/utils";
 
 
-export function MoviesCard({movieSets, className} : {movieSets?: iMovie[], className?: string}) {
+export function MoviesCard({movieSets, setLimit, className} : {movieSets?: iMovie[], setLimit?: boolean, className?: string}) {
     const {user} = useAuth();
+    const size = useResponsiveSize();
+
+    let moviesCount = 4;
+    if (size === "xl")
+        moviesCount = 3;
+    else if (size === "xs")
+        moviesCount = 2;
 
     return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>
         {
             movieSets ?
-                movieSets.map((movie) => (<MovieCard key={movie.imdb_id} movie={movie} user={user} />)) :
-                [...Array(3)].map((_, i) => (<MovieCard key={i} movie={null} user={user} />))
+                (setLimit ? movieSets.slice(0, moviesCount) : movieSets).map((movie) => (<MovieCard key={movie.imdb_id} movie={movie} user={user} />)) :
+                [...Array(moviesCount)].map((_, i) => (<MovieCard key={i} movie={null} user={user} />))
         }
     </div>);
 }
@@ -48,6 +57,7 @@ export function MovieCard({movie, user, className, showTitle = true} : {movie: i
         />
         {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}}></div>}
         <div className="absolute inset-0 p-4 flex items-end">
+            <div className="custom-noise" />
             {
                 watchingPercent === 100 ?
                 <div className="size-full absolute inset-0 bg-black/60"></div> :
@@ -68,20 +78,19 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
     const t = useTranslations("movie");
     let title = movie?.title;
     const [isLoaded, setIsLoaded] = useState(false);
-    const maxWidths = ["max-w-40", "max-w-70", "max-w-100", "max-w-130", "max-w-150"]
-    const [randomWidth] = useState(() => maxWidths[Math.floor(Math.random() * maxWidths.length)]);
 
     if (title && title.length > 20)
         title = title.slice(0, 18) + "...";
 
     return (<tr className="border-b group">
             <td className="p-2 xl:p-4">
-                <div className="border overflow-hidden aspect-3/2">
-                    {!isLoaded && (<div className="custom-loading absolute inset-0" />)}
+                <div className="border overflow-hidden aspect-3/2 relative">
+                    <div className="custom-noise" />
+                    {!isLoaded && (<div className="custom-loading" />)}
                     {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
                         <Image
                             className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-                            width={150} height={100} src={movie.backdrop_url.replace("/w500/", "/w300/")} alt={t("posterAlt", {title: movie.title})}
+                            width={600} height={400} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}
                             loading="eager"
                             onLoad={() => setIsLoaded(true)}
                         />
@@ -93,10 +102,7 @@ export function ListMovieCard({movie, setFilterGenre} : {movie: iMovie | null, s
                     <h1 className="hover:underline decoration-2 underline-offset-3 text-nowrap">{title}</h1>
                     <span className="responsive-text-hairline">{movie.year}</span>
                 </LinkLoginRequired> :
-                    <div className="h-17">
-                        <div className={"custom-loading " + randomWidth} />
-                    </div>
-                }
+                    <LoadingText />}
             </td>
             <td></td>
             <td className="hidden lg:table-cell">

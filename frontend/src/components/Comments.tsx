@@ -21,6 +21,7 @@ import {deleteComment, patchComment, postComment, useComments} from "@/api/comme
 import {useApiMutation} from "@/hooks/useApiMutation";
 import {useMovie} from "@/api/movies";
 import Link from "next/link";
+import Colors from "@/components/Colors";
 
 dayjs.extend(relativeTime);
 
@@ -44,17 +45,10 @@ export function CommentSection({movie}: {movie: iMovie}) {
 
     const addNewComment = (newComment: iComment) => setComments([newComment, ...actualComments]);
 
-    return (<div className="mx-auto max-w-2xl w-9/10 sm:w-full flex flex-col items-center gap-7 mb-10">
+    return (<div className="mx-auto max-w-2xl w-9/10 flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
             <h1 className="text-center">{t("title")}</h1>
-            <div className="flex h-2 sm:h-4 mt-1 sm:mt-2 w-full">
-                <div className="size-full bg-yellow"></div>
-                <div className="size-full bg-pink"></div>
-                <div className="size-full bg-green"></div>
-                <div className="size-full bg-purple"></div>
-                <div className="size-full bg-blue"></div>
-                <div className="size-full bg-red"></div>
-            </div>
+            <Colors className="mt-1 sm:mt-2" />
         </div>
         <div className="w-full text-center">
             {

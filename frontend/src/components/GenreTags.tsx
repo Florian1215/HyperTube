@@ -6,7 +6,7 @@ import {iGenre} from "@/types/genre";
 import {useLocale} from "next-intl";
 import {tLocale} from "@/i18n/request";
 
-export default function GenreTags({genreIds, genreCount, className = "", limit, setFilterGenre}: {genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
+export default function GenreTags({genreIds, genreCount, className="", limit, setFilterGenre}: {genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>}) {
     let addLimit = false;
     const {openModal, closeModal} = useModal();
 
@@ -22,12 +22,11 @@ export default function GenreTags({genreIds, genreCount, className = "", limit, 
     if (!data?.genres)
         return;
     let showGenres = data.genres;
-    if (genreIds)
-        showGenres = data.genres.filter(g => genreIds.includes(g.id));
-    else if (limit !== undefined && data.genres.length > limit) {
+    if (genreIds && limit !== undefined && genreIds?.length > limit) {
         addLimit = true;
         showGenres = data.genres.slice(0, limit);
-    }
+    } else if (genreIds)
+        showGenres = data.genres.filter(g => genreIds.includes(g.id));
     else if (genreCount)
         showGenres = randomGenres;
 

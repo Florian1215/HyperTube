@@ -1,6 +1,6 @@
 "use client";
 
-import React, {createContext, Dispatch, SetStateAction, useContext, useState} from "react";
+import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 
 type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-comment" | null;
@@ -28,6 +28,16 @@ export function ModalProvider({children}: {children: React.ReactNode}) {
 
     const openModal = (modal: ModalState) => setActiveModal(modal);
     const closeModal = () => setActiveModal({type: null});
+
+    useEffect(() => {
+        if (activeModal.type !== null) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+
+        return () => {document.body.style.overflow = "";};
+    }, [activeModal]);
 
     return (<ModalContext.Provider value={{activeModal, openModal, closeModal,}}>
         {children}
