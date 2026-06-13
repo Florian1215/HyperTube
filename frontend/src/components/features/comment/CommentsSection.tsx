@@ -42,7 +42,7 @@ export default function CommentsSection({movie}: {movie: iMovie}) {
                 user !== null ?
                 <div className="flex gap-2 sm:gap-4">
                     <ProfilePicture user={user}/>
-                    <NewComment user={user} onSubmit={addNewComment} movie={movie} ></NewComment>
+                    <NewComment user={user} onSubmit={addNewComment} movie={movie} />
                 </div> :
                 <TextButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</TextButton>
             }

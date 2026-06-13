@@ -135,7 +135,7 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComme
                               saveChange();
                       }
                   }}
-                  onChange={(e) => setNewEditedComment(e.target.value)}></textarea>
+                  onChange={(e) => setNewEditedComment(e.target.value)} />
         <div className="flex gap-2">
             <Button className="xl:px-6"
                     disabled={newEditedComment.trim().length <= 0 || newEditedComment.trim() === comment.content}

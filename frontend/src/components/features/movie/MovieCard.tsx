@@ -28,7 +28,7 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
         />
-        {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}}></div>}
+        {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}} />}
         {!isLoaded && <div className="absolute inset-0 size-full"><div className="custom-loading" /></div>}
         <div className="absolute inset-0 p-4 flex items-end">
             <div className="custom-noise" />

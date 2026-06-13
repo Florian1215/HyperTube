@@ -41,7 +41,7 @@ export default function MovieCardList({movie, setFilterGenre} : {movie: iMovie |
                 </LinkLoginRequired> :
                     <LoadingText />}
             </td>
-            <td></td>
+            <td />
             <td className="hidden lg:table-cell">
                 {movie && <GenreTags genreIds={movie.genres} limit={3} setFilterGenreAction={setFilterGenre}/>}
             </td>
