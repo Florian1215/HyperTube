@@ -186,12 +186,12 @@ func newRouter(
 
 		r.Get("/movies", moviesHandler.GetDefaultMovies)
 		r.Get("/movies/featured", moviesHandler.GetFeaturedMovies)
+		r.Get("/movies/search", moviesHandler.SearchMovies)
 
 		requireAuth := auth.RequireAuth(tokenManager)
 
 		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
 		r.With(requireAuth).Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
-		r.With(requireAuth).Get("/movies/search", moviesHandler.SearchMovies)
 		r.With(requireAuth).Get("/movies/{id}", moviesHandler.GetMoviesId)
 		r.With(requireAuth).Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
 		r.With(requireAuth).Get("/movies/{id}/comments", moviesHandler.GetComments)

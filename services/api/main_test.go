@@ -141,7 +141,7 @@ func TestRouterPublicOAuthProviderRoutes(t *testing.T) {
 func TestRouterProtectedRouteRejectsMissingBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/directstream", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
@@ -157,7 +157,7 @@ func TestRouterProtectedRouteRejectsMissingBearerToken(t *testing.T) {
 func TestRouterProtectedRouteRejectsInvalidBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/search", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/movies/directstream", nil)
 	req.Header.Set("Authorization", "Bearer not-a-token")
 	rec := httptest.NewRecorder()
 
