@@ -213,14 +213,13 @@ export function ListIcon({color="black", size=20}) {
     </svg>);
 }
 
-export function SortIcon({color="black", size=20}) { // todo keep
+export function SortIcon({sideUp=true, color="black", size=15}) {
     const fullColor = `var(--color-${color})`;
 
-    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 18">
-        <path d="M15.396.668h1.987v12.886l2.601-2.878 1.429 1.39-5.024 5.287-5.537-5.288 1.428-1.39 3.116 2.879V.668ZM5.195 16.892H7.13V4.348L9.662 7.15l1.39-1.353L6.163.65.772 5.797l1.39 1.353 3.033-2.802v12.544Z"
-            fill={fullColor}></path>
-        <path d="M5.174 17.369h1.992V4.456l2.607 2.885 1.431-1.393L6.17.65.621 5.948 2.053 7.34l3.121-2.885V17.37Z"
-              fill={fullColor}></path>
+    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 16">
+        {sideUp ?
+            <path d="M5.95 4.68171e-06L4.13909 4.99834e-06L4.13909 11.74L1.30182 9.11728L-8.4212e-07 10.3827L5.04455 15.1991L9.62091 10.3827L8.32 9.11637L5.95 11.7391L5.95 4.68171e-06Z" fill={fullColor} /> :
+            <path d="M5.95 15.1991L4.13909 15.1991L4.13909 3.45909L1.30182 6.08182L-8.4212e-07 4.81636L5.04455 8.82016e-07L9.62091 4.81637L8.32 6.08273L5.95 3.46L5.95 15.1991Z" fill={fullColor} />}
     </svg>);
 }
 

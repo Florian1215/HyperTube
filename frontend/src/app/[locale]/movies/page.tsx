@@ -3,7 +3,7 @@
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
 import React, {useEffect, useRef, useState} from "react";
-import {GridIcon, ListIcon} from "@/components/Icons";
+import {GridIcon, ListIcon, SortIcon} from "@/components/Icons";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {useGenres} from "@/hooks/useGenres";
@@ -163,9 +163,9 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
                     <th></th>
                     {sortOptions.map((sortOption, i) =>
                         <th key={sortOption.type} className={classNames[i]}>
-                            <button className={"relative capitalize text-nowrap hover:underline text-xs sm:text-base" + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
+                            <button className={"relative gap-1 flex items-center capitalize text-nowrap font-normal hover:underline text-xs sm:text-base" + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
                                     onClick={() => handleSort(sortOption.type)}>
-                                {sortOption.label} {sortOption.type === sort.type && (sort.side ? "▾" : "▴")}
+                                {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} />}
                             </button>
                             {sortOption.type === "genre" && <SelectedGenre genres={filterGenre} deleteGenre={deleteGenre}/>}
                         </th>
