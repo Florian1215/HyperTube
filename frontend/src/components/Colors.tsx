@@ -1,6 +1,4 @@
-
 export default function Colors({className, heigth="h-3 sm:h-4"}: {className?: string, heigth?: string}) {
-
     return (<div className={"w-full relative " + className + " " + heigth}>
         <div className="custom-noise" />
         <div className="flex h-full">

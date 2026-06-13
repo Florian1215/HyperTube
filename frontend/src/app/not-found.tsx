@@ -2,8 +2,8 @@
 
 import {usePathname, useRouter} from "@/i18n/navigation";
 import {useEffect} from "react";
-import {useNotification} from "@/context/NotificationContext";
 import {useTranslations} from "next-intl";
+import useNotification from "@/contexts/NotificationContext";
 
 export default function NotFoundPage() {
     const router = useRouter();
@@ -16,6 +16,7 @@ export default function NotFoundPage() {
         setTimeout(() => {
             router.replace("/");
         }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname]);
     return (<h1 className="text-center">404 - Not Found</h1>);
 }

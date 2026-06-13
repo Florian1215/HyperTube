@@ -1,13 +1,13 @@
 "use client";
 
 import {useRouter} from "next/navigation";
-import {ApiError} from "@/api/errors";
-import {useModal} from "@/context/ModalContext";
-import {useNotification} from "@/context/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import {tLocale} from "@/i18n/request";
+import {ApiError} from "@/services/ApiError";
+import useNotification from "@/contexts/NotificationContext";
+import useModal from "@/contexts/ModalContext";
 
-export function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string) {
+export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string) {
     const router = useRouter();
     const {openModal, closeModal} = useModal();
     const locale = useLocale() as tLocale;
