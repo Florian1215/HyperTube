@@ -30,5 +30,3 @@ export function useUser(userId: string) {
         (locale: string) => getUser(locale, userId),
     );
 }
-
-// todo make GET /users ?

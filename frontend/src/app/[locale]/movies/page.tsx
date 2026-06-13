@@ -3,7 +3,7 @@
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
 import React, {useEffect, useRef, useState} from "react";
-import {GridIcon, ListIcon} from "@/components/Icons";
+import {GridIcon, ListIcon, SortIcon} from "@/components/Icons";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {useGenres} from "@/hooks/useGenres";
@@ -76,15 +76,15 @@ function SearchBar({searchValue, onChange}: {searchValue: string, onChange: (e?:
 
     return (<div className="flex items-center px-6">
         <input ref={inputRef} type="search" placeholder={t("searchPlaceholder")} value={searchValue} onChange={onChange}
-        className="w-full bg-white text-5xl md:text-7xl xl:text-9xl font-condensed uppercase border-b focus:border-b-2"></input>
+        className="w-full bg-white text-5xl md:text-7xl xl:text-9xl font-condensed uppercase border-b focus:border-b-2" />
         <CloseButton className="absolute right-10" onClickAction={() => onChange()} disabled={searchValue.length === 0}/>
     </div>);
 }
 
 function Filter({viewType, onClick}: {viewType: tViewType, onClick: (value: tViewType) => void}) {
     return (<div className="flex w-full justify-end gap-4 px-6">
-        <button onClick={() => onClick("grid")}><GridIcon color={viewType == "grid" ? "black" : "gray"}/></button>
-        <button onClick={() => onClick("list")}><ListIcon color={viewType == "list" ? "black" : "gray"}/></button>
+        <button onClick={() => onClick("grid")}><GridIcon color={viewType == "grid" ? "black" : "gray"} /></button>
+        <button onClick={() => onClick("list")}><ListIcon color={viewType == "list" ? "black" : "gray"} /></button>
     </div>);
 }
 
@@ -160,17 +160,17 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
 
             <thead>
                 <tr className="text-left align-top">
-                    <th></th>
+                    <th />
                     {sortOptions.map((sortOption, i) =>
                         <th key={sortOption.type} className={classNames[i]}>
-                            <button className={"relative capitalize text-nowrap hover:underline text-xs sm:text-base" + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
+                            <button className={"relative gap-1 flex items-center capitalize text-nowrap font-normal hover:underline text-xs sm:text-base" + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
                                     onClick={() => handleSort(sortOption.type)}>
-                                {sortOption.label} {sortOption.type === sort.type && (sort.side ? "▾" : "▴")}
+                                {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} />}
                             </button>
                             {sortOption.type === "genre" && <SelectedGenre genres={filterGenre} deleteGenre={deleteGenre}/>}
                         </th>
                     )}
-                    <th></th>
+                    <th />
                 </tr>
             </thead>
             <tbody>

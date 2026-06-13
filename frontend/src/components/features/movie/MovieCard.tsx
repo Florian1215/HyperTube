@@ -1,7 +1,7 @@
 import {useTranslations} from "next-intl";
 import {iMovie} from "@/types/movie";
 import {iUser} from "@/types/user";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import LinkLoginRequired from "@/components/ui/LinkLoginRequired";
 import Image from "next/image";
 
@@ -15,9 +15,6 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
     }
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [isLoaded, setIsLoaded] = useState(false);
-    useEffect(() => {
-        console.log("poster loaded", isLoaded);
-    }, [isLoaded]);
 
     if (!movie) {
         return (<div className={containerClass}>
@@ -31,7 +28,7 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
         />
-        {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}}></div>}
+        {watchingPercent > 0 && <div className={`absolute bottom-0 h-1 bg-${user ? user.color : "red"} z-10`} style={{width: `${watchingPercent}%`}} />}
         {!isLoaded && <div className="absolute inset-0 size-full"><div className="custom-loading" /></div>}
         <div className="absolute inset-0 p-4 flex items-end">
             <div className="custom-noise" />

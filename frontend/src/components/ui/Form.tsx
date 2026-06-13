@@ -122,7 +122,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         <Input key={idx} id={getId(type)} type={type.includes("password") ? "password" : "text"} placeholder={t(type)}
                value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className + ((type === "username" || (formType === "register" && type === "password")) ? " max-w-2/3" : "")}
                requestErrorMessage={errors[getId(type)]} setErrorsMessage={newSetterError} ref={(el: HTMLInputElement) => {fieldRefs.current[idx] = el;}}
-               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)}></Input>;
+               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)} />;
 
     return (<form id={formType} className="w-full" onSubmit={(e) => {e.preventDefault(); onSubmit();}}>
         {fields.map((field, idx) => {

@@ -33,7 +33,7 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
     const [debouncedQuery] = useDebounce(search_title ?? "", 200);
 
     return useApiQuery(
-        ["movies", debouncedQuery, page ? String(page) : "1"],
+        ["movies", debouncedQuery, page?.toString() ?? "0"],
         (locale, signal) => getMovies(locale, debouncedQuery, page, signal),
         enabled
     );

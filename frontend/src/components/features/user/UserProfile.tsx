@@ -41,12 +41,12 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
             </div>
         </div>
         <div className="flex h-12 sm:h-16">
-            <div className="border-b border-r w-12"></div>
+            <div className="border-b border-r w-12" />
             {tabs.map((tab, index) => (<button
                 key={index}
                 className={"custom-condensed text-2xl sm:text-4xl tracking-wide sm:tracking-normal border-t border-r px-4 sm:px-12 xl:px-16 border-b text-nowrap" + (activeTab === index ? " border-b-white" : "")}
                 onClick={() => switchTab(index)}>{t(tab.name)}</button>))}
-            <div className="border-b w-full"></div>
+            <div className="border-b w-full" />
         </div>
         <ActiveTab user={user} updateUser={updateUserAction}/>
     </div>);

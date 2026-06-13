@@ -93,19 +93,19 @@ export function EyeIcon({color="black", size=24, crossed=false}: {color?: string
             <g clipPath="url(#clip0_2902_56205)">
                 <path
                     d="M12.0001 4.0645C9.61239 4.0645 7.67013 4.77712 6.12007 5.77699L18.4148 17.9851C21.6687 15.6147 23.0001 12.0645 23.0001 12.0645C23.0001 12.0645 20.0001 4.0645 12.0001 4.0645ZM12.0001 7.0645C14.7611 7.0645 17.0001 9.3035 17.0001 12.0645C17.0001 13.3004 16.5514 14.4318 15.8081 15.3045L8.64004 8.36201C9.52782 7.55584 10.7067 7.0645 12.0001 7.0645ZM12.0001 9.0645C11.5336 9.0645 11.0784 9.17312 10.6682 9.37635L14.6875 13.3979C14.8912 12.9873 15.0001 12.5315 15.0001 12.0645C15.0001 11.2688 14.684 10.5058 14.1214 9.94318C13.5588 9.38057 12.7957 9.0645 12.0001 9.0645Z"
-                    fill={fullColor}></path>
+                    fill={fullColor} />
                 <path fillRule="evenodd" clipRule="evenodd"
                       d="M22.343 23.7651L0.28125 1.70335L1.6389 0.345703L23.7006 22.4074L22.343 23.7651Z"
-                      fill={fullColor}></path>
+                      fill={fullColor} />
                 <path d="M11.8195 15.059C10.305 14.969 9.09286 13.7556 9.00513 12.2405L11.8195 15.059Z"
-                      fill={fullColor}></path>
+                      fill={fullColor} />
                 <path
                     d="M6.99561 12.0645C6.99561 14.7894 9.21646 17.0688 12 17.0688C12.5652 17.0688 13.0909 16.9785 13.5982 16.8068L16.0873 19.2959C12.6987 20.6758 5.05674 21.1038 0.995605 12.0645C1.37115 11.13 2.38425 9.12997 4.13971 7.37451L7.25761 10.4924C6.99561 11.1736 6.99561 12.0645 6.99561 12.0645Z"
-                    fill={fullColor}></path>
+                    fill={fullColor} />
             </g>
             <defs>
                 <clipPath id="clip0_2902_56205">
-                    <rect width="24" height="24" fill={fullColor}></rect>
+                    <rect width="24" height="24" fill={fullColor} />
                 </clipPath>
             </defs>
         </svg>);
@@ -113,7 +113,7 @@ export function EyeIcon({color="black", size=24, crossed=false}: {color?: string
     return (<svg height={size} width={size} viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
         <path
             d="M12 4.08398C4 4.08398 1 12.084 1 12.084C1 12.084 4 20.084 12 20.084C20 20.084 23 12.084 23 12.084C23 12.084 20 4.08398 12 4.08398ZM12 7.08398C14.761 7.08398 17 9.32298 17 12.084C17 14.845 14.761 17.084 12 17.084C9.239 17.084 7 14.845 7 12.084C7 9.32298 9.239 7.08398 12 7.08398ZM12 9.08398C11.2044 9.08398 10.4413 9.40005 9.87868 9.96266C9.31607 10.5253 9 11.2883 9 12.084C9 12.8796 9.31607 13.6427 9.87868 14.2053C10.4413 14.7679 11.2044 15.084 12 15.084C12.7956 15.084 13.5587 14.7679 14.1213 14.2053C14.6839 13.6427 15 12.8796 15 12.084C15 11.2883 14.6839 10.5253 14.1213 9.96266C13.5587 9.40005 12.7956 9.08398 12 9.08398Z"
-            fill={fullColor}></path>
+            fill={fullColor} />
     </svg>);
 }
 
@@ -200,7 +200,7 @@ export function GridIcon({color="black", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 15">
-        <path fill={fullColor} stroke={fullColor} strokeWidth="1.5" d="M1.252 1.697h4.5v4.5h-4.5zM8.752 1.697h4.5v4.5h-4.5zM16.252 1.697h4.5v4.5h-4.5zM1.252 9.197h4.5v4.5h-4.5zM8.752 9.197h4.5v4.5h-4.5zM16.252 9.197h4.5v4.5h-4.5z"></path>
+        <path fill={fullColor} stroke={fullColor} strokeWidth="1.5" d="M1.252 1.697h4.5v4.5h-4.5zM8.752 1.697h4.5v4.5h-4.5zM16.252 1.697h4.5v4.5h-4.5zM1.252 9.197h4.5v4.5h-4.5zM8.752 9.197h4.5v4.5h-4.5zM16.252 9.197h4.5v4.5h-4.5z" />
     </svg>);
 }
 
@@ -209,18 +209,17 @@ export function ListIcon({color="black", size=20}) {
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
         <path fillRule="evenodd" clipRule="evenodd" d="M21.499 3.33H5.719V.505h15.78V3.33ZM3.325 3.33H.5V.505h2.825V3.33ZM21.499 8.649H5.719V5.824h15.78v2.825ZM3.325 8.661H.5V5.836h2.825v2.825ZM21.499 13.966H5.719v-2.825h15.78v2.825ZM3.325 13.964H.5V11.14h2.825v2.825Z"
-              fill={fullColor}></path>
+              fill={fullColor} />
     </svg>);
 }
 
-export function SortIcon({color="black", size=20}) { // todo keep
+export function SortIcon({sideUp=true, color="black", size=15}) {
     const fullColor = `var(--color-${color})`;
 
-    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 18">
-        <path d="M15.396.668h1.987v12.886l2.601-2.878 1.429 1.39-5.024 5.287-5.537-5.288 1.428-1.39 3.116 2.879V.668ZM5.195 16.892H7.13V4.348L9.662 7.15l1.39-1.353L6.163.65.772 5.797l1.39 1.353 3.033-2.802v12.544Z"
-            fill={fullColor}></path>
-        <path d="M5.174 17.369h1.992V4.456l2.607 2.885 1.431-1.393L6.17.65.621 5.948 2.053 7.34l3.121-2.885V17.37Z"
-              fill={fullColor}></path>
+    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 16">
+        {sideUp ?
+            <path d="M5.95 4.68171e-06L4.13909 4.99834e-06L4.13909 11.74L1.30182 9.11728L-8.4212e-07 10.3827L5.04455 15.1991L9.62091 10.3827L8.32 9.11637L5.95 11.7391L5.95 4.68171e-06Z" fill={fullColor} /> :
+            <path d="M5.95 15.1991L4.13909 15.1991L4.13909 3.45909L1.30182 6.08182L-8.4212e-07 4.81636L5.04455 8.82016e-07L9.62091 4.81637L8.32 6.08273L5.95 3.46L5.95 15.1991Z" fill={fullColor} />}
     </svg>);
 }
 
@@ -235,17 +234,8 @@ export function StarIcon({color="yellow", size=20}) {
 
 export function CheckFillIcon({className="", size=20}) {
     return (<svg className={className} height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-        <path fill="var(--color-black)" d="M0 0h20v20H0z"></path>
-        <path d="m14.827 5.625-6.353 6.352-3.303-3.303-1.421 1.423 4.724 4.727 7.776-7.776-1.423-1.423Z" fill="#fff"></path>
-    </svg>);
-}
-
-export function FilterIcon({color="black", size=20}) { // todo keep ?
-    const fullColor = `var(--color-${color})`;
-
-    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
-        <path d="M6.3 0v1.8H0v1.8h6.3v1.8H9V0H6.3Zm4.5 1.8v1.8H18V1.8h-7.2Zm0 4.5v1.8H0v1.8h10.8v1.8h2.7V6.3h-2.7Zm4.5 1.8v1.8H18V8.1h-2.7ZM1.8 12.6v1.8H0v1.8h1.8V18h2.7v-5.4H1.8Zm4.5 1.8v1.8H18v-1.8H6.3Z"
-            fill={fullColor}></path>
+        <path fill="var(--color-black)" d="M0 0h20v20H0z" />
+        <path d="m14.827 5.625-6.353 6.352-3.303-3.303-1.421 1.423 4.724 4.727 7.776-7.776-1.423-1.423Z" fill="#fff" />
     </svg>);
 }
 

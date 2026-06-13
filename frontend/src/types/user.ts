@@ -19,7 +19,7 @@ export interface iUser {
     first_name: string
     last_name: string
     email: string
-    oauth_method: tOauthService // todo handle
+    oauth_method: tOauthService
     color: string
     profile_picture: null | string
     watch_history: {movie_id: string, watch_percent: number}[]
