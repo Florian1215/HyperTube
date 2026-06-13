@@ -1163,4 +1163,4 @@ INSERT INTO torrents (imdbid, title, year, source, url, quality, size, language,
     ('tt12299608', 'Mickey.17.2025.MULTi.VFF.2160p.BluRay.10bit.4KLight.DV.HDR10Plus.DDP.5.1.Atmos.x265-QTZ', 0, 'C411',
      'https://c411.org/api?t=get&id=23dfd2412b48f7fbd4d48522f8c1cef9&apikey=7de1d66186e3dab01f258e0e89cd465582c8010863f4ae97f130c125607c08c5',
      '2160p', '9.053528535179794', 'MULTi/VFF', '121')
-ON CONFLICT (imdbid, url) DO NOTHING;
+ON CONFLICT (url) DO NOTHING;
