@@ -28,7 +28,7 @@ export function deleteComment(locale: string, commentId: number) {
 
 export function useComments(filmId?: string, page?: number) {
     return useApiQuery(
-        ["comments", filmId ?? "", page ? String(page) : ""],
+        ["comments", filmId ?? "", page?.toString() ?? "0"],
         (locale) => getComments(filmId, page, locale),
     );
 }
