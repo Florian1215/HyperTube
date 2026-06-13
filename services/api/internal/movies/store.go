@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"hypertube/api/internal/models"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"hypertube/api/internal/models"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -205,7 +206,7 @@ func (s *Store) UpsertDefault(ctx context.Context, imdbId string, position int) 
 	_, err := s.db.Exec(ctx, `
 		INSERT INTO default_movies (imdbid, position)
 		VALUES ($1, $2)
-		ON CONFLICT (imdbid, position) DO NOTHING
+		ON CONFLICT (imdbid) DO NOTHING
 	`, imdbId, position)
 	return err
 }
