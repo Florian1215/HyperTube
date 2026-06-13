@@ -32,7 +32,7 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
         if (activeTab !== tabIdx)
             setActiveTab(tabIdx);
     }
-    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 sm:px-4 mb-10">
+    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 sm:px-4">
         <div className="flex items-center gap-4 justify-center">
             <ProfilePicture user={user} size={1}/>
             <div className="flex flex-col items-start">
@@ -49,5 +49,6 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
             <div className="border-b w-full" />
         </div>
         <ActiveTab user={user} updateUser={updateUserAction}/>
+        <div />
     </div>);
 }
