@@ -30,5 +30,5 @@ export function handleOauth(oatuhCompany: tOauthService, redirect: string | null
 
     if (redirect !== null)
         endpoint += `?redirect=${redirect}`;
-    window.location.href = endpoint; // todo test and handle
+    window.location.href = endpoint;
 }
