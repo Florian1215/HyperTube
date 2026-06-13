@@ -239,15 +239,6 @@ export function CheckFillIcon({className="", size=20}) {
     </svg>);
 }
 
-export function FilterIcon({color="black", size=20}) { // todo keep ?
-    const fullColor = `var(--color-${color})`;
-
-    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
-        <path d="M6.3 0v1.8H0v1.8h6.3v1.8H9V0H6.3Zm4.5 1.8v1.8H18V1.8h-7.2Zm0 4.5v1.8H0v1.8h10.8v1.8h2.7V6.3h-2.7Zm4.5 1.8v1.8H18V8.1h-2.7ZM1.8 12.6v1.8H0v1.8h1.8V18h2.7v-5.4H1.8Zm4.5 1.8v1.8H18v-1.8H6.3Z"
-            fill={fullColor} />
-    </svg>);
-}
-
 export function EditIcon({color="black", size=20}) {
     const fullColor = `var(--color-${color})`;
 
