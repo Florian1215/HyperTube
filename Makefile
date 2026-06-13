@@ -1,15 +1,19 @@
-.PHONY: up up-vpn down build logs api stream frontend
+.PHONY: up up-vpn down re build logs api stream frontend
 
 up:
 	mkdir -p data/videos
 	mkdir -p data/torrents
 	docker compose up --build
 
+re:
+	$(MAKE) down
+	$(MAKE) up
+
 up-vpn:
 	docker compose --profile vpn up --build
 
 down:
-	docker compose down
+	docker compose down -v
 
 build:
 	docker compose build
