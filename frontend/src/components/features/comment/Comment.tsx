@@ -36,7 +36,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
         {(!updateComment && movie) && <div className="flex justify-center mb-3">
             <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={movie.data} /></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
-            <Link href={`/users/${user.id}`}><ProfilePicture user={user}/></Link>
+            <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
                 <div className="flex justify-between w-full">
                     <div>

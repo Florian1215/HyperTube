@@ -10,11 +10,11 @@ export default function AvatarSection({user, updateUser}: {user: iUser, updateUs
 
     const handleNewPP = (newPP: string | null) => {if (updateUser) updateUser({profile_picture: newPP});}
     const handleSwitchColors = (newColor: string) => {if (updateUser) updateUser({color: newColor});}
-    const uploadNewPP = () => {handleNewPP("/images/profile_pictures.jpeg");}
+    const uploadNewPP = () => console.log("uploadNewPP");
 
     return (<div className="flex flex-col gap-2 items-center justify-center">
-        <ProfilePicture user={user} size={2} className="mb-6" onClick={uploadNewPP}/>
-        <Button onClick={uploadNewPP}>{t("selectNewAvatar")}</Button>
+        <button onClick={uploadNewPP}><ProfilePicture user={user} size={2} className="mb-6" /></button>
+        <Button onClick={uploadNewPP} disabled={true}>{t("selectNewAvatar")}</Button>
 
         <TextButton
             className={user.profile_picture ? "text-red  custom-underline-red" : "custom-no-underline"}
@@ -23,13 +23,10 @@ export default function AvatarSection({user, updateUser}: {user: iUser, updateUs
         {!user.profile_picture && (
             <div className="grid grid-cols-3 gap-2 mt-4">
                 {colors.map((color, index) => (
-                    <ProfilePicture
-                        key={index}
-                        user={user}
-                        color={color}
-                        className={user.color === color ? "border-3" : ""}
-                        onClick={() => handleSwitchColors(color)}
-                    />))}
+                    <button key={index} onClick={() => handleSwitchColors(color)}>
+                        <ProfilePicture user={user} color={color} className={user.color === color ? "border-3" : ""}/>
+                    </button>
+                ))}
             </div>)}
     </div>);
 }
