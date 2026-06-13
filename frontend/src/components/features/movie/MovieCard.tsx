@@ -1,7 +1,7 @@
 import {useTranslations} from "next-intl";
 import {iMovie} from "@/types/movie";
 import {iUser} from "@/types/user";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import LinkLoginRequired from "@/components/ui/LinkLoginRequired";
 import Image from "next/image";
 
@@ -15,9 +15,6 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
     }
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [isLoaded, setIsLoaded] = useState(false);
-    useEffect(() => {
-        console.log("poster loaded", isLoaded);
-    }, [isLoaded]);
 
     if (!movie) {
         return (<div className={containerClass}>
