@@ -2,18 +2,20 @@
 
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
-import {ListMovieCard, MoviesCard} from "@/components/MovieCard";
 import React, {useEffect, useRef, useState} from "react";
 import {GridIcon, ListIcon} from "@/components/Icons";
-import {CloseButton} from "@/components/Buttons";
-import {useModal} from "@/context/ModalContext";
 import {useSearchParams} from "next/navigation";
-import Pagination, {computeTotalPage} from "@/components/Pagination";
-import {useResponsiveSize} from "@/context/utils";
 import {useLocale, useTranslations} from "next-intl";
 import {useGenres} from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
-import {useMovies} from "@/api/movies";
+import {useMovies} from "@/services/movies.service";
+import computeTotalPage from "@/utils/computeTotalPage";
+import Pagination from "@/components/ui/Pagination";
+import CloseButton from "@/components/ui/Button/CloseButton";
+import useModal from "@/contexts/ModalContext";
+import {useResponsiveSize} from "@/hooks/useResponsiveSize";
+import MoviesCard from "@/components/features/movie/MoviesCard";
+import MovieCardList from "@/components/features/movie/MovieCardList";
 
 type tViewType = | "grid" | "list";
 type tSort = "title" | "genre" | "grade" | "year";
@@ -75,7 +77,7 @@ function SearchBar({searchValue, onChange}: {searchValue: string, onChange: (e?:
     return (<div className="flex items-center px-6">
         <input ref={inputRef} type="search" placeholder={t("searchPlaceholder")} value={searchValue} onChange={onChange}
         className="w-full bg-white text-5xl md:text-7xl xl:text-9xl font-condensed uppercase border-b focus:border-b-2"></input>
-        <CloseButton className="absolute right-10" onClick={() => onChange()} disabled={searchValue.length === 0}/>
+        <CloseButton className="absolute right-10" onClickAction={() => onChange()} disabled={searchValue.length === 0}/>
     </div>);
 }
 
@@ -173,8 +175,8 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
             </thead>
             <tbody>
                 {sortedMovies ?
-                    sortedMovies.map((movie) => (<ListMovieCard key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre}/>)) :
-                    [...Array(3)].map((_, i) => (<ListMovieCard key={i} movie={null} setFilterGenre={setFilterGenre}/>))
+                    sortedMovies.map((movie) => (<MovieCardList key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre}/>)) :
+                    [...Array(6)].map((_, i) => (<MovieCardList key={i} movie={null} setFilterGenre={setFilterGenre}/>))
                 }
             </tbody>
         </table>
@@ -190,11 +192,11 @@ function SelectedGenre({genres, deleteGenre}: {genres: iGenre[], deleteGenre:(ge
         {showGenres.map((genre, index) => (<div key={index}
         className="border flex items-center">
             <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{genre.name}</span>
-            <CloseButton size={20} className="border-l px-1" onClick={() => deleteGenre([genre])} />
+            <CloseButton size={20} className="border-l px-1" onClickAction={() => deleteGenre([genre])} />
         </div>))}
         { genres.length > 2 && <div className="border flex items-center">
             <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{t("selectedGenres.more", {count: genres.length - 2})}</span>
-            <CloseButton size={20} className="border-l px-1" onClick={() => deleteGenre(genres.slice(2))} />
+            <CloseButton size={20} className="border-l px-1" onClickAction={() => deleteGenre(genres.slice(2))} />
         </div>}
     </div>);
 }

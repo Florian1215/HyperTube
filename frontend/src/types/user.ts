@@ -1,4 +1,4 @@
-import {tOauthService} from "@/components/Form";
+import {tOauthService} from "@/components/ui/Form";
 
 export interface iToken {
     access_token: string

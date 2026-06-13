@@ -1,18 +1,19 @@
 "use client";
 
 import React, {useEffect} from "react";
-import {ProfileTab, AvatarTab} from "@/components/profile/ProfileTab";
-import AuthTab from "@/components/profile/AuthTab";
-import {useAuth} from "@/context/AuthContext";
-import ProfilePage, {tTab} from "@/components/profile/ProfilePage";
-import MovieHistoryTab from "@/components/profile/HistoryTab";
-import CommentsTab from "@/components/profile/CommentTab";
 import {useRouter} from "@/i18n/navigation";
+import useAuth from "@/contexts/AuthContext";
+import MovieHistoryTab from "@/components/features/movie/MovieHistoryTab";
+import CommentsProfileTab from "@/components/features/comment/CommentsProfileTab";
+import UserProfile, {tTab} from "@/components/features/user/UserProfile";
+import AuthProfileTab from "@/components/features/auth/AuthProfileTab";
+import AvatarProfileTab from "@/components/features/user/AvatarProfileTab";
+import ProfileTab from "@/components/features/user/UserProfileTab";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
-    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsTab}];
+    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}];
 
     useEffect(() => {
         if (!loading && !user)
@@ -24,11 +25,11 @@ export default function Page() {
         return null;
 
     if (user?.oauth_method && (user.oauth_method === "42" || user.oauth_method === "github"))
-        tabs.unshift({name: "avatar", comp: AvatarTab});
+        tabs.unshift({name: "avatar", comp: AvatarProfileTab});
     else {
-        tabs.unshift({name: "auth", comp: AuthTab});
+        tabs.unshift({name: "auth", comp: AuthProfileTab});
         tabs.unshift({name: "profile", comp: ProfileTab});
     }
 
-    return <ProfilePage user={user} updateUser={updateUser} tabs={tabs} />;
+    return <UserProfile user={user} updateUserAction={updateUser} tabs={tabs} />;
 }

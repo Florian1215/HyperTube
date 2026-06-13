@@ -1,13 +1,13 @@
 "use client";
 
-import {useParams} from "next/navigation";
-import ProfilePage, {tTab} from "@/components/profile/ProfilePage";
-import MovieHistoryTab from "@/components/profile/HistoryTab";
-import CommentsTab from "@/components/profile/CommentTab";
-import {useUser} from "@/api/users";
 import React, {useEffect, useState} from "react";
-import {useHandleError} from "@/hooks/useApiQuery";
-import {ApiError} from "@/api/errors";
+import UserProfile, {tTab} from "@/components/features/user/UserProfile";
+import MovieHistoryTab from "@/components/features/movie/MovieHistoryTab";
+import useHandleError from "@/hooks/useHandleError";
+import {useUser} from "@/services/users.service";
+import CommentsTab from "@/components/features/comment/CommentsProfileTab";
+import {ApiError} from "@/services/ApiError";
+import {useParams} from "next/navigation";
 
 export default function Page() {
     const params = useParams();
@@ -28,5 +28,5 @@ export default function Page() {
     if (errorNode || !data)
         return (errorNode);
 
-    return <ProfilePage user={data.data} tabs={tabs} />;
+    return <UserProfile user={data.data} tabs={tabs} />;
 }
