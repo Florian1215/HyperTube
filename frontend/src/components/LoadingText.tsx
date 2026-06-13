@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import {useState} from "react";
 
 export default function LoadingText({center=false}) {
     const maxWidths = ["max-w-1/10", "max-w-3/10", "max-w-5/10", "max-w-7/10", "max-w-9/10"]

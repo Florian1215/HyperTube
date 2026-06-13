@@ -1,7 +1,7 @@
 "use client";
 
 import {useQuery} from "@tanstack/react-query";
-import {fetchGenres} from "@/api/genre";
+import {fetchGenres} from "@/services/genre.service";
 
 export function useGenres(language: string) {
     return useQuery({

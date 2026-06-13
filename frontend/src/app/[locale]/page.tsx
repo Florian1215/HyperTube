@@ -2,18 +2,18 @@
 
 import {iMovie} from "@/types/movie";
 import React, {useEffect, useState} from "react";
-import {MoviesCard} from "@/components/MovieCard";
-import {MoviesHero} from "@/components/MovieHero";
 import {HypertubeLogo} from "@/components/Icons";
-import GenreTags from "@/components/GenreTags";
-import Section from "@/components/Section";
-import {useAuth} from "@/context/AuthContext";
 import {iUser} from "@/types/user";
-import {useResponsiveSize} from "@/context/utils";
 import {useTranslations} from "next-intl";
-import {useMovies} from "@/api/movies";
 import Colors from "@/components/Colors";
-import {useModal} from "@/context/ModalContext";
+import useAuth from "@/contexts/AuthContext";
+import {useResponsiveSize} from "@/hooks/useResponsiveSize";
+import {useMovies} from "@/services/movies.service";
+import MoviesHero from "@/components/features/movie/MoviesHero";
+import GenreTags from "@/components/features/genre/GenreTags";
+import Section from "@/components/ui/Section";
+import MoviesCard from "@/components/features/movie/MoviesCard";
+import useModal from "@/contexts/ModalContext";
 
 export default function HomePage() {
     const {user} = useAuth();

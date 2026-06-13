@@ -1,21 +1,22 @@
-import Navbar from "@/components/nav/Navbar";
-import {ModalProvider} from "@/context/ModalContext";
-import SigninModal from "@/components/modal/Signin";
-import RegisterModal from "@/components/modal/Register";
-import {GenreModal, FilterGenreModal} from "@/components/modal/Genre";
+import Navbar from "@/components/layout/nav/Navbar";
 import "./fonts.css";
 import "./globals.css";
-import {NotificationProvider} from "@/context/NotificationContext";
-import {NotificationList} from "@/components/Notifications";
 import React from "react";
-import {AuthProvider} from "@/context/AuthContext";
-import ForgotPassword from "@/components/modal/ForgotPassword";
-import {DeleteCommentModal} from "@/components/modal/DeleteComment";
 import {NextIntlClientProvider} from "next-intl";
 import {getLocale, getMessages} from "next-intl/server";
 import Providers from "@/app/providers";
-import ResetPassword from "@/components/modal/ResetPassword";
 import Colors from "@/components/Colors";
+import {AuthProvider} from "@/contexts/AuthContext";
+import {NotificationProvider} from "@/contexts/NotificationContext";
+import {ModalProvider} from "@/contexts/ModalContext";
+import NotificationList from "@/components/ui/Notification/NotificationList";
+import SigninModal from "@/components/features/auth/SigninModal";
+import RegisterModal from "@/components/features/auth/RegisterModal";
+import {DeleteCommentModal} from "@/components/features/comment/DeleteCommentModal";
+import GenreModal from "@/components/features/genre/GenreModal";
+import FilterGenreModal from "@/components/features/genre/FilterGenreModal";
+import ForgotPasswordModal from "@/components/features/auth/ForgotPasswordModal";
+import ResetPasswordModal from "@/components/features/auth/ResetPasswordModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
@@ -36,15 +37,15 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                         <ModalProvider>
                             <NotificationList/>
 
-                            <Navbar/>
-
                             <SigninModal/>
                             <RegisterModal/>
                             <GenreModal/>
                             <FilterGenreModal/>
-                            <ForgotPassword/>
-                            <ResetPassword/>
+                            <ForgotPasswordModal/>
+                            <ResetPasswordModal/>
                             <DeleteCommentModal/>
+
+                            <Navbar/>
 
                             {children}
                         </ModalProvider>
