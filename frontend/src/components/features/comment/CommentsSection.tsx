@@ -7,7 +7,7 @@ import {useTranslations} from "next-intl";
 import {useComments} from "@/services/comments.service";
 import computeTotalPage from "@/utils/computeTotalPage";
 import Colors from "@/components/Colors";
-import ProfilePicture from "@/components/ProfilePicture";
+import ProfilePicture from "@/components/features/user/ProfilePicture";
 import NewComment from "@/components/features/comment/NewComment";
 import TextButton from "@/components/ui/Button/TextButton";
 import Comments from "@/components/features/comment/Comments";

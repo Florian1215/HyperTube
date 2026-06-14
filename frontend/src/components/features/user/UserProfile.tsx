@@ -1,7 +1,7 @@
 "use client";
 
 import React, {JSX, useState} from "react";
-import ProfilePicture from "@/components/ProfilePicture";
+import ProfilePicture from "@/components/features/user/ProfilePicture";
 import {iUser} from "@/types/user";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";

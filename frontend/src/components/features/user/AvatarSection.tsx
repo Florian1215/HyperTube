@@ -1,6 +1,6 @@
 import {useTranslations} from "next-intl";
 import {iUser} from "@/types/user";
-import ProfilePicture from "@/components/ProfilePicture";
+import ProfilePicture from "@/components/features/user/ProfilePicture";
 import Button from "@/components/ui/Button/Button";
 import TextButton from "@/components/ui/Button/TextButton";
 
