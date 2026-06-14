@@ -136,7 +136,8 @@
     },
     "filterGenre": {
       "title": "Select genres",
-      "apply": "Apply"
+      "apply": "Apply",
+      "reset": "Reset"
     }
   },
   "validationErrors": {

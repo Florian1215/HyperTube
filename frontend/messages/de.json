@@ -136,7 +136,8 @@
     },
     "filterGenre": {
       "title": "Genres auswählen",
-      "apply": "Anwenden"
+      "apply": "Anwenden",
+      "reset": "Zurücksetzen"
     }
   },
   "validationErrors": {
