@@ -336,7 +336,7 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 			ID:        comment.ID,
 			Content:   comment.Content,
 			UpdatedAt: comment.UpdatedAt,
-			User:      models.ToUserSmall(user),
+			User:      models.ToUserSmallPrivate(user),
 		})
 	}
 	
