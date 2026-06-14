@@ -3,7 +3,7 @@ import React from "react";
 import Image from "next/image";
 import {useTranslations} from "next-intl";
 
-export default function ProfilePicture({user, onClick, size = 0, color, className}: {user: iUser, onClick?: () => void, size?: 0 | 1 | 2, color?: string, className?: string}) {
+export default function ProfilePicture({user, size = 0, color, className}: {user: iUser, size?: 0 | 1 | 2, color?: string, className?: string}) {
     const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45"];
     const t = useTranslations("common");
     let children;
@@ -24,11 +24,8 @@ export default function ProfilePicture({user, onClick, size = 0, color, classNam
             children = <h1 className="text-6xl">{initial}</h1>;
     }
 
-    if (onClick !== undefined)
-        className = className + ` hover:bg-${color}-hover`;
-
-    return (<button className={`relative overflow-hidden rounded-full bg-${color} ${sizes[size]} flex items-center justify-center border shrink-0 ` + className} onClick={onClick}>
+    return (<div className={`relative overflow-hidden rounded-full bg-${color} hover:bg-${color}-hover ${sizes[size]} flex items-center justify-center border shrink-0 ` + className}>
         <div className="custom-noise" />
         {children}
-    </button>);
+    </div>);
 }

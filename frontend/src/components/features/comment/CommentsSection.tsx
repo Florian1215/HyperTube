@@ -47,6 +47,6 @@ export default function CommentsSection({movie}: {movie: iMovie}) {
                 <TextButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</TextButton>
             }
         </div>
-        <Comments user={user} comments={actualComments} setComments={setComments} index={index} setIndex={setIndex} totalPage={totalPage} />
+        <Comments currentUser={user} comments={actualComments} setComments={setComments} index={index} setIndex={setIndex} totalPage={totalPage} />
     </div>);
 }
