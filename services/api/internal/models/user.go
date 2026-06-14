@@ -43,6 +43,8 @@ type UserSmall struct {
 	Username       string `json:"username"`
 	ProfilePicture string `json:"profile_picture,omitempty"`
 	Color          string `json:"color"`
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
 }
 
 func ToUserSmall(u User) UserSmall {
@@ -51,7 +53,30 @@ func ToUserSmall(u User) UserSmall {
 		Username:       u.Username,
 		ProfilePicture: u.ProfilePicture,
 		Color:          u.Color,
+		FirstName:      u.FirstName,
+		LastName: 		u.LastName,
+
 	}
+}
+
+func ToUserSmallPrivate(u User) UserSmall {
+	return UserSmall{
+		ID:             u.ID,
+		Username:       u.Username,
+		ProfilePicture: u.ProfilePicture,
+		Color:          u.Color,
+		FirstName:      initial(u.FirstName),
+		LastName:       initial(u.LastName),
+	}
+}
+
+// initial returns the first character of s, or an empty string if s is empty.
+func initial(s string) string {
+	if s == "" {
+		return ""
+	}
+	r := []rune(s)
+	return string(r[0])
 }
 
 func IsValidUserColor(color string) bool {
