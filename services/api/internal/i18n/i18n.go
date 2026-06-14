@@ -45,6 +45,8 @@ const (
 	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
 	MsgUserNotFound                    Message = "user not found"
+	MsgUserUpdateForbidden             Message = "cannot update another user's profile"
+	MsgFailedUpdateUser                Message = "failed to update user"
 	MsgInvalidUserColor                Message = "invalid user color"
 	MsgFailedUpdateUserColor           Message = "failed to update user color"
 	MsgInvalidCredentials              Message = "invalid email, username, or password"
@@ -138,6 +140,8 @@ var translations = map[Locale]map[Message]string{
 		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
 		MsgUserNotFound:                    "utilisateur introuvable",
+		MsgUserUpdateForbidden:             "impossible de modifier le profil d'un autre utilisateur",
+		MsgFailedUpdateUser:                "échec de la mise à jour de l'utilisateur",
 		MsgInvalidUserColor:                "couleur utilisateur invalide",
 		MsgFailedUpdateUserColor:           "échec de la mise à jour de la couleur utilisateur",
 		MsgInvalidCredentials:              "email, nom d'utilisateur ou mot de passe invalide",
@@ -223,6 +227,8 @@ var translations = map[Locale]map[Message]string{
 		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
 		MsgUserNotFound:                    "Benutzer nicht gefunden",
+		MsgUserUpdateForbidden:             "das Profil eines anderen Benutzers kann nicht aktualisiert werden",
+		MsgFailedUpdateUser:                "Benutzer konnte nicht aktualisiert werden",
 		MsgInvalidUserColor:                "Benutzerfarbe ist ungültig",
 		MsgFailedUpdateUserColor:           "Benutzerfarbe konnte nicht aktualisiert werden",
 		MsgInvalidCredentials:              "E-Mail, Benutzername oder Passwort ist ungültig",

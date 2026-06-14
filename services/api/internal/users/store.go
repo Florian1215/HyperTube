@@ -3,13 +3,57 @@ package users
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"hypertube/api/internal/models"
 )
 
-var ErrUserNotFound = errors.New("user not found")
+var (
+	ErrUserNotFound  = errors.New("user not found")
+	ErrDuplicateUser = errors.New("duplicate user")
+)
+
+type DuplicateUserError struct {
+	Fields []string
+}
+
+func (e *DuplicateUserError) Error() string {
+	if len(e.Fields) == 0 {
+		return ErrDuplicateUser.Error()
+	}
+	return fmt.Sprintf("%s: %s", ErrDuplicateUser, strings.Join(e.Fields, ", "))
+}
+
+func (e *DuplicateUserError) Unwrap() error {
+	return ErrDuplicateUser
+}
+
+func duplicateUserError(fields ...string) error {
+	return &DuplicateUserError{Fields: fields}
+}
+
+func duplicateUserFields(err error) []string {
+	var duplicateErr *DuplicateUserError
+	if errors.As(err, &duplicateErr) {
+		return duplicateErr.Fields
+	}
+	return nil
+}
+
+type UpdateUserParams struct {
+	Email             *string
+	Username          *string
+	FirstName         *string
+	LastName          *string
+	PasswordHash      *string
+	ProfilePicture    *string
+	ProfilePictureSet bool
+	Color             *string
+}
 
 type Store struct {
 	db *pgxpool.Pool
@@ -58,4 +102,60 @@ func (s *Store) FindUserByID(ctx context.Context, id int64) (models.User, error)
 		return models.User{}, err
 	}
 	return u, nil
+}
+
+func (s *Store) UpdateUser(ctx context.Context, id int64, params UpdateUserParams) (models.User, error) {
+	var u models.User
+
+	profilePictureValue := any(nil)
+	if params.ProfilePicture != nil {
+		profilePictureValue = *params.ProfilePicture
+	}
+
+	err := s.db.QueryRow(ctx, `
+		UPDATE users
+		SET
+			email = COALESCE($2, email),
+			username = COALESCE($3, username),
+			first_name = COALESCE($4, first_name),
+			last_name = COALESCE($5, last_name),
+			password_hash = COALESCE($6, password_hash),
+			profile_picture = CASE WHEN $7 THEN $8 ELSE profile_picture END,
+			color = COALESCE($9, color),
+			updated_at = NOW()
+		WHERE id = $1
+		RETURNING id, email, username, first_name, last_name, COALESCE(profile_picture, ''), COALESCE(password_hash, ''), color, created_at, updated_at
+	`, id, params.Email, params.Username, params.FirstName, params.LastName, params.PasswordHash, params.ProfilePictureSet, profilePictureValue, params.Color).
+		Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName, &u.ProfilePicture, &u.PasswordHash, &u.Color, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.User{}, ErrUserNotFound
+		}
+		if isUniqueViolation(err) {
+			return models.User{}, duplicateUpdateUserError(err)
+		}
+		return models.User{}, err
+	}
+	return u, nil
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}
+
+func duplicateUpdateUserError(err error) error {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return ErrDuplicateUser
+	}
+
+	switch pgErr.ConstraintName {
+	case "users_username_key":
+		return duplicateUserError("username")
+	case "users_password_email_key":
+		return duplicateUserError("email")
+	default:
+		return ErrDuplicateUser
+	}
 }
