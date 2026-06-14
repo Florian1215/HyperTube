@@ -7,17 +7,22 @@ function getUser(userId: string, locale: string) {
     return apiClient<tResponse<iUser>>(`/users/${userId}`, locale);
 }
 
-export function patchUser(locale: string, data: string[]) {
+export function patchUser(locale: string, data: string[], userId?: string) {
     const updateData: Record<string, string> = {};
-    if (data[0])
-        updateData["email"] = data[0].trim();
-    else if (data[1])
-        updateData["first_name"] = data[1].trim();
-    else if (data[2])
-        updateData["last_name"] = data[2].trim();
-    else if (data[3])
-        updateData["username"] = data[3].trim();
-    return apiClient<tResponse<iUserToken>>(`/users`, locale, {method: "PATCH", body: JSON.stringify(data)});
+
+    if (data.length === 2) {
+        updateData[data[0]] = data[1];
+    } else {
+        if (data[0])
+            updateData["email"] = data[0].trim();
+        else if (data[1])
+            updateData["first_name"] = data[1].trim();
+        else if (data[2])
+            updateData["last_name"] = data[2].trim();
+        else if (data[3])
+            updateData["username"] = data[3].trim();
+    }
+    return apiClient<tResponse<iUserToken>>(`/users/${userId}`, locale, {method: "PATCH", body: JSON.stringify(updateData)});
 }
 
 export function postNewPassword(locale: string, data: string[]) {

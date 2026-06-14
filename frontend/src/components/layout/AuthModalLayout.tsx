@@ -1,5 +1,5 @@
 import React from "react";
-import {iUserToken} from "@/types/user";
+import {iUser, iUserToken} from "@/types/user";
 import {useRouter} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
 import useModal from "@/contexts/ModalContext";
@@ -22,14 +22,16 @@ export default function AuthModalLayout({type, t, handleForgotPassword}: {type: 
     const {login, callbackUrl, setCallbackUrl} = useAuth();
     const tSuccess = useTranslations("notifications.success");
 
-    const handleLoginRegister = (data: tResponse<iUserToken>) => {
-        login(data.data.user, data.data.access_token);
-        closeModal();
-        if (callbackUrl) {
-            router.push(callbackUrl);
-            setCallbackUrl(null);
+    const handleLoginRegister = (data: tResponse<iUserToken | iUser>) => {
+        if ("access_token" in data.data) {
+            login(data.data.user, data.data.access_token);
+            closeModal();
+            if (callbackUrl) {
+                router.push(callbackUrl);
+                setCallbackUrl(null);
+            }
+            addNotification(tSuccess(isReg ? "accountCreatedSuccess" : "login"), "success");
         }
-        addNotification(tSuccess(isReg ? "accountCreatedSuccess" : "login"), "success");
     };
 
     return (<ModalLayout onCloseAction={() => {setCallbackUrl(null); closeModal();}} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>

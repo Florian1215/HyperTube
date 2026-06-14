@@ -8,7 +8,7 @@ import {useTranslations} from "next-intl";
 import {iComment} from "@/types/comment";
 import MovieCard from "@/components/features/movie/MovieCard";
 import {Link} from "@/i18n/navigation";
-import ProfilePicture from "@/components/ProfilePicture";
+import ProfilePicture from "@/components/features/user/ProfilePicture";
 import {EditIcon, TrashIcon} from "@/components/Icons";
 import TextButton from "@/components/ui/Button/TextButton";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
