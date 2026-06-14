@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"hypertube/api/internal/auth"
 	"hypertube/api/internal/models"
 )
 
@@ -187,10 +188,222 @@ func TestGetUserMapsStoreErrors(t *testing.T) {
 	}
 }
 
+func TestUpdateUserAppliesPartialProfileUpdate(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {
+			ID:             42,
+			Email:          "old@example.com",
+			Username:       "old_username",
+			FirstName:      "Old",
+			LastName:       "Name",
+			ProfilePicture: "https://example.com/old.png",
+			Color:          models.UserColorPurple,
+		},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{
+		"email":"  New@Example.COM  ",
+		"username":"  new_username  ",
+		"first_name":"  Alice  ",
+		"last_name":"  Liddell  ",
+		"profile_picture":"  https://example.com/avatar.png  ",
+		"color":"green"
+	}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !store.updated || store.updatedID != 42 {
+		t.Fatalf("expected update for user 42, got updated=%v id=%d", store.updated, store.updatedID)
+	}
+	assertStringPointer(t, "email", store.updatedParams.Email, "new@example.com")
+	assertStringPointer(t, "username", store.updatedParams.Username, "new_username")
+	assertStringPointer(t, "first_name", store.updatedParams.FirstName, "Alice")
+	assertStringPointer(t, "last_name", store.updatedParams.LastName, "Liddell")
+	assertStringPointer(t, "profile_picture", store.updatedParams.ProfilePicture, "https://example.com/avatar.png")
+	assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
+
+	var body struct {
+		Data models.User `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Email != "new@example.com" || body.Data.Username != "new_username" {
+		t.Fatalf("unexpected response user: %+v", body.Data)
+	}
+	if body.Data.Color != models.UserColorGreen {
+		t.Fatalf("expected response color green, got %q", body.Data.Color)
+	}
+}
+
+func TestUpdateUserCanRemoveProfilePicture(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, Email: "alice@example.com", Username: "alice", ProfilePicture: "https://example.com/avatar.png"},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"profile_picture":null}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !store.updatedParams.ProfilePictureSet {
+		t.Fatalf("expected profile picture to be marked for update")
+	}
+	if store.updatedParams.ProfilePicture != nil {
+		t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
+	}
+}
+
+func TestUpdateUserHashesPassword(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, Email: "alice@example.com", Username: "alice"},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"password":"new-secret-password"}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.updatedParams.PasswordHash == nil {
+		t.Fatalf("expected password hash to be sent to store")
+	}
+	if *store.updatedParams.PasswordHash == "new-secret-password" {
+		t.Fatalf("password was stored as plaintext")
+	}
+	if !auth.CheckPassword(*store.updatedParams.PasswordHash, "new-secret-password") {
+		t.Fatalf("stored password hash does not match password")
+	}
+	if strings.Contains(rec.Body.String(), "new-secret-password") || strings.Contains(rec.Body.String(), *store.updatedParams.PasswordHash) {
+		t.Fatalf("response leaked password material: %s", rec.Body.String())
+	}
+}
+
+func TestUpdateUserRejectsDifferentAuthenticatedUser(t *testing.T) {
+	store := &fakeUserStore{}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "7", `{"color":"green"}`)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called for another user's profile")
+	}
+	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "FORBIDDEN" {
+		t.Fatalf("expected FORBIDDEN, got %q", got)
+	}
+}
+
+func TestUpdateUserRejectsMissingAuthContext(t *testing.T) {
+	handler := NewHandler(&fakeUserStore{})
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/42", strings.NewReader(`{"color":"green"}`))
+	req.SetPathValue("id", "42")
+	rec := httptest.NewRecorder()
+
+	handler.UpdateUser(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
+func TestUpdateUserValidationErrors(t *testing.T) {
+	tests := []struct {
+		name       string
+		pathID     string
+		body       string
+		wantStatus int
+		wantCode   string
+		wantField  string
+	}{
+		{name: "invalid id", pathID: "abc", body: `{"color":"green"}`, wantStatus: http.StatusNotFound, wantCode: "NOT_FOUND"},
+		{name: "malformed JSON", pathID: "42", body: `{"color":`, wantStatus: http.StatusBadRequest, wantCode: "BAD_REQUEST"},
+		{name: "unknown field", pathID: "42", body: `{"role":"admin"}`, wantStatus: http.StatusBadRequest, wantCode: "BAD_REQUEST"},
+		{name: "empty object", pathID: "42", body: `{}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "body"},
+		{name: "invalid color", pathID: "42", body: `{"color":"orange"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "color"},
+		{name: "invalid email", pathID: "42", body: `{"email":"not-an-email"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "email"},
+		{name: "short password", pathID: "42", body: `{"password":"short"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "password"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeUserStore{}
+			handler := NewHandler(store)
+
+			rec := serveUpdateUser(t, handler, 42, tt.pathID, tt.body)
+
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
+			}
+			body := decodeUsersErrorEnvelope(t, rec)
+			if body.Error.Code != tt.wantCode {
+				t.Fatalf("expected %s, got %q", tt.wantCode, body.Error.Code)
+			}
+			if tt.wantField != "" {
+				if _, ok := body.Error.Fields[tt.wantField]; !ok {
+					t.Fatalf("expected field error for %q, got %+v", tt.wantField, body.Error.Fields)
+				}
+			}
+			if store.updated {
+				t.Fatalf("store update should not be called on validation error")
+			}
+		})
+	}
+}
+
+func TestUpdateUserMapsStoreErrors(t *testing.T) {
+	tests := []struct {
+		name       string
+		err        error
+		wantStatus int
+		wantCode   string
+		wantField  string
+	}{
+		{name: "missing user", err: ErrUserNotFound, wantStatus: http.StatusNotFound, wantCode: "NOT_FOUND"},
+		{name: "duplicate email", err: duplicateUserError("email"), wantStatus: http.StatusConflict, wantCode: "ALREADY_EXIST_ERROR", wantField: "email"},
+		{name: "duplicate username", err: duplicateUserError("username"), wantStatus: http.StatusConflict, wantCode: "ALREADY_EXIST_ERROR", wantField: "username"},
+		{name: "internal", err: errors.New("db down"), wantStatus: http.StatusInternalServerError, wantCode: "INTERNAL_ERROR"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewHandler(&fakeUserStore{updateErr: tt.err})
+
+			rec := serveUpdateUser(t, handler, 42, "42", `{"color":"green"}`)
+
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
+			}
+			body := decodeUsersErrorEnvelope(t, rec)
+			if body.Error.Code != tt.wantCode {
+				t.Fatalf("expected %s, got %q", tt.wantCode, body.Error.Code)
+			}
+			if tt.wantField != "" {
+				if _, ok := body.Error.Fields[tt.wantField]; !ok {
+					t.Fatalf("expected field error for %q, got %+v", tt.wantField, body.Error.Fields)
+				}
+			}
+		})
+	}
+}
+
 type fakeUserStore struct {
-	users map[int64]models.User
-	list  []models.User
-	err   error
+	users         map[int64]models.User
+	list          []models.User
+	err           error
+	updateErr     error
+	updated       bool
+	updatedID     int64
+	updatedParams UpdateUserParams
 }
 
 func (s *fakeUserStore) ListUsers(_ context.Context) ([]models.User, error) {
@@ -208,6 +421,68 @@ func (s *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, 
 		return u, nil
 	}
 	return models.User{}, ErrUserNotFound
+}
+
+func (s *fakeUserStore) UpdateUser(_ context.Context, id int64, params UpdateUserParams) (models.User, error) {
+	s.updated = true
+	s.updatedID = id
+	s.updatedParams = params
+
+	if s.updateErr != nil {
+		return models.User{}, s.updateErr
+	}
+
+	u := models.User{ID: id}
+	if existing, ok := s.users[id]; ok {
+		u = existing
+	}
+	if params.Email != nil {
+		u.Email = *params.Email
+	}
+	if params.Username != nil {
+		u.Username = *params.Username
+	}
+	if params.FirstName != nil {
+		u.FirstName = *params.FirstName
+	}
+	if params.LastName != nil {
+		u.LastName = *params.LastName
+	}
+	if params.PasswordHash != nil {
+		u.PasswordHash = *params.PasswordHash
+	}
+	if params.ProfilePictureSet {
+		u.ProfilePicture = ""
+		if params.ProfilePicture != nil {
+			u.ProfilePicture = *params.ProfilePicture
+		}
+	}
+	if params.Color != nil {
+		u.Color = *params.Color
+	}
+	return u, nil
+}
+
+func serveUpdateUser(t *testing.T, handler *Handler, authenticatedUserID int64, pathID string, body string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/"+pathID, strings.NewReader(body))
+	req.SetPathValue("id", pathID)
+	rec := httptest.NewRecorder()
+
+	auth.DevAuthenticateAs(authenticatedUserID)(http.HandlerFunc(handler.UpdateUser)).ServeHTTP(rec, req)
+	return rec
+}
+
+func assertStringPointer(t *testing.T, name string, got *string, want string) {
+	t.Helper()
+
+	if got == nil {
+		t.Fatalf("expected %s to be set to %q, got nil", name, want)
+	}
+	if *got != want {
+		t.Fatalf("expected %s %q, got %q", name, want, *got)
+	}
 }
 
 func decodeUsersErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
