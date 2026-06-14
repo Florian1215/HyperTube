@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
-import {iUserToken} from "@/types/user";
+import {iUser, iUserToken} from "@/types/user";
 import {OAuthIcon} from "@/components/Icons";
 import {usePathname} from "@/i18n/navigation";
 import useApiMutation from "@/hooks/useApiMutation";
@@ -15,7 +15,7 @@ export type tOauthService = "42" | "github";
 type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
 
-export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword, token}: {formType: formType, request: (locale: string, data: string[], token?: string) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, token?: string}) {
+export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken | iUser>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
@@ -83,7 +83,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
 
     const onSubmit = () => {
         const makeRequest = async () => {
-            return await execute((locale) => request(locale, fieldsValue, token));
+            return await execute((locale) => request(locale, fieldsValue, extraParam));
         };
 
         if (disableBtn)

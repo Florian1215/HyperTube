@@ -10,16 +10,18 @@ export default function ProfileSection({user, updateUser}: {user: iUser, updateU
     const t = useTranslations("profile.fields");
     const tSuccess = useTranslations("notifications.success");
 
-    const handleUpdateUser = (data: tResponse<iUserToken>) => {
-        if (data.data.user.email !== user.email)
-            addNotification(tSuccess("emailChanged"), "warning");
-        if (updateUser)
-            updateUser(data.data.user);
-        addNotification(tSuccess("infoChanged"), "success");
+    const handleUpdateUser = (data: tResponse<iUserToken | iUser>) => {
+        if ("username" in data.data) {
+            if (data.data.email !== user.email)
+                addNotification(tSuccess("emailChanged"), "warning");
+            if (updateUser)
+                updateUser(data.data);
+            addNotification(tSuccess("infoChanged"), "success");
+        }
     };
 
     return (<div className="flex flex-col gap-4 items-start">
-        <Form formType={"update"} request={patchUser} handleRequest={handleUpdateUser} t={t}
+        <Form formType={"update"} request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={String(user.id)}
               fields={["email", "first_name", "last_name", "username"]} />
     </div>);
 }
