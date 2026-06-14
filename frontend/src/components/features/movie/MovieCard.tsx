@@ -22,7 +22,6 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
         </div>);
     }
 
-
     return (<LinkLoginRequired href={"/movies/" + movie.imdb_id} className={containerClass + " " + className}>
         <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
@@ -34,8 +33,9 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
             <div className="custom-noise" />
             <div className={watchingPercent === 100 ? "size-full absolute inset-0 bg-black/60" : "bg-gradient"} />
             {showTitle &&
-                <h3 className="relative text-white hover:underline decoration-2 underline-offset-3 z-10 mx-auto">{movie.title}
-                    <span className="absolute -right-11 font-hairline text-lg tracking-normal">{movie.year}</span>
+                <h3 className="pl-[8%] flex gap-1 justify-center w-full z-10 text-white">
+                    <span className="max-w-8/10 custom-movie-title">{movie.title}</span>
+                    <span className="font-hairline text-lg tracking-normal">{movie.year}</span>
                 </h3>}
         </div>
     </LinkLoginRequired>);

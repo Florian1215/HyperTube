@@ -13,30 +13,25 @@ import Image from "next/image";
 export default function MovieCardList({movie, setFilterGenre} : {movie: iMovie | null, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
     const t = useTranslations("movie");
-    let title = movie?.title;
     const [isLoaded, setIsLoaded] = useState(false);
 
-    if (title && title.length > 20)
-        title = title.slice(0, 18) + "...";
-
-    return (<tr className="border-b group">
+    return (<tr className="border-b">
             <td className="p-2 xl:p-4">
                 <div className="border overflow-hidden aspect-3/2 relative">
                     <div className="custom-noise" />
                     {!isLoaded && (<div className="custom-loading" />)}
                     {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
                         <Image
-                            className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+                            className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`}
                             width={600} height={400} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}
-                            loading="eager"
-                            onLoad={() => setIsLoaded(true)}
+                            loading="eager" onLoad={() => setIsLoaded(true)}
                         />
                     </LinkLoginRequired>}
                 </div>
             </td>
-            <td className="sm:pl-3">
-                {movie ? <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="flex gap-1 sm:gap-2">
-                    <h1 className="hover:underline decoration-2 underline-offset-3 text-nowrap">{title}</h1>
+            <td className="sm:px-3">
+                {movie ? <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="flex gap-1 sm:gap-2 w-full">
+                    <h1 className="max-w-9/10 custom-movie-title">{movie.title}</h1>
                     <span className="responsive-text-hairline">{movie.year}</span>
                 </LinkLoginRequired> :
                     <LoadingText />}

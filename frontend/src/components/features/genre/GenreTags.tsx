@@ -34,7 +34,7 @@ export default function GenreTags({genreIds, genreCount, className="", limit, se
 
     return (<div className={"flex gap-2 sm:gap-4 flex-wrap " + className}>
         {showGenres.map((genre) => (<GenreTag key={genre.id} closeModal={closeModal} setFilterGenre={setFilterGenreAction}>{genre}</GenreTag>))}
-        {addLimit && <button className="relative right-2 font-8xl hover:underline" onClick={() => {
+        {addLimit && <button className="relative font-8xl hover:underline" onClick={() => {
             openModal({type: "genre", genres: genreIds, setFilterGenre: setFilterGenreAction});
         }}>...</button>}
     </div>);
