@@ -12,6 +12,7 @@
   },
   "home": {
     "continueWatching": "Weiter ansehen",
+    "featured": "Empfohlen",
     "popular": "Beliebt",
     "mostRated": "Am besten bewertet",
     "directStream": "Direkt-Streaming"
@@ -19,6 +20,7 @@
   "movies": {
     "searchPlaceholder": "Nach einem Film suchen...",
     "noResults": "Kein Film gefunden",
+    "noResultsResetFilter": "Keine Ergebnisse. Filter zurücksetzen?",
     "sort": {
       "title": "Titel",
       "year": "Jahr",
@@ -134,7 +136,8 @@
     },
     "filterGenre": {
       "title": "Genres auswählen",
-      "apply": "Anwenden"
+      "apply": "Anwenden",
+      "reset": "Zurücksetzen"
     }
   },
   "validationErrors": {
@@ -172,7 +175,8 @@
       "notFoundUser": "Benutzer nicht gefunden",
       "missingToken": "Token fehlt.",
       "invalidToken": "Token ungültig oder abgelaufen.",
-      "invalidQueryParameter": "Ungültiger Abfrageparameter."
+      "invalidQueryParameter": "Ungültiger Abfrageparameter.",
+      "notFound": "Seite '{path}' nicht gefunden."
     }
   }
 }

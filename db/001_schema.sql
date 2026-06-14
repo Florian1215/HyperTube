@@ -23,13 +23,16 @@ CREATE TABLE IF NOT EXISTS torrents (
     size        FLOAT   NOT NULL,
     language    TEXT    NOT NULL,
     seeds       TEXT    NOT NULL,
-    UNIQUE (imdbid, url)
+    UNIQUE (url)
 );
 
 CREATE TABLE IF NOT EXISTS featured_movies (
+    imdbid       TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS default_movies (
     imdbid       TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE,
     position INTEGER NOT NULL,
-    UNIQUE (position, imdbid),
     PRIMARY KEY (imdbid)
 );
 

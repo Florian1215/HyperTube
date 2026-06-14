@@ -24,6 +24,7 @@ type MoviesHandler struct {
 }
 
 type movieStore interface {
+	listDefault(ctx context.Context) ([]models.Movie, error)
 	listFeatured(ctx context.Context) ([]models.Movie, error)
 	findByID(ctx context.Context, id string) (*models.Movie, error)
 	UpsertMovie(ctx context.Context, m models.Movie) error
@@ -61,8 +62,24 @@ func NewMoviesHandler(store movieStore, userStore userStore, searchers []MovieSe
 	return &MoviesHandler{store: store, userStore: userStore, searchers: searchers, tmdb: tmdb}
 }
 
-// GetMovies returns a list of movies.
-func (h *MoviesHandler) GetMovies(w http.ResponseWriter, r *http.Request) {
+// GetDefaultMovies returns a list of tracker wide popular movies.
+func (h *MoviesHandler) GetDefaultMovies(w http.ResponseWriter, r *http.Request) {
+	movies, err := h.store.listDefault(r.Context())
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
+		return
+	}
+
+	movieResponse := make([]movieResponse, len(movies))
+	for i, m := range movies {
+		movieResponse[i] = toMovieResponse(m)
+	}
+	respond.List(w, http.StatusOK, movieResponse)
+}
+
+// GetFeatured.Movies returns a list of curated movies
+func (h *MoviesHandler) GetFeaturedMovies(w http.ResponseWriter, r *http.Request) {
 	movies, err := h.store.listFeatured(r.Context())
 	if err != nil {
 		log.Println("db err:", err)

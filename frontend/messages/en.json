@@ -12,6 +12,7 @@
   },
   "home": {
     "continueWatching": "Continue watching",
+    "featured": "Featured",
     "popular": "Popular",
     "mostRated": "Most rated",
     "directStream": "Direct Streaming"
@@ -19,6 +20,7 @@
   "movies": {
     "searchPlaceholder": "Search for a movie...",
     "noResults": "No movie found",
+    "noResultsResetFilter": "No results. Reset filters?",
     "sort": {
       "title": "Title",
       "year": "Year",
@@ -134,7 +136,8 @@
     },
     "filterGenre": {
       "title": "Select genres",
-      "apply": "Apply"
+      "apply": "Apply",
+      "reset": "Reset"
     }
   },
   "validationErrors": {
@@ -172,7 +175,8 @@
       "notFoundUser": "User not found",
       "missingToken": "Token is missing.",
       "invalidToken": "Token is invalid or has expired.",
-      "invalidQueryParameter": "Invalid query parameter."
+      "invalidQueryParameter": "Invalid query parameter.",
+      "notFound": "Page '{path}' not found."
     }
   }
 }

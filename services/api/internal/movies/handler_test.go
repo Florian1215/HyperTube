@@ -22,6 +22,10 @@ type fakeStore struct {
 	createdComment    models.Comment
 }
 
+func (f *fakeStore) listDefault(_ context.Context) ([]models.Movie, error) {
+	return f.movies, f.err
+}
+
 func (f *fakeStore) listFeatured(_ context.Context) ([]models.Movie, error) {
 	return f.movies, f.err
 }
@@ -128,7 +132,7 @@ func TestGetMovies_OK(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/movies", nil)
 	rec := httptest.NewRecorder()
-	h.GetMovies(rec, req)
+	h.GetDefaultMovies(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -160,7 +164,7 @@ func TestGetMovies_Empty(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/movies", nil)
 	rec := httptest.NewRecorder()
-	h.GetMovies(rec, req)
+	h.GetDefaultMovies(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -190,7 +194,7 @@ func TestGetMovies_StoreError(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/movies", nil)
 	rec := httptest.NewRecorder()
-	h.GetMovies(rec, req)
+	h.GetDefaultMovies(rec, req)
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d", rec.Code)
