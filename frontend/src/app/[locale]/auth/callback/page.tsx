@@ -1,10 +1,10 @@
 "use client";
 
 import React, {useEffect} from "react";
-import {useAuth} from "@/context/AuthContext";
 import {useTranslations} from "next-intl";
 import {useRouter} from "@/i18n/navigation";
-import {useNotification} from "@/context/NotificationContext";
+import useAuth from "@/contexts/AuthContext";
+import useNotification from "@/contexts/NotificationContext";
 
 export default function OAuthCallbackPage() {
     const t = useTranslations("auth.oauth");
@@ -32,7 +32,8 @@ export default function OAuthCallbackPage() {
             addNotification(tError("invalidQueryParameter"), "error");
         }
         router.push(redirect);
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tError]);
 
     return (<p className="small-text">{t("loadingAuth")}</p>);
 }

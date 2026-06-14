@@ -36,7 +36,7 @@ func setupTestServer(t *testing.T) *httptest.Server {
 	handler := NewMoviesHandler(store, nil, nil, nil)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /movies", handler.GetMovies)
+	mux.HandleFunc("GET /movies", handler.GetDefaultMovies)
 	mux.HandleFunc("GET /movies/{id}", handler.GetMoviesId)
 
 	return httptest.NewServer(mux)

@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -158,6 +159,11 @@ func (c *Client) get(ctx context.Context, rawURL string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusTooManyRequests {
+		log.Println("C411 rate limit exceeded (429) - wait 1 second before retrying")
+		time.Sleep(time.Second)
+		return c.get(ctx, rawURL)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}

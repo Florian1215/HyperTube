@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"hypertube/api/internal/models"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"hypertube/api/internal/models"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -45,6 +46,31 @@ func toMovie(r movieRow) models.Movie {
 	}
 }
 
+func (s *Store) listDefault(ctx context.Context) ([]models.Movie, error) {
+	rows, err := s.db.Query(ctx, `
+		SELECT m.imdbid, m.tmdbid, m.title, m.year,
+		       m.poster_url, m.backdrop_url, m.note, m.genre,
+		       m.summary
+		FROM movies m
+		JOIN default_movies f ON f.imdbid = m.imdbid
+		ORDER BY f.position
+	`)
+	if err != nil {
+		return nil, err
+	}
+
+	movieRows, err := pgx.CollectRows(rows, pgx.RowToStructByName[movieRow])
+	if err != nil {
+		return nil, err
+	}
+
+	movies := make([]models.Movie, len(movieRows))
+	for i, r := range movieRows {
+		movies[i] = toMovie(r)
+	}
+	return movies, nil
+}
+
 func (s *Store) listFeatured(ctx context.Context) ([]models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
@@ -52,8 +78,7 @@ func (s *Store) listFeatured(ctx context.Context) ([]models.Movie, error) {
 		       m.summary
 		FROM movies m
 		JOIN featured_movies f ON f.imdbid = m.imdbid
-		ORDER BY f.position
-	`)
+		`)
 	if err != nil {
 		return nil, err
 	}
@@ -177,11 +202,11 @@ func (s *Store) UpsertTorrent(ctx context.Context, ts models.Torrent) error {
 	return err
 }
 
-func (s *Store) UpsertFeatured(ctx context.Context, imdbId string, position int) error {
+func (s *Store) UpsertDefault(ctx context.Context, imdbId string, position int) error {
 	_, err := s.db.Exec(ctx, `
-		INSERT INTO featured_movies (imdbid, position)
+		INSERT INTO default_movies (imdbid, position)
 		VALUES ($1, $2)
-		ON CONFLICT (imdbid, position) DO NOTHING
+		ON CONFLICT (imdbid) DO NOTHING
 	`, imdbId, position)
 	return err
 }
