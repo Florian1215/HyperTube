@@ -43,12 +43,6 @@ type movieDetailResponse struct {
 }
 
 func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailResponse {
-	var defaultSummary string
-	if d.Summary == "" {
-		defaultSummary = m.Summary
-	} else {
-		defaultSummary = d.Summary
-	}
 	return movieDetailResponse{
 		ImdbID:           m.ImdbID,
 		TmdbID:           m.TmdbID,
@@ -59,7 +53,7 @@ func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailRes
 		BackdropURLExtra: d.ExtraBackdrops,
 		Note:             m.Note,
 		Genre:            m.Genre,
-		Summary:          defaultSummary,
+		Summary:          d.Summary,
 		Director:         firstDirector(d.Director),
 		Cast:             d.Cast,
 		Runtime:          d.Runtime,
