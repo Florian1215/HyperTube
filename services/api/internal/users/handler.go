@@ -36,7 +36,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 	result := make([]models.UserSmall, 0, len(users))
 	for _, u := range users {
-		result = append(result, models.ToUserSmall(u))
+		result = append(result, models.ToUserSmallPrivate(u))
 	}
 
 	respond.List(w, http.StatusOK, result)
@@ -61,5 +61,5 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.Data(w, http.StatusOK, models.ToUserSmall(user))
+	respond.Data(w, http.StatusOK, models.ToUserSmallPrivate(user))
 }

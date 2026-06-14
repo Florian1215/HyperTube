@@ -43,6 +43,8 @@ type UserSmall struct {
 	Username       string `json:"username"`
 	ProfilePicture string `json:"profile_picture,omitempty"`
 	Color          string `json:"color"`
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
 }
 
 func ToUserSmall(u User) UserSmall {
@@ -51,6 +53,20 @@ func ToUserSmall(u User) UserSmall {
 		Username:       u.Username,
 		ProfilePicture: u.ProfilePicture,
 		Color:          u.Color,
+		FirstName:      u.FirstName,
+		LastName: 		u.LastName,
+
+	}
+}
+
+func ToUserSmallPrivate(u User) UserSmall {
+	return UserSmall{
+		ID:             u.ID,
+		Username:       u.Username,
+		ProfilePicture: u.ProfilePicture,
+		Color:          u.Color,
+		FirstName:      u.FirstName[:1],
+		LastName: 		u.LastName[:1],
 	}
 }
 
