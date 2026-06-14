@@ -20,6 +20,7 @@
   "movies": {
     "searchPlaceholder": "Search for a movie...",
     "noResults": "No movie found",
+    "noResultsResetFilter": "No results. Reset filters?",
     "sort": {
       "title": "Title",
       "year": "Year",
@@ -135,7 +136,8 @@
     },
     "filterGenre": {
       "title": "Select genres",
-      "apply": "Apply"
+      "apply": "Apply",
+      "reset": "Reset"
     }
   },
   "validationErrors": {

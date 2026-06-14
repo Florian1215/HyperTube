@@ -20,6 +20,7 @@
   "movies": {
     "searchPlaceholder": "Rechercher un film...",
     "noResults": "Aucun film trouvé",
+    "noResultsResetFilter": "Aucun résultat. Réinitialiser les filtres ?",
     "sort": {
       "title": "Titre",
       "year": "Année",
@@ -135,7 +136,8 @@
     },
     "filterGenre": {
       "title": "Sélectionner des genres",
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "reset": "Réinitialiser"
     }
   },
   "validationErrors": {

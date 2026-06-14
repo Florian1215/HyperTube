@@ -3,7 +3,7 @@ import {useTranslations} from "next-intl";
 import {useMovies} from "@/services/movies.service";
 import computeTotalPage from "@/utils/computeTotalPage";
 import Pagination from "@/components/ui/Pagination";
-import MoviesCard from "@/components/features/movie/MoviesCard";
+import MoviesGrid from "@/components/features/movie/MoviesGrid";
 
 export default function MovieHistoryTab() {
     const [index, setIndex] = useState(0);
@@ -15,6 +15,6 @@ export default function MovieHistoryTab() {
     if (!watchMovies || watchMovies.data.length === 0)
         return (<p className="small-text">{t("noMoviesYet")}</p>);
     return (<Pagination currenIndex={index} onClick={changeIndex} totalPage={totalPage}>
-        <MoviesCard movieSets={watchMovies.data}/>
+        <MoviesGrid movieSets={watchMovies.data}/>
     </Pagination>);
 }

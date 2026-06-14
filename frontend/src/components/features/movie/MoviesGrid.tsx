@@ -3,7 +3,7 @@ import {useResponsiveSize} from "@/hooks/useResponsiveSize";
 import {iMovie} from "@/types/movie";
 import MovieCard from "@/components/features/movie/MovieCard";
 
-export default function MoviesCard({movieSets, setLimit, className} : {movieSets?: iMovie[], setLimit?: boolean, className?: string}) {
+export default function MoviesGrid({movieSets, setLimit, className} : {movieSets?: iMovie[], setLimit?: boolean, className?: string}) {
     const {user} = useAuth();
     const size = useResponsiveSize();
 
