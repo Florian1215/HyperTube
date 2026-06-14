@@ -25,6 +25,8 @@ export default function useHandleError() {
                     openModal({type: "signin"})
                 }>{tError("loginRequired")}</p></button>);
             } else if (error.status === 404)
+                addNotification(tError("notFound" + translation), "error");
+                router.push("/");
                 return (<p className="small-text">{tError("notFound" + translation)}</p>);
         } else
             addNotification(tError("network"), "error");
