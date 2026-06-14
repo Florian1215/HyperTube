@@ -160,7 +160,6 @@
     "success": {
       "passwordChanged": "Ihr Passwort wurde aktualisiert.",
       "newPasswordSet": "Ihr neues Passwort wurde festgelegt, Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
-      "emailChanged": "Ihre E-Mail-Adresse wurde aktualisiert. Eine Bestätigungs-E-Mail wurde gesendet, um die Änderung zu bestätigen.",
       "emailResetPassword": "Eine E-Mail zum Zurücksetzen Ihres Passworts wurde gesendet.",
       "infoChanged": "Ihre Profilinformationen wurden aktualisiert.",
       "login": "Sie sind jetzt erfolgreich angemeldet.",
