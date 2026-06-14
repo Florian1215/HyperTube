@@ -16,7 +16,7 @@ export default function ModalLayout({children, onCloseAction, title}: {children:
     }, [onCloseAction]);
 
     return (<div onClick={onCloseAction} className="fixed inset-0 flex justify-center items-center z-50 bg-black/50">
-        <div onClick={(e) => e.stopPropagation()} className="p-6 bg-white custom-shadow-m border min-w-9/10 sm:min-w-90 max-w-9/10 sm:max-w-none">
+        <div onClick={(e) => e.stopPropagation()} className="p-6 z-60 bg-white custom-shadow-m border min-w-9/10 sm:min-w-90 max-w-9/10 sm:max-w-none">
             <div className="flex flex-col items-start">
                 <div className="flex justify-between mb-8 w-full">
                     <span className="uppercase font-wide font-bold font-8xl max-w-70">{title}</span>
@@ -25,6 +25,6 @@ export default function ModalLayout({children, onCloseAction, title}: {children:
                 {children}
             </div>
         </div>
-        <div className="custom-noise-bg" />
+        <div className="custom-noise-bg z-40" />
     </div>);
 }
