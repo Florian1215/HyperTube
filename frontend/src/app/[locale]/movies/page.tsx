@@ -188,15 +188,13 @@ function SelectedGenre({genres, deleteGenre}: {genres: iGenre[], deleteGenre:(ge
     const showGenres = genres.slice(0, 2);
     const t = useTranslations("movies");
 
+    const GenreTag = (id: number, name: string, onClick: () => void) => <div key={id} className="border flex items-center">
+        <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{name}</span>
+        <CloseButton size={20} className="border-l px-1" onClickAction={onClick} />
+    </div>;
+
     return (<div className="flex gap-2">
-        {showGenres.map((genre, index) => (<div key={index}
-        className="border flex items-center">
-            <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{genre.name}</span>
-            <CloseButton size={20} className="border-l px-1" onClickAction={() => deleteGenre([genre])} />
-        </div>))}
-        { genres.length > 2 && <div className="border flex items-center">
-            <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{t("selectedGenres.more", {count: genres.length - 2})}</span>
-            <CloseButton size={20} className="border-l px-1" onClickAction={() => deleteGenre(genres.slice(2))} />
-        </div>}
+        {showGenres.map((genre, index) => GenreTag(index, genre.name, () => deleteGenre([genre])))}
+        {genres.length > 2 && GenreTag(-1, t("selectedGenres.more", {count: genres.length - 2}), () => deleteGenre(genres.slice(2)))}
     </div>);
 }
