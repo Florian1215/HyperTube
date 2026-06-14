@@ -20,6 +20,7 @@
   "movies": {
     "searchPlaceholder": "Nach einem Film suchen...",
     "noResults": "Kein Film gefunden",
+    "noResultsResetFilter": "Keine Ergebnisse. Filter zurücksetzen?",
     "sort": {
       "title": "Titel",
       "year": "Jahr",

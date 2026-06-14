@@ -3,7 +3,7 @@
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
 import React, {useEffect, useRef, useState} from "react";
-import {GridIcon, ListIcon, SortIcon} from "@/components/Icons";
+import {GridIcon, ListIcon} from "@/components/Icons";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {useGenres} from "@/hooks/useGenres";
@@ -12,15 +12,13 @@ import {useMovies} from "@/services/movies.service";
 import computeTotalPage from "@/utils/computeTotalPage";
 import Pagination from "@/components/ui/Pagination";
 import CloseButton from "@/components/ui/Button/CloseButton";
-import useModal from "@/contexts/ModalContext";
-import {useResponsiveSize} from "@/hooks/useResponsiveSize";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
-import MovieCardList from "@/components/features/movie/MovieCardList";
+import MoviesList from "@/components/features/movie/MoviesList";
 
 type tViewType = | "grid" | "list";
-type tSort = "title" | "genre" | "grade" | "year";
 
-interface iSort {
+export type tSort = "title" | "genre" | "grade" | "year";
+export interface iSort {
     type?: tSort;
     side: boolean;
 }
@@ -89,112 +87,12 @@ function Filter({viewType, onClick}: {viewType: tViewType, onClick: (value: tVie
 }
 
 function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[], viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
-    const {openModal} = useModal();
-    const [filterGenre, setFilterGenre] = useState<iGenre[]>(genre === undefined ? [] : [genre])
-    const size = useResponsiveSize();
     const t = useTranslations("movies");
 
-    const noResult = () => (<p className="small-text">{t("noResults")}</p>);
-
     if (movies && movies.length === 0)
-        return noResult();
+        return (<p className="small-text">{t("noResults")}</p>);
 
     if (viewType === "grid")
         return (<MoviesGrid movieSets={movies}/>);
-
-    const sortOptions: {type: tSort, label: string}[] = [
-        {type: "title", label: t("sort.title")},
-        {type: "year", label: t("sort.year")},
-        {type: "genre", label: t("sort.genre")},
-        {type: "grade", label: t("sort.rating")},
-    ];
-    let sortedMovies = movies;
-    if (sortedMovies) {
-        if (sort.type === "grade")
-            sortedMovies = sortedMovies.sort((a, b) => a.note - b.note);
-        else if (sort.type === "year")
-            sortedMovies = sortedMovies.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-        else if (sort.type === "title")
-            sortedMovies = sortedMovies.sort((a, b) => b.title.localeCompare(a.title));
-
-        if (sort.side)
-            sortedMovies = sortedMovies.reverse();
-
-        if (filterGenre.length > 0 && size === "xl")
-            sortedMovies = sortedMovies.filter(m => {
-                for (let i = 0; i < filterGenre.length; i++) {
-                    if (m.genres && !m.genres.includes(filterGenre[i].id))
-                        return false;
-                }
-                return true;
-            })
-    }
-
-
-    const handleSort = (sortOption: tSort) => {
-        if (sortOption === "genre")
-            openModal({type: "filter-genre", filterGenre: [filterGenre, setFilterGenre]})
-        else
-            changeSort(sortOption, sort.type === sortOption ? !sort.side : true)
-    }
-
-    const deleteGenre = (genre: iGenre[]) => {
-        let newGenre = filterGenre.filter(g => !genre.find(deletedGenre => deletedGenre.id === g.id));
-        if (newGenre.length === filterGenre.length)
-            newGenre = filterGenre.slice(0, 2);
-        setFilterGenre(newGenre);
-    }
-
-    const classNames = ["sm:pl-3", "", "hidden lg:table-cell", "hidden sm:table-cell"]
-
-    return (<div>
-        <table className="table-fixed w-full overflow-hidden">
-            <colgroup>
-                <col className="w-30 sm:w-55 xl:w-80" />
-                <col />
-                <col className="w-0" />
-                <col className="w-1/4 hidden lg:table-column" />
-                <col className="w-15 hidden sm:table-column" />
-                <col className="w-32" />
-            </colgroup>
-
-            <thead>
-                <tr className="text-left align-top">
-                    <th />
-                    {sortOptions.map((sortOption, i) =>
-                        <th key={sortOption.type} className={classNames[i]}>
-                            <button className={"relative gap-1 flex items-center capitalize text-nowrap font-normal hover:underline text-xs sm:text-base" + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
-                                    onClick={() => handleSort(sortOption.type)}>
-                                {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} />}
-                            </button>
-                            {sortOption.type === "genre" && <SelectedGenre genres={filterGenre} deleteGenre={deleteGenre}/>}
-                        </th>
-                    )}
-                    <th />
-                </tr>
-            </thead>
-            <tbody>
-                {sortedMovies ?
-                    sortedMovies.map((movie) => (<MovieCardList key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre}/>)) :
-                    [...Array(6)].map((_, i) => (<MovieCardList key={i} movie={null} setFilterGenre={setFilterGenre}/>))
-                }
-            </tbody>
-        </table>
-        {(sortedMovies && sortedMovies.length === 0) && noResult()}
-    </div>);
-}
-
-function SelectedGenre({genres, deleteGenre}: {genres: iGenre[], deleteGenre:(genre: iGenre[]) => void}) {
-    const showGenres = genres.slice(0, 2);
-    const t = useTranslations("movies");
-
-    const GenreTag = (id: number, name: string, onClick: () => void) => <div key={id} className="border flex items-center">
-        <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{name}</span>
-        <CloseButton size={20} className="border-l px-1" onClickAction={onClick} />
-    </div>;
-
-    return (<div className="flex gap-2">
-        {showGenres.map((genre, index) => GenreTag(index, genre.name, () => deleteGenre([genre])))}
-        {genres.length > 2 && GenreTag(-1, t("selectedGenres.more", {count: genres.length - 2}), () => deleteGenre(genres.slice(2)))}
-    </div>);
+    return (<MoviesList movieSets={movies} sort={sort} changeSort={changeSort} genre={genre} />);
 }
