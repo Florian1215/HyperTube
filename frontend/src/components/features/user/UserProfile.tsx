@@ -32,7 +32,7 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
         if (activeTab !== tabIdx)
             setActiveTab(tabIdx);
     }
-    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 sm:px-4">
+    return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 md:px-4">
         <div className="flex items-center gap-4 justify-center">
             <ProfilePicture user={user} size={1}/>
             <div className="flex flex-col items-start">
@@ -44,7 +44,7 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
             <div className="border-b border-r w-12" />
             {tabs.map((tab, index) => (<button
                 key={index}
-                className={"custom-condensed text-2xl sm:text-4xl tracking-wide sm:tracking-normal border-t border-r px-4 sm:px-12 xl:px-16 border-b text-nowrap" + (activeTab === index ? " border-b-white" : "")}
+                className={"custom-condensed text-2xl sm:text-3xl md:text-4xl tracking-wide sm:tracking-normal border-t border-r px-3 sm:px-12 xl:px-16 border-b text-nowrap" + (activeTab === index ? " border-b-white" : "")}
                 onClick={() => switchTab(index)}>{t(tab.name)}</button>))}
             <div className="border-b w-full" />
         </div>
