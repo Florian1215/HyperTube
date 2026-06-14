@@ -14,7 +14,7 @@ import Pagination from "@/components/ui/Pagination";
 import CloseButton from "@/components/ui/Button/CloseButton";
 import useModal from "@/contexts/ModalContext";
 import {useResponsiveSize} from "@/hooks/useResponsiveSize";
-import MoviesCard from "@/components/features/movie/MoviesCard";
+import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import MovieCardList from "@/components/features/movie/MovieCardList";
 
 type tViewType = | "grid" | "list";
@@ -100,7 +100,7 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
         return noResult();
 
     if (viewType === "grid")
-        return (<MoviesCard movieSets={movies}/>);
+        return (<MoviesGrid movieSets={movies}/>);
 
     const sortOptions: {type: tSort, label: string}[] = [
         {type: "title", label: t("sort.title")},

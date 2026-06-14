@@ -12,7 +12,7 @@ import {useMovies} from "@/services/movies.service";
 import MoviesHero from "@/components/features/movie/MoviesHero";
 import GenreTags from "@/components/features/genre/GenreTags";
 import Section from "@/components/ui/Section";
-import MoviesCard from "@/components/features/movie/MoviesCard";
+import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import useModal from "@/contexts/ModalContext";
 
 export default function HomePage() {
@@ -74,23 +74,23 @@ export default function HomePage() {
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching && continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href="/users?tab=history">
-                <MoviesCard movieSets={continueWatching} setLimit={true} />
+                <MoviesGrid movieSets={continueWatching} setLimit={true} />
             </Section>}
 
             {(featured && featured.length > 0) && <Section title={t("featured")} href="/movies?q=featured">
-                <MoviesCard movieSets={shuffleArray(featured)} setLimit={true} />
+                <MoviesGrid movieSets={shuffleArray(featured)} setLimit={true} />
             </Section>}
 
             {(popular && popular.length > 0) && <Section title={t("popular")} href="/movies?q=popular">
-                <MoviesCard movieSets={shuffleArray(popular)} setLimit={true} />
+                <MoviesGrid movieSets={shuffleArray(popular)} setLimit={true} />
             </Section>}
 
             {(mostRated && mostRated.length > 0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
-                <MoviesCard movieSets={shuffleArray(mostRated)} setLimit={true} />
+                <MoviesGrid movieSets={shuffleArray(mostRated)} setLimit={true} />
             </Section>}
 
             {dirctedWatchMovies && dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
-                <MoviesCard movieSets={dirctedWatchMovies} setLimit={true} />
+                <MoviesGrid movieSets={dirctedWatchMovies} setLimit={true} />
             </Section>}
         </div>
 
