@@ -10,7 +10,6 @@ type Movie struct {
 	PosterURL   string  `json:"poster_url"`
 	BackdropURL string  `json:"backdrop_url"`
 	Genre       []int   `json:"genres"`
-	Summary     string  `json:"summary"`
 	Note        float32 `json:"note"`
 }
 

@@ -113,10 +113,10 @@ func seedFeatured(ctx context.Context, c411Client *c411.Client, tmdbClient *tmdb
 		log.Printf("startup: failed to fetch top movies: %v", err)
 		return
 	}
-	log.Printf("startup: top %d movies by seeds:", len(featured))
-	for _, t := range featured {
-		log.Printf("  imdb=%s seeds=%s title=%s", t.ImdbID, t.Seeds, t.Title)
-	}
+	// log.Printf("startup: top %d movies by seeds:", len(featured))
+	// for _, t := range featured {
+	// 	log.Printf("  imdb=%s seeds=%s title=%s", t.ImdbID, t.Seeds, t.Title)
+	// }
 	for i, torrent := range featured {
 		movie, err := tmdbClient.FindByIMDBID(ctx, torrent.ImdbID)
 		if err != nil {
