@@ -12,8 +12,6 @@ export default function ProfileSection({user, updateUser}: {user: iUser, updateU
 
     const handleUpdateUser = (data: tResponse<iUserToken | iUser>) => {
         if ("username" in data.data) {
-            if (data.data.email !== user.email)
-                addNotification(tSuccess("emailChanged"), "warning");
             if (updateUser)
                 updateUser(data.data);
             addNotification(tSuccess("infoChanged"), "success");

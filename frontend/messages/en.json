@@ -160,7 +160,6 @@
     "success": {
       "passwordChanged": "Your password has been updated.",
       "newPasswordSet": "Your new password has been set, you can now sign in with your new password.",
-      "emailChanged": "Your email address has been updated. A confirmation email has been sent to validate the change.",
       "emailResetPassword": "An email has been sent to reset your password.",
       "infoChanged": "Your profile information has been updated.",
       "login": "You are now successfully signed in.",

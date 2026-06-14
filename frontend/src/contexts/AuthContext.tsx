@@ -2,7 +2,7 @@
 
 import {createContext, useContext, useEffect, useState, ReactNode} from "react";
 import {iUser} from "@/types/user";
-import {useRouter} from "@/i18n/navigation";
+import {usePathname, useRouter} from "@/i18n/navigation";
 
 interface AuthContextType {
     user: iUser | null;
@@ -21,6 +21,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const [loading, setLoading] = useState(true);
     const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         const userData = localStorage.getItem("user");
@@ -50,7 +51,8 @@ export function AuthProvider({children}: {children: ReactNode}) {
         localStorage.removeItem("password");
         localStorage.removeItem("user");
         setUser(null);
-        router.push("/");
+        if (pathname !== "/" && pathname !== "/movies")
+            router.push("/");
     };
 
     const updateUser = (patch: Partial<iUser>) => {
