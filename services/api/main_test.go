@@ -259,6 +259,41 @@ func TestRouterUserRouteWithValidTokenReachesHandler(t *testing.T) {
 	}
 }
 
+func TestRouterUserPatchRouteWithValidTokenReachesHandler(t *testing.T) {
+	userStore := &routerUserStore{}
+	router, tokens := newTestRouterWithUsersStore(t, userStore)
+	token, _, err := tokens.CreateAccessToken(7)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/7", strings.NewReader(`{"color":"green"}`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected users patch handler response, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !userStore.updated || userStore.requestedID != 7 {
+		t.Fatalf("expected handler to update id 7, got updated=%v id=%d", userStore.updated, userStore.requestedID)
+	}
+
+	var body struct {
+		Data struct {
+			ID    int64  `json:"id"`
+			Color string `json:"color"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.ID != 7 || body.Data.Color != models.UserColorGreen {
+		t.Fatalf("unexpected response: %+v", body.Data)
+	}
+}
+
 func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
 	return newTestRouterWithUsersStore(t, &routerUserStore{})
 }
@@ -284,6 +319,7 @@ func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserStore) (http
 
 type routerUserStore struct {
 	requestedID int64
+	updated     bool
 }
 
 func (s *routerUserStore) ListUsers(_ context.Context) ([]models.User, error) {
@@ -293,6 +329,17 @@ func (s *routerUserStore) ListUsers(_ context.Context) ([]models.User, error) {
 func (s *routerUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {
 	s.requestedID = id
 	return models.User{ID: id, Username: "alice"}, nil
+}
+
+func (s *routerUserStore) UpdateUser(_ context.Context, id int64, params users.UpdateUserParams) (models.User, error) {
+	s.requestedID = id
+	s.updated = true
+
+	user := models.User{ID: id, Username: "alice", Color: models.UserColorPurple}
+	if params.Color != nil {
+		user.Color = *params.Color
+	}
+	return user, nil
 }
 
 func decodeRouterErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string {
