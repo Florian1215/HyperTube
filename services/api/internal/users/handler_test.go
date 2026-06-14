@@ -14,8 +14,8 @@ import (
 
 func TestListUsersReturnsUserSmallList(t *testing.T) {
 	store := &fakeUserStore{list: []models.User{
-		{ID: 1, Username: "alice", Email: "alice@example.com", PasswordHash: "secret", Color: models.UserColorGreen},
-		{ID: 2, Username: "bob", Email: "bob@example.com", PasswordHash: "hunter2", Color: models.UserColorBlue},
+		{ID: 1, Username: "alice", Email: "alice@example.com", FirstName: "alice", LastName: "gu", PasswordHash: "secret", Color: models.UserColorGreen},
+		{ID: 2, Username: "bob", Email: "bob@example.com", FirstName: "alice", LastName: "gu", PasswordHash: "hunter2", Color: models.UserColorBlue},
 	}}
 	handler := NewHandler(store)
 

@@ -65,9 +65,18 @@ func ToUserSmallPrivate(u User) UserSmall {
 		Username:       u.Username,
 		ProfilePicture: u.ProfilePicture,
 		Color:          u.Color,
-		FirstName:      u.FirstName[:1],
-		LastName: 		u.LastName[:1],
+		FirstName:      initial(u.FirstName),
+		LastName:       initial(u.LastName),
 	}
+}
+
+// initial returns the first character of s, or an empty string if s is empty.
+func initial(s string) string {
+	if s == "" {
+		return ""
+	}
+	r := []rune(s)
+	return string(r[0])
 }
 
 func IsValidUserColor(color string) bool {

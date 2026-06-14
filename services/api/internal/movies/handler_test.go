@@ -363,7 +363,7 @@ func TestGetCommentsReturnsPaginatedComments(t *testing.T) {
 			commentTotal: 25,
 		},
 		userStore: &fakeUserStore{users: map[int64]models.User{
-			42: {ID: 42, Username: "alice"},
+			42: {ID: 42, Username: "alice", FirstName: "alice", LastName: "gu"},
 		}},
 	}
 
@@ -400,7 +400,7 @@ func TestGetCommentsIncludesUserColor(t *testing.T) {
 			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
 		},
 		userStore: &fakeUserStore{users: map[int64]models.User{
-			42: {ID: 42, Username: "alice", Color: models.UserColorGreen},
+			42: {ID: 42, Username: "alice", Color: models.UserColorGreen, FirstName: "alice", LastName: "gu"},
 		}},
 	}
 
