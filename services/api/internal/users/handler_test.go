@@ -32,7 +32,9 @@ func TestListUsersReturnsUserSmallList(t *testing.T) {
 	var body struct {
 		Data []models.UserSmall `json:"data"`
 		Meta struct {
-			Total int `json:"total"`
+			Total   int `json:"total"`
+			Page    int `json:"page"`
+			PerPage int `json:"per_page"`
 		} `json:"meta"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
@@ -44,6 +46,18 @@ func TestListUsersReturnsUserSmallList(t *testing.T) {
 	if body.Meta.Total != 2 {
 		t.Fatalf("expected total 2, got %d", body.Meta.Total)
 	}
+	if body.Meta.Page != 1 {
+		t.Fatalf("expected page 1, got %d", body.Meta.Page)
+	}
+	if body.Meta.PerPage != userPageLimit {
+		t.Fatalf("expected per_page %d, got %d", userPageLimit, body.Meta.PerPage)
+	}
+	if store.gotLimit != userPageLimit {
+		t.Fatalf("expected limit %d, got %d", userPageLimit, store.gotLimit)
+	}
+	if store.gotOffset != 0 {
+		t.Fatalf("expected offset 0, got %d", store.gotOffset)
+	}
 	if body.Data[0].Username != "alice" || body.Data[1].Username != "bob" {
 		t.Fatalf("unexpected users: %+v", body.Data)
 	}
@@ -52,6 +66,105 @@ func TestListUsersReturnsUserSmallList(t *testing.T) {
 	}
 	if raw := rec.Body.String(); strings.Contains(raw, "secret") || strings.Contains(raw, "alice@example.com") {
 		t.Fatalf("response leaked sensitive data: %s", raw)
+	}
+}
+
+func TestListUsersUsesSecondPageQueryForPagination(t *testing.T) {
+	store := &fakeUserStore{
+		list: []models.User{
+			{ID: 13, Username: "page_two_user", FirstName: "Page", LastName: "Two", Color: models.UserColorBlue},
+		},
+		total: 25,
+	}
+	handler := NewHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users?page=2", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ListUsers(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data []models.UserSmall `json:"data"`
+		Meta struct {
+			Total   int `json:"total"`
+			Page    int `json:"page"`
+			PerPage int `json:"per_page"`
+		} `json:"meta"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if store.gotLimit != userPageLimit {
+		t.Fatalf("expected limit %d, got %d", userPageLimit, store.gotLimit)
+	}
+	if store.gotOffset != userPageLimit {
+		t.Fatalf("expected offset %d, got %d", userPageLimit, store.gotOffset)
+	}
+	if body.Meta.Total != 25 {
+		t.Fatalf("expected total 25, got %d", body.Meta.Total)
+	}
+	if body.Meta.Page != 2 {
+		t.Fatalf("expected page 2, got %d", body.Meta.Page)
+	}
+	if body.Meta.PerPage != userPageLimit {
+		t.Fatalf("expected per_page %d, got %d", userPageLimit, body.Meta.PerPage)
+	}
+	if len(body.Data) != 1 || body.Data[0].Username != "page_two_user" {
+		t.Fatalf("unexpected users: %+v", body.Data)
+	}
+}
+
+func TestListUsersInvalidPageFallsBackToOne(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{name: "missing page", path: "/api/v1/users"},
+		{name: "empty page", path: "/api/v1/users?page="},
+		{name: "text page", path: "/api/v1/users?page=abc"},
+		{name: "zero page", path: "/api/v1/users?page=0"},
+		{name: "negative page", path: "/api/v1/users?page=-1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeUserStore{
+				list: []models.User{
+					{ID: 1, Username: "alice", FirstName: "Alice", LastName: "Example", Color: models.UserColorGreen},
+				},
+				total: 1,
+			}
+			handler := NewHandler(store)
+
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			rec := httptest.NewRecorder()
+
+			handler.ListUsers(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if store.gotOffset != 0 {
+				t.Fatalf("expected offset 0 for invalid page, got %d", store.gotOffset)
+			}
+
+			var body struct {
+				Meta struct {
+					Page int `json:"page"`
+				} `json:"meta"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+				t.Fatalf("decode response: %v", err)
+			}
+			if body.Meta.Page != 1 {
+				t.Fatalf("expected page 1 for invalid page, got %d", body.Meta.Page)
+			}
+		})
 	}
 }
 
@@ -80,6 +193,22 @@ func TestListUsersEmpty(t *testing.T) {
 
 func TestListUsersStoreErrorReturnsInternalError(t *testing.T) {
 	handler := NewHandler(&fakeUserStore{err: errors.New("db down")})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ListUsers(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
+	}
+}
+
+func TestListUsersCountErrorReturnsInternalError(t *testing.T) {
+	handler := NewHandler(&fakeUserStore{countErr: errors.New("db down")})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
 	rec := httptest.NewRecorder()
@@ -399,18 +528,35 @@ func TestUpdateUserMapsStoreErrors(t *testing.T) {
 type fakeUserStore struct {
 	users         map[int64]models.User
 	list          []models.User
+	total         int
 	err           error
+	countErr      error
 	updateErr     error
 	updated       bool
 	updatedID     int64
 	updatedParams UpdateUserParams
+	gotLimit      int
+	gotOffset     int
 }
 
-func (s *fakeUserStore) ListUsers(_ context.Context) ([]models.User, error) {
+func (s *fakeUserStore) ListUsers(_ context.Context, limit, offset int) ([]models.User, error) {
+	s.gotLimit = limit
+	s.gotOffset = offset
+
 	if s.err != nil {
 		return nil, s.err
 	}
 	return s.list, nil
+}
+
+func (s *fakeUserStore) CountUsers(_ context.Context) (int, error) {
+	if s.countErr != nil {
+		return 0, s.countErr
+	}
+	if s.total != 0 {
+		return s.total, nil
+	}
+	return len(s.list), nil
 }
 
 func (s *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {

@@ -322,8 +322,12 @@ type routerUserStore struct {
 	updated     bool
 }
 
-func (s *routerUserStore) ListUsers(_ context.Context) ([]models.User, error) {
+func (s *routerUserStore) ListUsers(_ context.Context, limit, offset int) ([]models.User, error) {
 	return nil, nil
+}
+
+func (s *routerUserStore) CountUsers(_ context.Context) (int, error) {
+	return 0, nil
 }
 
 func (s *routerUserStore) FindUserByID(_ context.Context, id int64) (models.User, error) {
