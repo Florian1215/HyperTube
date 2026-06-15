@@ -2,9 +2,14 @@ import {iUser, iUserToken} from "@/types/user";
 import useApiQuery from "@/hooks/useApiQuery";
 import {tResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
+import {iMovie} from "@/types/movie";
 
-function getUser(userId: string, locale: string) {
+function getUser(locale: string, userId: string) {
     return apiClient<tResponse<iUser>>(`/users/${userId}`, locale);
+}
+
+function getUserFilmHistory(locale: string, userId?: number) {
+    return apiClient<tResponse<iMovie[]>>(`/users/${userId}/film-history`, locale);
 }
 
 export function patchUser(locale: string, data: string[], userId?: string) {
@@ -33,5 +38,13 @@ export function useUser(userId: string) {
     return useApiQuery(
         ["user", userId],
         (locale: string) => getUser(locale, userId),
+    );
+}
+
+export function useUserFilmHistory(userId?: number) {
+    return useApiQuery(
+        ["user-film-history", String(userId)],
+        (locale: string) => getUserFilmHistory(locale, userId),
+        !!userId
     );
 }

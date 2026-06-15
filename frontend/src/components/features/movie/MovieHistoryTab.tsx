@@ -1,15 +1,16 @@
 import {useState} from "react";
 import {useTranslations} from "next-intl";
-import {useMovies} from "@/services/movies.service";
 import computeTotalPage from "@/utils/computeTotalPage";
 import Pagination from "@/components/ui/Pagination";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
+import {useUserFilmHistory} from "@/services/users.service";
+import {iUser} from "@/types/user";
 
-export default function MovieHistoryTab() {
+export default function MovieHistoryTab({user}: {user: iUser}) {
     const [index, setIndex] = useState(0);
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
     const t = useTranslations("profile");
-    const {data: watchMovies} = useMovies("watched", index);
+    const {data: watchMovies} = useUserFilmHistory(user.id);
     const totalPage = computeTotalPage(watchMovies);
 
     if (!watchMovies || watchMovies.data.length === 0)
