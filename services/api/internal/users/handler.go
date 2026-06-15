@@ -20,7 +20,8 @@ import (
 )
 
 type userStore interface {
-	ListUsers(ctx context.Context) ([]models.User, error)
+	ListUsers(ctx context.Context, limit, offset int) ([]models.User, error)
+	CountUsers(ctx context.Context) (int, error)
 	FindUserByID(ctx context.Context, id int64) (models.User, error)
 	UpdateUser(ctx context.Context, id int64, params UpdateUserParams) (models.User, error)
 }
@@ -36,6 +37,7 @@ func NewHandler(store userStore) *Handler {
 const maxJSONBodyBytes = 1 << 20
 
 const (
+	userPageLimit     = 12
 	minPasswordBytes  = 8
 	maxPasswordBytes  = 72
 	minUsernameLength = 3
@@ -54,9 +56,19 @@ type updateUserParams struct {
 	Password *string
 }
 
-// ListUsers returns every user as a UserSmall list.
+// ListUsers returns a paginated UserSmall list.
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.store.ListUsers(r.Context())
+	page := parsePage(r)
+	offset := (page - 1) * userPageLimit
+
+	total, err := h.store.CountUsers(r.Context())
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
+		return
+	}
+
+	users, err := h.store.ListUsers(r.Context(), userPageLimit, offset)
 	if err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
@@ -68,7 +80,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		result = append(result, models.ToUserSmallPrivate(u))
 	}
 
-	respond.List(w, http.StatusOK, result)
+	respond.ListPaginated(w, http.StatusOK, result, total, page, userPageLimit)
 }
 
 // GetUser returns the public profile (UserSmall) for the user with the given id.
@@ -143,6 +155,14 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond.Data(w, http.StatusOK, user)
+}
+
+func parsePage(r *http.Request) int {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
+		return 1
+	}
+	return page
 }
 
 func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserParams, bool) {

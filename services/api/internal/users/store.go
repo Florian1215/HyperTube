@@ -63,12 +63,13 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) ListUsers(ctx context.Context) ([]models.User, error) {
+func (s *Store) ListUsers(ctx context.Context, limit, offset int) ([]models.User, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT id, email, username, first_name, last_name, COALESCE(profile_picture, ''), COALESCE(password_hash, ''), color, created_at, updated_at
 		FROM users
 		ORDER BY id
-	`)
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +87,12 @@ func (s *Store) ListUsers(ctx context.Context) ([]models.User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (s *Store) CountUsers(ctx context.Context) (int, error) {
+	var total int
+	err := s.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&total)
+	return total, err
 }
 
 func (s *Store) FindUserByID(ctx context.Context, id int64) (models.User, error) {

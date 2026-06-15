@@ -9,7 +9,7 @@ API_TEST_DIR="$SCRIPT_DIR/api"
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 
-TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract" "issue-97")
+TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract" "issue-97" "issue-191")
 TEST_TITLES=(
   "Comprehensive API E2E"
   "OAuth2 Token API"
@@ -20,6 +20,7 @@ TEST_TITLES=(
   "Password Reset API"
   "Frontend Auth Contract API"
   "Issue #97 Endpoint Regression"
+  "Issue #191 Users Pagination"
 )
 TEST_FILES=(
   "comprehensive_api_test.sh"
@@ -31,6 +32,7 @@ TEST_FILES=(
   "password_reset_api_test.sh"
   "frontend_auth_contract_api_test.sh"
   "issue_97_endpoint_regression_test.sh"
+  "issue_191_users_pagination_test.sh"
 )
 TEST_DEPS=(
   "curl jq sed date tr"
@@ -42,6 +44,7 @@ TEST_DEPS=(
   "curl jq sed"
   "curl jq sed date"
   "curl jq sed date"
+  "curl jq sed date mktemp cp"
 )
 TEST_DESCRIPTIONS=(
   "Validates public routes, registration, login, protected-route failures, JWT user context, comment ownership, and authenticated movie flows."
@@ -53,6 +56,7 @@ TEST_DESCRIPTIONS=(
   "Validates password-reset request validation, missing-mailer behavior, reset-token validation, and invalid or expired token errors."
   "Validates that the API accepts the current frontend auth payloads and returns both backend and frontend-compatible user fields."
   "Validates issue #97 fixes: auth field validation, email/name rules, method handling, comment 404 ordering, content validation, trimming, and comment pagination."
+  "Validates issue #191 fixes: GET /users reads page, uses page=1 as first page, returns per_page 12, preserves total, and falls back invalid pages to page 1."
 )
 
 RESET=""
@@ -96,6 +100,7 @@ Tests:
   frontend-auth-contract
                    Current frontend registration/login contract compatibility.
   issue-97         Endpoint regression checks for issue #97.
+  issue-191        Users pagination checks for GET /users?page=.
   all              Run every test in the order shown above.
 
 Environment:
@@ -106,7 +111,7 @@ Environment:
 Interactive controls:
   Up/Down or j/k  Move selection.
   Enter           Run selected item.
-  1-9             Jump to an item.
+  1-9, 0          Jump to an item (0 selects item 10).
   q or Esc        Quit.
 USAGE
 }
@@ -234,6 +239,9 @@ resolve_test_index() {
       ;;
     9|issue-97|issue97|endpoint-regression|fix-endpoint)
       printf '8'
+      ;;
+    10|issue-191|issue191|users-pagination|user-pagination)
+      printf '9'
       ;;
     *)
       return 1
@@ -384,7 +392,7 @@ draw_menu() {
   printf '\033[H\033[2J'
   print_header
   printf '  %b%-14s%b %s\n' "$DIM" "BASE_URL" "$RESET" "$BASE_URL"
-  printf '  %b%-14s%b %s\n' "$DIM" "Controls" "$RESET" "Up/Down, j/k, Enter, 1-9, q"
+  printf '  %b%-14s%b %s\n' "$DIM" "Controls" "$RESET" "Up/Down, j/k, Enter, 1-9/0, q"
   echo
 
   for ((i = 0; i < total_options; i++)); do
@@ -471,6 +479,9 @@ interactive_menu() {
         ;;
       1|2|3|4|5|6|7|8|9)
         selected=$((key - 1))
+        ;;
+      0)
+        selected=9
         ;;
       q|Q)
         return 0
