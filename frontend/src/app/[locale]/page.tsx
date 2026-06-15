@@ -1,7 +1,7 @@
 "use client";
 
 import {iMovie} from "@/types/movie";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {HypertubeLogo} from "@/components/Icons";
 import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
@@ -14,83 +14,57 @@ import GenreTags from "@/components/features/genre/GenreTags";
 import Section from "@/components/ui/Section";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import useModal from "@/contexts/ModalContext";
+import shuffleArray from "@/utils/shuffleArray";
+import {useUserFilmHistory} from "@/services/users.service";
 
 export default function HomePage() {
     const {user} = useAuth();
     const t = useTranslations("home");
-    let continueWatching;
     const size = useResponsiveSize();
-
-    let genreCount = 3;
-    if (size === "md")
-        genreCount = 4;
-    else if (size === "lg")
-        genreCount = 6;
-    else if (size === "xl")
-        genreCount = 8;
-
-    let heightAnimationLogo = 100;
-    if (size === "md")
-        heightAnimationLogo = 200;
-    else if (size === "lg")
-        heightAnimationLogo = 250;
-    else if (size === "xl")
-        heightAnimationLogo = 300;
+    const genreCount = {xs: 3, md: 4, lg: 6, xl: 8}[size];
+    const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
 
     const {data: movies} = useMovies();
-    const {data: featuredMovies} = useMovies("featured");
-    const {data: allDirctedWatchMovies} = useMovies("directstream", undefined, !!user);
-    const featured = filterAlreadyWatch(user, featuredMovies?.data);
-    const dirctedWatchMovies = filterAlreadyWatch(user, allDirctedWatchMovies?.data);
-    const moviesSets = filterAlreadyWatch(user, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined);
-    const mostRated = moviesSets ? moviesSets.filter((film) => film.note > 7) : null;
     const popular = filterAlreadyWatch(user, movies?.data);
+    const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
 
-    if (user && movies) {
-        continueWatching = user.watch_history
-            .filter(h => h.watch_percent < 100)
-            .map(m => movies.data.find(mSearch => mSearch.imdb_id === m.movie_id))
-            .filter(m => m !== undefined);
-    }
+    const {data: featuredMovies} = useMovies("featured");
+    const featured = filterAlreadyWatch(user, featuredMovies?.data);
+    const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
 
-    const shuffleArray = (array: iMovie[] | null) => {
-        if (array === null)
-            return [];
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            // eslint-disable-next-line react-hooks/purity
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
+    const mostRated = filterAlreadyWatch(user, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined).filter((film) => film.note > 7);
+    const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
-    };
+    const {data: continueWatching=null} = useUserFilmHistory(user?.id);
+
+    const {data: dirctedWatchMovies} = useMovies("directstream", undefined, !!user);
+    const filterDirectedWatchMovies = filterAlreadyWatch(user, dirctedWatchMovies?.data);
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        <MoviesHero movies={shuffleArray(featured).slice(0, 5)} />
+        <MoviesHero movies={(shuffledFeatured).slice(0, 5)} />
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
-            {(continueWatching && continueWatching.length > 0) &&
+            {(continueWatching && continueWatching.data.length > 0) &&
             <Section title={t("continueWatching")} href="/users?tab=history">
-                <MoviesGrid movieSets={continueWatching} setLimit={true} />
+                <MoviesGrid movieSets={continueWatching.data} setLimit={true} />
             </Section>}
 
-            {(featured && featured.length > 0) && <Section title={t("featured")} href="/movies?q=featured">
-                <MoviesGrid movieSets={shuffleArray(featured)} setLimit={true} />
+            {(shuffledFeatured.length > 0) && <Section title={t("featured")} href="/movies?q=featured">
+                <MoviesGrid movieSets={shuffledFeatured} setLimit={true} />
             </Section>}
 
-            {(popular && popular.length > 0) && <Section title={t("popular")} href="/movies?q=popular">
-                <MoviesGrid movieSets={shuffleArray(popular)} setLimit={true} />
+            {(shuffledPopular.length > 0) && <Section title={t("popular")} href="/movies?q=popular">
+                <MoviesGrid movieSets={shuffledPopular} setLimit={true} />
             </Section>}
 
-            {(mostRated && mostRated.length > 0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
-                <MoviesGrid movieSets={shuffleArray(mostRated)} setLimit={true} />
+            {(shuffledMostRated.length > 0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
+                <MoviesGrid movieSets={shuffledMostRated} setLimit={true} />
             </Section>}
 
-            {dirctedWatchMovies && dirctedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
-                <MoviesGrid movieSets={dirctedWatchMovies} setLimit={true} />
+            {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
+                <MoviesGrid movieSets={filterDirectedWatchMovies} setLimit={true} />
             </Section>}
         </div>
 
@@ -152,7 +126,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
 
 function filterAlreadyWatch(user: iUser | null, movies?: iMovie[]) {
     if (!movies)
-        return null;
+        return [];
     if (!user)
         return movies;
     return movies.filter(m => {
