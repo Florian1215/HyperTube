@@ -335,6 +335,10 @@ func (s *routerUserStore) FindUserByID(_ context.Context, id int64) (models.User
 	return models.User{ID: id, Username: "alice"}, nil
 }
 
+func (s *routerUserStore) UserHasOAuthAccount(_ context.Context, _ int64) (bool, error) {
+	return false, nil
+}
+
 func (s *routerUserStore) UpdateUser(_ context.Context, id int64, params users.UpdateUserParams) (models.User, error) {
 	s.requestedID = id
 	s.updated = true

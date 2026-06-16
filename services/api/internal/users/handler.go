@@ -23,6 +23,7 @@ type userStore interface {
 	ListUsers(ctx context.Context, limit, offset int) ([]models.User, error)
 	CountUsers(ctx context.Context) (int, error)
 	FindUserByID(ctx context.Context, id int64) (models.User, error)
+	UserHasOAuthAccount(ctx context.Context, id int64) (bool, error)
 	UpdateUser(ctx context.Context, id int64, params UpdateUserParams) (models.User, error)
 }
 
@@ -129,6 +130,12 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if params.Email != nil || params.Password != nil {
+		if ok := h.ensureOAuthCredentialUpdateAllowed(w, r, id, params); !ok {
+			return
+		}
+	}
+
 	if params.Password != nil {
 		passwordHash, err := auth.HashPassword(*params.Password)
 		if err != nil {
@@ -155,6 +162,28 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond.Data(w, http.StatusOK, user)
+}
+
+func (h *Handler) ensureOAuthCredentialUpdateAllowed(w http.ResponseWriter, r *http.Request, id int64, params updateUserParams) bool {
+	hasOAuthAccount, err := h.store.UserHasOAuthAccount(r.Context(), id)
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedUpdateUser)
+		return false
+	}
+	if !hasOAuthAccount {
+		return true
+	}
+
+	fields := validationErrors{}
+	if params.Email != nil {
+		fields["email"] = i18n.MsgOAuthEmailUpdateForbidden
+	}
+	if params.Password != nil {
+		fields["password"] = i18n.MsgOAuthPasswordUpdateForbidden
+	}
+	writeValidationError(w, r, fields)
+	return false
 }
 
 func parsePage(r *http.Request) int {
