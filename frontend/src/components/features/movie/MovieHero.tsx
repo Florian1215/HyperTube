@@ -27,11 +27,11 @@ export default function MovieHero({movie, onClick, onSlide}: {movie?: iMovie, on
                 <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
                 {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
                     {
-                        onSlide ?
+                        onClick && !onSlide ?
+                            <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick}>{t("watch")}</SecondaryButton> :
                             <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
                                 <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
-                            </h1> :
-                            <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={() => console.log("watch movie")}>{t("watch")}</SecondaryButton>
+                            </h1>
                     }
                 </LinkLoginRequired>}
             </div>

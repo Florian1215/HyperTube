@@ -1,4 +1,4 @@
-import {iMovie, iMovieDetails} from "@/types/movie";
+import {iMovie, iMovieDetails, iTorrent} from "@/types/movie";
 import {useDebounce} from "use-debounce";
 import useApiQuery from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
@@ -37,4 +37,20 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
         (locale, signal) => getMovies(locale, debouncedQuery, page, signal),
         enabled
     );
+}
+
+function getTorrents(locale: string, movieId?: string) {
+    return apiClient<tListResponse<iTorrent[]>>(`/movies/${movieId}/torrents`, locale);
+}
+
+export function useTorrents(movieId?: string, enabled=false) {
+    return useApiQuery(
+        ["torrents", movieId ?? ""],
+        (locale) => getTorrents(locale, movieId),
+        enabled && movieId !== undefined
+    );
+}
+
+export function startStreamingTorrent(torrentId: string) { // todo handle local ?
+    return apiClient<tListResponse<iTorrent>>(`/stream/${torrentId}`);
 }
