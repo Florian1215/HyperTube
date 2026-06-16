@@ -38,6 +38,9 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if registerResponse.Data.User.FirstName != "Alice" || registerResponse.Data.User.LastName != "Example" {
 		t.Fatalf("expected canonical names, got %q %q", registerResponse.Data.User.FirstName, registerResponse.Data.User.LastName)
 	}
+	if registerResponse.Data.User.OAuthMethod != nil {
+		t.Fatalf("expected register oauth_method to be nil, got %q", *registerResponse.Data.User.OAuthMethod)
+	}
 	assertNoFrontendNameAliasFields(t, registerRec)
 	if registerResponse.Data.User.JoinedAt == 0 {
 		t.Fatal("expected joined_at compatibility field")
@@ -79,6 +82,9 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	}
 	if loginResponse.Data.User.Color != registerResponse.Data.User.Color {
 		t.Fatalf("expected login color %q, got %q", registerResponse.Data.User.Color, loginResponse.Data.User.Color)
+	}
+	if loginResponse.Data.User.OAuthMethod != nil {
+		t.Fatalf("expected login oauth_method to be nil, got %q", *loginResponse.Data.User.OAuthMethod)
 	}
 	if _, err := tokens.ValidateAccessToken(loginResponse.Data.AccessToken); err != nil {
 		t.Fatalf("login token should validate: %v", err)
