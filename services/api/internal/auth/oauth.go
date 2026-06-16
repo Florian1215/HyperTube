@@ -782,7 +782,7 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 		return
 	}
 
-	h.writeOAuthSuccess(w, r, user, locale, redirectPath)
+	h.writeOAuthSuccess(w, r, user, locale, redirectPath, identity.Provider)
 }
 
 func profileImageURL(image fortyTwoProfileImage) string {
@@ -804,7 +804,7 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User, locale i18n.Locale, redirectPath string) {
+func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User, locale i18n.Locale, redirectPath string, oauthMethod string) {
 	token, _, err := h.tokens.CreateAccessToken(user.ID)
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateToken))
@@ -815,7 +815,7 @@ func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user
 		AccessToken: token,
 		TokenType:   "Bearer",
 		ExpiresIn:   int64(AccessTokenTTL.Seconds()),
-		User:        toUserResponse(user),
+		User:        toUserResponse(user, &oauthMethod),
 	}
 
 	if h.frontendAuthCallbackURL == "" {

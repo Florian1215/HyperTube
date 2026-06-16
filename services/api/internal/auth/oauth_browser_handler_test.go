@@ -332,6 +332,9 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 	if response.Data.User.Username != "ft_user" {
 		t.Fatalf("expected 42 login as username, got %q", response.Data.User.Username)
 	}
+	if response.Data.User.OAuthMethod == nil || *response.Data.User.OAuthMethod != "42" {
+		t.Fatalf("expected oauth_method 42, got %#v", response.Data.User.OAuthMethod)
+	}
 	if response.Data.User.ProfilePicture == nil || *response.Data.User.ProfilePicture != "https://cdn.intra.42.fr/users/12345/medium_ft_user.jpg" {
 		t.Fatalf("expected 42 profile picture, got %+v", response.Data.User.ProfilePicture)
 	}

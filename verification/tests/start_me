@@ -9,7 +9,7 @@ API_TEST_DIR="$SCRIPT_DIR/api"
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 
-TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract" "issue-97" "issue-191")
+TEST_IDS=("comprehensive" "oauth-token" "forty-two" "github" "gitlab" "basic" "password-reset" "frontend-auth-contract" "issue-97" "issue-191" "issue-164")
 TEST_TITLES=(
   "Comprehensive API E2E"
   "OAuth2 Token API"
@@ -21,6 +21,7 @@ TEST_TITLES=(
   "Frontend Auth Contract API"
   "Issue #97 Endpoint Regression"
   "Issue #191 Users Pagination"
+  "Issue #164 OAuth Method Contract"
 )
 TEST_FILES=(
   "comprehensive_api_test.sh"
@@ -33,6 +34,7 @@ TEST_FILES=(
   "frontend_auth_contract_api_test.sh"
   "issue_97_endpoint_regression_test.sh"
   "issue_191_users_pagination_test.sh"
+  "issue_164_oauth_method_test.sh"
 )
 TEST_DEPS=(
   "curl jq sed date tr"
@@ -45,6 +47,7 @@ TEST_DEPS=(
   "curl jq sed date"
   "curl jq sed date"
   "curl jq sed date mktemp cp"
+  "curl jq sed date mktemp"
 )
 TEST_DESCRIPTIONS=(
   "Validates public routes, registration, login, protected-route failures, JWT user context, comment ownership, and authenticated movie flows."
@@ -57,6 +60,7 @@ TEST_DESCRIPTIONS=(
   "Validates that the API accepts the current frontend auth payloads and returns both backend and frontend-compatible user fields."
   "Validates issue #97 fixes: auth field validation, email/name rules, method handling, comment 404 ordering, content validation, trimming, and comment pagination."
   "Validates issue #191 fixes: GET /users reads page, uses page=1 as first page, returns per_page 12, preserves total, and falls back invalid pages to page 1."
+  "Validates issue #164 fixes: register/login auth user responses include oauth_method as JSON null for password accounts."
 )
 
 RESET=""
@@ -101,6 +105,7 @@ Tests:
                    Current frontend registration/login contract compatibility.
   issue-97         Endpoint regression checks for issue #97.
   issue-191        Users pagination checks for GET /users?page=.
+  issue-164        Auth response oauth_method contract checks.
   all              Run every test in the order shown above.
 
 Environment:
@@ -242,6 +247,9 @@ resolve_test_index() {
       ;;
     10|issue-191|issue191|users-pagination|user-pagination)
       printf '9'
+      ;;
+    11|issue-164|issue164|oauth-method|auth-oauth-method)
+      printf '10'
       ;;
     *)
       return 1

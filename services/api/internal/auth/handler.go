@@ -110,6 +110,7 @@ type userResponse struct {
 	FirstName      string  `json:"first_name"`
 	LastName       string  `json:"last_name"`
 	ProfilePicture *string `json:"profile_picture"`
+	OAuthMethod    *string `json:"oauth_method"`
 	CreatedAt      string  `json:"created_at"`
 	JoinedAt       int64   `json:"joined_at"`
 	Color          string  `json:"color"`
@@ -195,11 +196,11 @@ func (h *Handler) writeAuthResponse(w http.ResponseWriter, r *http.Request, stat
 		AccessToken: token,
 		TokenType:   "Bearer",
 		ExpiresIn:   int64(AccessTokenTTL.Seconds()),
-		User:        toUserResponse(user),
+		User:        toUserResponse(user, nil),
 	})
 }
 
-func toUserResponse(user models.User) userResponse {
+func toUserResponse(user models.User, oauthMethod *string) userResponse {
 	var profilePicture *string
 	if user.ProfilePicture != "" {
 		profilePicture = &user.ProfilePicture
@@ -215,6 +216,7 @@ func toUserResponse(user models.User) userResponse {
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
 		ProfilePicture: profilePicture,
+		OAuthMethod:    oauthMethod,
 		CreatedAt:      user.CreatedAt.Format(time.RFC3339),
 		JoinedAt:       user.CreatedAt.UnixMilli(),
 		Color:          color,
