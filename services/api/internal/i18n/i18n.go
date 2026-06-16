@@ -46,6 +46,8 @@ const (
 	MsgFailedCreateUser                Message = "failed to create user"
 	MsgUserNotFound                    Message = "user not found"
 	MsgUserUpdateForbidden             Message = "cannot update another user's profile"
+	MsgOAuthEmailUpdateForbidden       Message = "OAuth users cannot change their email"
+	MsgOAuthPasswordUpdateForbidden    Message = "OAuth users cannot change their password"
 	MsgFailedUpdateUser                Message = "failed to update user"
 	MsgInvalidUserColor                Message = "invalid user color"
 	MsgFailedUpdateUserColor           Message = "failed to update user color"
@@ -141,6 +143,8 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
 		MsgUserNotFound:                    "utilisateur introuvable",
 		MsgUserUpdateForbidden:             "impossible de modifier le profil d'un autre utilisateur",
+		MsgOAuthEmailUpdateForbidden:       "les utilisateurs OAuth ne peuvent pas modifier leur email",
+		MsgOAuthPasswordUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur mot de passe",
 		MsgFailedUpdateUser:                "échec de la mise à jour de l'utilisateur",
 		MsgInvalidUserColor:                "couleur utilisateur invalide",
 		MsgFailedUpdateUserColor:           "échec de la mise à jour de la couleur utilisateur",
@@ -228,6 +232,8 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
 		MsgUserNotFound:                    "Benutzer nicht gefunden",
 		MsgUserUpdateForbidden:             "das Profil eines anderen Benutzers kann nicht aktualisiert werden",
+		MsgOAuthEmailUpdateForbidden:       "OAuth-Benutzer können ihre E-Mail nicht ändern",
+		MsgOAuthPasswordUpdateForbidden:    "OAuth-Benutzer können ihr Passwort nicht ändern",
 		MsgFailedUpdateUser:                "Benutzer konnte nicht aktualisiert werden",
 		MsgInvalidUserColor:                "Benutzerfarbe ist ungültig",
 		MsgFailedUpdateUserColor:           "Benutzerfarbe konnte nicht aktualisiert werden",

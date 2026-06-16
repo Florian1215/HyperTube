@@ -111,6 +111,18 @@ func (s *Store) FindUserByID(ctx context.Context, id int64) (models.User, error)
 	return u, nil
 }
 
+func (s *Store) UserHasOAuthAccount(ctx context.Context, id int64) (bool, error) {
+	var exists bool
+	err := s.db.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM oauth_accounts
+			WHERE user_id = $1
+		)
+	`, id).Scan(&exists)
+	return exists, err
+}
+
 func (s *Store) UpdateUser(ctx context.Context, id int64, params UpdateUserParams) (models.User, error) {
 	var u models.User
 

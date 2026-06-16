@@ -411,6 +411,183 @@ func TestUpdateUserHashesPassword(t *testing.T) {
 	}
 }
 
+func TestUpdateUserRejectsOAuthEmailUpdate(t *testing.T) {
+	store := &fakeUserStore{
+		oauthUsers: map[int64]bool{42: true},
+	}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"email":"new@example.com"}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if _, ok := body.Error.Fields["email"]; !ok {
+		t.Fatalf("expected email field error, got %+v", body.Error.Fields)
+	}
+	if _, ok := body.Error.Fields["password"]; ok {
+		t.Fatalf("did not expect password field error, got %+v", body.Error.Fields)
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called for blocked OAuth email update")
+	}
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserRejectsOAuthPasswordUpdate(t *testing.T) {
+	store := &fakeUserStore{
+		oauthUsers: map[int64]bool{42: true},
+	}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"password":"new-secret-password"}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if _, ok := body.Error.Fields["password"]; !ok {
+		t.Fatalf("expected password field error, got %+v", body.Error.Fields)
+	}
+	if _, ok := body.Error.Fields["email"]; ok {
+		t.Fatalf("did not expect email field error, got %+v", body.Error.Fields)
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called for blocked OAuth password update")
+	}
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserRejectsOAuthEmailAndPasswordUpdate(t *testing.T) {
+	store := &fakeUserStore{
+		oauthUsers: map[int64]bool{42: true},
+	}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{
+		"email":"new@example.com",
+		"password":"new-secret-password"
+	}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if _, ok := body.Error.Fields["email"]; !ok {
+		t.Fatalf("expected email field error, got %+v", body.Error.Fields)
+	}
+	if _, ok := body.Error.Fields["password"]; !ok {
+		t.Fatalf("expected password field error, got %+v", body.Error.Fields)
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called for blocked OAuth credential update")
+	}
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserAllowsOAuthProfileFields(t *testing.T) {
+	store := &fakeUserStore{
+		users: map[int64]models.User{
+			42: {ID: 42, Email: "oauth@example.com", Username: "oauth_user", Color: models.UserColorPurple},
+		},
+		oauthUsers: map[int64]bool{42: true},
+	}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"color":"green"}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !store.updated || store.updatedID != 42 {
+		t.Fatalf("expected update for user 42, got updated=%v id=%d", store.updated, store.updatedID)
+	}
+	assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
+	if store.oauthChecked {
+		t.Fatalf("OAuth check should not run for profile-only updates")
+	}
+}
+
+func TestUpdateUserAllowsEmailForPasswordUser(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, Email: "old@example.com", Username: "alice"},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"email":"new@example.com"}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertStringPointer(t, "email", store.updatedParams.Email, "new@example.com")
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for credential update, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserOAuthStatusErrorReturnsInternalError(t *testing.T) {
+	store := &fakeUserStore{oauthErr: errors.New("db down")}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"email":"new@example.com"}`)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", body.Error.Code)
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called when OAuth status lookup fails")
+	}
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserValidatesEmailBeforeOAuthPolicy(t *testing.T) {
+	store := &fakeUserStore{
+		oauthUsers: map[int64]bool{42: true},
+	}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"email":"not-an-email"}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if _, ok := body.Error.Fields["email"]; !ok {
+		t.Fatalf("expected email field error, got %+v", body.Error.Fields)
+	}
+	if store.oauthChecked {
+		t.Fatalf("OAuth check should not run before body validation succeeds")
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called on validation error")
+	}
+}
+
 func TestUpdateUserRejectsDifferentAuthenticatedUser(t *testing.T) {
 	store := &fakeUserStore{}
 	handler := NewHandler(store)
@@ -526,17 +703,21 @@ func TestUpdateUserMapsStoreErrors(t *testing.T) {
 }
 
 type fakeUserStore struct {
-	users         map[int64]models.User
-	list          []models.User
-	total         int
-	err           error
-	countErr      error
-	updateErr     error
-	updated       bool
-	updatedID     int64
-	updatedParams UpdateUserParams
-	gotLimit      int
-	gotOffset     int
+	users          map[int64]models.User
+	list           []models.User
+	total          int
+	err            error
+	countErr       error
+	updateErr      error
+	oauthUsers     map[int64]bool
+	oauthErr       error
+	updated        bool
+	updatedID      int64
+	updatedParams  UpdateUserParams
+	oauthChecked   bool
+	oauthCheckedID int64
+	gotLimit       int
+	gotOffset      int
 }
 
 func (s *fakeUserStore) ListUsers(_ context.Context, limit, offset int) ([]models.User, error) {
@@ -567,6 +748,15 @@ func (s *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, 
 		return u, nil
 	}
 	return models.User{}, ErrUserNotFound
+}
+
+func (s *fakeUserStore) UserHasOAuthAccount(_ context.Context, id int64) (bool, error) {
+	s.oauthChecked = true
+	s.oauthCheckedID = id
+	if s.oauthErr != nil {
+		return false, s.oauthErr
+	}
+	return s.oauthUsers[id], nil
 }
 
 func (s *fakeUserStore) UpdateUser(_ context.Context, id int64, params UpdateUserParams) (models.User, error) {

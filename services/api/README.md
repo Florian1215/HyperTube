@@ -753,6 +753,87 @@ Example:
 
 ---
 
+## User endpoints
+
+All user endpoints require `Authorization: Bearer <access_token>`.
+
+## PATCH /users/{id}
+
+Updates the authenticated user's own profile. The `{id}` path value must match
+the user ID in the bearer token. Send only the fields that should change; all
+other profile values stay untouched.
+
+### Request body
+
+At least one field is required. Unknown JSON fields, malformed JSON, multiple
+JSON documents, and request bodies larger than 1 MiB are rejected.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `email` | string | Valid email address. Password users only. |
+| `password` | string | 8-72 bytes. Password users only. |
+| `username` | string | 3-32 characters. Letters, digits, and underscores only. |
+| `first_name` | string | 1-100 characters after trimming. |
+| `last_name` | string | 1-100 characters after trimming. |
+| `profile_picture` | string or null | URL/string value after trimming, or `null` to remove it. |
+| `color` | string | One of `yellow`, `pink`, `green`, `purple`, `blue`, or `red`. |
+
+OAuth users can update profile fields, but cannot change `email` or `password`
+through this endpoint. A user is considered an OAuth user when they have at
+least one linked `oauth_accounts` row.
+
+### Example request
+
+```http
+PATCH /api/v1/users/1
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "username": "ada_lovelace",
+  "first_name": "Ada",
+  "profile_picture": null,
+  "color": "purple"
+}
+```
+
+Use `profile_picture: null` to remove the stored profile picture. For password
+users, include `email` or `password` only when those credentials should change.
+
+### Response
+
+```json
+{
+  "data": {
+    "id": 1,
+    "email": "ada@example.com",
+    "username": "ada_lovelace",
+    "first_name": "Ada",
+    "last_name": "Lovelace",
+    "profile_picture": "",
+    "color": "purple",
+    "created_at": "2026-05-06T12:00:00Z",
+    "updated_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+### Error responses
+
+```json
+{ "error": { "code": "FORBIDDEN", "message": "Cannot update another user's profile" } }
+```
+```json
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "email": { "message": "OAuth users cannot change their email" } } } }
+```
+```json
+{ "error": { "code": "ALREADY_EXIST_ERROR", "fields": { "email": { "message": "Email is already in use" } } } }
+```
+
+---
+
 ## Stream endpoints *(temporarily public — will move behind auth)*
 
 ### GET /stream/{id}
