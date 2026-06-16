@@ -48,7 +48,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
 
     const logout = () => {
         localStorage.removeItem("token");
-        localStorage.removeItem("password");
         localStorage.removeItem("user");
         setUser(null);
         if (pathname !== "/" && pathname !== "/movies")
