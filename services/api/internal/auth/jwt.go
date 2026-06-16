@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const AccessTokenTTL = 15 * time.Minute
+const AccessTokenTTL = 7 * 24 * time.Hour
 
 var (
 	ErrJWTSecretTooShort = errors.New("jwt secret must be at least 32 bytes")
