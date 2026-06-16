@@ -18,14 +18,11 @@ export function patchUser(locale: string, data: string[], userId?: string) {
     if (data.length === 2) {
         updateData[data[0]] = data[1];
     } else {
-        if (data[0])
-            updateData["email"] = data[0].trim();
-        else if (data[1])
-            updateData["first_name"] = data[1].trim();
-        else if (data[2])
-            updateData["last_name"] = data[2].trim();
-        else if (data[3])
-            updateData["username"] = data[3].trim();
+        ["email", "first_name", "last_name", "username"].forEach((field, index) => {
+            const newValue = data[index].trim();
+            if (newValue)
+                updateData[field] = newValue;
+        })
     }
     return apiClient<tResponse<iUserToken>>(`/users/${userId}`, locale, {method: "PATCH", body: JSON.stringify(updateData)});
 }

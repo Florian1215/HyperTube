@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import {tOauthService} from "@/components/ui/Form";
+import {tOauthService} from "@/types/user";
 
 export function CrossIcon({color="black", size=30, className=""}) {
     const fullColor = `var(--color-${color})`;
