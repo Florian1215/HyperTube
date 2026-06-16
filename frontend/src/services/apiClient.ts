@@ -29,8 +29,9 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
     console.log(options?.method || "GET", endpoint, response.status, "=>", data);
     if (!response.ok) {
         if (response.status === 401 && data.error.code === "TOKEN_EXPIRED") {
+            const user = JSON.parse(localStorage.getItem("user")!);
             console.warn("TOKEN EXPIRED");
-            return postToken(locale, localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!).email : "", localStorage.getItem("password") || "").then((res) => {
+            return postToken(locale, user.email, "coucoucou").then((res) => {
                 console.warn("GET NEW TOKEN, RETRY REQUEST");
                 localStorage.setItem("token", res.access_token);
                 return apiClient<T>(endpoint, locale, options);

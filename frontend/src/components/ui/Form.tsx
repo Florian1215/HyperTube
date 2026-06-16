@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
-import {iUser, iUserToken} from "@/types/user";
+import {iUser, iUserToken, tOauthService} from "@/types/user";
 import {OAuthIcon} from "@/components/Icons";
 import {usePathname} from "@/i18n/navigation";
 import useApiMutation from "@/hooks/useApiMutation";
@@ -11,8 +11,7 @@ import {handleOauth} from "@/services/auth.service";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
 
-export type tOauthService = "42" | "github";
-type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
+export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
 
 export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken | iUser>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string}) {
@@ -21,7 +20,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
     const [disableBtn, setDisableBtn] = useState(false);
     const tError = useTranslations("validationErrors");
     const [focusedIndex, setFocusedIndex] = useState((formType === "update" || formType === "auth")? -1 : 0);
-    const {execute} = useApiMutation(setErrors, setFocusedIndex, formType);
+    const {execute} = useApiMutation(setErrors, setFocusedIndex, formType, fields);
     const fieldRefs = useRef<HTMLInputElement[]>([]);
     const showOAuth = formType === "signin" || formType === "register";
 

@@ -6,8 +6,9 @@ import {tLocale} from "@/i18n/request";
 import {ApiError} from "@/services/ApiError";
 import useNotification from "@/contexts/NotificationContext";
 import useModal from "@/contexts/ModalContext";
+import {fieldType} from "@/components/ui/Form";
 
-export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string) {
+export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string, fields?: fieldType[]) {
     const router = useRouter();
     const {openModal, closeModal} = useModal();
     const locale = useLocale() as tLocale;
@@ -19,15 +20,17 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
             return await callback(locale);
         } catch (error) {
             if (error instanceof ApiError) {
-                if ((error.status === 400 || error.status === 409) && error.data.error.fields && setErrorsAction && formType) {
+                if (error.data.error.fields && setErrorsAction && formType && fields) {
                     const newErrors: Record<string, string> = {};
                     let setNewFocus = false;
 
-                    Object.entries(error.data.error.fields).map(([key, value], idx)=> {
-                        newErrors[key + "-" + formType] = value.message;
-                        if (!setNewFocus && setFocusedIndex) {
-                            setNewFocus = true;
-                            setFocusedIndex(idx);
+                    fields.forEach((field, idx)=> {
+                        if (error.data.error.fields && error.data.error.fields[field]) {
+                            newErrors[field + "-" + formType] = error.data.error.fields[field].message;
+                            if (!setNewFocus && setFocusedIndex) {
+                                setNewFocus = true;
+                                setFocusedIndex(idx);
+                            }
                         }
                     });
                     setErrorsAction(newErrors);
