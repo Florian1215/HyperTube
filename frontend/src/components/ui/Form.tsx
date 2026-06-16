@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
-import {iUser, iUserToken} from "@/types/user";
+import {iUser, iUserToken, tOauthService} from "@/types/user";
 import {OAuthIcon} from "@/components/Icons";
 import {usePathname} from "@/i18n/navigation";
 import useApiMutation from "@/hooks/useApiMutation";
@@ -11,7 +11,6 @@ import {handleOauth} from "@/services/auth.service";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
 
-export type tOauthService = "42" | "github";
 type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
 

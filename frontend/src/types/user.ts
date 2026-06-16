@@ -1,4 +1,4 @@
-import {tOauthService} from "@/components/ui/Form";
+export type tOauthService = "42" | "github" | null;
 
 export interface iToken {
     access_token: string

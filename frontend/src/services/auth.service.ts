@@ -1,7 +1,6 @@
 import apiClient, {API_URL} from "@/services/apiClient";
 import {tResponse} from "@/types/api";
-import {iToken, iUserToken} from "@/types/user";
-import {tOauthService} from "@/components/ui/Form";
+import {iToken, iUserToken, tOauthService} from "@/types/user";
 
 export function postLogin(locale: string, data: string[]) {
     localStorage.setItem("password", data[1]);
