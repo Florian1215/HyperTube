@@ -62,7 +62,7 @@ Successful register, login, and OAuth callback responses use this auth payload:
   "data": {
     "access_token": "<jwt>",
     "token_type": "Bearer",
-    "expires_in": 900,
+    "expires_in": 604800,
     "user": {
       "id": 1,
       "email": "ada@example.com",
@@ -75,7 +75,7 @@ Successful register, login, and OAuth callback responses use this auth payload:
 ```
 
 `access_token` is a JWT signed with `HS256`. It contains a `user_id` claim and
-expires after 15 minutes. Protected routes expect:
+expires after 7 days. Protected routes expect:
 
 ```http
 Authorization: Bearer <access_token>
@@ -124,7 +124,7 @@ Content-Type: application/json
   "data": {
     "access_token": "<jwt>",
     "token_type": "Bearer",
-    "expires_in": 900,
+    "expires_in": 604800,
     "user": {
       "id": 1,
       "email": "ada@example.com",
@@ -204,7 +204,7 @@ Content-Type: application/json
   "data": {
     "access_token": "<jwt>",
     "token_type": "Bearer",
-    "expires_in": 900,
+    "expires_in": 604800,
     "user": {
       "id": 1,
       "email": "ada@example.com",
@@ -444,7 +444,7 @@ auth data in the URL fragment:
 `303 See Other`
 
 ```http
-Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
+Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=604800&user=%7B...%7D
 Set-Cookie: hypertube_oauth_42_state=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
 ```
 
@@ -556,7 +556,7 @@ auth data in the URL fragment:
 `303 See Other`
 
 ```http
-Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
+Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=604800&user=%7B...%7D
 Set-Cookie: hypertube_oauth_github_state=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
 ```
 
@@ -720,7 +720,7 @@ JSON is also accepted:
 {
   "access_token": "<jwt>",
   "token_type": "Bearer",
-  "expires_in": 900,
+  "expires_in": 604800,
   "scope": "profile"
 }
 ```
