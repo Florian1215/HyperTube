@@ -31,7 +31,7 @@ type User struct {
 	Username       string    `json:"username"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
-	ProfilePicture string    `json:"profile_picture,omitempty"`
+	ProfilePicture string    `json:"profile_picture"`
 	PasswordHash   string    `json:"-"`
 	Color          string    `json:"color"`
 	CreatedAt      time.Time `json:"created_at"`
