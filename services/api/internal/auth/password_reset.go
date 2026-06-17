@@ -19,7 +19,7 @@ import (
 const passwordResetTokenBytes = 32
 
 type passwordResetMailer interface {
-	SendPasswordReset(ctx context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration) error
+	SendPasswordReset(ctx context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration, locale i18n.Locale) error
 }
 
 type passwordResetRequest struct {
@@ -83,18 +83,18 @@ func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resetLocale := req.Locale
-	if strings.TrimSpace(resetLocale) == "" {
-		resetLocale = i18n.FromRequest(r).String()
+	resetLocale := i18n.FromValue(req.Locale)
+	if strings.TrimSpace(req.Locale) == "" {
+		resetLocale = i18n.FromRequest(r)
 	}
-	resetURL, err := h.buildPasswordResetURL(token, resetLocale)
+	resetURL, err := h.buildPasswordResetURL(token, resetLocale.String())
 	if err != nil {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgPasswordResetURLNotConfigured)
 		return
 	}
 
 	toName := strings.TrimSpace(user.FirstName + " " + user.LastName)
-	if err := h.passwordResetMailer.SendPasswordReset(r.Context(), user.Email, toName, resetURL, h.passwordResetTTL); err != nil {
+	if err := h.passwordResetMailer.SendPasswordReset(r.Context(), user.Email, toName, resetURL, h.passwordResetTTL, resetLocale); err != nil {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedSendPasswordResetEmail)
 		return
 	}

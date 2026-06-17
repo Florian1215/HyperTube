@@ -252,7 +252,7 @@ defaults to `Hypertube`.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `email` | string | yes | Valid email address. Trimmed and lowercased before lookup. |
-| `locale` | string | no | Locale segment used when building `PASSWORD_RESET_URL`. Defaults to `en`. |
+| `locale` | string | no | Optional locale override for the reset email and `PASSWORD_RESET_URL`. Defaults to `Accept-Language`, then `en`. |
 
 Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
 larger than 1 MiB are rejected.
@@ -262,12 +262,12 @@ larger than 1 MiB are rejected.
 ```http
 POST /api/v1/auth/password-reset
 Content-Type: application/json
+Accept-Language: de
 ```
 
 ```json
 {
-  "email": "ada@example.com",
-  "locale": "de"
+  "email": "ada@example.com"
 }
 ```
 
