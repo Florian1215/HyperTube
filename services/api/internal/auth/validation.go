@@ -150,6 +150,9 @@ func validateUsername(raw string) (string, i18n.Message, bool) {
 }
 
 func validatePassword(password string) (i18n.Message, bool) {
+	if password == "" {
+		return i18n.MsgPasswordRequired, false
+	}
 	if len(password) < minPasswordBytes {
 		return i18n.MsgPasswordTooShort, false
 	}

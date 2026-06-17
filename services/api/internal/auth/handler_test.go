@@ -266,6 +266,110 @@ func TestRegisterValidationErrorReturnsFieldErrors(t *testing.T) {
 	}
 }
 
+func TestRegisterMissingRequiredFieldsReturnFieldErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		body        string
+		field       string
+		wantMessage string
+	}{
+		{
+			name:        "missing email",
+			body:        `{"username":"alice_1","first_name":"Alice","last_name":"Example","password":"correct-horse-battery"}`,
+			field:       "email",
+			wantMessage: "Email is required",
+		},
+		{
+			name:        "missing username",
+			body:        `{"email":"alice@example.com","first_name":"Alice","last_name":"Example","password":"correct-horse-battery"}`,
+			field:       "username",
+			wantMessage: "Username is required",
+		},
+		{
+			name:        "missing first_name",
+			body:        `{"email":"alice@example.com","username":"alice_1","last_name":"Example","password":"correct-horse-battery"}`,
+			field:       "first_name",
+			wantMessage: "First name is required",
+		},
+		{
+			name:        "missing last_name",
+			body:        `{"email":"alice@example.com","username":"alice_1","first_name":"Alice","password":"correct-horse-battery"}`,
+			field:       "last_name",
+			wantMessage: "Last name is required",
+		},
+		{
+			name:        "missing password",
+			body:        `{"email":"alice@example.com","username":"alice_1","first_name":"Alice","last_name":"Example"}`,
+			field:       "password",
+			wantMessage: "Password is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+
+			handler.Register(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+
+			errorBody := decodeErrorEnvelope(t, rec).Error
+			if errorBody.Code != "VALIDATION_ERROR" {
+				t.Fatalf("expected VALIDATION_ERROR, got %q: %s", errorBody.Code, rec.Body.String())
+			}
+			if errorBody.Message != "" {
+				t.Fatalf("expected validation response without top-level message, got %q", errorBody.Message)
+			}
+			got, ok := errorBody.Fields[tt.field]
+			if !ok {
+				t.Fatalf("expected field %q in validation response, got %+v", tt.field, errorBody.Fields)
+			}
+			if got.Message != tt.wantMessage {
+				t.Fatalf("expected %s message %q, got %q", tt.field, tt.wantMessage, got.Message)
+			}
+		})
+	}
+
+	t.Run("missing all required fields", func(t *testing.T) {
+		handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", strings.NewReader(`{}`))
+		rec := httptest.NewRecorder()
+
+		handler.Register(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+		}
+
+		errorBody := decodeErrorEnvelope(t, rec).Error
+		if errorBody.Code != "VALIDATION_ERROR" {
+			t.Fatalf("expected VALIDATION_ERROR, got %q: %s", errorBody.Code, rec.Body.String())
+		}
+		if errorBody.Message != "" {
+			t.Fatalf("expected validation response without top-level message, got %q", errorBody.Message)
+		}
+		for field, wantMessage := range map[string]string{
+			"email":      "Email is required",
+			"username":   "Username is required",
+			"first_name": "First name is required",
+			"last_name":  "Last name is required",
+			"password":   "Password is required",
+		} {
+			got, ok := errorBody.Fields[field]
+			if !ok {
+				t.Fatalf("expected field %q in validation response, got %+v", field, errorBody.Fields)
+			}
+			if got.Message != wantMessage {
+				t.Fatalf("expected %s message %q, got %q", field, wantMessage, got.Message)
+			}
+		}
+	})
+}
+
 func TestRegisterInvalidFieldTypesReturnFieldErrors(t *testing.T) {
 	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
 	body := `{"email":6,"username":["test",5,false],"first_name":"Alice","last_name":false,"password":"correct-horse-battery"}`
