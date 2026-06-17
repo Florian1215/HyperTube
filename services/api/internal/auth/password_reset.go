@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"hypertube/api/internal/i18n"
+	"hypertube/api/internal/requestjson"
 	"hypertube/api/internal/respond"
+	"hypertube/api/internal/userinput"
 )
 
 const passwordResetTokenBytes = 32
@@ -38,11 +40,11 @@ type passwordResetResponse struct {
 
 func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req passwordResetRequest
-	if !decodeJSON(w, r, &req) {
+	if !requestjson.DecodeJSON(w, r, &req) {
 		return
 	}
 
-	email, validationMessage, ok := validateEmail(req.Email)
+	email, validationMessage, ok := userinput.ValidateEmail(req.Email)
 	if !ok {
 		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "email", validationMessage)
 		return
@@ -104,7 +106,7 @@ func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req resetPasswordRequest
-	if !decodeJSON(w, r, &req) {
+	if !requestjson.DecodeJSON(w, r, &req) {
 		return
 	}
 
@@ -119,7 +121,7 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if validationMessage, ok := validatePassword(req.Password); !ok {
+	if validationMessage, ok := userinput.ValidateRequiredPassword(req.Password); !ok {
 		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "password", validationMessage)
 		return
 	}
