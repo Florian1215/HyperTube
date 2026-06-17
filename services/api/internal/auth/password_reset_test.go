@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"hypertube/api/internal/i18n"
 )
 
 func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
@@ -60,6 +62,9 @@ func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
 	if mailer.expiresIn != ttl {
 		t.Fatalf("expected ttl %s, got %s", ttl, mailer.expiresIn)
 	}
+	if mailer.locale != i18n.German {
+		t.Fatalf("expected mail locale de, got %q", mailer.locale)
+	}
 
 	resetURL, err := url.Parse(mailer.resetURL)
 	if err != nil {
@@ -91,6 +96,39 @@ func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
 	}
 	if _, rawTokenStored := store.resetTokens[token]; rawTokenStored {
 		t.Fatal("raw reset token must not be stored")
+	}
+}
+
+func TestRequestPasswordResetUsesAcceptLanguageForEmailAndLink(t *testing.T) {
+	store := newMemoryUserStore()
+	createPasswordUser(t, store, "alice@example.com", "alice_1", "old-password")
+
+	mailer := &fakePasswordResetMailer{}
+	handler := NewHandler(
+		store,
+		newTestTokenManager(t),
+		WithPasswordResetMailer(mailer),
+		WithPasswordResetURL("https://frontend.test/{locale}/reset-password"),
+	)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset", strings.NewReader(`{"email":"alice@example.com"}`))
+	req.Header.Set("Accept-Language", "de-DE,de;q=0.9")
+	rec := httptest.NewRecorder()
+
+	handler.RequestPasswordReset(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected 202, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if mailer.locale != i18n.German {
+		t.Fatalf("expected mail locale from Accept-Language, got %q", mailer.locale)
+	}
+	resetURL, err := url.Parse(mailer.resetURL)
+	if err != nil {
+		t.Fatalf("parse reset URL: %v", err)
+	}
+	if resetURL.Path != "/de/reset-password" {
+		t.Fatalf("expected reset URL to use Accept-Language locale, got %q", mailer.resetURL)
 	}
 }
 
