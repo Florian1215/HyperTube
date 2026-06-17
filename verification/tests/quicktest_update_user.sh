@@ -235,6 +235,24 @@ register_payload() {
     '{email:$email, username:$username, first_name:$first_name, last_name:$last_name, password:$password}'
 }
 
+register_payload_missing_field() {
+  local field="$1"
+  local safe_run_id="${RUN_ID//[^A-Za-z0-9]/_}"
+  local suffix="${field//[^A-Za-z0-9]/_}"
+  local email_local="missing-${suffix}-${safe_run_id}"
+  local username="missing_${suffix}_${safe_run_id}"
+
+  email_local="${email_local:0:60}"
+  username="${username:0:32}"
+
+  jq -n \
+    --arg missing "$field" \
+    --arg email "${email_local}@example.test" \
+    --arg username "$username" \
+    --arg password "$PASSWORD" \
+    '{email:$email, username:$username, first_name:"Patch", last_name:"Owner", password:$password} | del(.[$missing])'
+}
+
 login_payload() {
   jq -n --arg login "$1" --arg password "$2" '{login:$login, password:$password}'
 }
@@ -253,11 +271,13 @@ usage() {
   cat <<EOF
 Usage:
   $0 [full]
+  $0 walkthrough
   $0 profile-picture
   $0 help
 
 Modes:
   full             Run the complete PATCH /users regression suite (default).
+  walkthrough      Step through the core user API flow with printed curl commands.
   profile-picture Step through the profile_picture null regression from the CLI.
 
 Useful environment variables:
@@ -468,6 +488,161 @@ run_profile_picture_steps() {
   finish
 }
 
+walkthrough_note() {
+  printf '  Expected: %s\n' "$1"
+}
+
+run_walkthrough() {
+  require_command curl jq sed date mktemp grep
+
+  section "Configuration"
+  printf '  BASE_URL=%s\n' "$BASE_URL"
+  printf '  Mode=walkthrough\n'
+  printf '  This mode creates two fresh users and walks through the core profile API.\n'
+  printf '  Set INTERACTIVE=0 to run without pressing Enter between requests.\n'
+
+  run_step_request \
+    "1. Register user A" \
+    POST \
+    /auth/register \
+    "$(register_payload "$USER_A_EMAIL" "$USER_A_USERNAME" "Patch" "Owner")"
+  walkthrough_note "201 with access_token and user id"
+  if expect_status "Register user A" "201"; then
+    USER_A_TOKEN="$(jq -r '.data.access_token // empty' "$LAST_BODY_FILE")"
+    USER_A_ID="$(jq -r '.data.user.id // empty' "$LAST_BODY_FILE")"
+    assert_jq_true "User A token exists" '.data.access_token | type == "string" and length > 20'
+    assert_jq_true "User A id exists" '.data.user.id | type == "number"'
+  fi
+
+  run_step_request \
+    "2. Register user B" \
+    POST \
+    /auth/register \
+    "$(register_payload "$USER_B_EMAIL" "$USER_B_USERNAME" "Patch" "Other")"
+  walkthrough_note "201 with access_token and user id"
+  if expect_status "Register user B" "201"; then
+    USER_B_TOKEN="$(jq -r '.data.access_token // empty' "$LAST_BODY_FILE")"
+    USER_B_ID="$(jq -r '.data.user.id // empty' "$LAST_BODY_FILE")"
+    assert_jq_true "User B token exists" '.data.access_token | type == "string" and length > 20'
+    assert_jq_true "User B id exists" '.data.user.id | type == "number"'
+  fi
+
+  if [[ -z "$USER_A_TOKEN" || -z "$USER_A_ID" || -z "$USER_B_TOKEN" || -z "$USER_B_ID" ]]; then
+    fail "Could not create both walkthrough users"
+    finish
+  fi
+
+  run_step_request \
+    "3. User A reads user B public profile" \
+    GET \
+    "/users/$USER_B_ID" \
+    "" \
+    "$USER_A_TOKEN"
+  walkthrough_note "200, public profile only; no private email or password fields"
+  if expect_status "Authenticated user can read another profile" "200"; then
+    assert_jq_eq "Public profile id is user B" '.data.id | tostring' "$USER_B_ID"
+    assert_body_not_contains "Public profile does not expose user B email" "$USER_B_EMAIL"
+    assert_body_not_contains "Public profile does not expose password_hash" "password_hash"
+  fi
+
+  run_step_request \
+    "4. User A tries to update user B" \
+    PATCH \
+    "/users/$USER_B_ID" \
+    '{"color":"blue"}' \
+    "$USER_A_TOKEN"
+  walkthrough_note "403 because users may only update their own profile"
+  if expect_status "Cross-user profile update is forbidden" "403"; then
+    assert_jq_eq "Forbidden response code" '.error.code' "FORBIDDEN"
+  fi
+
+  run_step_request \
+    "5. User A updates their own profile" \
+    PATCH \
+    "/users/$USER_A_ID" \
+    "$(patch_profile_payload)" \
+    "$USER_A_TOKEN"
+  walkthrough_note "200 with the updated profile fields"
+  if expect_status "Own profile update succeeds" "200"; then
+    assert_jq_eq "Updated response id" '.data.id | tostring' "$USER_A_ID"
+    assert_jq_eq "Updated email" '.data.email' "$UPDATED_EMAIL"
+    assert_jq_eq "Updated username" '.data.username' "$UPDATED_USERNAME"
+    assert_jq_eq "Updated profile picture" '.data.profile_picture' "https://example.test/avatar.png"
+    assert_jq_eq "Updated color" '.data.color' "green"
+    assert_body_not_contains "Profile update response does not expose password_hash" "password_hash"
+  fi
+
+  run_step_request \
+    "6. User B reads user A public profile after the update" \
+    GET \
+    "/users/$USER_A_ID" \
+    "" \
+    "$USER_B_TOKEN"
+  walkthrough_note "200, updated public fields visible, private email hidden"
+  if expect_status "Updated public profile is readable" "200"; then
+    assert_jq_eq "Public username is updated" '.data.username' "$UPDATED_USERNAME"
+    assert_jq_eq "Public profile picture is updated" '.data.profile_picture' "https://example.test/avatar.png"
+    assert_body_not_contains "Public profile does not expose updated email" "$UPDATED_EMAIL"
+  fi
+
+  run_step_request \
+    "7. User A sends one invalid update" \
+    PATCH \
+    "/users/$USER_A_ID" \
+    '{"email":"not-an-email"}' \
+    "$USER_A_TOKEN"
+  walkthrough_note "400 with a validation error"
+  if expect_status "Invalid email update is rejected" "400"; then
+    assert_jq_eq "Invalid email uses validation error" '.error.code' "VALIDATION_ERROR"
+    assert_jq_true "Invalid email reports email field" '.error.fields.email.message | type == "string" and length > 0'
+  fi
+
+  run_step_request \
+    "8. User A clears their profile picture" \
+    PATCH \
+    "/users/$USER_A_ID" \
+    '{"profile_picture":null}' \
+    "$USER_A_TOKEN"
+  walkthrough_note "200 and profile_picture is returned as an empty string"
+  if expect_status "Profile picture can be cleared" "200"; then
+    assert_jq_true "Profile picture is empty" '(.data | has("profile_picture")) and .data.profile_picture == ""'
+  fi
+
+  run_step_request \
+    "9. User A changes password" \
+    PATCH \
+    "/users/$USER_A_ID" \
+    "$(jq -n --arg password "$NEW_PASSWORD" '{password:$password}')" \
+    "$USER_A_TOKEN"
+  walkthrough_note "200 without plaintext password or password_hash in the response"
+  if expect_status "Password update succeeds" "200"; then
+    assert_body_not_contains "Password update response does not expose plaintext password" "$NEW_PASSWORD"
+    assert_body_not_contains "Password update response does not expose password_hash" "password_hash"
+  fi
+
+  run_step_request \
+    "10. Login with new password" \
+    POST \
+    /auth/login \
+    "$(login_payload "$UPDATED_EMAIL" "$NEW_PASSWORD")"
+  walkthrough_note "200 for the new password"
+  if expect_status "Login works with new password" "200"; then
+    assert_jq_eq "Login returns user A id" '.data.user.id | tostring' "$USER_A_ID"
+  fi
+
+  run_step_request \
+    "11. Login with old password" \
+    POST \
+    /auth/login \
+    "$(login_payload "$UPDATED_EMAIL" "$PASSWORD")"
+  walkthrough_note "401 for the old password"
+  if expect_status "Old password no longer works" "401"; then
+    assert_jq_eq "Old password failure code" '.error.code' "INVALID_CREDENTIALS"
+  fi
+
+  finish
+}
+
 run_full_suite() {
 require_command curl jq sed date mktemp grep
 
@@ -524,6 +699,24 @@ if expect_status "Forbidden update did not break user B lookup" "200"; then
 fi
 
 section "Validation"
+for missing_field in email username first_name last_name password; do
+  request POST /auth/register "$(register_payload_missing_field "$missing_field")"
+  if expect_status "Register rejects missing $missing_field" "400"; then
+    assert_jq_eq "Missing $missing_field uses VALIDATION_ERROR" '.error.code' "VALIDATION_ERROR"
+    assert_jq_true "Missing $missing_field reports field error" ".error.fields[\"$missing_field\"].message | type == \"string\" and length > 0"
+    assert_jq_true "Missing $missing_field has no top-level invalid JSON message" '(.error.message // "") == ""'
+  fi
+done
+
+request POST /auth/register '{}'
+if expect_status "Register rejects empty object" "400"; then
+  assert_jq_eq "Empty register object uses VALIDATION_ERROR" '.error.code' "VALIDATION_ERROR"
+  for required_field in email username first_name last_name password; do
+    assert_jq_true "Empty register object reports $required_field" ".error.fields[\"$required_field\"].message | type == \"string\" and length > 0"
+  done
+  assert_jq_true "Empty register object has no top-level invalid JSON message" '(.error.message // "") == ""'
+fi
+
 request PATCH "/users/abc" '{"color":"green"}' "$USER_A_TOKEN"
 if expect_status "PATCH rejects invalid path id" "404"; then
   assert_jq_eq "Invalid id uses NOT_FOUND" '.error.code' "NOT_FOUND"
@@ -635,6 +828,9 @@ finish
 case "$MODE" in
   full)
     run_full_suite
+    ;;
+  walkthrough|walk-through|steps)
+    run_walkthrough
     ;;
   profile-picture|profile_picture|avatar)
     run_profile_picture_steps
