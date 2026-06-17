@@ -5,6 +5,7 @@ BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BASE_URL="${BASE_URL%/}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-20}"
 RUN_ID="${API_TEST_RUN_ID:-$(date +%s)-$$-$RANDOM}"
+MODE="${1:-full}"
 
 USER_A_EMAIL="patch-a-${RUN_ID}@example.test"
 USER_A_USERNAME="patch_a_${RUN_ID//[^A-Za-z0-9]/_}"
@@ -248,6 +249,226 @@ patch_profile_payload() {
     '{email:$email, username:$username, first_name:$first_name, last_name:$last_name, profile_picture:$profile_picture, color:"green"}'
 }
 
+usage() {
+  cat <<EOF
+Usage:
+  $0 [full]
+  $0 profile-picture
+  $0 help
+
+Modes:
+  full             Run the complete PATCH /users regression suite (default).
+  profile-picture Step through the profile_picture null regression from the CLI.
+
+Useful environment variables:
+  BASE_URL=http://localhost:8080/api/v1
+  TOKEN=... USER_ID=...             Reuse an existing authenticated user.
+  AUTH_RESULT_URL='...#access_token=...' Paste an OAuth callback URL non-interactively.
+  LOGIN=... LOGIN_PASSWORD=...      Login and extract TOKEN/USER_ID before the steps.
+  INTERACTIVE=0                     Do not pause before each request.
+EOF
+}
+
+print_last_response() {
+  printf '  HTTP status: %s\n' "${LAST_STATUS:-<none>}"
+  printf '  Response body:\n'
+  if [[ ! -s "$LAST_BODY_FILE" ]]; then
+    printf '    <empty>\n'
+  elif jq . "$LAST_BODY_FILE" >/dev/null 2>&1; then
+    jq . "$LAST_BODY_FILE" | sed 's/^/    /'
+  else
+    sed 's/^/    /' "$LAST_BODY_FILE"
+  fi
+}
+
+print_curl_command() {
+  local method="$1"
+  local path="$2"
+  local body="${3:-}"
+  local token="${4:-}"
+
+  printf '  URL: %s%s\n' "$BASE_URL" "$path"
+  printf '  Command:\n'
+  printf '    curl -i -X %s "%s%s" \\\n' "$method" "$BASE_URL" "$path"
+  printf '      -H "Accept: application/json"'
+  if [[ -n "$token" ]]; then
+    printf ' \\\n      -H "Authorization: Bearer %s"' "$token"
+  fi
+  if [[ -n "$body" ]]; then
+    printf ' \\\n      -H "Content-Type: application/json" \\\n'
+    printf "      --data '%s'" "$body"
+  fi
+  printf '\n'
+}
+
+pause_before_request() {
+  local ignored
+
+  if [[ "${INTERACTIVE:-1}" == "0" ]]; then
+    return
+  fi
+
+  printf '  Press Enter to run this request... '
+  read -r ignored || true
+}
+
+run_step_request() {
+  local title="$1"
+  local method="$2"
+  local path="$3"
+  local body="${4:-}"
+  local token="${5:-}"
+
+  section "$title"
+  print_curl_command "$method" "$path" "$body" "$token"
+  pause_before_request
+  request "$method" "$path" "$body" "$token"
+  print_last_response
+}
+
+extract_url_param() {
+  local text="$1"
+  local key="$2"
+
+  printf '%s\n' "$text" | sed -n "s/.*[?&#]$key=\([^&#]*\).*/\1/p" | sed -n '1p'
+}
+
+jwt_user_id() {
+  local token="$1"
+  local segment
+  local mod
+  local decoded
+
+  if ! command -v base64 >/dev/null 2>&1; then
+    return 1
+  fi
+
+  segment="${token#*.}"
+  segment="${segment%%.*}"
+  if [[ -z "$segment" || "$segment" == "$token" ]]; then
+    return 1
+  fi
+
+  segment="$(printf '%s' "$segment" | tr '_-' '/+')"
+  mod=$((${#segment} % 4))
+  if [[ "$mod" -eq 2 ]]; then
+    segment="${segment}=="
+  elif [[ "$mod" -eq 3 ]]; then
+    segment="${segment}="
+  elif [[ "$mod" -eq 1 ]]; then
+    return 1
+  fi
+
+  decoded="$(printf '%s' "$segment" | base64 -d 2>/dev/null || true)"
+  if [[ -z "$decoded" ]]; then
+    return 1
+  fi
+
+  jq -r '.user_id // .sub // empty' <<<"$decoded" 2>/dev/null
+}
+
+extract_auth_from_response() {
+  USER_A_TOKEN="$(jq -r '.data.access_token // empty' "$LAST_BODY_FILE")"
+  USER_A_ID="$(jq -r '.data.user.id // empty' "$LAST_BODY_FILE")"
+}
+
+load_profile_picture_identity() {
+  local pasted_url="${AUTH_RESULT_URL:-}"
+  local pasted_token=""
+  local decoded_user_id=""
+
+  if [[ -n "${TOKEN:-}" && -n "${USER_ID:-}" ]]; then
+    USER_A_TOKEN="$TOKEN"
+    USER_A_ID="$USER_ID"
+    printf '  Using TOKEN and USER_ID from the environment.\n'
+    return
+  fi
+
+  if [[ -z "$pasted_url" && "${INTERACTIVE:-1}" != "0" ]]; then
+    section "Optional existing auth"
+    printf '  Paste a callback URL containing #access_token=... and press Enter,\n'
+    printf '  or just press Enter to create a fresh password test user.\n'
+    printf '  Callback URL: '
+    read -r pasted_url || true
+  fi
+
+  if [[ -n "$pasted_url" ]]; then
+    pasted_token="$(extract_url_param "$pasted_url" "access_token")"
+    if [[ -n "$pasted_token" ]]; then
+      USER_A_TOKEN="$pasted_token"
+      decoded_user_id="$(jwt_user_id "$USER_A_TOKEN" || true)"
+      if [[ -n "$decoded_user_id" ]]; then
+        USER_A_ID="$decoded_user_id"
+      elif [[ -n "${USER_ID:-}" ]]; then
+        USER_A_ID="$USER_ID"
+      elif [[ "${INTERACTIVE:-1}" != "0" ]]; then
+        printf '  User ID for this token: '
+        read -r USER_A_ID || true
+      fi
+      if [[ -n "$USER_A_ID" ]]; then
+        printf '  Extracted access token from callback URL.\n'
+        return
+      fi
+    fi
+    printf '  Could not extract access_token and USER_ID from the pasted value.\n'
+  fi
+
+  if [[ -n "${LOGIN:-}" && -n "${LOGIN_PASSWORD:-}" ]]; then
+    run_step_request "Login existing user" POST /auth/login "$(login_payload "$LOGIN" "$LOGIN_PASSWORD")"
+    if expect_status "Login existing user" "200"; then
+      extract_auth_from_response
+    fi
+    return
+  fi
+
+  run_step_request "Register fresh test user" POST /auth/register "$(register_payload "$USER_A_EMAIL" "$USER_A_USERNAME" "Patch" "Owner")"
+  if expect_status "Register fresh test user" "201"; then
+    extract_auth_from_response
+  fi
+}
+
+run_profile_picture_steps() {
+  require_command curl jq sed date mktemp grep
+
+  section "Configuration"
+  printf '  BASE_URL=%s\n' "$BASE_URL"
+  printf '  Mode=profile-picture\n'
+
+  load_profile_picture_identity
+
+  if [[ -z "$USER_A_TOKEN" || -z "$USER_A_ID" ]]; then
+    fail "Could not get TOKEN and USER_ID for profile_picture steps"
+    finish
+  fi
+
+  section "Captured auth"
+  printf '  USER_ID=%s\n' "$USER_A_ID"
+  printf '  TOKEN=%s\n' "$USER_A_TOKEN"
+
+  run_step_request \
+    "Set profile_picture to URL" \
+    PATCH \
+    "/users/$USER_A_ID" \
+    '{"profile_picture":"https://example.test/avatar.png"}' \
+    "$USER_A_TOKEN"
+  if expect_status "PATCH sets profile_picture" "200"; then
+    assert_jq_eq "Set response profile_picture" '.data.profile_picture' "https://example.test/avatar.png"
+  fi
+
+  run_step_request \
+    "Clear profile_picture with null" \
+    PATCH \
+    "/users/$USER_A_ID" \
+    '{"profile_picture":null}' \
+    "$USER_A_TOKEN"
+  if expect_status "PATCH clears profile_picture" "200"; then
+    assert_jq_true "Clear response includes profile_picture as empty string" '(.data | has("profile_picture")) and .data.profile_picture == ""'
+  fi
+
+  finish
+}
+
+run_full_suite() {
 require_command curl jq sed date mktemp grep
 
 section "Configuration"
@@ -389,7 +610,7 @@ fi
 
 request PATCH "/users/$USER_A_ID" '{"profile_picture":null}' "$USER_A_TOKEN"
 if expect_status "PATCH removes profile picture with null" "200"; then
-  assert_jq_true "Removed profile picture is omitted or empty" '(.data.profile_picture // "") == ""'
+  assert_jq_true "Removed profile picture is present and empty" '(.data | has("profile_picture")) and .data.profile_picture == ""'
 fi
 
 request PATCH "/users/$USER_A_ID" '{"password":"NewPatchPass123!"}' "$USER_A_TOKEN"
@@ -409,3 +630,21 @@ if expect_status "Old password no longer works" "401"; then
 fi
 
 finish
+}
+
+case "$MODE" in
+  full)
+    run_full_suite
+    ;;
+  profile-picture|profile_picture|avatar)
+    run_profile_picture_steps
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    printf 'Unknown mode: %s\n\n' "$MODE" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
