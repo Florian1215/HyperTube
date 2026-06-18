@@ -1,22 +1,20 @@
 package users
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
+	"hypertube/api/internal/requestjson"
 	"hypertube/api/internal/respond"
+	"hypertube/api/internal/userinput"
 )
 
 type userStore interface {
@@ -35,20 +33,9 @@ func NewHandler(store userStore) *Handler {
 	return &Handler{store: store}
 }
 
-const maxJSONBodyBytes = 1 << 20
-
 const (
-	userPageLimit     = 12
-	minPasswordBytes  = 8
-	maxPasswordBytes  = 72
-	minUsernameLength = 3
-	maxUsernameLength = 32
-	maxNameLength     = 100
+	userPageLimit = 12
 )
-
-var usernameCharsPattern = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
-var emailPrefixPattern = regexp.MustCompile(`^[A-Za-z0-9._+\-]+$`)
-var emailDomainPattern = regexp.MustCompile(`^[A-Za-z0-9.\-]+$`)
 
 type validationErrors map[string]i18n.Message
 
@@ -60,7 +47,7 @@ type updateUserParams struct {
 // ListUsers returns a paginated UserSmall list.
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	page := parsePage(r)
-	offset := (page - 1) * userPageLimit
+	offset := page * userPageLimit
 
 	total, err := h.store.CountUsers(r.Context())
 	if err != nil {
@@ -130,8 +117,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if params.Email != nil || params.Password != nil {
-		if ok := h.ensureOAuthCredentialUpdateAllowed(w, r, id, params); !ok {
+	if hasOAuthRestrictedUpdate(params) {
+		if ok := h.ensureOAuthRestrictedUpdateAllowed(w, r, id, params); !ok {
 			return
 		}
 	}
@@ -161,10 +148,18 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.Data(w, http.StatusOK, user)
+	respond.Data(w, http.StatusOK, models.ToUserResponse(user))
 }
 
-func (h *Handler) ensureOAuthCredentialUpdateAllowed(w http.ResponseWriter, r *http.Request, id int64, params updateUserParams) bool {
+func hasOAuthRestrictedUpdate(params updateUserParams) bool {
+	return params.Email != nil ||
+		params.Password != nil ||
+		params.Username != nil ||
+		params.FirstName != nil ||
+		params.LastName != nil
+}
+
+func (h *Handler) ensureOAuthRestrictedUpdateAllowed(w http.ResponseWriter, r *http.Request, id int64, params updateUserParams) bool {
 	hasOAuthAccount, err := h.store.UserHasOAuthAccount(r.Context(), id)
 	if err != nil {
 		log.Println("db err:", err)
@@ -182,20 +177,29 @@ func (h *Handler) ensureOAuthCredentialUpdateAllowed(w http.ResponseWriter, r *h
 	if params.Password != nil {
 		fields["password"] = i18n.MsgOAuthPasswordUpdateForbidden
 	}
+	if params.Username != nil {
+		fields["username"] = i18n.MsgOAuthUsernameUpdateForbidden
+	}
+	if params.FirstName != nil {
+		fields["first_name"] = i18n.MsgOAuthFirstNameUpdateForbidden
+	}
+	if params.LastName != nil {
+		fields["last_name"] = i18n.MsgOAuthLastNameUpdateForbidden
+	}
 	writeValidationError(w, r, fields)
 	return false
 }
 
 func parsePage(r *http.Request) int {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil || page < 1 {
-		return 1
+	if err != nil || page < 0 {
+		return 0
 	}
 	return page
 }
 
 func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserParams, bool) {
-	body, ok := decodeJSONObject(w, r, map[string]struct{}{
+	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"email":           {},
 		"username":        {},
 		"password":        {},
@@ -218,7 +222,7 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	if raw, ok := body["email"]; ok {
 		value, ok := decodeStringField(raw, "email", fields)
 		if ok {
-			if email, message, ok := validateEmail(value); ok {
+			if email, message, ok := userinput.ValidateEmail(value); ok {
 				params.Email = &email
 			} else {
 				fields["email"] = message
@@ -229,7 +233,7 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	if raw, ok := body["username"]; ok {
 		value, ok := decodeStringField(raw, "username", fields)
 		if ok {
-			if username, message, ok := validateUsername(value); ok {
+			if username, message, ok := userinput.ValidateUsername(value); ok {
 				params.Username = &username
 			} else {
 				fields["username"] = message
@@ -240,7 +244,7 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	if raw, ok := body["password"]; ok {
 		value, ok := decodeStringField(raw, "password", fields)
 		if ok {
-			if message, ok := validatePassword(value); ok {
+			if message, ok := userinput.ValidateUpdatePassword(value); ok {
 				params.Password = &value
 			} else {
 				fields["password"] = message
@@ -251,7 +255,7 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	if raw, ok := body["first_name"]; ok {
 		value, ok := decodeStringField(raw, "first_name", fields)
 		if ok {
-			if firstName, message, ok := validateName(value, i18n.MsgFirstNameRequired, i18n.MsgFirstNameTooLong, i18n.MsgFirstNameInvalid); ok {
+			if firstName, message, ok := userinput.ValidateName(value, i18n.MsgFirstNameRequired, i18n.MsgFirstNameTooLong, i18n.MsgFirstNameInvalid); ok {
 				params.FirstName = &firstName
 			} else {
 				fields["first_name"] = message
@@ -262,7 +266,7 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	if raw, ok := body["last_name"]; ok {
 		value, ok := decodeStringField(raw, "last_name", fields)
 		if ok {
-			if lastName, message, ok := validateName(value, i18n.MsgLastNameRequired, i18n.MsgLastNameTooLong, i18n.MsgLastNameInvalid); ok {
+			if lastName, message, ok := userinput.ValidateName(value, i18n.MsgLastNameRequired, i18n.MsgLastNameTooLong, i18n.MsgLastNameInvalid); ok {
 				params.LastName = &lastName
 			} else {
 				fields["last_name"] = message
@@ -272,7 +276,7 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 
 	if raw, ok := body["profile_picture"]; ok {
 		params.ProfilePictureSet = true
-		if !isJSONNull(raw) {
+		if !requestjson.IsNull(raw) {
 			value, ok := decodeStringField(raw, "profile_picture", fields)
 			if ok {
 				profilePicture := strings.TrimSpace(value)
@@ -303,167 +307,13 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	return params, true
 }
 
-func decodeJSONObject(w http.ResponseWriter, r *http.Request, allowedFields map[string]struct{}) (map[string]json.RawMessage, bool) {
-	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
-
-	decoder := json.NewDecoder(r.Body)
-	var body map[string]json.RawMessage
-	if err := decoder.Decode(&body); err != nil || body == nil {
-		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-		return nil, false
-	}
-
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-		return nil, false
-	}
-
-	for field := range body {
-		if _, ok := allowedFields[field]; !ok {
-			respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-			return nil, false
-		}
-	}
-
-	return body, true
-}
-
 func decodeStringField(raw json.RawMessage, field string, fields validationErrors) (string, bool) {
-	if isJSONNull(raw) {
-		fields[field] = i18n.MsgInvalidRequestBody
-		return "", false
-	}
-
-	var value string
-	if err := json.Unmarshal(raw, &value); err != nil {
+	value, ok := requestjson.DecodeString(raw)
+	if !ok {
 		fields[field] = i18n.MsgInvalidRequestBody
 		return "", false
 	}
 	return value, true
-}
-
-func isJSONNull(raw json.RawMessage) bool {
-	return bytes.Equal(bytes.TrimSpace(raw), []byte("null"))
-}
-
-func validateEmail(raw string) (string, i18n.Message, bool) {
-	email := strings.TrimSpace(raw)
-	if email == "" {
-		return "", i18n.MsgEmailRequired, false
-	}
-
-	normalizedEmail, ok := normalizeEmail(email)
-	if !ok {
-		return "", i18n.MsgValidEmailRequired, false
-	}
-	return normalizedEmail, "", true
-}
-
-func validateUsername(raw string) (string, i18n.Message, bool) {
-	username := strings.TrimSpace(raw)
-	if username == "" {
-		return "", i18n.MsgUsernameRequired, false
-	}
-	if len(username) < minUsernameLength {
-		return "", i18n.MsgUsernameTooShort, false
-	}
-	if len(username) > maxUsernameLength {
-		return "", i18n.MsgUsernameTooLong, false
-	}
-	if !usernameCharsPattern.MatchString(username) {
-		return "", i18n.MsgUsernameInvalidChars, false
-	}
-	return username, "", true
-}
-
-func validatePassword(password string) (i18n.Message, bool) {
-	if len(password) < minPasswordBytes {
-		return i18n.MsgPasswordTooShort, false
-	}
-	if len(password) > maxPasswordBytes {
-		return i18n.MsgPasswordTooLong, false
-	}
-	return "", true
-}
-
-func validateName(raw string, requiredMessage, tooLongMessage, invalidMessage i18n.Message) (string, i18n.Message, bool) {
-	name := strings.TrimSpace(raw)
-	if name == "" {
-		return "", requiredMessage, false
-	}
-	if len(name) > maxNameLength {
-		return "", tooLongMessage, false
-	}
-	if !validPersonName(name) {
-		return "", invalidMessage, false
-	}
-	return name, "", true
-}
-
-func normalizeEmail(raw string) (string, bool) {
-	email := strings.ToLower(strings.TrimSpace(raw))
-	if email == "" {
-		return "", false
-	}
-
-	if !validEmail(email) {
-		return "", false
-	}
-
-	return email, true
-}
-
-func validEmail(email string) bool {
-	if strings.Count(email, "@") != 1 {
-		return false
-	}
-
-	parts := strings.Split(email, "@")
-	prefix, domain := parts[0], parts[1]
-	if len(prefix) == 0 || len(prefix) > 64 {
-		return false
-	}
-	if strings.HasPrefix(prefix, ".") || strings.HasSuffix(prefix, ".") || strings.Contains(prefix, "..") {
-		return false
-	}
-	if !emailPrefixPattern.MatchString(prefix) {
-		return false
-	}
-
-	if len(domain) == 0 || len(domain) > 253 {
-		return false
-	}
-	if !emailDomainPattern.MatchString(domain) || !strings.Contains(domain, ".") {
-		return false
-	}
-
-	labels := strings.Split(domain, ".")
-	for _, label := range labels {
-		if label == "" || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
-			return false
-		}
-	}
-
-	tld := labels[len(labels)-1]
-	if len(tld) < 2 || len(tld) > 63 {
-		return false
-	}
-	for _, r := range tld {
-		if !unicode.IsLetter(r) || r > 127 {
-			return false
-		}
-	}
-	return true
-}
-
-func validPersonName(name string) bool {
-	for _, r := range name {
-		if unicode.IsLetter(r) || r == ' ' || r == '-' || r == '\'' {
-			continue
-		}
-		return false
-	}
-	return true
 }
 
 func writeValidationError(w http.ResponseWriter, r *http.Request, fields validationErrors) {

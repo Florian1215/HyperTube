@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"hypertube/api/internal/i18n"
+	"hypertube/api/internal/userinput"
 )
 
 type oauthTokenRequest struct {
@@ -58,14 +59,14 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgUsernamePasswordRequired))
 		return
 	}
-	if len(req.Password) > maxPasswordBytes {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgPasswordTooLong))
+	if validationMessage, ok := userinput.ValidateLoginPassword(req.Password); !ok {
+		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, validationMessage))
 		return
 	}
 
-	user, err := h.store.FindUserByLogin(r.Context(), login)
+	user, err := h.authenticatePassword(r.Context(), login, req.Password)
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
+		if errors.Is(err, errInvalidCredentials) {
 			writeOAuthError(w, http.StatusBadRequest, "invalid_grant", i18n.T(locale, i18n.MsgInvalidUsernamePassword))
 			return
 		}
@@ -73,12 +74,7 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 		return
 	}
 
-	if user.PasswordHash == "" || !CheckPassword(user.PasswordHash, req.Password) {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_grant", i18n.T(locale, i18n.MsgInvalidUsernamePassword))
-		return
-	}
-
-	token, _, err := h.tokens.CreateAccessToken(user.ID)
+	token, expiresIn, err := h.issueAccessToken(user.ID)
 	if err != nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgFailedCreateAccessToken))
 		return
@@ -87,7 +83,7 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 	response := oauthTokenResponse{
 		AccessToken: token,
 		TokenType:   "Bearer",
-		ExpiresIn:   int64(AccessTokenTTL.Seconds()),
+		ExpiresIn:   expiresIn,
 		Scope:       normalizeOAuthScope(req.Scope),
 	}
 	writeOAuthJSON(w, http.StatusOK, response)

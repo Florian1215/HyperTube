@@ -772,15 +772,17 @@ JSON documents, and request bodies larger than 1 MiB are rejected.
 |-----------|------|-------------|
 | `email` | string | Valid email address. Password users only. |
 | `password` | string | 8-72 bytes. Password users only. |
-| `username` | string | 3-32 characters. Letters, digits, and underscores only. |
-| `first_name` | string | 1-100 characters after trimming. |
-| `last_name` | string | 1-100 characters after trimming. |
-| `profile_picture` | string or null | URL/string value after trimming, or `null` to remove it. |
+| `username` | string | 3-32 characters. Letters, digits, and underscores only. Password users only. |
+| `first_name` | string | 1-100 characters after trimming. Password users only. |
+| `last_name` | string | 1-100 characters after trimming. Password users only. |
+| `profile_picture` | string or null | URL/string value after trimming, `null`, or an empty string to remove it. |
 | `color` | string | One of `yellow`, `pink`, `green`, `purple`, `blue`, or `red`. |
 
-OAuth users can update profile fields, but cannot change `email` or `password`
-through this endpoint. A user is considered an OAuth user when they have at
-least one linked `oauth_accounts` row.
+Password users can update all documented fields. OAuth users can update only
+`profile_picture` and `color` through this endpoint; `email`, `password`,
+`username`, `first_name`, and `last_name` are managed by the OAuth provider and
+are rejected. A user is considered an OAuth user when they have at least one
+linked `oauth_accounts` row.
 
 ### Example request
 
@@ -799,10 +801,14 @@ Content-Type: application/json
 }
 ```
 
-Use `profile_picture: null` to remove the stored profile picture. For password
-users, include `email` or `password` only when those credentials should change.
+Use `profile_picture: null` to remove the stored profile picture.
+`profile_picture: ""` also removes it, matching the existing frontend behavior.
+For password users, include credential or identity fields only when they should
+change.
 
 ### Response
+
+When no profile picture is stored, responses include `"profile_picture": null`.
 
 ```json
 {
@@ -812,7 +818,7 @@ users, include `email` or `password` only when those credentials should change.
     "username": "ada_lovelace",
     "first_name": "Ada",
     "last_name": "Lovelace",
-    "profile_picture": "",
+    "profile_picture": null,
     "color": "purple",
     "created_at": "2026-05-06T12:00:00Z",
     "updated_at": "2026-05-06T12:00:00Z"

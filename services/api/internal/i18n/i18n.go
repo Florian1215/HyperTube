@@ -41,6 +41,7 @@ const (
 	MsgLoginInvalid                    Message = "invalid email or username"
 	MsgPasswordRequired                Message = "password is required"
 	MsgPasswordInvalid                 Message = "invalid password"
+	MsgPasswordTooCommon               Message = "password is too common"
 	MsgEmailAlreadyInUse               Message = "email is already in use"
 	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
@@ -48,6 +49,9 @@ const (
 	MsgUserUpdateForbidden             Message = "cannot update another user's profile"
 	MsgOAuthEmailUpdateForbidden       Message = "OAuth users cannot change their email"
 	MsgOAuthPasswordUpdateForbidden    Message = "OAuth users cannot change their password"
+	MsgOAuthUsernameUpdateForbidden    Message = "OAuth users cannot change their username"
+	MsgOAuthFirstNameUpdateForbidden   Message = "OAuth users cannot change their first name"
+	MsgOAuthLastNameUpdateForbidden    Message = "OAuth users cannot change their last name"
 	MsgFailedUpdateUser                Message = "failed to update user"
 	MsgInvalidUserColor                Message = "invalid user color"
 	MsgFailedUpdateUserColor           Message = "failed to update user color"
@@ -138,6 +142,7 @@ var translations = map[Locale]map[Message]string{
 		MsgLoginInvalid:                    "email ou nom d'utilisateur invalide",
 		MsgPasswordRequired:                "mot de passe requis",
 		MsgPasswordInvalid:                 "mot de passe invalide",
+		MsgPasswordTooCommon:               "mot de passe trop courant",
 		MsgEmailAlreadyInUse:               "email déjà utilisé",
 		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
@@ -145,6 +150,9 @@ var translations = map[Locale]map[Message]string{
 		MsgUserUpdateForbidden:             "impossible de modifier le profil d'un autre utilisateur",
 		MsgOAuthEmailUpdateForbidden:       "les utilisateurs OAuth ne peuvent pas modifier leur email",
 		MsgOAuthPasswordUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur mot de passe",
+		MsgOAuthUsernameUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur nom d'utilisateur",
+		MsgOAuthFirstNameUpdateForbidden:   "les utilisateurs OAuth ne peuvent pas modifier leur prénom",
+		MsgOAuthLastNameUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur nom",
 		MsgFailedUpdateUser:                "échec de la mise à jour de l'utilisateur",
 		MsgInvalidUserColor:                "couleur utilisateur invalide",
 		MsgFailedUpdateUserColor:           "échec de la mise à jour de la couleur utilisateur",
@@ -227,6 +235,7 @@ var translations = map[Locale]map[Message]string{
 		MsgLoginInvalid:                    "E-Mail oder Benutzername ist ungültig",
 		MsgPasswordRequired:                "Passwort ist erforderlich",
 		MsgPasswordInvalid:                 "Passwort ist ungültig",
+		MsgPasswordTooCommon:               "Passwort ist zu häufig",
 		MsgEmailAlreadyInUse:               "E-Mail wird bereits verwendet",
 		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
@@ -234,6 +243,9 @@ var translations = map[Locale]map[Message]string{
 		MsgUserUpdateForbidden:             "das Profil eines anderen Benutzers kann nicht aktualisiert werden",
 		MsgOAuthEmailUpdateForbidden:       "OAuth-Benutzer können ihre E-Mail nicht ändern",
 		MsgOAuthPasswordUpdateForbidden:    "OAuth-Benutzer können ihr Passwort nicht ändern",
+		MsgOAuthUsernameUpdateForbidden:    "OAuth-Benutzer können ihren Benutzernamen nicht ändern",
+		MsgOAuthFirstNameUpdateForbidden:   "OAuth-Benutzer können ihren Vornamen nicht ändern",
+		MsgOAuthLastNameUpdateForbidden:    "OAuth-Benutzer können ihren Nachnamen nicht ändern",
 		MsgFailedUpdateUser:                "Benutzer konnte nicht aktualisiert werden",
 		MsgInvalidUserColor:                "Benutzerfarbe ist ungültig",
 		MsgFailedUpdateUserColor:           "Benutzerfarbe konnte nicht aktualisiert werden",
