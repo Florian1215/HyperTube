@@ -25,6 +25,6 @@ export default function SwitchLanguage(Icon: ({selected}: {selected: boolean}) =
         onMouseLeave={() => (setIsOpen(false))}>
 
         <Icon selected={isOpen} />
-        {isOpen && <LanguageDropdown handleSwitchLanguage={handleSwitchLanguage} selected={locale} />}
+        {isOpen && <LanguageDropdown handleSwitchLanguage={handleSwitchLanguage} selected={locale} className="top-10 right-1/30" />}
     </div>);
 }
