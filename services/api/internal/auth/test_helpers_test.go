@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
 )
 
@@ -320,14 +321,16 @@ type fakePasswordResetMailer struct {
 	toName    string
 	resetURL  string
 	expiresIn time.Duration
+	locale    i18n.Locale
 }
 
-func (m *fakePasswordResetMailer) SendPasswordReset(_ context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration) error {
+func (m *fakePasswordResetMailer) SendPasswordReset(_ context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration, locale i18n.Locale) error {
 	m.calls++
 	m.toEmail = toEmail
 	m.toName = toName
 	m.resetURL = resetURL
 	m.expiresIn = expiresIn
+	m.locale = locale
 	return nil
 }
 

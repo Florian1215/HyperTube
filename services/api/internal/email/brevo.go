@@ -11,6 +11,8 @@ import (
 	"net/mail"
 	"strings"
 	"time"
+
+	"hypertube/api/internal/i18n"
 )
 
 const defaultBrevoAPIURL = "https://api.brevo.com/v3/smtp/email"
@@ -53,7 +55,7 @@ func NewBrevoMailer(config BrevoConfig) (*BrevoMailer, error) {
 	}, nil
 }
 
-func (m *BrevoMailer) SendPasswordReset(ctx context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration) error {
+func (m *BrevoMailer) SendPasswordReset(ctx context.Context, toEmail string, toName string, resetURL string, expiresIn time.Duration, locale i18n.Locale) error {
 	toEmail = strings.TrimSpace(toEmail)
 	if _, err := mail.ParseAddress(toEmail); err != nil {
 		return fmt.Errorf("recipient email must be valid")
@@ -64,25 +66,80 @@ func (m *BrevoMailer) SendPasswordReset(ctx context.Context, toEmail string, toN
 		minutes = 1
 	}
 	displayName := strings.TrimSpace(toName)
-	if displayName == "" {
-		displayName = "there"
-	}
 
-	subject := "Reset your Hypertube password"
-	textBody := fmt.Sprintf(
-		"Hello %s,\n\nUse this link to reset your Hypertube password:\n%s\n\nThis link expires in %d minutes. If you did not request this, you can ignore this email.\n",
-		displayName,
-		resetURL,
-		minutes,
-	)
-	htmlBody := fmt.Sprintf(
-		`<p>Hello %s,</p><p>Use this link to reset your Hypertube password:</p><p><a href="%s">Reset password</a></p><p>This link expires in %d minutes. If you did not request this, you can ignore this email.</p>`,
-		html.EscapeString(displayName),
-		html.EscapeString(resetURL),
-		minutes,
-	)
+	subject, textBody, htmlBody := passwordResetEmailContent(locale, displayName, resetURL, minutes)
 
 	return m.send(ctx, toEmail, toName, subject, textBody, htmlBody)
+}
+
+func passwordResetEmailContent(locale i18n.Locale, displayName string, resetURL string, minutes int) (string, string, string) {
+	locale = i18n.FromValue(string(locale))
+	greeting := passwordResetGreeting(locale, displayName)
+	switch locale {
+	case i18n.French:
+		return "Réinitialisez votre mot de passe Hypertube",
+			fmt.Sprintf(
+				"%s,\n\nUtilisez ce lien pour réinitialiser votre mot de passe Hypertube :\n%s\n\nCe lien expire dans %d minutes. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.\n",
+				greeting,
+				resetURL,
+				minutes,
+			),
+			fmt.Sprintf(
+				`<p>%s,</p><p>Utilisez ce lien pour réinitialiser votre mot de passe Hypertube :</p><p><a href="%s">Réinitialiser le mot de passe</a></p><p>Ce lien expire dans %d minutes. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>`,
+				html.EscapeString(greeting),
+				html.EscapeString(resetURL),
+				minutes,
+			)
+	case i18n.German:
+		return "Setze dein Hypertube-Passwort zurück",
+			fmt.Sprintf(
+				"%s,\n\nNutze diesen Link, um dein Hypertube-Passwort zurückzusetzen:\n%s\n\nDieser Link läuft in %d Minuten ab. Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.\n",
+				greeting,
+				resetURL,
+				minutes,
+			),
+			fmt.Sprintf(
+				`<p>%s,</p><p>Nutze diesen Link, um dein Hypertube-Passwort zurückzusetzen:</p><p><a href="%s">Passwort zurücksetzen</a></p><p>Dieser Link läuft in %d Minuten ab. Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren.</p>`,
+				html.EscapeString(greeting),
+				html.EscapeString(resetURL),
+				minutes,
+			)
+	default:
+		return "Reset your Hypertube password",
+			fmt.Sprintf(
+				"%s,\n\nUse this link to reset your Hypertube password:\n%s\n\nThis link expires in %d minutes. If you did not request this, you can ignore this email.\n",
+				greeting,
+				resetURL,
+				minutes,
+			),
+			fmt.Sprintf(
+				`<p>%s,</p><p>Use this link to reset your Hypertube password:</p><p><a href="%s">Reset password</a></p><p>This link expires in %d minutes. If you did not request this, you can ignore this email.</p>`,
+				html.EscapeString(greeting),
+				html.EscapeString(resetURL),
+				minutes,
+			)
+	}
+}
+
+func passwordResetGreeting(locale i18n.Locale, displayName string) string {
+	displayName = strings.TrimSpace(displayName)
+	switch locale {
+	case i18n.French:
+		if displayName == "" {
+			return "Bonjour"
+		}
+		return "Bonjour " + displayName
+	case i18n.German:
+		if displayName == "" {
+			return "Hallo"
+		}
+		return "Hallo " + displayName
+	default:
+		if displayName == "" {
+			return "Hello"
+		}
+		return "Hello " + displayName
+	}
 }
 
 func (m *BrevoMailer) send(ctx context.Context, toEmail string, toName string, subject string, textBody string, htmlBody string) error {

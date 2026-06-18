@@ -384,6 +384,24 @@ func TestUpdateUserCanRemoveProfilePicture(t *testing.T) {
 	if store.updatedParams.ProfilePicture != nil {
 		t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
 	}
+
+	var body struct {
+		Data map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	raw, ok := body.Data["profile_picture"]
+	if !ok {
+		t.Fatalf("expected response profile_picture field, got body: %s", rec.Body.String())
+	}
+	var profilePicture string
+	if err := json.Unmarshal(raw, &profilePicture); err != nil {
+		t.Fatalf("decode profile_picture: %v", err)
+	}
+	if profilePicture != "" {
+		t.Fatalf("expected empty profile_picture, got %q", profilePicture)
+	}
 }
 
 func TestUpdateUserHashesPassword(t *testing.T) {

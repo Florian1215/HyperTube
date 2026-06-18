@@ -62,7 +62,7 @@ Successful register, login, and OAuth callback responses use this auth payload:
   "data": {
     "access_token": "<jwt>",
     "token_type": "Bearer",
-    "expires_in": 604800,
+    "expires_in": 900,
     "user": {
       "id": 1,
       "email": "ada@example.com",
@@ -75,7 +75,7 @@ Successful register, login, and OAuth callback responses use this auth payload:
 ```
 
 `access_token` is a JWT signed with `HS256`. It contains a `user_id` claim and
-expires after 7 days. Protected routes expect:
+expires after 15 minutes. Protected routes expect:
 
 ```http
 Authorization: Bearer <access_token>
@@ -124,7 +124,7 @@ Content-Type: application/json
   "data": {
     "access_token": "<jwt>",
     "token_type": "Bearer",
-    "expires_in": 604800,
+    "expires_in": 900,
     "user": {
       "id": 1,
       "email": "ada@example.com",
@@ -204,7 +204,7 @@ Content-Type: application/json
   "data": {
     "access_token": "<jwt>",
     "token_type": "Bearer",
-    "expires_in": 604800,
+    "expires_in": 900,
     "user": {
       "id": 1,
       "email": "ada@example.com",
@@ -252,7 +252,7 @@ defaults to `Hypertube`.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `email` | string | yes | Valid email address. Trimmed and lowercased before lookup. |
-| `locale` | string | no | Locale segment used when building `PASSWORD_RESET_URL`. Defaults to `en`. |
+| `locale` | string | no | Optional locale override for the reset email and `PASSWORD_RESET_URL`. Defaults to `Accept-Language`, then `en`. |
 
 Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
 larger than 1 MiB are rejected.
@@ -262,12 +262,12 @@ larger than 1 MiB are rejected.
 ```http
 POST /api/v1/auth/password-reset
 Content-Type: application/json
+Accept-Language: de
 ```
 
 ```json
 {
-  "email": "ada@example.com",
-  "locale": "de"
+  "email": "ada@example.com"
 }
 ```
 
@@ -444,7 +444,7 @@ auth data in the URL fragment:
 `303 See Other`
 
 ```http
-Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=604800&user=%7B...%7D
+Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
 Set-Cookie: hypertube_oauth_42_state=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
 ```
 
@@ -556,7 +556,7 @@ auth data in the URL fragment:
 `303 See Other`
 
 ```http
-Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=604800&user=%7B...%7D
+Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
 Set-Cookie: hypertube_oauth_github_state=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
 ```
 
@@ -720,7 +720,7 @@ JSON is also accepted:
 {
   "access_token": "<jwt>",
   "token_type": "Bearer",
-  "expires_in": 604800,
+  "expires_in": 900,
   "scope": "profile"
 }
 ```
