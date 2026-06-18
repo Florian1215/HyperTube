@@ -808,6 +808,8 @@ change.
 
 ### Response
 
+When no profile picture is stored, responses include `"profile_picture": null`.
+
 ```json
 {
   "data": {
@@ -816,7 +818,7 @@ change.
     "username": "ada_lovelace",
     "first_name": "Ada",
     "last_name": "Lovelace",
-    "profile_picture": "",
+    "profile_picture": null,
     "color": "purple",
     "created_at": "2026-05-06T12:00:00Z",
     "updated_at": "2026-05-06T12:00:00Z"

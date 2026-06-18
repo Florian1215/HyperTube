@@ -148,7 +148,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.Data(w, http.StatusOK, user)
+	respond.Data(w, http.StatusOK, models.ToUserResponse(user))
 }
 
 func hasOAuthRestrictedUpdate(params updateUserParams) bool {

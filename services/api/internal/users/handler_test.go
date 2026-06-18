@@ -69,6 +69,39 @@ func TestListUsersReturnsUserSmallList(t *testing.T) {
 	}
 }
 
+func TestListUsersIncludesNullProfilePicture(t *testing.T) {
+	store := &fakeUserStore{list: []models.User{
+		{
+			ID:        1,
+			Username:  "alice",
+			FirstName: "Alice",
+			LastName:  "Liddell",
+			Color:     models.UserColorGreen,
+		},
+	}}
+	handler := NewHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ListUsers(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data []map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("expected 1 user, got %d", len(body.Data))
+	}
+	assertRawJSONField(t, body.Data[0], "profile_picture", "null")
+}
+
 func TestListUsersUsesSecondPageQueryForPagination(t *testing.T) {
 	store := &fakeUserStore{
 		list: []models.User{
@@ -269,6 +302,37 @@ func TestGetUserReturnsUserSmall(t *testing.T) {
 	}
 }
 
+func TestGetUserIncludesNullProfilePicture(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {
+			ID:        42,
+			Username:  "alice",
+			FirstName: "Alice",
+			LastName:  "Liddell",
+			Color:     models.UserColorGreen,
+		},
+	}}
+	handler := NewHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/42", nil)
+	req.SetPathValue("id", "42")
+	rec := httptest.NewRecorder()
+
+	handler.GetUser(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	assertRawJSONField(t, body.Data, "profile_picture", "null")
+}
+
 func TestGetUserInvalidIDReturnsNotFound(t *testing.T) {
 	handler := NewHandler(&fakeUserStore{})
 
@@ -354,7 +418,7 @@ func TestUpdateUserAppliesPartialProfileUpdate(t *testing.T) {
 	assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
 
 	var body struct {
-		Data models.User `json:"data"`
+		Data models.UserResponse `json:"data"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
@@ -364,6 +428,9 @@ func TestUpdateUserAppliesPartialProfileUpdate(t *testing.T) {
 	}
 	if body.Data.Color != models.UserColorGreen {
 		t.Fatalf("expected response color green, got %q", body.Data.Color)
+	}
+	if body.Data.ProfilePicture == nil || *body.Data.ProfilePicture != "https://example.com/avatar.png" {
+		t.Fatalf("expected response profile_picture URL, got %+v", body.Data.ProfilePicture)
 	}
 }
 
@@ -391,17 +458,34 @@ func TestUpdateUserCanRemoveProfilePicture(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	raw, ok := body.Data["profile_picture"]
-	if !ok {
-		t.Fatalf("expected response profile_picture field, got body: %s", rec.Body.String())
+	assertRawJSONField(t, body.Data, "profile_picture", "null")
+}
+
+func TestUpdateUserEmptyProfilePictureReturnsNull(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, Email: "alice@example.com", Username: "alice", ProfilePicture: "https://example.com/avatar.png"},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{"profile_picture":""}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	var profilePicture string
-	if err := json.Unmarshal(raw, &profilePicture); err != nil {
-		t.Fatalf("decode profile_picture: %v", err)
+	if !store.updatedParams.ProfilePictureSet {
+		t.Fatalf("expected profile picture to be marked for update")
 	}
-	if profilePicture != "" {
-		t.Fatalf("expected empty profile_picture, got %q", profilePicture)
+	if store.updatedParams.ProfilePicture != nil {
+		t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
 	}
+
+	var body struct {
+		Data map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	assertRawJSONField(t, body.Data, "profile_picture", "null")
 }
 
 func TestUpdateUserHashesPassword(t *testing.T) {
@@ -981,6 +1065,18 @@ func assertStringPointer(t *testing.T, name string, got *string, want string) {
 	}
 	if *got != want {
 		t.Fatalf("expected %s %q, got %q", name, want, *got)
+	}
+}
+
+func assertRawJSONField(t *testing.T, fields map[string]json.RawMessage, field string, want string) {
+	t.Helper()
+
+	raw, ok := fields[field]
+	if !ok {
+		t.Fatalf("expected %s field, got fields: %+v", field, fields)
+	}
+	if string(raw) != want {
+		t.Fatalf("expected %s to be %s, got %s", field, want, raw)
 	}
 }
 
