@@ -41,6 +41,7 @@ const (
 	MsgLoginInvalid                    Message = "invalid email or username"
 	MsgPasswordRequired                Message = "password is required"
 	MsgPasswordInvalid                 Message = "invalid password"
+	MsgPasswordTooCommon               Message = "password is too common"
 	MsgEmailAlreadyInUse               Message = "email is already in use"
 	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
@@ -141,6 +142,7 @@ var translations = map[Locale]map[Message]string{
 		MsgLoginInvalid:                    "email ou nom d'utilisateur invalide",
 		MsgPasswordRequired:                "mot de passe requis",
 		MsgPasswordInvalid:                 "mot de passe invalide",
+		MsgPasswordTooCommon:               "mot de passe trop courant",
 		MsgEmailAlreadyInUse:               "email déjà utilisé",
 		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
@@ -233,6 +235,7 @@ var translations = map[Locale]map[Message]string{
 		MsgLoginInvalid:                    "E-Mail oder Benutzername ist ungültig",
 		MsgPasswordRequired:                "Passwort ist erforderlich",
 		MsgPasswordInvalid:                 "Passwort ist ungültig",
+		MsgPasswordTooCommon:               "Passwort ist zu häufig",
 		MsgEmailAlreadyInUse:               "E-Mail wird bereits verwendet",
 		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",

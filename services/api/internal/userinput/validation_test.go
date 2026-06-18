@@ -118,6 +118,74 @@ func TestValidatePasswordVariants(t *testing.T) {
 	}
 }
 
+func TestValidateRequiredPasswordRejectsCommonPasswords(t *testing.T) {
+	tests := []struct {
+		name     string
+		password string
+		wantOK   bool
+	}{
+		{name: "plain common", password: "password"},
+		{name: "case and suffix", password: "Password123!"},
+		{name: "hyphen and digits suffix", password: "computer-91"},
+		{name: "digit suffix", password: "football1"},
+		{name: "passphrase", password: "correct-horse-battery", wantOK: true},
+		{name: "non-common trimmed suffix", password: "blue-cinema-91", wantOK: true},
+		{name: "camel case phrase", password: "MovieLampRiver42", wantOK: true},
+		{name: "non-common phrase", password: "not-a-common-passphrase", wantOK: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			message, ok := ValidateRequiredPassword(tt.password)
+			if ok != tt.wantOK {
+				t.Fatalf("expected ok=%v, got message=%q ok=%v", tt.wantOK, message, ok)
+			}
+			if !tt.wantOK && message != i18n.MsgPasswordTooCommon {
+				t.Fatalf("expected common password message, got %q", message)
+			}
+			if tt.wantOK && message != "" {
+				t.Fatalf("expected no validation message, got %q", message)
+			}
+		})
+	}
+}
+
+func TestValidateUpdatePasswordRejectsCommonPasswords(t *testing.T) {
+	tests := []struct {
+		name     string
+		password string
+		wantOK   bool
+	}{
+		{name: "plain common", password: "password"},
+		{name: "case and suffix", password: "Password123!"},
+		{name: "hyphen and digits suffix", password: "computer-91"},
+		{name: "digit suffix", password: "football1"},
+		{name: "passphrase", password: "correct-horse-battery", wantOK: true},
+		{name: "non-common trimmed suffix", password: "blue-cinema-91", wantOK: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			message, ok := ValidateUpdatePassword(tt.password)
+			if ok != tt.wantOK {
+				t.Fatalf("expected ok=%v, got message=%q ok=%v", tt.wantOK, message, ok)
+			}
+			if !tt.wantOK && message != i18n.MsgPasswordTooCommon {
+				t.Fatalf("expected common password message, got %q", message)
+			}
+			if tt.wantOK && message != "" {
+				t.Fatalf("expected no validation message, got %q", message)
+			}
+		})
+	}
+}
+
+func TestValidateLoginPasswordAllowsExistingCommonPassword(t *testing.T) {
+	if message, ok := ValidateLoginPassword("password"); !ok || message != "" {
+		t.Fatalf("expected common login password to pass validation, got message=%q ok=%v", message, ok)
+	}
+}
+
 func TestValidateName(t *testing.T) {
 	name, message, ok := ValidateName(" Alice-Louise ", i18n.MsgFirstNameRequired, i18n.MsgFirstNameTooLong, i18n.MsgFirstNameInvalid)
 	if !ok {
