@@ -403,21 +403,17 @@ func applyOAuthProfile(ctx context.Context, q rowQuerier, user models.User, para
 	if params.LastName != "" {
 		lastName = params.LastName
 	}
-	profilePicture := user.ProfilePicture
-	if params.ProfilePicture != "" {
-		profilePicture = params.ProfilePicture
-	}
 
-	if username == user.Username && firstName == user.FirstName && lastName == user.LastName && profilePicture == user.ProfilePicture {
+	if username == user.Username && firstName == user.FirstName && lastName == user.LastName {
 		return user, nil
 	}
 
 	updatedUser, err := scanUser(q.QueryRow(ctx, `
 		UPDATE users
-		SET username = $1, first_name = $2, last_name = $3, profile_picture = $4, updated_at = NOW()
-		WHERE id = $5
+		SET username = $1, first_name = $2, last_name = $3, updated_at = NOW()
+		WHERE id = $4
 		RETURNING id, email, username, first_name, last_name, profile_picture, COALESCE(password_hash, ''), color, created_at, updated_at
-	`, username, firstName, lastName, nullableString(profilePicture), user.ID))
+	`, username, firstName, lastName, user.ID))
 	if err != nil {
 		return models.User{}, err
 	}

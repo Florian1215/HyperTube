@@ -119,3 +119,66 @@ func TestMemoryUserStoreOAuthProfileRefreshPreservesColor(t *testing.T) {
 		t.Fatalf("expected refreshed profile fields, got %+v", refreshedUser)
 	}
 }
+
+func TestMemoryUserStoreOAuthProfileRefreshPreservesProfilePicture(t *testing.T) {
+	tests := []struct {
+		name                string
+		localProfilePicture string
+	}{
+		{
+			name:                "custom picture",
+			localProfilePicture: "https://hypertube.example/custom.png",
+		},
+		{
+			name:                "removed picture",
+			localProfilePicture: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newMemoryUserStore()
+
+			firstUser, err := store.FindOrCreateOAuthUser(context.Background(), OAuthUserParams{
+				Provider:       githubProvider,
+				ProviderUserID: "github-id",
+				Email:          "oauth@example.com",
+				Username:       "oauth_user",
+				FirstName:      "Old",
+				LastName:       "Name",
+				ProfilePicture: "https://provider.example/avatar-old.png",
+			})
+			if err != nil {
+				t.Fatalf("create OAuth user: %v", err)
+			}
+
+			localUser := firstUser
+			localUser.ProfilePicture = tt.localProfilePicture
+			store.usersByID[localUser.ID] = localUser
+			store.usersByUsername[localUser.Username] = localUser
+
+			refreshedUser, err := store.FindOrCreateOAuthUser(context.Background(), OAuthUserParams{
+				Provider:       githubProvider,
+				ProviderUserID: "github-id",
+				Email:          "oauth@example.com",
+				Username:       "oauth_user",
+				FirstName:      "New",
+				LastName:       "Profile",
+				ProfilePicture: "https://provider.example/avatar-new.png",
+			})
+			if err != nil {
+				t.Fatalf("refresh OAuth user: %v", err)
+			}
+
+			if refreshedUser.ID != firstUser.ID {
+				t.Fatalf("expected OAuth refresh to reuse user id %d, got %d", firstUser.ID, refreshedUser.ID)
+			}
+			if refreshedUser.ProfilePicture != tt.localProfilePicture {
+				t.Fatalf("expected profile picture %q, got %q", tt.localProfilePicture, refreshedUser.ProfilePicture)
+			}
+			if refreshedUser.Color != firstUser.Color {
+				t.Fatalf("expected OAuth refresh to preserve color %q, got %q", firstUser.Color, refreshedUser.Color)
+			}
+		})
+	}
+}

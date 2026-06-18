@@ -117,8 +117,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if params.Email != nil || params.Password != nil {
-		if ok := h.ensureOAuthCredentialUpdateAllowed(w, r, id, params); !ok {
+	if hasOAuthRestrictedUpdate(params) {
+		if ok := h.ensureOAuthRestrictedUpdateAllowed(w, r, id, params); !ok {
 			return
 		}
 	}
@@ -151,7 +151,15 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	respond.Data(w, http.StatusOK, user)
 }
 
-func (h *Handler) ensureOAuthCredentialUpdateAllowed(w http.ResponseWriter, r *http.Request, id int64, params updateUserParams) bool {
+func hasOAuthRestrictedUpdate(params updateUserParams) bool {
+	return params.Email != nil ||
+		params.Password != nil ||
+		params.Username != nil ||
+		params.FirstName != nil ||
+		params.LastName != nil
+}
+
+func (h *Handler) ensureOAuthRestrictedUpdateAllowed(w http.ResponseWriter, r *http.Request, id int64, params updateUserParams) bool {
 	hasOAuthAccount, err := h.store.UserHasOAuthAccount(r.Context(), id)
 	if err != nil {
 		log.Println("db err:", err)
@@ -168,6 +176,15 @@ func (h *Handler) ensureOAuthCredentialUpdateAllowed(w http.ResponseWriter, r *h
 	}
 	if params.Password != nil {
 		fields["password"] = i18n.MsgOAuthPasswordUpdateForbidden
+	}
+	if params.Username != nil {
+		fields["username"] = i18n.MsgOAuthUsernameUpdateForbidden
+	}
+	if params.FirstName != nil {
+		fields["first_name"] = i18n.MsgOAuthFirstNameUpdateForbidden
+	}
+	if params.LastName != nil {
+		fields["last_name"] = i18n.MsgOAuthLastNameUpdateForbidden
 	}
 	writeValidationError(w, r, fields)
 	return false

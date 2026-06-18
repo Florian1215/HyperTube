@@ -342,14 +342,26 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 		t.Fatalf("42 auth token should validate: %v", err)
 	}
 
+	storedUser := store.usersByID[response.Data.User.ID]
+	storedUser.ProfilePicture = ""
+	store.usersByID[storedUser.ID] = storedUser
+	store.usersByUsername[storedUser.Username] = storedUser
+	provider.identity.ProfilePicture = "https://cdn.intra.42.fr/users/12345/provider-refresh.jpg"
+
 	secondReq := httptest.NewRequest(http.MethodGet, "/api/v1/auth/42/callback?code=valid-code&state=second-state", nil)
 	secondReq.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "second-state"})
 	secondRec := httptest.NewRecorder()
 
 	handler.CallbackFortyTwo(secondRec, secondReq)
+	if secondRec.Code != http.StatusOK {
+		t.Fatalf("expected second callback 200, got %d: %s", secondRec.Code, secondRec.Body.String())
+	}
 	secondResponse := decodeAuthEnvelope(t, secondRec)
 	if secondResponse.Data.User.ID != response.Data.User.ID {
 		t.Fatalf("expected repeat 42 login to reuse user id %d, got %d", response.Data.User.ID, secondResponse.Data.User.ID)
+	}
+	if secondResponse.Data.User.ProfilePicture != nil {
+		t.Fatalf("expected repeat 42 login to preserve removed profile picture, got %+v", secondResponse.Data.User.ProfilePicture)
 	}
 }
 

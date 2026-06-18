@@ -1,8 +1,15 @@
 package auth
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"hypertube/api/internal/models"
 )
 
 func TestNormalizeOAuthUserParamsFillsFallbackFields(t *testing.T) {
@@ -78,4 +85,124 @@ func TestUsernameWithSuffixKeepsUsernameWithinLimit(t *testing.T) {
 	if !strings.HasSuffix(got, "_42_provider_user") {
 		t.Fatalf("expected suffix to be preserved, got %q", got)
 	}
+}
+
+func TestApplyOAuthProfilePreservesProfilePictureWhenProviderPictureChanges(t *testing.T) {
+	now := time.Now().UTC()
+	user := models.User{
+		ID:             42,
+		Email:          "oauth@example.com",
+		Username:       "oauth_user",
+		FirstName:      "Old",
+		LastName:       "Name",
+		ProfilePicture: "https://hypertube.example/custom.png",
+		Color:          models.UserColorGreen,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	returnedUser := user
+	returnedUser.FirstName = "New"
+	q := &fakeOAuthProfileQuerier{returnedUser: returnedUser}
+
+	updated, err := applyOAuthProfile(context.Background(), q, user, OAuthUserParams{
+		Provider:       githubProvider,
+		ProviderUserID: "123",
+		Username:       "oauth_user",
+		FirstName:      "New",
+		LastName:       "Name",
+		ProfilePicture: "https://provider.example/avatar-new.png",
+	})
+	if err != nil {
+		t.Fatalf("apply OAuth profile: %v", err)
+	}
+
+	if updated.ProfilePicture != "https://hypertube.example/custom.png" {
+		t.Fatalf("expected local profile picture to be preserved, got %q", updated.ProfilePicture)
+	}
+	if !q.called {
+		t.Fatal("expected profile refresh update query")
+	}
+	if strings.Contains(q.query, "profile_picture =") {
+		t.Fatalf("update query must not write profile_picture: %s", q.query)
+	}
+	if len(q.args) != 4 {
+		t.Fatalf("expected 4 query args, got %d: %+v", len(q.args), q.args)
+	}
+	if q.args[0] != "oauth_user" || q.args[1] != "New" || q.args[2] != "Name" || q.args[3] != int64(42) {
+		t.Fatalf("unexpected query args: %+v", q.args)
+	}
+}
+
+func TestApplyOAuthProfileDoesNotWriteWhenOnlyProviderPictureChanges(t *testing.T) {
+	now := time.Now().UTC()
+	user := models.User{
+		ID:             42,
+		Email:          "oauth@example.com",
+		Username:       "oauth_user",
+		FirstName:      "Old",
+		LastName:       "Name",
+		ProfilePicture: "https://hypertube.example/custom.png",
+		Color:          models.UserColorGreen,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	q := &fakeOAuthProfileQuerier{returnedUser: user}
+
+	updated, err := applyOAuthProfile(context.Background(), q, user, OAuthUserParams{
+		Provider:       githubProvider,
+		ProviderUserID: "123",
+		Username:       "oauth_user",
+		FirstName:      "Old",
+		LastName:       "Name",
+		ProfilePicture: "https://provider.example/avatar-new.png",
+	})
+	if err != nil {
+		t.Fatalf("apply OAuth profile: %v", err)
+	}
+
+	if updated != user {
+		t.Fatalf("expected unchanged user, got %+v", updated)
+	}
+	if q.called {
+		t.Fatalf("expected no query when only provider picture changes, got %s", q.query)
+	}
+}
+
+type fakeOAuthProfileQuerier struct {
+	called       bool
+	query        string
+	args         []any
+	returnedUser models.User
+}
+
+func (q *fakeOAuthProfileQuerier) QueryRow(_ context.Context, query string, args ...any) pgx.Row {
+	q.called = true
+	q.query = query
+	q.args = args
+	return fakeOAuthProfileRow{user: q.returnedUser}
+}
+
+type fakeOAuthProfileRow struct {
+	user models.User
+}
+
+func (r fakeOAuthProfileRow) Scan(dest ...any) error {
+	if len(dest) != 10 {
+		return fmt.Errorf("expected 10 scan destinations, got %d", len(dest))
+	}
+
+	*(dest[0].(*int64)) = r.user.ID
+	*(dest[1].(*string)) = r.user.Email
+	*(dest[2].(*string)) = r.user.Username
+	*(dest[3].(*string)) = r.user.FirstName
+	*(dest[4].(*string)) = r.user.LastName
+	*(dest[5].(*sql.NullString)) = sql.NullString{
+		String: r.user.ProfilePicture,
+		Valid:  r.user.ProfilePicture != "",
+	}
+	*(dest[6].(*string)) = r.user.PasswordHash
+	*(dest[7].(*string)) = r.user.Color
+	*(dest[8].(*time.Time)) = r.user.CreatedAt
+	*(dest[9].(*time.Time)) = r.user.UpdatedAt
+	return nil
 }

@@ -519,26 +519,148 @@ func TestUpdateUserRejectsOAuthEmailAndPasswordUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateUserAllowsOAuthProfileFields(t *testing.T) {
-	store := &fakeUserStore{
-		users: map[int64]models.User{
-			42: {ID: 42, Email: "oauth@example.com", Username: "oauth_user", Color: models.UserColorPurple},
+func TestUpdateUserAllowsOAuthAvatarFields(t *testing.T) {
+	tests := []struct {
+		name   string
+		body   string
+		assert func(t *testing.T, store *fakeUserStore)
+	}{
+		{
+			name: "color",
+			body: `{"color":"green"}`,
+			assert: func(t *testing.T, store *fakeUserStore) {
+				assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
+				if store.updatedParams.ProfilePictureSet {
+					t.Fatalf("did not expect profile picture update")
+				}
+			},
 		},
+		{
+			name: "profile picture URL",
+			body: `{"profile_picture":"https://example.com/avatar.png"}`,
+			assert: func(t *testing.T, store *fakeUserStore) {
+				if !store.updatedParams.ProfilePictureSet {
+					t.Fatalf("expected profile picture update")
+				}
+				assertStringPointer(t, "profile_picture", store.updatedParams.ProfilePicture, "https://example.com/avatar.png")
+			},
+		},
+		{
+			name: "profile picture null",
+			body: `{"profile_picture":null}`,
+			assert: func(t *testing.T, store *fakeUserStore) {
+				if !store.updatedParams.ProfilePictureSet {
+					t.Fatalf("expected profile picture removal")
+				}
+				if store.updatedParams.ProfilePicture != nil {
+					t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
+				}
+			},
+		},
+		{
+			name: "profile picture empty string",
+			body: `{"profile_picture":""}`,
+			assert: func(t *testing.T, store *fakeUserStore) {
+				if !store.updatedParams.ProfilePictureSet {
+					t.Fatalf("expected profile picture removal")
+				}
+				if store.updatedParams.ProfilePicture != nil {
+					t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeUserStore{
+				users: map[int64]models.User{
+					42: {
+						ID:             42,
+						Email:          "oauth@example.com",
+						Username:       "oauth_user",
+						ProfilePicture: "https://example.com/old.png",
+						Color:          models.UserColorPurple,
+					},
+				},
+				oauthUsers: map[int64]bool{42: true},
+			}
+			handler := NewHandler(store)
+
+			rec := serveUpdateUser(t, handler, 42, "42", tt.body)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if !store.updated || store.updatedID != 42 {
+				t.Fatalf("expected update for user 42, got updated=%v id=%d", store.updated, store.updatedID)
+			}
+			tt.assert(t, store)
+			if store.oauthChecked {
+				t.Fatalf("OAuth check should not run for avatar-only updates")
+			}
+		})
+	}
+}
+
+func TestUpdateUserRejectsOAuthProviderManagedFields(t *testing.T) {
+	store := &fakeUserStore{
 		oauthUsers: map[int64]bool{42: true},
 	}
 	handler := NewHandler(store)
 
-	rec := serveUpdateUser(t, handler, 42, "42", `{"color":"green"}`)
+	rec := serveUpdateUser(t, handler, 42, "42", `{
+		"username":"new_username",
+		"first_name":"New",
+		"last_name":"Name"
+	}`)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !store.updated || store.updatedID != 42 {
-		t.Fatalf("expected update for user 42, got updated=%v id=%d", store.updated, store.updatedID)
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
 	}
-	assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
-	if store.oauthChecked {
-		t.Fatalf("OAuth check should not run for profile-only updates")
+	for _, field := range []string{"username", "first_name", "last_name"} {
+		if _, ok := body.Error.Fields[field]; !ok {
+			t.Fatalf("expected %s field error, got %+v", field, body.Error.Fields)
+		}
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called for blocked OAuth provider-managed field update")
+	}
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserRejectsOAuthMixedAllowedAndRestrictedFields(t *testing.T) {
+	store := &fakeUserStore{
+		oauthUsers: map[int64]bool{42: true},
+	}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{
+		"color":"green",
+		"username":"new_username"
+	}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	if _, ok := body.Error.Fields["username"]; !ok {
+		t.Fatalf("expected username field error, got %+v", body.Error.Fields)
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called when a restricted OAuth field is present")
+	}
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
 	}
 }
 
@@ -556,6 +678,29 @@ func TestUpdateUserAllowsEmailForPasswordUser(t *testing.T) {
 	assertStringPointer(t, "email", store.updatedParams.Email, "new@example.com")
 	if !store.oauthChecked || store.oauthCheckedID != 42 {
 		t.Fatalf("expected OAuth check for credential update, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
+	}
+}
+
+func TestUpdateUserAllowsProviderManagedFieldsForPasswordUser(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, Email: "alice@example.com", Username: "old_username", FirstName: "Old", LastName: "Name"},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{
+		"username":"new_username",
+		"first_name":"New",
+		"last_name":"Name"
+	}`)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertStringPointer(t, "username", store.updatedParams.Username, "new_username")
+	assertStringPointer(t, "first_name", store.updatedParams.FirstName, "New")
+	assertStringPointer(t, "last_name", store.updatedParams.LastName, "Name")
+	if !store.oauthChecked || store.oauthCheckedID != 42 {
+		t.Fatalf("expected OAuth check for provider-managed field update, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
 	}
 }
 
