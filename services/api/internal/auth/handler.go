@@ -1,15 +1,14 @@
 package auth
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"time"
 
 	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
+	"hypertube/api/internal/requestjson"
 	"hypertube/api/internal/respond"
 )
 
@@ -167,9 +166,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.store.FindUserByLogin(r.Context(), login)
+	user, err := h.authenticatePassword(r.Context(), login, req.Password)
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
+		if errors.Is(err, errInvalidCredentials) {
 			respond.LocalizedError(w, r, http.StatusUnauthorized, "INVALID_CREDENTIALS", i18n.MsgInvalidCredentials)
 			return
 		}
@@ -177,27 +176,17 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.PasswordHash == "" || !CheckPassword(user.PasswordHash, req.Password) {
-		respond.LocalizedError(w, r, http.StatusUnauthorized, "INVALID_CREDENTIALS", i18n.MsgInvalidCredentials)
-		return
-	}
-
 	h.writeAuthResponse(w, r, http.StatusOK, user)
 }
 
 func (h *Handler) writeAuthResponse(w http.ResponseWriter, r *http.Request, status int, user models.User) {
-	token, _, err := h.tokens.CreateAccessToken(user.ID)
+	response, err := h.newAuthResponse(user, nil)
 	if err != nil {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateToken)
 		return
 	}
 
-	respond.Data(w, status, authResponse{
-		AccessToken: token,
-		TokenType:   "Bearer",
-		ExpiresIn:   int64(AccessTokenTTL.Seconds()),
-		User:        toUserResponse(user, nil),
-	})
+	respond.Data(w, status, response)
 }
 
 func toUserResponse(user models.User, oauthMethod *string) userResponse {
@@ -256,27 +245,8 @@ func writeDuplicateRegisterError(w http.ResponseWriter, r *http.Request, fields 
 	respond.ErrorWithFields(w, http.StatusConflict, "ALREADY_EXIST_ERROR", responseFields)
 }
 
-func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
-
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(dst); err != nil {
-		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-		return false
-	}
-
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-		return false
-	}
-
-	return true
-}
-
 func decodeRegisterRequest(w http.ResponseWriter, r *http.Request) (registerRequest, validationErrors, bool) {
-	body, ok := decodeJSONObject(w, r, map[string]struct{}{
+	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"email":      {},
 		"username":   {},
 		"first_name": {},
@@ -306,7 +276,7 @@ func decodeRegisterRequest(w http.ResponseWriter, r *http.Request) (registerRequ
 }
 
 func decodeLoginRequest(w http.ResponseWriter, r *http.Request) (loginRequest, validationErrors, bool) {
-	body, ok := decodeJSONObject(w, r, map[string]struct{}{
+	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"login":    {},
 		"password": {},
 	})
@@ -325,43 +295,14 @@ func decodeLoginRequest(w http.ResponseWriter, r *http.Request) (loginRequest, v
 	return req, nil, true
 }
 
-func decodeJSONObject(w http.ResponseWriter, r *http.Request, allowedFields map[string]struct{}) (map[string]json.RawMessage, bool) {
-	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
-
-	decoder := json.NewDecoder(r.Body)
-	var body map[string]json.RawMessage
-	if err := decoder.Decode(&body); err != nil || body == nil {
-		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-		return nil, false
-	}
-
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-		return nil, false
-	}
-
-	for field := range body {
-		if _, ok := allowedFields[field]; !ok {
-			respond.LocalizedError(w, r, http.StatusBadRequest, "BAD_REQUEST", i18n.MsgInvalidJSONBody)
-			return nil, false
-		}
-	}
-
-	return body, true
-}
-
 func decodeStringField(body map[string]json.RawMessage, field string, fields validationErrors) string {
 	raw, ok := body[field]
 	if !ok {
 		return ""
 	}
-	if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
-		fields[field] = i18n.MsgInvalidRequestBody
-		return ""
-	}
 
-	var value string
-	if err := json.Unmarshal(raw, &value); err != nil {
+	value, ok := requestjson.DecodeString(raw)
+	if !ok {
 		fields[field] = i18n.MsgInvalidRequestBody
 		return ""
 	}

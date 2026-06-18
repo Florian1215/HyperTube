@@ -12,6 +12,7 @@ import (
 
 	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
+	"hypertube/api/internal/userinput"
 )
 
 const testJWTSecret = "0123456789abcdef0123456789abcdef"
@@ -95,7 +96,7 @@ func (s *memoryUserStore) FindUserByEmail(_ context.Context, email string) (mode
 
 func (s *memoryUserStore) FindUserByLogin(_ context.Context, login string) (models.User, error) {
 	login = strings.TrimSpace(login)
-	if email, ok := normalizeEmail(login); ok {
+	if email, ok := userinput.NormalizeEmail(login); ok {
 		if user, ok := s.usersByEmail[email]; ok {
 			return user, nil
 		}

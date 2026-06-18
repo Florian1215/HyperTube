@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"hypertube/api/internal/models"
+	"hypertube/api/internal/userinput"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -166,7 +167,7 @@ func (s *Store) FindUserByEmail(ctx context.Context, email string) (models.User,
 func (s *Store) FindUserByLogin(ctx context.Context, login string) (models.User, error) {
 	login = strings.TrimSpace(login)
 	email := ""
-	if normalizedEmail, ok := normalizeEmail(login); ok {
+	if normalizedEmail, ok := userinput.NormalizeEmail(login); ok {
 		email = normalizedEmail
 	}
 
@@ -499,7 +500,7 @@ func usernameExists(ctx context.Context, q rowQuerier, username string) (bool, e
 func normalizeOAuthUserParams(params OAuthUserParams) OAuthUserParams {
 	params.Provider = strings.TrimSpace(params.Provider)
 	params.ProviderUserID = strings.TrimSpace(params.ProviderUserID)
-	if email, ok := normalizeEmail(params.Email); ok {
+	if email, ok := userinput.NormalizeEmail(params.Email); ok {
 		params.Email = email
 	} else {
 		params.Email = oauthFallbackEmail(params.Provider, params.ProviderUserID)

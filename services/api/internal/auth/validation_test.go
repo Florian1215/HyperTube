@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+const (
+	testMinPasswordBytes = 8
+	testMaxPasswordBytes = 72
+	testMaxNameLength    = 100
+)
+
 func TestValidateRegisterRequestNormalizesInput(t *testing.T) {
 	params, fields, ok := validateRegisterRequest(registerRequest{
 		Email:     " Alice@Example.COM ",
@@ -91,21 +97,21 @@ func TestValidateRegisterRequestRejectsInvalidFields(t *testing.T) {
 			name:  "short password",
 			field: "password",
 			mutate: func(req *registerRequest) {
-				req.Password = strings.Repeat("a", minPasswordBytes-1)
+				req.Password = strings.Repeat("a", testMinPasswordBytes-1)
 			},
 		},
 		{
 			name:  "long password",
 			field: "password",
 			mutate: func(req *registerRequest) {
-				req.Password = strings.Repeat("a", maxPasswordBytes+1)
+				req.Password = strings.Repeat("a", testMaxPasswordBytes+1)
 			},
 		},
 		{
 			name:  "long first name",
 			field: "first_name",
 			mutate: func(req *registerRequest) {
-				req.FirstName = strings.Repeat("a", maxNameLength+1)
+				req.FirstName = strings.Repeat("a", testMaxNameLength+1)
 			},
 		},
 		{
@@ -239,7 +245,7 @@ func TestValidateLoginRequestRejectsInvalidInput(t *testing.T) {
 	}{
 		{req: loginRequest{Login: "not-an-email!", Password: "correct-horse-battery"}, field: "login"},
 		{req: loginRequest{Login: "alice@example.com", Password: ""}, field: "password"},
-		{req: loginRequest{Login: "alice@example.com", Password: strings.Repeat("a", maxPasswordBytes+1)}, field: "password"},
+		{req: loginRequest{Login: "alice@example.com", Password: strings.Repeat("a", testMaxPasswordBytes+1)}, field: "password"},
 		{req: loginRequest{Password: "correct-horse-battery"}, field: "login"},
 	}
 
