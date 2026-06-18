@@ -20,6 +20,39 @@ var usernameCharsPattern = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 var emailPrefixPattern = regexp.MustCompile(`^[A-Za-z0-9._+\-]+$`)
 var emailDomainPattern = regexp.MustCompile(`^[A-Za-z0-9.\-]+$`)
 
+var commonPasswords = map[string]struct{}{
+	"00000000":      {},
+	"11111111":      {},
+	"12345678":      {},
+	"123456789":     {},
+	"abc123":        {},
+	"admin":         {},
+	"administrator": {},
+	"baseball":      {},
+	"batman":        {},
+	"computer":      {},
+	"default":       {},
+	"dragon":        {},
+	"football":      {},
+	"hello":         {},
+	"iloveyou":      {},
+	"internet":      {},
+	"letmein":       {},
+	"login":         {},
+	"master":        {},
+	"monkey":        {},
+	"password":      {},
+	"password1":     {},
+	"princess":      {},
+	"qwerty":        {},
+	"qwerty123":     {},
+	"secret":        {},
+	"sunshine":      {},
+	"superman":      {},
+	"trustno1":      {},
+	"welcome":       {},
+}
+
 func ValidateEmail(raw string) (string, i18n.Message, bool) {
 	email := strings.TrimSpace(raw)
 	if email == "" {
@@ -91,6 +124,9 @@ func ValidateRequiredPassword(password string) (i18n.Message, bool) {
 	if len(password) > maxPasswordBytes {
 		return i18n.MsgPasswordTooLong, false
 	}
+	if isCommonPassword(password) {
+		return i18n.MsgPasswordTooCommon, false
+	}
 	return "", true
 }
 
@@ -110,6 +146,9 @@ func ValidateUpdatePassword(password string) (i18n.Message, bool) {
 	}
 	if len(password) > maxPasswordBytes {
 		return i18n.MsgPasswordTooLong, false
+	}
+	if isCommonPassword(password) {
+		return i18n.MsgPasswordTooCommon, false
 	}
 	return "", true
 }
@@ -169,6 +208,23 @@ func validEmail(email string) bool {
 		}
 	}
 	return true
+}
+
+func isCommonPassword(password string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(password))
+	if _, ok := commonPasswords[normalized]; ok {
+		return true
+	}
+
+	simplified := trimCommonPasswordSuffix(normalized)
+	_, ok := commonPasswords[simplified]
+	return ok
+}
+
+func trimCommonPasswordSuffix(password string) string {
+	return strings.TrimRightFunc(password, func(r rune) bool {
+		return unicode.IsDigit(r) || strings.ContainsRune("!?._-@#", r)
+	})
 }
 
 func validPersonName(name string) bool {
