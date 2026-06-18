@@ -33,3 +33,32 @@ func TestRandomUserColorAlwaysReturnsAllowedColor(t *testing.T) {
 		}
 	}
 }
+
+func TestToUserSmallPrivateProfilePictureNullability(t *testing.T) {
+	withoutPicture := ToUserSmallPrivate(User{})
+	if withoutPicture.ProfilePicture != nil {
+		t.Fatalf("expected nil profile picture, got %+v", withoutPicture.ProfilePicture)
+	}
+
+	withPicture := ToUserSmallPrivate(User{ProfilePicture: "https://example.com/avatar.png"})
+	if withPicture.ProfilePicture == nil || *withPicture.ProfilePicture != "https://example.com/avatar.png" {
+		t.Fatalf("expected profile picture URL, got %+v", withPicture.ProfilePicture)
+	}
+}
+
+func TestToUserResponseProfilePictureNullability(t *testing.T) {
+	withoutPicture := ToUserResponse(User{})
+	if withoutPicture.ProfilePicture != nil {
+		t.Fatalf("expected nil profile picture, got %+v", withoutPicture.ProfilePicture)
+	}
+
+	withPicture := ToUserResponse(User{ProfilePicture: "https://example.com/avatar.png"})
+	if withPicture.ProfilePicture == nil || *withPicture.ProfilePicture != "https://example.com/avatar.png" {
+		t.Fatalf("expected profile picture URL, got %+v", withPicture.ProfilePicture)
+	}
+
+	whitespacePicture := ToUserResponse(User{ProfilePicture: "   "})
+	if whitespacePicture.ProfilePicture != nil {
+		t.Fatalf("expected whitespace-only profile picture to be nil, got %+v", whitespacePicture.ProfilePicture)
+	}
+}

@@ -38,24 +38,49 @@ type User struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+type UserResponse struct {
+	ID             int64     `json:"id"`
+	Email          string    `json:"email"`
+	Username       string    `json:"username"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	ProfilePicture *string   `json:"profile_picture"`
+	Color          string    `json:"color"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
 type UserSmall struct {
-	ID             int64  `json:"id"`
-	Username       string `json:"username"`
-	ProfilePicture string `json:"profile_picture,omitempty"`
-	Color          string `json:"color"`
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
+	ID             int64   `json:"id"`
+	Username       string  `json:"username"`
+	ProfilePicture *string `json:"profile_picture"`
+	Color          string  `json:"color"`
+	FirstName      string  `json:"first_name"`
+	LastName       string  `json:"last_name"`
+}
+
+func ToUserResponse(u User) UserResponse {
+	return UserResponse{
+		ID:             u.ID,
+		Email:          u.Email,
+		Username:       u.Username,
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
+		ProfilePicture: nullableProfilePicture(u.ProfilePicture),
+		Color:          u.Color,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
+	}
 }
 
 func ToUserSmall(u User) UserSmall {
 	return UserSmall{
 		ID:             u.ID,
 		Username:       u.Username,
-		ProfilePicture: u.ProfilePicture,
+		ProfilePicture: nullableProfilePicture(u.ProfilePicture),
 		Color:          u.Color,
 		FirstName:      u.FirstName,
-		LastName: 		u.LastName,
-
+		LastName:       u.LastName,
 	}
 }
 
@@ -63,11 +88,18 @@ func ToUserSmallPrivate(u User) UserSmall {
 	return UserSmall{
 		ID:             u.ID,
 		Username:       u.Username,
-		ProfilePicture: u.ProfilePicture,
+		ProfilePicture: nullableProfilePicture(u.ProfilePicture),
 		Color:          u.Color,
 		FirstName:      initial(u.FirstName),
 		LastName:       initial(u.LastName),
 	}
+}
+
+func nullableProfilePicture(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return &value
 }
 
 // initial returns the first character of s, or an empty string if s is empty.

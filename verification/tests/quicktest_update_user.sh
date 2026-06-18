@@ -482,7 +482,7 @@ run_profile_picture_steps() {
     '{"profile_picture":null}' \
     "$USER_A_TOKEN"
   if expect_status "PATCH clears profile_picture" "200"; then
-    assert_jq_true "Clear response includes profile_picture as empty string" '(.data | has("profile_picture")) and .data.profile_picture == ""'
+    assert_jq_true "Clear response includes profile_picture as null" '(.data | has("profile_picture")) and .data.profile_picture == null'
   fi
 
   finish
@@ -603,9 +603,9 @@ run_walkthrough() {
     "/users/$USER_A_ID" \
     '{"profile_picture":null}' \
     "$USER_A_TOKEN"
-  walkthrough_note "200 and profile_picture is returned as an empty string"
+  walkthrough_note "200 and profile_picture is returned as null"
   if expect_status "Profile picture can be cleared" "200"; then
-    assert_jq_true "Profile picture is empty" '(.data | has("profile_picture")) and .data.profile_picture == ""'
+    assert_jq_true "Profile picture is null" '(.data | has("profile_picture")) and .data.profile_picture == null'
   fi
 
   run_step_request \
@@ -803,7 +803,7 @@ fi
 
 request PATCH "/users/$USER_A_ID" '{"profile_picture":null}' "$USER_A_TOKEN"
 if expect_status "PATCH removes profile picture with null" "200"; then
-  assert_jq_true "Removed profile picture is present and empty" '(.data | has("profile_picture")) and .data.profile_picture == ""'
+  assert_jq_true "Removed profile picture is present and null" '(.data | has("profile_picture")) and .data.profile_picture == null'
 fi
 
 request PATCH "/users/$USER_A_ID" '{"password":"NewPatchPass123!"}' "$USER_A_TOKEN"
