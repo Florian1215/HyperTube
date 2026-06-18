@@ -152,9 +152,6 @@ func (s *memoryUserStore) applyOAuthProfile(user models.User, params OAuthUserPa
 	if params.LastName != "" {
 		user.LastName = params.LastName
 	}
-	if params.ProfilePicture != "" {
-		user.ProfilePicture = params.ProfilePicture
-	}
 	s.usersByID[user.ID] = user
 	s.usersByUsername[user.Username] = user
 	return user
