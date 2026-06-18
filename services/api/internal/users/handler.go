@@ -47,7 +47,7 @@ type updateUserParams struct {
 // ListUsers returns a paginated UserSmall list.
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	page := parsePage(r)
-	offset := (page - 1) * userPageLimit
+	offset := page * userPageLimit
 
 	total, err := h.store.CountUsers(r.Context())
 	if err != nil {
@@ -192,8 +192,8 @@ func (h *Handler) ensureOAuthRestrictedUpdateAllowed(w http.ResponseWriter, r *h
 
 func parsePage(r *http.Request) int {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil || page < 1 {
-		return 1
+	if err != nil || page < 0 {
+		return 0
 	}
 	return page
 }

@@ -46,8 +46,8 @@ func TestListUsersReturnsUserSmallList(t *testing.T) {
 	if body.Meta.Total != 2 {
 		t.Fatalf("expected total 2, got %d", body.Meta.Total)
 	}
-	if body.Meta.Page != 1 {
-		t.Fatalf("expected page 1, got %d", body.Meta.Page)
+	if body.Meta.Page != 0 {
+		t.Fatalf("expected page 0, got %d", body.Meta.Page)
 	}
 	if body.Meta.PerPage != userPageLimit {
 		t.Fatalf("expected per_page %d, got %d", userPageLimit, body.Meta.PerPage)
@@ -102,7 +102,7 @@ func TestListUsersIncludesNullProfilePicture(t *testing.T) {
 	assertRawJSONField(t, body.Data[0], "profile_picture", "null")
 }
 
-func TestListUsersUsesSecondPageQueryForPagination(t *testing.T) {
+func TestListUsersUsesPageOneQueryForSecondPagePagination(t *testing.T) {
 	store := &fakeUserStore{
 		list: []models.User{
 			{ID: 13, Username: "page_two_user", FirstName: "Page", LastName: "Two", Color: models.UserColorBlue},
@@ -111,7 +111,7 @@ func TestListUsersUsesSecondPageQueryForPagination(t *testing.T) {
 	}
 	handler := NewHandler(store)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/users?page=2", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users?page=1", nil)
 	rec := httptest.NewRecorder()
 
 	handler.ListUsers(rec, req)
@@ -141,8 +141,8 @@ func TestListUsersUsesSecondPageQueryForPagination(t *testing.T) {
 	if body.Meta.Total != 25 {
 		t.Fatalf("expected total 25, got %d", body.Meta.Total)
 	}
-	if body.Meta.Page != 2 {
-		t.Fatalf("expected page 2, got %d", body.Meta.Page)
+	if body.Meta.Page != 1 {
+		t.Fatalf("expected page 1, got %d", body.Meta.Page)
 	}
 	if body.Meta.PerPage != userPageLimit {
 		t.Fatalf("expected per_page %d, got %d", userPageLimit, body.Meta.PerPage)
@@ -152,7 +152,7 @@ func TestListUsersUsesSecondPageQueryForPagination(t *testing.T) {
 	}
 }
 
-func TestListUsersInvalidPageFallsBackToOne(t *testing.T) {
+func TestListUsersInvalidPageFallsBackToZero(t *testing.T) {
 	tests := []struct {
 		name string
 		path string
@@ -160,7 +160,6 @@ func TestListUsersInvalidPageFallsBackToOne(t *testing.T) {
 		{name: "missing page", path: "/api/v1/users"},
 		{name: "empty page", path: "/api/v1/users?page="},
 		{name: "text page", path: "/api/v1/users?page=abc"},
-		{name: "zero page", path: "/api/v1/users?page=0"},
 		{name: "negative page", path: "/api/v1/users?page=-1"},
 	}
 
@@ -194,10 +193,44 @@ func TestListUsersInvalidPageFallsBackToOne(t *testing.T) {
 			if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 				t.Fatalf("decode response: %v", err)
 			}
-			if body.Meta.Page != 1 {
-				t.Fatalf("expected page 1 for invalid page, got %d", body.Meta.Page)
+			if body.Meta.Page != 0 {
+				t.Fatalf("expected page 0 for invalid page, got %d", body.Meta.Page)
 			}
 		})
+	}
+}
+
+func TestListUsersAcceptsZeroPageQuery(t *testing.T) {
+	store := &fakeUserStore{
+		list: []models.User{
+			{ID: 1, Username: "alice", FirstName: "Alice", LastName: "Example", Color: models.UserColorGreen},
+		},
+		total: 1,
+	}
+	handler := NewHandler(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users?page=0", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ListUsers(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.gotOffset != 0 {
+		t.Fatalf("expected offset 0, got %d", store.gotOffset)
+	}
+
+	var body struct {
+		Meta struct {
+			Page int `json:"page"`
+		} `json:"meta"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Meta.Page != 0 {
+		t.Fatalf("expected page 0, got %d", body.Meta.Page)
 	}
 }
 
