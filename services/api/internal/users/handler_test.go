@@ -433,7 +433,6 @@ func TestUpdateUserAppliesPartialProfileUpdate(t *testing.T) {
 		"username":"  new_username  ",
 		"first_name":"  Alice  ",
 		"last_name":"  Liddell  ",
-		"profile_picture":"  https://example.com/avatar.png  ",
 		"color":"green"
 	}`)
 
@@ -447,7 +446,6 @@ func TestUpdateUserAppliesPartialProfileUpdate(t *testing.T) {
 	assertStringPointer(t, "username", store.updatedParams.Username, "new_username")
 	assertStringPointer(t, "first_name", store.updatedParams.FirstName, "Alice")
 	assertStringPointer(t, "last_name", store.updatedParams.LastName, "Liddell")
-	assertStringPointer(t, "profile_picture", store.updatedParams.ProfilePicture, "https://example.com/avatar.png")
 	assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
 
 	var body struct {
@@ -462,9 +460,6 @@ func TestUpdateUserAppliesPartialProfileUpdate(t *testing.T) {
 	if body.Data.Color != models.UserColorGreen {
 		t.Fatalf("expected response color green, got %q", body.Data.Color)
 	}
-	if body.Data.ProfilePicture == nil || *body.Data.ProfilePicture != "https://example.com/avatar.png" {
-		t.Fatalf("expected response profile_picture URL, got %+v", body.Data.ProfilePicture)
-	}
 }
 
 func TestUpdateUserCanRemoveProfilePicture(t *testing.T) {
@@ -478,11 +473,8 @@ func TestUpdateUserCanRemoveProfilePicture(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !store.updatedParams.ProfilePictureSet {
-		t.Fatalf("expected profile picture to be marked for update")
-	}
-	if store.updatedParams.ProfilePicture != nil {
-		t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
+	if !store.updatedParams.ClearProfilePicture {
+		t.Fatalf("expected profile picture to be marked for removal")
 	}
 
 	var body struct {
@@ -495,30 +487,88 @@ func TestUpdateUserCanRemoveProfilePicture(t *testing.T) {
 }
 
 func TestUpdateUserEmptyProfilePictureReturnsNull(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "empty string", body: `{"profile_picture":""}`},
+		{name: "whitespace string", body: `{"profile_picture":"   "}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeUserStore{users: map[int64]models.User{
+				42: {ID: 42, Email: "alice@example.com", Username: "alice", ProfilePicture: "https://example.com/avatar.png"},
+			}}
+			handler := NewHandler(store)
+
+			rec := serveUpdateUser(t, handler, 42, "42", tt.body)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if !store.updatedParams.ClearProfilePicture {
+				t.Fatalf("expected profile picture to be marked for removal")
+			}
+
+			var body struct {
+				Data map[string]json.RawMessage `json:"data"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+				t.Fatalf("decode response: %v", err)
+			}
+			assertRawJSONField(t, body.Data, "profile_picture", "null")
+		})
+	}
+}
+
+func TestUpdateUserRejectsProfilePictureURL(t *testing.T) {
 	store := &fakeUserStore{users: map[int64]models.User{
-		42: {ID: 42, Email: "alice@example.com", Username: "alice", ProfilePicture: "https://example.com/avatar.png"},
+		42: {ID: 42, Email: "alice@example.com", Username: "alice", ProfilePicture: "https://example.com/old.png"},
 	}}
 	handler := NewHandler(store)
 
-	rec := serveUpdateUser(t, handler, 42, "42", `{"profile_picture":""}`)
+	rec := serveUpdateUser(t, handler, 42, "42", `{"profile_picture":"https://example.com/avatar.png"}`)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !store.updatedParams.ProfilePictureSet {
-		t.Fatalf("expected profile picture to be marked for update")
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
 	}
-	if store.updatedParams.ProfilePicture != nil {
-		t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
+	if _, ok := body.Error.Fields["profile_picture"]; !ok {
+		t.Fatalf("expected profile_picture field error, got %+v", body.Error.Fields)
 	}
+	if store.updated {
+		t.Fatalf("store update should not be called for blocked profile picture URL")
+	}
+}
 
-	var body struct {
-		Data map[string]json.RawMessage `json:"data"`
+func TestUpdateUserRejectsProfilePictureURLWithoutPartialUpdate(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, Email: "alice@example.com", Username: "alice", Color: models.UserColorPurple},
+	}}
+	handler := NewHandler(store)
+
+	rec := serveUpdateUser(t, handler, 42, "42", `{
+		"profile_picture":"https://example.com/avatar.png",
+		"color":"green"
+	}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-		t.Fatalf("decode response: %v", err)
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
 	}
-	assertRawJSONField(t, body.Data, "profile_picture", "null")
+	if _, ok := body.Error.Fields["profile_picture"]; !ok {
+		t.Fatalf("expected profile_picture field error, got %+v", body.Error.Fields)
+	}
+	if store.updated {
+		t.Fatalf("store update should not be called when profile_picture is invalid")
+	}
 }
 
 func TestUpdateUserHashesPassword(t *testing.T) {
@@ -636,7 +686,7 @@ func TestUpdateUserRejectsOAuthEmailAndPasswordUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateUserAllowsOAuthAvatarFields(t *testing.T) {
+func TestUpdateUserAllowsOAuthAppearanceUpdates(t *testing.T) {
 	tests := []struct {
 		name   string
 		body   string
@@ -647,30 +697,17 @@ func TestUpdateUserAllowsOAuthAvatarFields(t *testing.T) {
 			body: `{"color":"green"}`,
 			assert: func(t *testing.T, store *fakeUserStore) {
 				assertStringPointer(t, "color", store.updatedParams.Color, models.UserColorGreen)
-				if store.updatedParams.ProfilePictureSet {
+				if store.updatedParams.ClearProfilePicture {
 					t.Fatalf("did not expect profile picture update")
 				}
-			},
-		},
-		{
-			name: "profile picture URL",
-			body: `{"profile_picture":"https://example.com/avatar.png"}`,
-			assert: func(t *testing.T, store *fakeUserStore) {
-				if !store.updatedParams.ProfilePictureSet {
-					t.Fatalf("expected profile picture update")
-				}
-				assertStringPointer(t, "profile_picture", store.updatedParams.ProfilePicture, "https://example.com/avatar.png")
 			},
 		},
 		{
 			name: "profile picture null",
 			body: `{"profile_picture":null}`,
 			assert: func(t *testing.T, store *fakeUserStore) {
-				if !store.updatedParams.ProfilePictureSet {
+				if !store.updatedParams.ClearProfilePicture {
 					t.Fatalf("expected profile picture removal")
-				}
-				if store.updatedParams.ProfilePicture != nil {
-					t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
 				}
 			},
 		},
@@ -678,11 +715,8 @@ func TestUpdateUserAllowsOAuthAvatarFields(t *testing.T) {
 			name: "profile picture empty string",
 			body: `{"profile_picture":""}`,
 			assert: func(t *testing.T, store *fakeUserStore) {
-				if !store.updatedParams.ProfilePictureSet {
+				if !store.updatedParams.ClearProfilePicture {
 					t.Fatalf("expected profile picture removal")
-				}
-				if store.updatedParams.ProfilePicture != nil {
-					t.Fatalf("expected nil profile picture, got %q", *store.updatedParams.ProfilePicture)
 				}
 			},
 		},
@@ -918,6 +952,8 @@ func TestUpdateUserValidationErrors(t *testing.T) {
 		{name: "invalid color", pathID: "42", body: `{"color":"orange"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "color"},
 		{name: "invalid email", pathID: "42", body: `{"email":"not-an-email"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "email"},
 		{name: "short password", pathID: "42", body: `{"password":"short"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "password"},
+		{name: "numeric profile picture", pathID: "42", body: `{"profile_picture":123}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "profile_picture"},
+		{name: "object profile picture", pathID: "42", body: `{"profile_picture":{"url":"https://example.com/avatar.png"}}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "profile_picture"},
 	}
 
 	for _, tt := range tests {
@@ -1067,11 +1103,8 @@ func (s *fakeUserStore) UpdateUser(_ context.Context, id int64, params UpdateUse
 	if params.PasswordHash != nil {
 		u.PasswordHash = *params.PasswordHash
 	}
-	if params.ProfilePictureSet {
+	if params.ClearProfilePicture {
 		u.ProfilePicture = ""
-		if params.ProfilePicture != nil {
-			u.ProfilePicture = *params.ProfilePicture
-		}
 	}
 	if params.Color != nil {
 		u.Color = *params.Color
