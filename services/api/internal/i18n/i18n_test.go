@@ -37,4 +37,7 @@ func TestTranslateMessages(t *testing.T) {
 	if got := T(French, MsgFailedCreateUser); got != "Échec de la création de l'utilisateur" {
 		t.Fatalf("unexpected capitalized French message: %q", got)
 	}
+	if got := T(German, MsgProfilePictureUpdateForbidden); got != "Profilbild kann nur entfernt werden" {
+		t.Fatalf("unexpected German profile picture message: %q", got)
+	}
 }

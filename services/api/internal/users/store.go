@@ -45,14 +45,13 @@ func duplicateUserFields(err error) []string {
 }
 
 type UpdateUserParams struct {
-	Email             *string
-	Username          *string
-	FirstName         *string
-	LastName          *string
-	PasswordHash      *string
-	ProfilePicture    *string
-	ProfilePictureSet bool
-	Color             *string
+	Email               *string
+	Username            *string
+	FirstName           *string
+	LastName            *string
+	PasswordHash        *string
+	ClearProfilePicture bool
+	Color               *string
 }
 
 type Store struct {
@@ -126,11 +125,6 @@ func (s *Store) UserHasOAuthAccount(ctx context.Context, id int64) (bool, error)
 func (s *Store) UpdateUser(ctx context.Context, id int64, params UpdateUserParams) (models.User, error) {
 	var u models.User
 
-	profilePictureValue := any(nil)
-	if params.ProfilePicture != nil {
-		profilePictureValue = *params.ProfilePicture
-	}
-
 	err := s.db.QueryRow(ctx, `
 		UPDATE users
 		SET
@@ -139,12 +133,12 @@ func (s *Store) UpdateUser(ctx context.Context, id int64, params UpdateUserParam
 			first_name = COALESCE($4, first_name),
 			last_name = COALESCE($5, last_name),
 			password_hash = COALESCE($6, password_hash),
-			profile_picture = CASE WHEN $7 THEN $8 ELSE profile_picture END,
-			color = COALESCE($9, color),
+			profile_picture = CASE WHEN $7 THEN NULL::text ELSE profile_picture END,
+			color = COALESCE($8, color),
 			updated_at = NOW()
 		WHERE id = $1
 		RETURNING id, email, username, first_name, last_name, COALESCE(profile_picture, ''), COALESCE(password_hash, ''), color, created_at, updated_at
-	`, id, params.Email, params.Username, params.FirstName, params.LastName, params.PasswordHash, params.ProfilePictureSet, profilePictureValue, params.Color).
+	`, id, params.Email, params.Username, params.FirstName, params.LastName, params.PasswordHash, params.ClearProfilePicture, params.Color).
 		Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName, &u.ProfilePicture, &u.PasswordHash, &u.Color, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

@@ -52,6 +52,7 @@ const (
 	MsgOAuthUsernameUpdateForbidden    Message = "OAuth users cannot change their username"
 	MsgOAuthFirstNameUpdateForbidden   Message = "OAuth users cannot change their first name"
 	MsgOAuthLastNameUpdateForbidden    Message = "OAuth users cannot change their last name"
+	MsgProfilePictureUpdateForbidden   Message = "profile picture can only be removed"
 	MsgFailedUpdateUser                Message = "failed to update user"
 	MsgInvalidUserColor                Message = "invalid user color"
 	MsgFailedUpdateUserColor           Message = "failed to update user color"
@@ -153,6 +154,7 @@ var translations = map[Locale]map[Message]string{
 		MsgOAuthUsernameUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur nom d'utilisateur",
 		MsgOAuthFirstNameUpdateForbidden:   "les utilisateurs OAuth ne peuvent pas modifier leur prénom",
 		MsgOAuthLastNameUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur nom",
+		MsgProfilePictureUpdateForbidden:   "la photo de profil peut seulement être supprimée",
 		MsgFailedUpdateUser:                "échec de la mise à jour de l'utilisateur",
 		MsgInvalidUserColor:                "couleur utilisateur invalide",
 		MsgFailedUpdateUserColor:           "échec de la mise à jour de la couleur utilisateur",
@@ -246,6 +248,7 @@ var translations = map[Locale]map[Message]string{
 		MsgOAuthUsernameUpdateForbidden:    "OAuth-Benutzer können ihren Benutzernamen nicht ändern",
 		MsgOAuthFirstNameUpdateForbidden:   "OAuth-Benutzer können ihren Vornamen nicht ändern",
 		MsgOAuthLastNameUpdateForbidden:    "OAuth-Benutzer können ihren Nachnamen nicht ändern",
+		MsgProfilePictureUpdateForbidden:   "Profilbild kann nur entfernt werden",
 		MsgFailedUpdateUser:                "Benutzer konnte nicht aktualisiert werden",
 		MsgInvalidUserColor:                "Benutzerfarbe ist ungültig",
 		MsgFailedUpdateUserColor:           "Benutzerfarbe konnte nicht aktualisiert werden",
