@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {startStreamingTorrent, useMovie, useTorrents} from "@/services/movies.service";
+import {useMovie, useTorrents} from "@/services/movies.service";
 import useHandleError from "@/hooks/useHandleError";
 import {ApiError} from "@/services/ApiError";
 import MovieHero from "@/components/features/movie/MovieHero";
@@ -17,6 +17,7 @@ export default function MoviePage() {
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const handleError = useHandleError();
     const [getTorrents, setGetTorrents] = useState(false);
+    const [torrentId, setTorrentId] = useState<string | undefined>();
     const {data: torrents} = useTorrents(data?.data?.imdb_id, getTorrents)
 
     useEffect(() => {
@@ -31,14 +32,9 @@ export default function MoviePage() {
         if (torrents) {
             const selectedTorrent = getBestTorrent(torrents.data);
             console.log(selectedTorrent);
-            if (selectedTorrent) {
-                try {
-                    const data = startStreamingTorrent(selectedTorrent.id);
-                    console.log(data.then(d => console.log(d)));
-                } catch (e) {
-                    console.log("ERROR REQUEST", e);// todo handle error
-                }
-            }
+            if (selectedTorrent)
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setTorrentId(selectedTorrent.id);
         }
     }, [torrents]);
 
@@ -51,10 +47,9 @@ export default function MoviePage() {
         }
     }
 
-    // todo add many backdrops
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MovieHero movie={data?.data} onClick={handleTorrent} />
+        <MovieHero movie={data?.data} onClick={handleTorrent} torrentId={torrentId}/>
         <MovieInfoSection movie={data?.data}/>
-        {data ? <CommentsSection movie={data.data} /> : <div />}
+        {data ? <CommentsSection movie={data.data}/> : <div/>}
     </div>);
 }
