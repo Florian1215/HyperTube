@@ -263,8 +263,7 @@ patch_profile_payload() {
     --arg username "$UPDATED_USERNAME" \
     --arg first_name "Ada" \
     --arg last_name "Lovelace" \
-    --arg profile_picture "https://example.test/avatar.png" \
-    '{email:$email, username:$username, first_name:$first_name, last_name:$last_name, profile_picture:$profile_picture, color:"green"}'
+    '{email:$email, username:$username, first_name:$first_name, last_name:$last_name, color:"green"}'
 }
 
 usage() {
@@ -278,7 +277,7 @@ Usage:
 Modes:
   full             Run the complete PATCH /users regression suite (default).
   walkthrough      Step through the core user API flow with printed curl commands.
-  profile-picture Step through the profile_picture null regression from the CLI.
+  profile-picture Step through the profile_picture protection regression from the CLI.
 
 Useful environment variables:
   BASE_URL=http://localhost:8080/api/v1
@@ -466,13 +465,14 @@ run_profile_picture_steps() {
   printf '  TOKEN=%s\n' "$USER_A_TOKEN"
 
   run_step_request \
-    "Set profile_picture to URL" \
+    "Reject profile_picture URL" \
     PATCH \
     "/users/$USER_A_ID" \
     '{"profile_picture":"https://example.test/avatar.png"}' \
     "$USER_A_TOKEN"
-  if expect_status "PATCH sets profile_picture" "200"; then
-    assert_jq_eq "Set response profile_picture" '.data.profile_picture' "https://example.test/avatar.png"
+  if expect_status "PATCH rejects profile_picture URL" "400"; then
+    assert_jq_eq "Profile picture URL uses validation error" '.error.code' "VALIDATION_ERROR"
+    assert_jq_true "Profile picture URL reports profile_picture field" '.error.fields.profile_picture.message | type == "string" and length > 0'
   fi
 
   run_step_request \
@@ -567,7 +567,6 @@ run_walkthrough() {
     assert_jq_eq "Updated response id" '.data.id | tostring' "$USER_A_ID"
     assert_jq_eq "Updated email" '.data.email' "$UPDATED_EMAIL"
     assert_jq_eq "Updated username" '.data.username' "$UPDATED_USERNAME"
-    assert_jq_eq "Updated profile picture" '.data.profile_picture' "https://example.test/avatar.png"
     assert_jq_eq "Updated color" '.data.color' "green"
     assert_body_not_contains "Profile update response does not expose password_hash" "password_hash"
   fi
@@ -581,7 +580,6 @@ run_walkthrough() {
   walkthrough_note "200, updated public fields visible, private email hidden"
   if expect_status "Updated public profile is readable" "200"; then
     assert_jq_eq "Public username is updated" '.data.username' "$UPDATED_USERNAME"
-    assert_jq_eq "Public profile picture is updated" '.data.profile_picture' "https://example.test/avatar.png"
     assert_body_not_contains "Public profile does not expose updated email" "$UPDATED_EMAIL"
   fi
 
@@ -779,9 +777,14 @@ if expect_status "PATCH updates own full profile" "200"; then
   assert_jq_eq "Updated response username" '.data.username' "$UPDATED_USERNAME"
   assert_jq_eq "Updated response first_name" '.data.first_name' "Ada"
   assert_jq_eq "Updated response last_name" '.data.last_name' "Lovelace"
-  assert_jq_eq "Updated response profile_picture" '.data.profile_picture' "https://example.test/avatar.png"
   assert_jq_eq "Updated response color" '.data.color' "green"
   assert_body_not_contains "Profile update response does not leak password_hash key" "password_hash"
+fi
+
+request PATCH "/users/$USER_A_ID" '{"profile_picture":"https://example.test/avatar.png"}' "$USER_A_TOKEN"
+if expect_status "PATCH rejects profile picture URL" "400"; then
+  assert_jq_eq "Profile picture URL uses VALIDATION_ERROR" '.error.code' "VALIDATION_ERROR"
+  assert_jq_true "Profile picture URL reports profile_picture field" '.error.fields.profile_picture.message | type == "string" and length > 0'
 fi
 
 request POST /auth/login "$(login_payload "$UPDATED_EMAIL" "$PASSWORD")"
