@@ -50,7 +50,3 @@ export function useTorrents(movieId?: string, enabled=false) {
         enabled && movieId !== undefined
     );
 }
-
-export function startStreamingTorrent(torrentId: string) { // todo handle local ?
-    return apiClient<tListResponse<iTorrent>>(`/stream/${torrentId}`);
-}
