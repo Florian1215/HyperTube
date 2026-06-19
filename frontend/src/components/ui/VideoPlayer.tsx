@@ -6,7 +6,6 @@ import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 
-// todo handle when click loading mode
 // todo get subtitle
 export default function VideoPlayer({src, color}: {src: string, color: string}) {
     const token = localStorage.getItem("token") ?? "coucou";
@@ -14,23 +13,25 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
-    const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
-    const [duration, setDuration] = useState(formatTime(0));
+    const [duration, setDuration] = useState(0);
+    const [durationString, setDurationString] = useState(formatTime(0));
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);
     const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
     const [showSubtitleMenu, setShowSubtitleMenu] = useState(false);
-    const [selectedSubtitle, setSelectedSubtitle] = useState<tLocale>("fr");
+    const [selectedSubtitle, setSelectedSubtitle] = useState<tLocale | undefined>();
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [isSeeking, setIsSeeking] = useState(false);
+    const [seekTime, setSeekTime] = useState(0);
+    const progressBarRef = useRef<HTMLDivElement>(null);
+    const seekTimeRef = useRef(0);
 
     useEffect(() => {
         const video = videoRef.current;
 
         if (!video)
             return;
-
 
         // Safari
         if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -62,6 +63,8 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
 
     /* -------------- PLAY PAUSE ------------- */
     const togglePlay = () => {
+        if (showSubtitleMenu)
+            setShowSubtitleMenu(false);
         const video = videoRef.current;
         if (!video)
             return;
@@ -82,47 +85,86 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
         const video = videoRef.current;
         if (!video)
             return;
-        const percent = (video.currentTime / video.duration) * 100;
         setCurrentTime(formatTime(video.currentTime));
-        setProgress(percent);
     };
 
-    const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const getTimeFromClientX = (clientX: number) => {
+        const video = videoRef.current;
+        if (!video || !progressBarRef.current)
+            return 0;
+
+        const rect = progressBarRef.current.getBoundingClientRect();
+        const percent = (clientX - rect.left) / rect.width;
+
+        return Math.min(Math.max(percent * video.duration, 0), video.duration);
+    };
+
+    useEffect(() => {
+        if (!isSeeking)
+            return;
+
+        const handleMove = (e: MouseEvent) => {
+            const time = getTimeFromClientX(e.clientX);
+            seekTimeRef.current = time;
+            setSeekTime(time);
+        };
+
+        const handleUp = () => {
+            const video = videoRef.current;
+            if (!video) return;
+
+            setIsSeeking(false);
+            video.currentTime = seekTimeRef.current;
+            video.play();
+        };
+
+        window.addEventListener("mousemove", handleMove);
+        window.addEventListener("mouseup", handleUp);
+
+        return () => {
+            window.removeEventListener("mousemove", handleMove);
+            window.removeEventListener("mouseup", handleUp);
+        };
+    }, [isSeeking, seekTime]);
+
+    const handleSeekStart = (e: React.MouseEvent<HTMLDivElement>) => {
         const video = videoRef.current;
         if (!video)
-            return ;
+            return;
 
-        const rect = e.currentTarget.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-
-        video.currentTime = percent * video.duration;
-        handleTimeUpdate();
+        setIsSeeking(true);
+        const time = getTimeFromClientX(e.clientX);
+        setSeekTime(time);
+        video.pause();
     };
 
     /* ------------- FULL SCREEN ------------- */
-    const toggleFullscreen = () => setFullscreenEnabled(!fullscreenEnabled);
-
-    useEffect(() => {
+    const toggleFullscreen = () => {
+        if (showSubtitleMenu)
+            setShowSubtitleMenu(false);
+        setFullscreenEnabled(!fullscreenEnabled);
         const container = containerRef.current;
-
-        if (fullscreenEnabled) {
-            if (container)
-                container.requestFullscreen();
-        } else // todo remake
+        if (!container)
+            return ;
+        if (!document.fullscreenElement)
+            container.requestFullscreen();
+        else
             document.exitFullscreen();
-    }, [fullscreenEnabled]);
+    }
 
-    /* ---------------- SUBTITLES ---------------- todo */
+    /* -------------- SUBTITLES -------------- */
     const changeSubtitle = (lang: tLocale) => {
         const video = videoRef.current;
         if (!video)
             return;
 
+        const newLang = lang === selectedSubtitle ? undefined : lang;
+
         Array.from(video.textTracks).forEach((track) => {
-            track.mode = track.language === lang ? "showing" : "hidden";
+            track.mode = track.language === newLang ? "showing" : "hidden";
         });
 
-        setSelectedSubtitle(lang);
+        setSelectedSubtitle(newLang);
         setShowSubtitleMenu(false);
     };
 
@@ -145,6 +187,8 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
     /* --------------- KEYBOARD -------------- */
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            if (showSubtitleMenu)
+                setShowSubtitleMenu(false);
             const video = videoRef.current;
             if (!video)
                 return;
@@ -179,11 +223,12 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
 
         window.addEventListener("keydown", handleKey);
         return () => window.removeEventListener("keydown", handleKey);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (<div ref={containerRef} className={"relative size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]")} onMouseMove={resetHideTimer} >
         {isBuffering && (<div className="absolute inset-0 flex items-center justify-center  pointer-events-none bg-black/30">
-            <div className="size-14 animate-spin border-6 rounded-full border-white border-t-transparent" />
+            <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 
         <video
@@ -193,7 +238,8 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
                 const video = videoRef.current;
                 if (!video)
                     return;
-                setDuration(formatTime(video.duration));
+                setDuration(video.duration);
+                setDurationString(formatTime(video.duration));
             }}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
@@ -214,15 +260,12 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
                         <button onClick={togglePlay} className="p-2">
                             <PlayPauseIcon isPlaying={isPlaying} />
                         </button>
-                        <p>{currentTime} / {duration}</p>
+                        <p>{currentTime} / {durationString}</p>
                     </div>
 
                     <div className="flex gap-4 items-center">
-                        <div className="relative">
-                            <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white" : "border-white")}>CC</button>
-
-                            {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} />}
-                        </div>
+                        <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white" : "border-white")}>CC</button>
+                        {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
                         <button onClick={toggleFullscreen} className="p-2">
                             <FullScreenIcon iFullScreen={fullscreenEnabled} />
@@ -230,8 +273,8 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
                     </div>
                 </div>
 
-                <div className="w-full h-4 bg-gray cursor-pointer" onClick={handleSeek} >
-                    <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${progress}%`}} />
+                <div ref={progressBarRef} className="w-full h-4 bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart}>
+                    <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${(seekTime / duration) * 100 || 0}%`}} />
                 </div>
             </div>
         </div>
