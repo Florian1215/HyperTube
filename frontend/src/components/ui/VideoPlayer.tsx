@@ -192,8 +192,8 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return (<div ref={containerRef} className={"relative size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]")} onMouseMove={resetHideTimer} >
-        {isBuffering && (<div className="absolute inset-0 flex items-center justify-center  pointer-events-none bg-black/30">
+    return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/20" : "")} onMouseMove={resetHideTimer} >
+        {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center  pointer-events-none bg-black/30">
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 
