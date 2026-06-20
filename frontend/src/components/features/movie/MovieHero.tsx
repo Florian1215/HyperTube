@@ -70,7 +70,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
                 <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
                     <div className="custom-noise" />
                     <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
-                    {hasVideo && <div className="custom-loading2 opacity-80" />}
+                    {hasVideo && <div className="custom-loading-dark opacity-80" />}
                     {renderContent()}
                 </div>
             </div>
