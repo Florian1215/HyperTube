@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from "react";
 import {iMovie} from "@/types/movie";
 import MovieHero from "@/components/features/movie/MovieHero";
 
-export default function MoviesHero({movies, onClick}: {movies: iMovie[], onClick?: () => void}) {
+export default function MoviesHero({movies}: {movies: iMovie[]}) {
     const [index, setIndex] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
@@ -34,7 +34,7 @@ export default function MoviesHero({movies, onClick}: {movies: iMovie[], onClick
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
             {movies.length > 0 ?
-                movies.map((movie, index) => (<MovieHero key={index} movie={movie} onClick={onClick} onSlide={slide} />)) :
+                movies.map((movie, index) => (<MovieHero key={index} movie={movie} onSlide={slide} />)) :
                 <MovieHero movie={undefined} />
             }
         </div>

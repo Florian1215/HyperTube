@@ -55,7 +55,7 @@ export default function MoviePage() {
     }
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MovieHero movie={data?.data} onClick={handleTorrent} torrentId={torrentId} startVideo={startVideo} />
+        <MovieHero movie={data?.data} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} />
         <MovieInfoSection movie={data?.data}/>
         {data ? <CommentsSection movie={data.data}/> : <div/>}
     </div>);
