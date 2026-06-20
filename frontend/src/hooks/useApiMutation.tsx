@@ -49,7 +49,7 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
                     router.push("/404");
                     return null;
                 } else
-                    addNotification(`${error.status} - ${error.message}`, "error");
+                    addNotification(error.notificationMsg, "error");
             } else
                 addNotification(tError("network"), "error");
             return null;

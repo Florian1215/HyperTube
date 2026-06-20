@@ -36,8 +36,8 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
                 localStorage.setItem("token", res.access_token);
                 return apiClient<T>(endpoint, locale, options);
             });
-        } else
-            throw new ApiError(response.status, data);
+        }
+        throw new ApiError(response.status, data);
     } else
         return data;
 }
