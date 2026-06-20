@@ -204,8 +204,14 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
                 const video = videoRef.current;
                 if (!video)
                     return;
-                setDuration(video.duration);
-                setDurationString(formatTime(video.duration));
+                if (video.duration === Infinity) { //todo handle error
+                    setDuration(3600);
+                    setDurationString(formatTime(3600));
+                } else {
+                    setDuration(video.duration);
+                    setDurationString(formatTime(video.duration));
+                }
+
             }}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
