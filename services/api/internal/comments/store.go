@@ -73,9 +73,39 @@ func (s *Store) findAll(ctx context.Context, limit, offset int) ([]models.Commen
 	return comments, nil
 }
 
+func (s *Store) findAllByUserID(ctx context.Context, userID int64, limit, offset int) ([]models.Comment, error) {
+	rows, err := s.db.Query(ctx, `
+		SELECT id, user_id, movie_id, content, edited, updated_at
+		FROM comments
+		WHERE user_id = $1
+		ORDER BY updated_at DESC, id DESC
+		LIMIT $2 OFFSET $3
+	`, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	comments, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Comment])
+	if err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
+
 func (s *Store) countAll(ctx context.Context) (int, error) {
 	var total int
 	err := s.db.QueryRow(ctx, `SELECT COUNT(*) FROM comments`).Scan(&total)
+	return total, err
+}
+
+func (s *Store) countAllByUserID(ctx context.Context, userID int64) (int, error) {
+	var total int
+	err := s.db.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM comments
+		WHERE user_id = $1
+	`, userID).Scan(&total)
 	return total, err
 }
 
