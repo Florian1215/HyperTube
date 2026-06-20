@@ -1,14 +1,12 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import Hls from "hls.js";
 import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
+import Hls from "hls.js";
 
-// todo get subtitle
 export default function VideoPlayer({src, color}: {src: string, color: string}) {
-    const token = localStorage.getItem("token") ?? "coucou";
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -26,6 +24,27 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
     const [seekTime, setSeekTime] = useState(0);
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || !src)
+            return;
+
+        const token = localStorage.getItem("token");
+
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                xhrSetup: (xhr) => {
+                    if (token)
+                        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+                },
+            });
+            hls.loadSource(src);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.ERROR, (event, data) => {console.error("HLS error:", data);});
+            return () => {hls.destroy();};
+        }
+    }, [src]);
 
     /* -------------- PLAY PAUSE ------------- */
     useEffect(() => {
@@ -205,8 +224,7 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 
-        <video
-            ref={videoRef} src={src} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
+        <video ref={videoRef} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
             onClick={togglePlay} onTimeUpdate={handleTimeUpdate} controls={false}
             onLoadedMetadata={() => {
                 const video = videoRef.current;
