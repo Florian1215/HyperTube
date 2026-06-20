@@ -47,10 +47,10 @@ function getTorrents(locale: string, movieId?: string) {
     return apiClient<tListResponse<iTorrent[]>>(`/movies/${movieId}/torrents`, locale);
 }
 
-export function useTorrents(movieId?: string, enabled=false) {
+export function useTorrents(movieId?: string) {
     return useApiQuery(
         ["torrents", movieId ?? ""],
         (locale) => getTorrents(locale, movieId),
-        enabled && movieId !== undefined
+        movieId !== undefined
     );
 }

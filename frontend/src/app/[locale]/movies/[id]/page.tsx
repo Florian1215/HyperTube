@@ -9,6 +9,8 @@ import MovieHero from "@/components/features/movie/MovieHero";
 import MovieInfoSection from "@/components/features/movie/MovieInfoSection";
 import CommentsSection from "@/components/features/comment/CommentsSection";
 import getBestTorrent from "@/utils/getBestTorrent";
+import useNotification from "@/contexts/NotificationContext";
+import {useTranslations} from "next-intl";
 
 export default function MoviePage() {
     const params = useParams();
@@ -16,10 +18,11 @@ export default function MoviePage() {
     const {data, error} = useMovie(id);
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const handleError = useHandleError();
-    const [getTorrents, setGetTorrents] = useState(false);
     const [torrentId, setTorrentId] = useState<string | undefined>();
     const [startVideo, setStartVideo] = useState(false);
-    const {data: torrents} = useTorrents(data?.data?.imdb_id, getTorrents)
+    const {data: torrents} = useTorrents(data?.data?.imdb_id)
+    const {addNotification} = useNotification();
+    const tError = useTranslations("notifications.error");
 
     useEffect(() => {
         if (error) {
@@ -29,26 +32,26 @@ export default function MoviePage() {
         }
     }, [error, handleError]);
 
-    useEffect(() => {
-        if (torrents) {
-            const selectedTorrent = getBestTorrent(torrents.data); // todo handle error
-            if (selectedTorrent) {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setTorrentId(selectedTorrent.id);
-                startTorrentStreaming(selectedTorrent.id).then(() => {
-                    setStartVideo(true);// todo hanle error
-                });
-            }
-        }
-    }, [torrents]);
-
     if (errorNode)
         return (errorNode);
 
-    const handleTorrent = () => {
-        if (!getTorrents) {
-            setGetTorrents(true);
-        }
+    const handleTorrent = async () => {
+        const selectedTorrent = getBestTorrent(torrents?.data);
+        if (torrents && selectedTorrent) {
+            setTorrentId(selectedTorrent.id);
+            try {
+                await startTorrentStreaming(selectedTorrent.id).then(() => {
+                    setStartVideo(true);
+                });
+            } catch (error) {
+                if (error instanceof ApiError)
+                    addNotification(error.notificationMsg, "error");
+                else
+                    addNotification(tError("unknown"), "error");
+                setTorrentId(undefined);
+            }
+        } else
+            addNotification(tError("torrentNotFound"), "error");
     }
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
