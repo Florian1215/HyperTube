@@ -7,6 +7,7 @@ import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import useAuth from "@/contexts/AuthContext";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import {API_URL} from "@/services/apiClient";
+import SmallText from "@/components/ui/SmallText";
 
 export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo}: {movie?: iMovie, onClick?: () => void, onSlide?: (side: number) => void, torrentId?: string, startVideo?: boolean}) {
     const t = useTranslations("movie");
@@ -33,14 +34,14 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
                 <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
                 {torrentId && <div className="custom-loading2 opacity-80"/>}
                 {!torrentId && movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="absolute z-40 max-w-2/3 bottom-1/20">
-                    {
-                        onClick && !onSlide ?
-                            <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick}>{t("watch")}</SecondaryButton> :
-                            <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
-                                <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
-                            </h1>
+                    {onClick && !onSlide ?
+                        <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick}>{t("watch")}</SecondaryButton> :
+                        <h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
+                            <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
+                        </h1>
                     }
                 </LinkLoginRequired>}
+                {torrentId && !startVideo && <div className="absolute mx-auto w-full text-center bottom-1/20 max-w-1/5"><SmallText className="my-2 xl:my-4 text-white">{t("movieDownloading")}</SmallText></div>}
             </div>
         </div>
     </div>);

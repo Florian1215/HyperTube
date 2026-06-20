@@ -5,6 +5,7 @@ import {useTranslations} from "next-intl";
 import {useRouter} from "@/i18n/navigation";
 import useAuth from "@/contexts/AuthContext";
 import useNotification from "@/contexts/NotificationContext";
+import SmallText from "@/components/ui/SmallText";
 
 export default function OAuthCallbackPage() {
     const t = useTranslations("auth.oauth");
@@ -35,5 +36,5 @@ export default function OAuthCallbackPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tError]);
 
-    return (<p className="small-text">{t("loadingAuth")}</p>);
+    return (<SmallText>{t("loadingAuth")}</SmallText>);
 }

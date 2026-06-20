@@ -5,6 +5,7 @@ import Pagination from "@/components/ui/Pagination";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import {useUserFilmHistory} from "@/services/users.service";
 import {iUser} from "@/types/user";
+import SmallText from "@/components/ui/SmallText";
 
 export default function MovieHistoryTab({user}: {user: iUser}) {
     const [index, setIndex] = useState(0);
@@ -14,7 +15,7 @@ export default function MovieHistoryTab({user}: {user: iUser}) {
     const totalPage = computeTotalPage(watchMovies);
 
     if (!watchMovies || watchMovies.data.length === 0)
-        return (<p className="small-text">{t("noMoviesYet")}</p>);
+        return (<SmallText>{t("noMoviesYet")}</SmallText>);
     return (<Pagination currenIndex={index} onClick={changeIndex} totalPage={totalPage}>
         <MoviesGrid movieSets={watchMovies.data}/>
     </Pagination>);
