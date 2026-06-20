@@ -1177,6 +1177,7 @@ Returns comments posted on a movie, ordered by most recent first.
       "user_id": 2,
       "movie_id": "string",
       "content": "string",
+      "edited": false,
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
@@ -1225,6 +1226,7 @@ Posts a new comment on a movie as the authenticated user. Requires
     "user_id": 1,
     "movie_id": "string",
     "content": "string",
+    "edited": false,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
@@ -1264,6 +1266,7 @@ Returns all comments across all movies.
       "user_id": 2,
       "movie_id": "string",
       "content": "string",
+      "edited": false,
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
@@ -1298,6 +1301,7 @@ Returns a single comment by its ID.
     "user_id": 2,
     "movie_id": "string",
     "content": "string",
+    "edited": false,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
@@ -1342,6 +1346,7 @@ user. Requires `Authorization: Bearer <access_token>`.
     "user_id": 2,
     "movie_id": "string",
     "content": "string",
+    "edited": true,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
