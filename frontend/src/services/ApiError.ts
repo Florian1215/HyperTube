@@ -8,7 +8,7 @@ type tDataErrorResponse = {
 
 export class ApiError extends Error {
     constructor(public status: number, public data: tDataErrorResponse) {
-        super(data.error.message);
+        super(data?.error?.message ?? "Unknown error occurred.");
         this.status = status;
         this.data = data;
     }

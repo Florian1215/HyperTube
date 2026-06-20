@@ -17,3 +17,13 @@ export interface iMovieDetails extends iMovie {
     "watched": boolean
     "progression": number
 }
+
+export interface iTorrent {
+    "id": string
+    "title": string
+    "source": string
+    "quality": string
+    "size": number
+    "language": string
+    "seeds": string
+}
