@@ -8,16 +8,16 @@ import useAuth from "@/contexts/AuthContext";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import {API_URL} from "@/services/apiClient";
 
-export default function MovieHero({movie, onClick, onSlide, torrentId}: {movie?: iMovie, onClick?: () => void, onSlide?: (side: number) => void, torrentId?: string}) {
+export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo}: {movie?: iMovie, onClick?: () => void, onSlide?: (side: number) => void, torrentId?: string, startVideo?: boolean}) {
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
     const {user} = useAuth();
 
     return (<div className="px-4 sm:px-6 min-w-full">
         <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
-            {torrentId &&
+            {torrentId && startVideo &&
                 <VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`} />}
-            {!torrentId && movie && <Image className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
+            {movie && <Image className={`absolute inset-0 size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`} width={5000}
                              height={5000} loading="eager" onLoad={() => setIsLoaded(true)}
                              src={movie.backdrop_url.replace("/w500/", "/original/")} alt={t("posterAlt", {title: movie.title})}/>}
             {!torrentId && onSlide && <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left"

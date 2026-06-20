@@ -27,40 +27,6 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
 
-    useEffect(() => {
-        const video = videoRef.current;
-
-        if (!video)
-            return;
-
-        // Safari
-        if (video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = src;
-            return;
-        }
-
-        // Chrome, Firefox, Edge
-        if (Hls.isSupported()) {
-            const hls = new Hls({
-                fetchSetup: (context, init) => {
-                    init.headers = {
-                        ...init.headers,
-                        Authorization: `Bearer ${token}`,
-                    };
-                    console.log("SETUP");
-                    return new Request(context.url, init);
-                },
-            });
-
-            hls.loadSource(src);
-            hls.attachMedia(video);
-
-            return () => {
-                hls.destroy();
-            };
-        }
-    }, [src, token]);
-
     /* -------------- PLAY PAUSE ------------- */
     const togglePlay = () => {
         if (showSubtitleMenu)
