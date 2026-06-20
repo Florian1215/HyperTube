@@ -28,6 +28,14 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
     const seekTimeRef = useRef(0);
 
     /* -------------- PLAY PAUSE ------------- */
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video)
+            return;
+        video.play();
+        setIsPlaying(true);
+    }, []);
+
     const togglePlay = () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
