@@ -401,7 +401,7 @@ func TestGetCommentsIncludesUserColor(t *testing.T) {
 	h := &MoviesHandler{
 		store: &fakeStore{
 			movies:   []models.Movie{{ImdbID: "tt123"}},
-			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
+			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello", Edited: true}},
 		},
 		userStore: &fakeUserStore{users: map[int64]models.User{
 			42: {ID: 42, Username: "alice", Color: models.UserColorGreen, FirstName: "alice", LastName: "gu"},
@@ -429,6 +429,9 @@ func TestGetCommentsIncludesUserColor(t *testing.T) {
 	}
 	if got := body.Data[0].User.Color; got != models.UserColorGreen {
 		t.Fatalf("expected comment user color %q, got %q", models.UserColorGreen, got)
+	}
+	if !body.Data[0].Edited {
+		t.Fatal("expected edited comment in response")
 	}
 }
 
@@ -470,6 +473,21 @@ func TestPostCommentUsesAuthenticatedUserIDAndPathMovieID(t *testing.T) {
 	}
 	if store.createdComment.Content != "hello" {
 		t.Fatalf("expected trimmed content, got %q", store.createdComment.Content)
+	}
+
+	var body struct {
+		Data struct {
+			Edited *bool `json:"edited"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Edited == nil {
+		t.Fatal("expected edited field in response")
+	}
+	if *body.Data.Edited {
+		t.Fatal("expected new comment to be unedited")
 	}
 }
 

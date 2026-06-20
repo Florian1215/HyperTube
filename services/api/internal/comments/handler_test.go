@@ -65,7 +65,7 @@ func (s *fakeCommentStore) update(ctx context.Context, content string, id int, u
 	if s.updateErr != nil {
 		return models.Comment{}, s.updateErr
 	}
-	return models.Comment{ID: 1, UserID: userID, Content: content}, nil
+	return models.Comment{ID: 1, UserID: userID, Content: content, Edited: true}, nil
 }
 
 func (s *fakeCommentStore) delete(ctx context.Context, id int, userID int) error {
@@ -144,7 +144,7 @@ func TestCreateInvalidBodyReturnsFieldValidationError(t *testing.T) {
 func TestListReturnsPaginatedComments(t *testing.T) {
 	store := &fakeCommentStore{
 		comments: []models.Comment{
-			{ID: 1, UserID: 42, MovieID: "tt123", Content: "hello"},
+			{ID: 1, UserID: 42, MovieID: "tt123", Content: "hello", Edited: true},
 		},
 		total: 25,
 	}
@@ -173,6 +173,9 @@ func TestListReturnsPaginatedComments(t *testing.T) {
 	if body.Meta.Total != 25 || body.Meta.Page != 0 || body.Meta.PerPage != commentPageLimit {
 		t.Fatalf("unexpected meta: %+v", body.Meta)
 	}
+	if len(body.Data) != 1 || !body.Data[0].Edited {
+		t.Fatalf("expected edited comment in response, got %+v", body.Data)
+	}
 }
 
 func TestGetInvalidIDReturnsNotFound(t *testing.T) {
@@ -194,7 +197,7 @@ func TestGetInvalidIDReturnsNotFound(t *testing.T) {
 
 func TestGetReturnsItemEnvelope(t *testing.T) {
 	store := &fakeCommentStore{
-		comment: &models.Comment{ID: 7, UserID: 42, MovieID: "tt123", Content: "hello"},
+		comment: &models.Comment{ID: 7, UserID: 42, MovieID: "tt123", Content: "hello", Edited: true},
 	}
 	handler := NewCommentsHandler(store)
 
@@ -210,6 +213,9 @@ func TestGetReturnsItemEnvelope(t *testing.T) {
 	body := decodeCommentItemEnvelope(t, rec)
 	if body.Data.ID != 7 || body.Data.MovieID != "tt123" || body.Data.Content != "hello" {
 		t.Fatalf("unexpected comment envelope: %+v", body.Data)
+	}
+	if !body.Data.Edited {
+		t.Fatal("expected edited comment in response")
 	}
 }
 
@@ -245,6 +251,10 @@ func TestUpdateUsesAuthenticatedUserID(t *testing.T) {
 	}
 	if store.updateUserID != 42 {
 		t.Fatalf("expected token user id 42, got %d", store.updateUserID)
+	}
+	body := decodeCommentItemEnvelope(t, rec)
+	if !body.Data.Edited {
+		t.Fatal("expected updated comment to be marked as edited")
 	}
 }
 

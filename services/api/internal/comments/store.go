@@ -35,7 +35,7 @@ func (s *Store) create(ctx context.Context, content string, movieID string, user
 
 func (s *Store) findByID(ctx context.Context, id int) (*models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT id, user_id, movie_id, content, updated_at
+		SELECT id, user_id, movie_id, content, edited, updated_at
 		FROM comments
 		WHERE id = $1
 	`, id)
@@ -56,7 +56,7 @@ func (s *Store) findByID(ctx context.Context, id int) (*models.Comment, error) {
 
 func (s *Store) findAll(ctx context.Context, limit, offset int) ([]models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT id, user_id, movie_id, content, updated_at
+		SELECT id, user_id, movie_id, content, edited, updated_at
 		FROM comments
 		ORDER BY updated_at DESC
 		LIMIT $1 OFFSET $2
@@ -82,7 +82,7 @@ func (s *Store) countAll(ctx context.Context) (int, error) {
 func (s *Store) update(ctx context.Context, content string, id int, userID int) (models.Comment, error) {
 	rows, err := s.db.Query(ctx, `
 		UPDATE comments
-		SET content = $1, updated_at = NOW()
+		SET content = $1, updated_at = NOW(), edited = TRUE
 		WHERE id = $2 AND user_id = $3
 		RETURNING *
 	`, content, id, userID)
