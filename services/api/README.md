@@ -757,6 +757,60 @@ Example:
 
 All user endpoints require `Authorization: Bearer <access_token>`.
 
+## GET /users/{id}/comments
+
+Returns the authenticated user's own comments. The `{id}` path value must match
+the user ID in the bearer token; comments belonging to another user cannot be
+requested through this endpoint.
+
+### Path and query parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `id` | integer | yes | | Positive user ID; must match the access-token user ID. |
+| `page` | integer | no | `0` | Zero-based page index. Invalid or negative values use page `0`. |
+
+Results contain 12 comments per page and are ordered by `updated_at DESC`, then
+by `id DESC` when timestamps are equal.
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "id": 17,
+      "user_id": 42,
+      "movie_id": "tt1234567",
+      "content": "A very good movie.",
+      "edited": false,
+      "updated_at": "2026-06-20T12:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 0,
+    "per_page": 12
+  }
+}
+```
+
+The response contains the raw comment fields, including `user_id` and
+`movie_id`, plus pagination metadata. An empty collection is returned as
+`"data": []`, never `null`.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 403 | `FORBIDDEN` | Path user ID does not match the access-token user ID. |
+| 404 | `NOT_FOUND` | Path user ID is not a positive integer. |
+| 500 | `INTERNAL_ERROR` | Counting or loading the user's comments failed. |
+
+---
+
 ## PATCH /users/{id}
 
 Updates the authenticated user's own profile. The `{id}` path value must match
@@ -1177,6 +1231,7 @@ Returns comments posted on a movie, ordered by most recent first.
       "user_id": 2,
       "movie_id": "string",
       "content": "string",
+      "edited": false,
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
@@ -1225,6 +1280,7 @@ Posts a new comment on a movie as the authenticated user. Requires
     "user_id": 1,
     "movie_id": "string",
     "content": "string",
+    "edited": false,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
@@ -1264,6 +1320,7 @@ Returns all comments across all movies.
       "user_id": 2,
       "movie_id": "string",
       "content": "string",
+      "edited": false,
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
@@ -1298,6 +1355,7 @@ Returns a single comment by its ID.
     "user_id": 2,
     "movie_id": "string",
     "content": "string",
+    "edited": false,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
@@ -1342,6 +1400,7 @@ user. Requires `Authorization: Bearer <access_token>`.
     "user_id": 2,
     "movie_id": "string",
     "content": "string",
+    "edited": true,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
