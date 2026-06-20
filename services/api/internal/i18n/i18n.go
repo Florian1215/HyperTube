@@ -47,6 +47,7 @@ const (
 	MsgFailedCreateUser                Message = "failed to create user"
 	MsgUserNotFound                    Message = "user not found"
 	MsgUserUpdateForbidden             Message = "cannot update another user's profile"
+	MsgUserCommentsForbidden           Message = "cannot access another user's comments"
 	MsgOAuthEmailUpdateForbidden       Message = "OAuth users cannot change their email"
 	MsgOAuthPasswordUpdateForbidden    Message = "OAuth users cannot change their password"
 	MsgOAuthUsernameUpdateForbidden    Message = "OAuth users cannot change their username"
@@ -149,6 +150,7 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
 		MsgUserNotFound:                    "utilisateur introuvable",
 		MsgUserUpdateForbidden:             "impossible de modifier le profil d'un autre utilisateur",
+		MsgUserCommentsForbidden:           "impossible d'accéder aux commentaires d'un autre utilisateur",
 		MsgOAuthEmailUpdateForbidden:       "les utilisateurs OAuth ne peuvent pas modifier leur email",
 		MsgOAuthPasswordUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur mot de passe",
 		MsgOAuthUsernameUpdateForbidden:    "les utilisateurs OAuth ne peuvent pas modifier leur nom d'utilisateur",
@@ -243,6 +245,7 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
 		MsgUserNotFound:                    "Benutzer nicht gefunden",
 		MsgUserUpdateForbidden:             "das Profil eines anderen Benutzers kann nicht aktualisiert werden",
+		MsgUserCommentsForbidden:           "Kommentare eines anderen Benutzers können nicht abgerufen werden",
 		MsgOAuthEmailUpdateForbidden:       "OAuth-Benutzer können ihre E-Mail nicht ändern",
 		MsgOAuthPasswordUpdateForbidden:    "OAuth-Benutzer können ihr Passwort nicht ändern",
 		MsgOAuthUsernameUpdateForbidden:    "OAuth-Benutzer können ihren Benutzernamen nicht ändern",
