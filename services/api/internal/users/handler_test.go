@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -596,7 +597,7 @@ func TestUpdateUserRejectsProfilePictureURLWithoutPartialUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateUserHashesPassword(t *testing.T) {
+func TestUpdateUserRejectsPasswordField(t *testing.T) {
 	store := &fakeUserStore{users: map[int64]models.User{
 		42: {ID: 42, Email: "alice@example.com", Username: "alice"},
 	}}
@@ -604,20 +605,14 @@ func TestUpdateUserHashesPassword(t *testing.T) {
 
 	rec := serveUpdateUser(t, handler, 42, "42", `{"password":"new-secret-password"}`)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if store.updatedParams.PasswordHash == nil {
-		t.Fatalf("expected password hash to be sent to store")
+	if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "BAD_REQUEST" {
+		t.Fatalf("expected BAD_REQUEST, got %q", got)
 	}
-	if *store.updatedParams.PasswordHash == "new-secret-password" {
-		t.Fatalf("password was stored as plaintext")
-	}
-	if !auth.CheckPassword(*store.updatedParams.PasswordHash, "new-secret-password") {
-		t.Fatalf("stored password hash does not match password")
-	}
-	if strings.Contains(rec.Body.String(), "new-secret-password") || strings.Contains(rec.Body.String(), *store.updatedParams.PasswordHash) {
-		t.Fatalf("response leaked password material: %s", rec.Body.String())
+	if store.updated {
+		t.Fatalf("store update should not be called for rejected password field")
 	}
 }
 
@@ -650,36 +645,7 @@ func TestUpdateUserRejectsOAuthEmailUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateUserRejectsOAuthPasswordUpdate(t *testing.T) {
-	store := &fakeUserStore{
-		oauthUsers: map[int64]bool{42: true},
-	}
-	handler := NewHandler(store)
-
-	rec := serveUpdateUser(t, handler, 42, "42", `{"password":"new-secret-password"}`)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
-	}
-	body := decodeUsersErrorEnvelope(t, rec)
-	if body.Error.Code != "VALIDATION_ERROR" {
-		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
-	}
-	if _, ok := body.Error.Fields["password"]; !ok {
-		t.Fatalf("expected password field error, got %+v", body.Error.Fields)
-	}
-	if _, ok := body.Error.Fields["email"]; ok {
-		t.Fatalf("did not expect email field error, got %+v", body.Error.Fields)
-	}
-	if store.updated {
-		t.Fatalf("store update should not be called for blocked OAuth password update")
-	}
-	if !store.oauthChecked || store.oauthCheckedID != 42 {
-		t.Fatalf("expected OAuth check for user 42, got checked=%v id=%d", store.oauthChecked, store.oauthCheckedID)
-	}
-}
-
-func TestUpdateUserRejectsOAuthEmailAndPasswordUpdate(t *testing.T) {
+func TestUpdateUserRejectsOAuthEmailAndUsernameUpdate(t *testing.T) {
 	store := &fakeUserStore{
 		oauthUsers: map[int64]bool{42: true},
 	}
@@ -687,7 +653,7 @@ func TestUpdateUserRejectsOAuthEmailAndPasswordUpdate(t *testing.T) {
 
 	rec := serveUpdateUser(t, handler, 42, "42", `{
 		"email":"new@example.com",
-		"password":"new-secret-password"
+		"username":"new_username"
 	}`)
 
 	if rec.Code != http.StatusBadRequest {
@@ -700,8 +666,8 @@ func TestUpdateUserRejectsOAuthEmailAndPasswordUpdate(t *testing.T) {
 	if _, ok := body.Error.Fields["email"]; !ok {
 		t.Fatalf("expected email field error, got %+v", body.Error.Fields)
 	}
-	if _, ok := body.Error.Fields["password"]; !ok {
-		t.Fatalf("expected password field error, got %+v", body.Error.Fields)
+	if _, ok := body.Error.Fields["username"]; !ok {
+		t.Fatalf("expected username field error, got %+v", body.Error.Fields)
 	}
 	if store.updated {
 		t.Fatalf("store update should not be called for blocked OAuth credential update")
@@ -976,7 +942,7 @@ func TestUpdateUserValidationErrors(t *testing.T) {
 		{name: "empty object", pathID: "42", body: `{}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "body"},
 		{name: "invalid color", pathID: "42", body: `{"color":"orange"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "color"},
 		{name: "invalid email", pathID: "42", body: `{"email":"not-an-email"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "email"},
-		{name: "short password", pathID: "42", body: `{"password":"short"}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "password"},
+		{name: "password field is rejected", pathID: "42", body: `{"password":"short"}`, wantStatus: http.StatusBadRequest, wantCode: "BAD_REQUEST"},
 		{name: "numeric profile picture", pathID: "42", body: `{"profile_picture":123}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "profile_picture"},
 		{name: "object profile picture", pathID: "42", body: `{"profile_picture":{"url":"https://example.com/avatar.png"}}`, wantStatus: http.StatusBadRequest, wantCode: "VALIDATION_ERROR", wantField: "profile_picture"},
 	}
@@ -1043,22 +1009,318 @@ func TestUpdateUserMapsStoreErrors(t *testing.T) {
 	}
 }
 
+func TestSetPasswordSuccess(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		body string
+	}{
+		{name: "without confirmation", body: `{"current_password":"old-correct-horse","new_password":"new-correct-horse"}`},
+		{name: "with confirmation", body: `{"current_password":"old-correct-horse","new_password":"new-correct-horse","new_password_confirm":"new-correct-horse"}`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			oldHash := mustHashPassword(t, "old-correct-horse")
+			store := &fakeUserStore{users: map[int64]models.User{
+				42: {ID: 42, PasswordHash: oldHash},
+			}}
+			rec := serveSetPassword(t, NewHandler(store), 42, tt.body)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if !store.passwordUpdated || store.passwordUpdatedID != 42 {
+				t.Fatalf("expected password update for user 42, got updated=%v id=%d", store.passwordUpdated, store.passwordUpdatedID)
+			}
+			if store.passwordExpectedHash != oldHash {
+				t.Fatalf("store did not receive the previously loaded hash")
+			}
+			if store.passwordNewHash == "new-correct-horse" || !auth.CheckPassword(store.passwordNewHash, "new-correct-horse") {
+				t.Fatalf("store did not receive a matching bcrypt hash")
+			}
+			response := rec.Body.String()
+			for _, secret := range []string{"old-correct-horse", "new-correct-horse", oldHash, store.passwordNewHash} {
+				if strings.Contains(response, secret) {
+					t.Fatalf("response leaked password material: %s", response)
+				}
+			}
+			var body struct {
+				Data struct {
+					Message string `json:"message"`
+				} `json:"data"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+				t.Fatalf("decode response: %v", err)
+			}
+			if body.Data.Message != "Password has been changed" {
+				t.Fatalf("unexpected success message %q", body.Data.Message)
+			}
+		})
+	}
+}
+
+func TestSetPasswordRejectsInvalidCurrentPassword(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, PasswordHash: mustHashPassword(t, "old-correct-horse")},
+	}}
+	rec := serveSetPassword(t, NewHandler(store), 42, `{"current_password":"wrong-password","new_password":"new-correct-horse"}`)
+
+	assertSetPasswordFieldError(t, rec, http.StatusUnauthorized, "INVALID_CURRENT_PASSWORD", "current-password")
+	if store.passwordUpdated {
+		t.Fatalf("password update should not be called")
+	}
+}
+
+func TestSetPasswordRejectsUnchangedPasswordBeforeCurrentRules(t *testing.T) {
+	for _, password := range []string{"old-correct-horse", "short", "password"} {
+		t.Run(password, func(t *testing.T) {
+			store := &fakeUserStore{users: map[int64]models.User{
+				42: {ID: 42, PasswordHash: mustHashPassword(t, password)},
+			}}
+			body := `{"current_password":` + strconv.Quote(password) + `,"new_password":` + strconv.Quote(password) + `}`
+			rec := serveSetPassword(t, NewHandler(store), 42, body)
+
+			assertSetPasswordFieldError(t, rec, http.StatusConflict, "PASSWORD_UNCHANGED", "new-password")
+			if store.passwordUpdated {
+				t.Fatalf("password update should not be called")
+			}
+		})
+	}
+}
+
+func TestSetPasswordValidatesNewPassword(t *testing.T) {
+	oldHash := mustHashPassword(t, "old-correct-horse")
+	tests := []struct {
+		name     string
+		password string
+	}{
+		{name: "too short", password: "short"},
+		{name: "too long", password: strings.Repeat("x", 73)},
+		{name: "too common", password: "password"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeUserStore{users: map[int64]models.User{42: {ID: 42, PasswordHash: oldHash}}}
+			body := `{"current_password":"old-correct-horse","new_password":` + strconv.Quote(tt.password) + `}`
+			rec := serveSetPassword(t, NewHandler(store), 42, body)
+
+			assertSetPasswordFieldError(t, rec, http.StatusBadRequest, "VALIDATION_ERROR", "new-password")
+			if store.passwordUpdated {
+				t.Fatalf("password update should not be called")
+			}
+		})
+	}
+}
+
+func TestSetPasswordRequiredFields(t *testing.T) {
+	tests := []struct {
+		name   string
+		body   string
+		fields []string
+	}{
+		{name: "empty object", body: `{}`, fields: []string{"current-password", "new-password"}},
+		{name: "missing current", body: `{"new_password":"new-correct-horse"}`, fields: []string{"current-password"}},
+		{name: "empty current", body: `{"current_password":"","new_password":"new-correct-horse"}`, fields: []string{"current-password"}},
+		{name: "missing new", body: `{"current_password":"old-correct-horse"}`, fields: []string{"new-password"}},
+		{name: "empty new", body: `{"current_password":"old-correct-horse","new_password":""}`, fields: []string{"new-password"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := serveSetPassword(t, NewHandler(&fakeUserStore{}), 42, tt.body)
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			body := decodeUsersErrorEnvelope(t, rec)
+			if body.Error.Code != "VALIDATION_ERROR" {
+				t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+			}
+			if len(body.Error.Fields) != len(tt.fields) {
+				t.Fatalf("expected fields %v, got %+v", tt.fields, body.Error.Fields)
+			}
+			for _, field := range tt.fields {
+				if _, ok := body.Error.Fields[field]; !ok {
+					t.Fatalf("expected field %q, got %+v", field, body.Error.Fields)
+				}
+			}
+		})
+	}
+}
+
+func TestSetPasswordRejectsNonStringFields(t *testing.T) {
+	invalidValues := []string{"null", "123", "true", `[]`, `{}`}
+	for _, field := range []struct {
+		request  string
+		response string
+	}{
+		{request: "current_password", response: "current-password"},
+		{request: "new_password", response: "new-password"},
+		{request: "new_password_confirm", response: "confirm-new-password"},
+	} {
+		for _, invalid := range invalidValues {
+			name := field.request + "=" + invalid
+			t.Run(name, func(t *testing.T) {
+				body := map[string]string{
+					"current_password":     `"old-correct-horse"`,
+					"new_password":         `"new-correct-horse"`,
+					"new_password_confirm": `"new-correct-horse"`,
+				}
+				body[field.request] = invalid
+				jsonBody := `{"current_password":` + body["current_password"] + `,"new_password":` + body["new_password"] + `,"new_password_confirm":` + body["new_password_confirm"] + `}`
+				rec := serveSetPassword(t, NewHandler(&fakeUserStore{}), 42, jsonBody)
+				assertSetPasswordFieldError(t, rec, http.StatusBadRequest, "VALIDATION_ERROR", field.response)
+			})
+		}
+	}
+}
+
+func TestSetPasswordConfirmation(t *testing.T) {
+	store := &fakeUserStore{users: map[int64]models.User{
+		42: {ID: 42, PasswordHash: mustHashPassword(t, "old-correct-horse")},
+	}}
+	rec := serveSetPassword(t, NewHandler(store), 42, `{"current_password":"old-correct-horse","new_password":"new-correct-horse","new_password_confirm":"different-password"}`)
+
+	assertSetPasswordFieldError(t, rec, http.StatusBadRequest, "VALIDATION_ERROR", "confirm-new-password")
+	if store.oauthChecked || store.passwordUpdated {
+		t.Fatalf("confirmation must be rejected before loading password data")
+	}
+}
+
+func TestSetPasswordRejectsInvalidJSONShape(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "malformed", body: `{"current_password":`},
+		{name: "multiple documents", body: `{}` + `{}`},
+		{name: "unknown field", body: `{"current_password":"old-correct-horse","new_password":"new-correct-horse","password":"secret"}`},
+		{name: "hyphen current", body: `{"current-password":"old-correct-horse","new_password":"new-correct-horse"}`},
+		{name: "hyphen new", body: `{"current_password":"old-correct-horse","new-password":"new-correct-horse"}`},
+		{name: "hyphen confirm", body: `{"current_password":"old-correct-horse","new_password":"new-correct-horse","confirm-new-password":"new-correct-horse"}`},
+		{name: "oversized", body: `{"current_password":"` + strings.Repeat("x", 1<<20) + `","new_password":"new-correct-horse"}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := serveSetPassword(t, NewHandler(&fakeUserStore{}), 42, tt.body)
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got := decodeUsersErrorEnvelope(t, rec).Error.Code; got != "BAD_REQUEST" {
+				t.Fatalf("expected BAD_REQUEST, got %q", got)
+			}
+		})
+	}
+}
+
+func TestSetPasswordRejectsOAuthUser(t *testing.T) {
+	store := &fakeUserStore{
+		users:      map[int64]models.User{42: {ID: 42, PasswordHash: mustHashPassword(t, "old-correct-horse")}},
+		oauthUsers: map[int64]bool{42: true},
+	}
+	rec := serveSetPassword(t, NewHandler(store), 42, `{"current_password":"old-correct-horse","new_password":"new-correct-horse"}`)
+
+	assertSetPasswordFieldError(t, rec, http.StatusBadRequest, "VALIDATION_ERROR", "new-password")
+	if store.passwordUpdated {
+		t.Fatalf("password update should not be called for OAuth user")
+	}
+}
+
+func TestSetPasswordRejectsMissingAuthContext(t *testing.T) {
+	handler := NewHandler(&fakeUserStore{})
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/new-password", strings.NewReader(`{}`))
+	rec := httptest.NewRecorder()
+
+	handler.SetPassword(rec, req)
+
+	if rec.Code != http.StatusUnauthorized || decodeUsersErrorEnvelope(t, rec).Error.Code != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestSetPasswordMapsStoreErrors(t *testing.T) {
+	oldHash := mustHashPassword(t, "old-correct-horse")
+	tests := []struct {
+		name       string
+		store      *fakeUserStore
+		wantStatus int
+		wantCode   string
+		wantField  string
+	}{
+		{name: "user not found", store: &fakeUserStore{}, wantStatus: http.StatusNotFound, wantCode: "NOT_FOUND"},
+		{name: "user lookup", store: &fakeUserStore{err: errors.New("db down")}, wantStatus: http.StatusInternalServerError, wantCode: "INTERNAL_ERROR"},
+		{name: "oauth lookup", store: &fakeUserStore{users: map[int64]models.User{42: {ID: 42, PasswordHash: oldHash}}, oauthErr: errors.New("db down")}, wantStatus: http.StatusInternalServerError, wantCode: "INTERNAL_ERROR"},
+		{name: "password update", store: &fakeUserStore{users: map[int64]models.User{42: {ID: 42, PasswordHash: oldHash}}, passwordErr: errors.New("db down")}, wantStatus: http.StatusInternalServerError, wantCode: "INTERNAL_ERROR"},
+		{name: "concurrent password update", store: &fakeUserStore{users: map[int64]models.User{42: {ID: 42, PasswordHash: oldHash}}, passwordErr: ErrPasswordChanged}, wantStatus: http.StatusUnauthorized, wantCode: "INVALID_CURRENT_PASSWORD", wantField: "current-password"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := serveSetPassword(t, NewHandler(tt.store), 42, `{"current_password":"old-correct-horse","new_password":"new-correct-horse"}`)
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
+			}
+			body := decodeUsersErrorEnvelope(t, rec)
+			if body.Error.Code != tt.wantCode {
+				t.Fatalf("expected %s, got %q", tt.wantCode, body.Error.Code)
+			}
+			if tt.wantField != "" {
+				if _, ok := body.Error.Fields[tt.wantField]; !ok {
+					t.Fatalf("expected field %q, got %+v", tt.wantField, body.Error.Fields)
+				}
+			}
+		})
+	}
+}
+
+func TestSetPasswordLocalizesResponses(t *testing.T) {
+	oldHash := mustHashPassword(t, "old-correct-horse")
+	tests := []struct {
+		name       string
+		language   string
+		current    string
+		wantStatus int
+		wantText   string
+	}{
+		{name: "German success", language: "de", current: "old-correct-horse", wantStatus: http.StatusOK, wantText: "Passwort wurde geändert"},
+		{name: "French invalid current", language: "fr", current: "wrong-password", wantStatus: http.StatusUnauthorized, wantText: "Mot de passe actuel invalide"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeUserStore{users: map[int64]models.User{42: {ID: 42, PasswordHash: oldHash}}}
+			req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/new-password", strings.NewReader(`{"current_password":`+strconv.Quote(tt.current)+`,"new_password":"new-correct-horse"}`))
+			req.Header.Set("Accept-Language", tt.language)
+			rec := httptest.NewRecorder()
+			auth.DevAuthenticateAs(42)(http.HandlerFunc(NewHandler(store).SetPassword)).ServeHTTP(rec, req)
+
+			if rec.Code != tt.wantStatus || !strings.Contains(rec.Body.String(), tt.wantText) {
+				t.Fatalf("expected %d containing %q, got %d: %s", tt.wantStatus, tt.wantText, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
 type fakeUserStore struct {
-	users          map[int64]models.User
-	list           []models.User
-	total          int
-	err            error
-	countErr       error
-	updateErr      error
-	oauthUsers     map[int64]bool
-	oauthErr       error
-	updated        bool
-	updatedID      int64
-	updatedParams  UpdateUserParams
-	oauthChecked   bool
-	oauthCheckedID int64
-	gotLimit       int
-	gotOffset      int
+	users                map[int64]models.User
+	list                 []models.User
+	total                int
+	err                  error
+	countErr             error
+	updateErr            error
+	passwordErr          error
+	oauthUsers           map[int64]bool
+	oauthErr             error
+	updated              bool
+	updatedID            int64
+	updatedParams        UpdateUserParams
+	passwordUpdated      bool
+	passwordUpdatedID    int64
+	passwordExpectedHash string
+	passwordNewHash      string
+	oauthChecked         bool
+	oauthCheckedID       int64
+	gotLimit             int
+	gotOffset            int
 }
 
 func (s *fakeUserStore) ListUsers(_ context.Context, limit, offset int) ([]models.User, error) {
@@ -1125,9 +1387,6 @@ func (s *fakeUserStore) UpdateUser(_ context.Context, id int64, params UpdateUse
 	if params.LastName != nil {
 		u.LastName = *params.LastName
 	}
-	if params.PasswordHash != nil {
-		u.PasswordHash = *params.PasswordHash
-	}
 	if params.ClearProfilePicture {
 		u.ProfilePicture = ""
 	}
@@ -1135,6 +1394,24 @@ func (s *fakeUserStore) UpdateUser(_ context.Context, id int64, params UpdateUse
 		u.Color = *params.Color
 	}
 	return u, nil
+}
+
+func (s *fakeUserStore) UpdatePasswordHash(_ context.Context, id int64, expectedHash, newHash string) error {
+	s.passwordUpdated = true
+	s.passwordUpdatedID = id
+	s.passwordExpectedHash = expectedHash
+	s.passwordNewHash = newHash
+	if s.passwordErr != nil {
+		return s.passwordErr
+	}
+
+	u, ok := s.users[id]
+	if !ok || u.PasswordHash != expectedHash {
+		return ErrPasswordChanged
+	}
+	u.PasswordHash = newHash
+	s.users[id] = u
+	return nil
 }
 
 func serveUpdateUser(t *testing.T, handler *Handler, authenticatedUserID int64, pathID string, body string) *httptest.ResponseRecorder {
@@ -1146,6 +1423,38 @@ func serveUpdateUser(t *testing.T, handler *Handler, authenticatedUserID int64, 
 
 	auth.DevAuthenticateAs(authenticatedUserID)(http.HandlerFunc(handler.UpdateUser)).ServeHTTP(rec, req)
 	return rec
+}
+
+func serveSetPassword(t *testing.T, handler *Handler, authenticatedUserID int64, body string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/new-password", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+	auth.DevAuthenticateAs(authenticatedUserID)(http.HandlerFunc(handler.SetPassword)).ServeHTTP(rec, req)
+	return rec
+}
+
+func mustHashPassword(t *testing.T, password string) string {
+	t.Helper()
+	hash, err := auth.HashPassword(password)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	return hash
+}
+
+func assertSetPasswordFieldError(t *testing.T, rec *httptest.ResponseRecorder, wantStatus int, wantCode, wantField string) {
+	t.Helper()
+	if rec.Code != wantStatus {
+		t.Fatalf("expected %d, got %d: %s", wantStatus, rec.Code, rec.Body.String())
+	}
+	body := decodeUsersErrorEnvelope(t, rec)
+	if body.Error.Code != wantCode {
+		t.Fatalf("expected %s, got %q", wantCode, body.Error.Code)
+	}
+	if _, ok := body.Error.Fields[wantField]; !ok {
+		t.Fatalf("expected field %q, got %+v", wantField, body.Error.Fields)
+	}
 }
 
 func assertStringPointer(t *testing.T, name string, got *string, want string) {
