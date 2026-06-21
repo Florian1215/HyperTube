@@ -14,6 +14,7 @@ import Pagination from "@/components/ui/Pagination";
 import CloseButton from "@/components/ui/Button/CloseButton";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import MoviesList from "@/components/features/movie/MoviesList";
+import SmallText from "@/components/ui/SmallText";
 
 type tViewType = | "grid" | "list";
 
@@ -90,7 +91,7 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
     const t = useTranslations("movies");
 
     if (movies && movies.length === 0)
-        return (<p className="small-text">{t("noResults")}</p>);
+        return (<SmallText>{t("noResults")}</SmallText>);
 
     if (viewType === "grid")
         return (<MoviesGrid movieSets={movies}/>);

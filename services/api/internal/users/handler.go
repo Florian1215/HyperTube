@@ -90,7 +90,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.Data(w, http.StatusOK, models.ToUserSmallPrivate(user))
+	respond.Data(w, http.StatusOK, models.ToUserProfilePrivate(user))
 }
 
 // UpdateUser applies a partial profile update for the authenticated user's own profile.
@@ -275,14 +275,14 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	}
 
 	if raw, ok := body["profile_picture"]; ok {
-		params.ProfilePictureSet = true
-		if !requestjson.IsNull(raw) {
-			value, ok := decodeStringField(raw, "profile_picture", fields)
-			if ok {
-				profilePicture := strings.TrimSpace(value)
-				if profilePicture != "" {
-					params.ProfilePicture = &profilePicture
-				}
+		if requestjson.IsNull(raw) {
+			params.ClearProfilePicture = true
+		} else if value, ok := decodeStringField(raw, "profile_picture", fields); ok {
+			profilePicture := strings.TrimSpace(value)
+			if profilePicture == "" {
+				params.ClearProfilePicture = true
+			} else {
+				fields["profile_picture"] = i18n.MsgProfilePictureUpdateForbidden
 			}
 		}
 	}

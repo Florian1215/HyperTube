@@ -38,7 +38,8 @@
     "directors": "Regisseure",
     "stars": "Schauspieler",
     "synopsis": "Zusammenfassung",
-    "posterAlt": "Filmplakat: {title}"
+    "posterAlt": "Filmplakat: {title}",
+    "movieDownloading": "Der Film wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten..."
   },
   "comments": {
     "title": "Kommentare",
@@ -175,7 +176,8 @@
       "missingToken": "Token fehlt.",
       "invalidToken": "Token ungültig oder abgelaufen.",
       "invalidQueryParameter": "Ungültiger Abfrageparameter.",
-      "notFound": "Seite '{path}' nicht gefunden."
+      "notFound": "Seite '{path}' nicht gefunden.",
+      "torrentNotFound": "Torrent nicht gefunden. Dieser Film ist möglicherweise noch nicht zum Streaming verfügbar. Bitte versuchen Sie es später erneut."
     }
   }
 }

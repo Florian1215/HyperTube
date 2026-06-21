@@ -1,6 +1,9 @@
 package models
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestIsValidUserColor(t *testing.T) {
 	for _, color := range AllowedUserColors {
@@ -60,5 +63,28 @@ func TestToUserResponseProfilePictureNullability(t *testing.T) {
 	whitespacePicture := ToUserResponse(User{ProfilePicture: "   "})
 	if whitespacePicture.ProfilePicture != nil {
 		t.Fatalf("expected whitespace-only profile picture to be nil, got %+v", whitespacePicture.ProfilePicture)
+	}
+}
+
+func TestToUserProfilePrivate(t *testing.T) {
+	createdAt := time.Date(2026, time.June, 20, 12, 0, 0, 0, time.UTC)
+	profile := ToUserProfilePrivate(User{
+		ID:             7,
+		Username:       "alice",
+		FirstName:      "Alice",
+		LastName:       "Liddell",
+		ProfilePicture: "https://example.test/avatar.png",
+		Color:          UserColorGreen,
+		CreatedAt:      createdAt,
+	})
+
+	if profile.CreatedAt != createdAt {
+		t.Fatalf("expected created_at %v, got %v", createdAt, profile.CreatedAt)
+	}
+	if profile.FirstName != "A" || profile.LastName != "L" {
+		t.Fatalf("expected private initials A L, got %q %q", profile.FirstName, profile.LastName)
+	}
+	if profile.ProfilePicture == nil || *profile.ProfilePicture != "https://example.test/avatar.png" {
+		t.Fatalf("unexpected profile picture: %+v", profile.ProfilePicture)
 	}
 }

@@ -6,6 +6,7 @@ import {ApiError} from "@/services/ApiError";
 import useModal from "@/contexts/ModalContext";
 import useNotification from "@/contexts/NotificationContext";
 import useAuth from "@/contexts/AuthContext";
+import SmallText from "@/components/ui/SmallText";
 
 export default function useHandleError() {
     const {openModal} = useModal();
@@ -21,13 +22,13 @@ export default function useHandleError() {
                 openModal({type: "signin"});
                 setCallbackUrl(pathname);
                 router.push("/");
-                return (<button className="w-full"><p className="small-text hover:underline" onClick={() =>
+                return (<button className="w-full hover:underline" onClick={() =>
                     openModal({type: "signin"})
-                }>{tError("loginRequired")}</p></button>);
+                }><SmallText>{tError("loginRequired")}</SmallText></button>);
             } else if (error.status === 404)
                 addNotification(tError("notFound" + translation), "error");
                 router.push("/");
-                return (<p className="small-text">{tError("notFound" + translation)}</p>);
+                return (<SmallText>{tError("notFound" + translation)}</SmallText>);
         } else
             addNotification(tError("network"), "error");
         return (<Link href={"/"}><p className="text-center italic text-red">{tError("unknown")}</p></Link>);

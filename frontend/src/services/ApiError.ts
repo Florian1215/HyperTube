@@ -7,9 +7,17 @@ type tDataErrorResponse = {
 };
 
 export class ApiError extends Error {
-    constructor(public status: number, public data: tDataErrorResponse) {
-        super(data.error.message);
+    status: number;
+    data: tDataErrorResponse;
+    notificationMsg: string;
+
+    constructor(status: number, data: tDataErrorResponse) {
+        super(data?.error?.message ?? "Unknown error occurred.");
+
+        this.name = "ApiError";
         this.status = status;
         this.data = data;
+        this.notificationMsg = `${status} - ${this.message}`;
+        Object.setPrototypeOf(this, ApiError.prototype);
     }
 }

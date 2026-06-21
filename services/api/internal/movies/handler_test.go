@@ -19,6 +19,7 @@ type fakeStore struct {
 	commentTotal      int
 	err               error
 	listWatchedUserID int
+	listWatchedCalled bool
 	createdComment    models.Comment
 }
 
@@ -81,8 +82,9 @@ func (s *fakeStore) listSearchResults(ctx context.Context, query string, limit, 
 }
 
 func (s *fakeStore) listWatched(ctx context.Context, user_id int) ([]models.Movie, error) {
+	s.listWatchedCalled = true
 	s.listWatchedUserID = user_id
-	return nil, nil
+	return s.movies, s.err
 }
 
 func (s *fakeStore) listDirectStream(ctx context.Context) ([]models.Movie, error) {
@@ -401,7 +403,7 @@ func TestGetCommentsIncludesUserColor(t *testing.T) {
 	h := &MoviesHandler{
 		store: &fakeStore{
 			movies:   []models.Movie{{ImdbID: "tt123"}},
-			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello"}},
+			comments: []models.Comment{{ID: 1, MovieID: "tt123", UserID: 42, Content: "hello", Edited: true}},
 		},
 		userStore: &fakeUserStore{users: map[int64]models.User{
 			42: {ID: 42, Username: "alice", Color: models.UserColorGreen, FirstName: "alice", LastName: "gu"},
@@ -430,6 +432,9 @@ func TestGetCommentsIncludesUserColor(t *testing.T) {
 	if got := body.Data[0].User.Color; got != models.UserColorGreen {
 		t.Fatalf("expected comment user color %q, got %q", models.UserColorGreen, got)
 	}
+	if !body.Data[0].Edited {
+		t.Fatal("expected edited comment in response")
+	}
 }
 
 func TestGetWatchedMoviesUsesAuthenticatedUserID(t *testing.T) {
@@ -446,6 +451,118 @@ func TestGetWatchedMoviesUsesAuthenticatedUserID(t *testing.T) {
 	}
 	if store.listWatchedUserID != 42 {
 		t.Fatalf("expected token user id 42, got %d", store.listWatchedUserID)
+	}
+}
+
+func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{
+		ImdbID: "tt1234567", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
+		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18},
+	}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.listWatchedUserID != 7 {
+		t.Fatalf("expected URL user id 7, got %d", store.listWatchedUserID)
+	}
+	var body struct {
+		Data []movieResponse `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 || body.Data[0].ImdbID != "tt1234567" || body.Data[0].Title != "Example Movie" || body.Data[0].Year != "2025" || body.Data[0].PosterURL != "poster.jpg" || body.Data[0].BackdropURL != "backdrop.jpg" || body.Data[0].Note != 8.1 || len(body.Data[0].Genre) != 2 {
+		t.Fatalf("unexpected history response: %+v", body.Data)
+	}
+}
+
+func TestGetUserFilmHistoryRequiresAuthentication(t *testing.T) {
+	store := &fakeStore{}
+	h := &MoviesHandler{store: store}
+	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+
+	h.GetUserFilmHistory(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.listWatchedCalled {
+		t.Fatal("store must not be called without authentication")
+	}
+}
+
+func TestGetUserFilmHistoryRejectsInvalidUserID(t *testing.T) {
+	for _, value := range []string{"abc", "0", "-1"} {
+		t.Run(value, func(t *testing.T) {
+			store := &fakeStore{}
+			h := &MoviesHandler{store: store}
+			req := httptest.NewRequest(http.MethodGet, "/users/"+value+"/film-history", nil)
+			req.SetPathValue("id", value)
+			rec := httptest.NewRecorder()
+
+			serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusNotFound {
+				t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if store.listWatchedCalled {
+				t.Fatal("store must not be called for an invalid user ID")
+			}
+		})
+	}
+}
+
+func TestGetUserFilmHistoryReturnsInternalError(t *testing.T) {
+	store := &fakeStore{err: errors.New("db down")}
+	h := &MoviesHandler{store: store}
+	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGetUserFilmHistoryReturnsEmptyJSONList(t *testing.T) {
+	store := &fakeStore{}
+	h := &MoviesHandler{store: store}
+	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body struct {
+		Data []movieResponse `json:"data"`
+		Meta struct {
+			Total   int `json:"total"`
+			Page    int `json:"page"`
+			PerPage int `json:"per_page"`
+		} `json:"meta"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data == nil || len(body.Data) != 0 {
+		t.Fatalf("expected data [], got %+v", body.Data)
+	}
+	if body.Meta.Total != 0 || body.Meta.Page != 0 || body.Meta.PerPage != 0 {
+		t.Fatalf("unexpected meta: %+v", body.Meta)
 	}
 }
 
@@ -470,6 +587,21 @@ func TestPostCommentUsesAuthenticatedUserIDAndPathMovieID(t *testing.T) {
 	}
 	if store.createdComment.Content != "hello" {
 		t.Fatalf("expected trimmed content, got %q", store.createdComment.Content)
+	}
+
+	var body struct {
+		Data struct {
+			Edited *bool `json:"edited"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Edited == nil {
+		t.Fatal("expected edited field in response")
+	}
+	if *body.Data.Edited {
+		t.Fatal("expected new comment to be unedited")
 	}
 }
 

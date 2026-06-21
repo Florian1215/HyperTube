@@ -14,7 +14,7 @@ type Movie struct {
 }
 
 type Torrent struct {
-	Id       string     `json:"id"`
+	Id       string  `json:"id"`
 	ImdbID   string  `json:"imdb_id"`
 	Title    string  `json:"title"`
 	Year     int     `json:"year"`
@@ -44,16 +44,34 @@ type Comment struct {
 	UserID    int       `json:"user_id"`
 	MovieID   string    `json:"movie_id"`
 	Content   string    `json:"content"`
+	Edited    bool      `json:"edited" db:"edited"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type MovieSmall struct {
+	ImdbID      string `json:"imdb_id"`
+	Title       string `json:"title"`
+	Year        string `json:"year"`
+	BackdropURL string `json:"backdrop_url"`
+}
+
+type CommentWithMovie struct {
+	ID        int        `json:"id"`
+	UserID    int        `json:"user_id"`
+	MovieID   string     `json:"movie_id"`
+	Movie     MovieSmall `json:"movie"`
+	Content   string     `json:"content"`
+	Edited    bool       `json:"edited"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 type CommentWithUser struct {
 	ID        int       `json:"id"`
 	User      UserSmall `json:"user"`
 	Content   string    `json:"content"`
+	Edited    bool      `json:"edited"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
-
 
 type MovieSearchRow struct {
 	Query      string    `json:"query"      db:"query"`

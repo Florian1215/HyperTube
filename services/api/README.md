@@ -757,6 +757,150 @@ Example:
 
 All user endpoints require `Authorization: Bearer <access_token>`.
 
+## GET /users/{id}
+
+Returns the public profile of the requested user. The path parameter `id` must
+be a positive integer. First and last names are reduced to initials; email,
+password data, and `updated_at` are never returned.
+
+### Response
+
+```json
+{
+  "data": {
+    "id": 7,
+    "username": "alice",
+    "first_name": "A",
+    "last_name": "L",
+    "profile_picture": null,
+    "color": "green",
+    "created_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+A syntactically valid ID for an unknown user returns `404 NOT_FOUND`.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 404 | `NOT_FOUND` | Path user ID is invalid or the user does not exist. |
+| 500 | `INTERNAL_ERROR` | Loading the user failed. |
+
+---
+
+## GET /users/{id}/comments
+
+Returns comments posted by the requested user. Any authenticated user may read
+another user's comments.
+
+### Path and query parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `id` | integer | yes | | Positive ID of the user whose comments should be displayed. |
+| `page` | integer | no | `0` | Zero-based page index. Invalid or negative values use page `0`. |
+
+Results contain 12 comments per page and are ordered by `updated_at DESC`, then
+by `id DESC` when timestamps are equal.
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "id": 17,
+      "user_id": 42,
+      "movie_id": "tt1234567",
+      "movie": {
+        "imdb_id": "tt1234567",
+        "title": "Example Movie",
+        "year": "2025",
+        "backdrop_url": "https://example.test/backdrop.jpg"
+      },
+      "content": "A very good movie.",
+      "edited": false,
+      "updated_at": "2026-06-20T12:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 0,
+    "per_page": 12
+  }
+}
+```
+
+The response contains the comment fields, a small `movie` object, and pagination
+metadata. `movie_id` remains present alongside `movie` for frontend
+compatibility. An empty collection is returned as `"data": []`, never `null`.
+A syntactically valid ID for an unknown user returns an empty collection.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 404 | `NOT_FOUND` | Path user ID is not a positive integer. |
+| 500 | `INTERNAL_ERROR` | Counting or loading the user's comments failed. |
+
+---
+
+## GET /users/{id}/film-history
+
+Returns all stored watch-history entries for the requested user, ordered by
+`watched_at DESC`. Any authenticated user may read another user's history.
+There is no query pagination; every existing entry is returned, including
+duplicates present in `watch_history`.
+
+### Path parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | yes | Positive ID of the user whose history should be displayed. |
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "imdb_id": "tt1234567",
+      "title": "Example Movie",
+      "year": "2025",
+      "poster_url": "https://example.test/poster.jpg",
+      "backdrop_url": "https://example.test/backdrop.jpg",
+      "note": 8.1,
+      "genres": [12, 18]
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 0,
+    "per_page": 1
+  }
+}
+```
+
+A syntactically valid ID for an unknown user returns `"data": []` with zeroed
+metadata.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 404 | `NOT_FOUND` | Path user ID is not a positive integer. |
+| 500 | `INTERNAL_ERROR` | Loading the user's film history failed. |
+
+---
+
 ## PATCH /users/{id}
 
 Updates the authenticated user's own profile. The `{id}` path value must match
@@ -775,14 +919,15 @@ JSON documents, and request bodies larger than 1 MiB are rejected.
 | `username` | string | 3-32 characters. Letters, digits, and underscores only. Password users only. |
 | `first_name` | string | 1-100 characters after trimming. Password users only. |
 | `last_name` | string | 1-100 characters after trimming. Password users only. |
-| `profile_picture` | string or null | URL/string value after trimming, `null`, or an empty string to remove it. |
+| `profile_picture` | string or null | Protected field. Send `null` or an empty string to remove it. Non-empty strings are rejected. |
 | `color` | string | One of `yellow`, `pink`, `green`, `purple`, `blue`, or `red`. |
 
-Password users can update all documented fields. OAuth users can update only
-`profile_picture` and `color` through this endpoint; `email`, `password`,
-`username`, `first_name`, and `last_name` are managed by the OAuth provider and
-are rejected. A user is considered an OAuth user when they have at least one
-linked `oauth_accounts` row.
+Password users can update the documented identity and appearance fields, but
+`profile_picture` can only be removed. OAuth users can update only `color` and
+remove `profile_picture` through this endpoint; `email`, `password`, `username`,
+`first_name`, and `last_name` are managed by the OAuth provider and are rejected.
+A user is considered an OAuth user when they have at least one linked
+`oauth_accounts` row.
 
 ### Example request
 
@@ -803,6 +948,7 @@ Content-Type: application/json
 
 Use `profile_picture: null` to remove the stored profile picture.
 `profile_picture: ""` also removes it, matching the existing frontend behavior.
+Non-empty `profile_picture` strings are rejected.
 For password users, include credential or identity fields only when they should
 change.
 
@@ -833,6 +979,9 @@ When no profile picture is stored, responses include `"profile_picture": null`.
 ```
 ```json
 { "error": { "code": "VALIDATION_ERROR", "fields": { "email": { "message": "OAuth users cannot change their email" } } } }
+```
+```json
+{ "error": { "code": "VALIDATION_ERROR", "fields": { "profile_picture": { "message": "Profile picture can only be removed" } } } }
 ```
 ```json
 { "error": { "code": "ALREADY_EXIST_ERROR", "fields": { "email": { "message": "Email is already in use" } } } }
@@ -1172,6 +1321,7 @@ Returns comments posted on a movie, ordered by most recent first.
       "user_id": 2,
       "movie_id": "string",
       "content": "string",
+      "edited": false,
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
@@ -1220,6 +1370,7 @@ Posts a new comment on a movie as the authenticated user. Requires
     "user_id": 1,
     "movie_id": "string",
     "content": "string",
+    "edited": false,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
@@ -1259,6 +1410,7 @@ Returns all comments across all movies.
       "user_id": 2,
       "movie_id": "string",
       "content": "string",
+      "edited": false,
       "updated_at": "2026-05-06T12:00:00Z"
     }
   ],
@@ -1293,6 +1445,7 @@ Returns a single comment by its ID.
     "user_id": 2,
     "movie_id": "string",
     "content": "string",
+    "edited": false,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }
@@ -1337,6 +1490,7 @@ user. Requires `Authorization: Bearer <access_token>`.
     "user_id": 2,
     "movie_id": "string",
     "content": "string",
+    "edited": true,
     "updated_at": "2026-05-06T12:00:00Z"
   }
 }

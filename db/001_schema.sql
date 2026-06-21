@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS comments (
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     movie_id    TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE,
     content     TEXT    NOT NULL,
+    edited      BOOLEAN NOT NULL DEFAULT FALSE,
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
