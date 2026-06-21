@@ -1,7 +1,7 @@
 import {useTranslations} from "next-intl";
 import {useCallback} from "react";
 import Link from "next/link";
-import {usePathname, useRouter} from "next/navigation";
+import {usePathname, useRouter} from "@/i18n/navigation";
 import {ApiError} from "@/services/ApiError";
 import useModal from "@/contexts/ModalContext";
 import useNotification from "@/contexts/NotificationContext";
