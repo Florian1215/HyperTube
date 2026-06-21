@@ -32,9 +32,7 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
         if (response.status === 401 && data.error.code === "TOKEN_EXPIRED") {
             const refresh_token = localStorage.getItem("refresh_token");
             if (refresh_token) {
-                console.warn("TOKEN EXPIRED");
-                return refreshToken(locale, refresh_token).then((res) => {
-                    console.warn("GET NEW TOKEN, RETRY REQUEST w/", res.data.access_token);
+                return await refreshToken(locale, refresh_token).then((res) => {
                     localStorage.setItem("token", res.data.access_token);
                     return apiClient<T>(endpoint, locale, options);
                 });
