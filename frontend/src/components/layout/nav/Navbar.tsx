@@ -29,16 +29,16 @@ export default function Navbar() {
     const t = useTranslations("nav");
 
     const navItems: iNavItem[] = user !== null ? [{
-        name: "", icon: HypertubResponsiveLogo, href: "/",}, {
-        name: t("search"), icon: SearchIcon, href: "/movies",}, {
-        name: t("account"), icon: () => <ProfilePicture user={user} />, href: "/users",}, {
-        name: t("logout"), icon: ExitDoorIcon, action: logout,}, {
+        name: "", icon: HypertubResponsiveLogo, href: "/"}, {
+        name: t("search"), icon: SearchIcon, href: "/movies"}, {
+        name: t("account"), icon: () => <ProfilePicture user={user} />, href: "/users"}, {
+        name: t("logout"), icon: ExitDoorIcon, action: logout}, {
         name: "", icon: LanguageIcon, hover: SwitchLanguage,
     },] : [{
-        name: "", icon: HypertubResponsiveLogo, href: "/",}, {
-        name: t("search"), icon: SearchIcon, href: "/movies",}, {
-        name: t("signin"), icon: UserIcon, action: () => openModal({type: "signin"}),}, {
-        name: t("createAccount"), icon: RegisterIcon, action: () => openModal({type: "register"}),}, {
+        name: "", icon: HypertubResponsiveLogo, href: "/"}, {
+        name: t("search"), icon: SearchIcon, href: "/movies"}, {
+        name: t("signin"), icon: UserIcon, action: () => openModal({type: "signin"})}, {
+        name: t("createAccount"), icon: RegisterIcon, action: () => openModal({type: "register"})}, {
         name: "", icon: LanguageIcon, hover: SwitchLanguage,
     },];
 

@@ -2,8 +2,9 @@
 
 import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
+import {iTorrent} from "@/types/movie";
 
-type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-comment" | null;
+type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-comment" | "select-torrent" | null;
 
 interface ModalState {
     type: ModalType;
@@ -13,6 +14,8 @@ interface ModalState {
     commentId?: number
     deleteComment?: (commentId: number) => void
     token?: string
+    torrents?: iTorrent[]
+    setTorrentId?: (selectTorrentId: string) => void
 }
 
 interface ModalContextType {
@@ -39,7 +42,7 @@ export function ModalProvider({children}: {children: React.ReactNode}) {
         return () => {document.body.style.overflow = "";};
     }, [activeModal]);
 
-    return (<ModalContext.Provider value={{activeModal, openModal, closeModal,}}>
+    return (<ModalContext.Provider value={{activeModal, openModal, closeModal}}>
         {children}
     </ModalContext.Provider>);
 }

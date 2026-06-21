@@ -41,7 +41,7 @@ export default function MoviePage() {
             setTorrentId(selectedTorrent.id);
             try {
                 await startTorrentStreaming(selectedTorrent.id).then(() => {
-                    setStartVideo(true);
+                    setTimeout(() => setStartVideo(true), 2000); // todo keep?
                 });
             } catch (error) {
                 if (error instanceof ApiError)
@@ -55,7 +55,7 @@ export default function MoviePage() {
     }
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MovieHero movie={data?.data} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} />
+        <MovieHero movie={data?.data} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} torrents={torrents?.data} setTorrentId={setTorrentId} />
         <MovieInfoSection movie={data?.data}/>
         {data ? <CommentsSection movie={data.data}/> : <div/>}
     </div>);

@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 type tSize = "xs" | "md" | "lg" | "xl";
 
-export function useResponsiveSize() {
+export default function useResponsiveSize() {
     const [size, setSize] = useState<tSize>("xl");
 
     useEffect(() => {

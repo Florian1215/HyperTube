@@ -1,7 +1,7 @@
 import {ReactNode, useState} from "react";
 import {LeftIcon, RightIcon} from "@/components/Icons";
 
-export default function Pagination({children, currenIndex, totalPage, onClick} : {children: ReactNode, currenIndex: number, totalPage: number, onClick: (i: number) => void}) {
+export default function Pagination({children, currenIndex, totalPage, onClick, variableMT=false} : {children: ReactNode, currenIndex: number, totalPage: number, onClick: (i: number) => void, variableMT?: boolean}) {
     const [leftColor, setLeftColor] = useState("gray");
     const [rightColor, setRightColor] = useState("gray");
 
@@ -19,10 +19,10 @@ export default function Pagination({children, currenIndex, totalPage, onClick} :
             onClick(index);
     }
 
-    return (<div className="w-full mb-4">
+    return (<div className="w-full">
         {children}
         {totalPage > 1 &&
-            <div className="flex w-full gap-2 justify-center my-4">
+            <div className={"flex w-full gap-2 justify-center " + (variableMT ? "mt-2 md:mt-4 xl:mt-6" : "mt4")}>
                 <button className="mt-1" onClick={handleLeftArrow} onMouseEnter={() => setLeftColor(currenIndex === 0 ? "gray" : "black")} onMouseLeave={() => setLeftColor("gray")}>
                     <LeftIcon color={leftColor}/>
                 </button>

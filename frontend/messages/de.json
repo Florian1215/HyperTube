@@ -35,7 +35,9 @@
     "stars": "Schauspieler",
     "synopsis": "Zusammenfassung",
     "posterAlt": "Filmplakat: {title}",
-    "movieDownloading": "Der Film wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten..."
+    "movieDownloading": "Der Film wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
+    "torrentError": "Beim Herunterladen des Films ist ein Fehler aufgetreten. Bitte versuchen Sie es mit einem anderen Torrent oder versuchen Sie es später erneut.",
+    "chooseAnotherTorrent": "Wählen Sie einen anderen Torrent"
   },
   "comments": {
     "title": "Kommentare",
@@ -131,6 +133,18 @@
       "title": "Genres auswählen",
       "apply": "Anwenden",
       "reset": "Zurücksetzen"
+    },
+    "selectTorrent": {
+      "title": "Torrent auswählen",
+      "gb": "GB",
+      "columns": {
+        "source": "Quelle",
+        "quality": "Qualität",
+        "size": "Größe",
+        "language": "Sprache",
+        "seeds": "Seeds"
+      },
+      "choose": "Auswählen"
     }
   },
   "validationErrors": {

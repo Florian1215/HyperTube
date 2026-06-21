@@ -45,20 +45,23 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
             });
-            hls.on(Hls.Events.ERROR, (event, data) => setErrorAction(data.error.message));
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                console.log("ERROR", event, data);
+                setErrorAction(data.error.message)
+            });
             return () => {hls.destroy();};
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
 
     /* -------------- PLAY PAUSE ------------- */
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!video)
-            return;
-        video.play();
-        setIsPlaying(true);
-    }, []);
+    // useEffect(() => { //todo keep ?
+    //     const video = videoRef.current;
+    //     if (!video)
+    //         return;
+    //     video.play();
+    //     setIsPlaying(true);
+    // }, []);
 
     const togglePlay = () => {
         if (showSubtitleMenu)

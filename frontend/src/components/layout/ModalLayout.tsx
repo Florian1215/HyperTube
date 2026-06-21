@@ -3,7 +3,7 @@
 import React, {useEffect} from "react";
 import CloseButton from "@/components/ui/Button/CloseButton";
 
-export default function ModalLayout({children, onCloseAction, title}: {children: React.ReactNode, onCloseAction: () => void, title: string}) {
+export default function ModalLayout({children, onCloseAction, title, addMaxWTitle=false}: {children: React.ReactNode, onCloseAction: () => void, title: string, addMaxWTitle?: boolean}) {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape")
@@ -19,7 +19,7 @@ export default function ModalLayout({children, onCloseAction, title}: {children:
         <div onClick={(e) => e.stopPropagation()} className="p-6 z-60 bg-white custom-shadow-m border min-w-9/10 sm:min-w-90 max-w-9/10 sm:max-w-none">
             <div className="flex flex-col items-start">
                 <div className="flex justify-between mb-8 w-full">
-                    <span className="uppercase font-wide font-bold font-8xl max-w-70">{title}</span>
+                    <span className={"uppercase font-wide font-bold font-8xl" + (addMaxWTitle ? " max-w-70" : "")}>{title}</span>
                     <CloseButton onClickAction={onCloseAction} />
                 </div>
                 {children}
