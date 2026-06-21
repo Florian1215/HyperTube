@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
-import { iMovie } from "@/types/movie";
+import {iMovie, iMovieDetails} from "@/types/movie";
 import Image from "next/image";
 import LinkLoginRequired from "@/components/ui/LinkLoginRequired";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
@@ -9,7 +9,7 @@ import VideoPlayer from "@/components/ui/VideoPlayer";
 import { API_URL } from "@/services/apiClient";
 import SmallText from "@/components/ui/SmallText";
 
-export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo}: {movie?: iMovie; onClick?: () => void; onSlide?: (side: number) => void; torrentId?: string; startVideo?: boolean}) {
+export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo}: {movie?: iMovie | iMovieDetails; onClick?: () => void; onSlide?: (side: number) => void; torrentId?: string; startVideo?: boolean}) {
     const t = useTranslations("movie");
     const {user} = useAuth();
     const [isLoaded, setIsLoaded] = useState(false);
@@ -40,7 +40,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
             </div>);
         }
 
-        if (!movie)
+        if (!movie || startVideo)
             return null;
 
         return (<LinkLoginRequired href={`/movies/${movie.imdb_id}`} className="absolute z-40 max-w-2/3 bottom-1/20">
@@ -57,7 +57,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
 
     return (<div className="px-4 sm:px-6 min-w-full">
             <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
-                {renderVideo && (<VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`}/>)}
+                {renderVideo && (<VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`} duration={movie && "runtime_minutes" in movie ? movie.runtime_minutes * 60 : 666}/>)}
 
                 {renderImage && imageUrl && (<Image className={"absolute inset-0 size-full object-cover " + (isLoaded ? "opacity-100" : "opacity-0")}
                         width={5000} height={5000} loading="eager"
