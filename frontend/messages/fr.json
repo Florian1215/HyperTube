@@ -148,6 +148,7 @@
     }
   },
   "validationErrors": {
+    "invalidLoginOrPassword": "Email, nom d'utilisateur ou mot de passe invalide",
     "emailInvalid": "L'adresse e-mail n'est pas valide.",
     "usernameTooShort": "Le nom d'utilisateur est trop court.",
     "usernameTooLong": "Le nom d'utilisateur est trop long.",

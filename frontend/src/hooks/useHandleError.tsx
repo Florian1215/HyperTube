@@ -12,7 +12,7 @@ export default function useHandleError() {
     const {openModal} = useModal();
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
-    const {setCallbackUrl} = useAuth();
+    const {setCallbackUrl, logout} = useAuth();
     const pathname = usePathname();
     const router = useRouter();
 
@@ -21,7 +21,7 @@ export default function useHandleError() {
             if (error.status === 401) {
                 openModal({type: "signin"});
                 setCallbackUrl(pathname);
-                router.push("/");
+                logout();
                 return (<button className="w-full hover:underline" onClick={() =>
                     openModal({type: "signin"})
                 }><SmallText>{tError("loginRequired")}</SmallText></button>);

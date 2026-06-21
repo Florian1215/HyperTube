@@ -44,6 +44,9 @@ export default function Form({formType, request, handleRequest, t, fields, handl
     };
 
     useEffect(() => {
+        if (formType === "signin" && errors[getId("login")] == tError("invalidLoginOrPassword"))
+            newSetterErrorUtils("login");
+
         if (formType === "auth" && fieldsValue[0]) {
             if (fieldsValue[0] == fieldsValue[1])
                 newSetterErrorUtils("new-password", "passwordSameAsOld");

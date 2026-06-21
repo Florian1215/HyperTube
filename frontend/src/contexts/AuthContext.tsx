@@ -6,7 +6,7 @@ import {usePathname, useRouter} from "@/i18n/navigation";
 
 interface AuthContextType {
     user: iUser | null;
-    login: (user: iUser, token: string) => void;
+    login: (user: iUser, token: string, refresh: string) => void;
     logout: () => void;
     loading: boolean;
     updateUser: (patch: Partial<iUser>) => void;
@@ -40,8 +40,9 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setLoading(false);
     }, []);
 
-    const login = (user: iUser, token: string) => {
+    const login = (user: iUser, token: string, refresh: string) => {
         localStorage.setItem("token", token);
+        localStorage.setItem("refresh_token", refresh);
         localStorage.setItem("user", JSON.stringify(user));
         setUser(user);
     };
