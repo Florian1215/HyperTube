@@ -205,6 +205,7 @@ func newRouter(
 		r.With(requireAuth).Get("/users", usersHandler.ListUsers)
 		r.With(requireAuth).Get("/users/{id}", usersHandler.GetUser)
 		r.With(requireAuth).Get("/users/{id}/comments", commentsHandler.ListByUser)
+		r.With(requireAuth).Get("/users/{id}/film-history", moviesHandler.GetUserFilmHistory)
 		r.With(requireAuth).Patch("/users/{id}", usersHandler.UpdateUser)
 
 		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
