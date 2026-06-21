@@ -13,6 +13,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
     const t = useTranslations("movie");
     const {user} = useAuth();
     const [isLoaded, setIsLoaded] = useState(false);
+    const [errorStr, setError] = useState<undefined | string>();
 
     const hasVideo = !!torrentId;
     const hasMovie = !!movie;
@@ -56,24 +57,24 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
     };
 
     return (<div className="px-4 sm:px-6 min-w-full">
-            <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
-                {renderVideo && (<VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`} duration={movie && "runtime_minutes" in movie ? movie.runtime_minutes * 60 : 666}/>)}
+        <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
+            {renderVideo && !errorStr && (<VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`} duration={movie && "runtime_minutes" in movie ? movie.runtime_minutes * 60 : 666} setErrorAction={setError}/>)}
 
-                {renderImage && imageUrl && (<Image className={"absolute inset-0 size-full object-cover " + (isLoaded ? "opacity-100" : "opacity-0")}
-                        width={5000} height={5000} loading="eager"
-                        onLoad={() => setIsLoaded(true)}
-                        src={imageUrl} alt={t("posterAlt", { title: movie.title })}/>)}
+            {renderImage && imageUrl && (<Image className={"absolute inset-0 size-full object-cover " + (isLoaded ? "opacity-100" : "opacity-0")}
+                    width={5000} height={5000} loading="eager"
+                    onLoad={() => setIsLoaded(true)}
+                    src={imageUrl} alt={t("posterAlt", { title: movie.title })}/>)}
 
-                {renderLeftSlide && (<div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)}
-                {renderRightSlide && (<div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)}
-                {renderClickableLayer}
-                <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
-                    <div className="custom-noise" />
-                    <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
-                    {hasVideo && <div className="custom-loading-dark opacity-80" />}
-                    {renderContent()}
-                </div>
+            {renderLeftSlide && (<div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)}
+            {renderRightSlide && (<div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)}
+            {renderClickableLayer}
+            <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
+                <div className="custom-noise" />
+                {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center"><p className="text-2xl text-red">{errorStr}</p></div>}
+                <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
+                {hasVideo && !errorStr && <div className="custom-loading-dark opacity-80" />}
+                {renderContent()}
             </div>
         </div>
-    );
+    </div>);
 }

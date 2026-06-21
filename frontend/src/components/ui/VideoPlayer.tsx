@@ -6,7 +6,7 @@ import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
 
-export default function VideoPlayer({src, color, duration}: {src: string, color: string, duration: number}) {
+export default function VideoPlayer({src, color, duration, setErrorAction}: {src: string, color: string, duration: number, setErrorAction: (e: string) => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -45,9 +45,10 @@ export default function VideoPlayer({src, color, duration}: {src: string, color:
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
             });
-            hls.on(Hls.Events.ERROR, (event, data) => {console.error("HLS error:", data);}); // todo handle error
+            hls.on(Hls.Events.ERROR, (event, data) => setErrorAction(data.error.message));
             return () => {hls.destroy();};
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
 
     /* -------------- PLAY PAUSE ------------- */
