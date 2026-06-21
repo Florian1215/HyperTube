@@ -96,10 +96,11 @@ type loginRequest struct {
 }
 
 type authResponse struct {
-	AccessToken string       `json:"access_token"`
-	TokenType   string       `json:"token_type"`
-	ExpiresIn   int64        `json:"expires_in"`
-	User        userResponse `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token,omitempty"`
+	TokenType    string       `json:"token_type"`
+	ExpiresIn    int64        `json:"expires_in"`
+	User         userResponse `json:"user"`
 }
 
 type userResponse struct {
@@ -176,11 +177,23 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeAuthResponse(w, r, http.StatusOK, user)
+	h.writeLoginResponse(w, r, http.StatusOK, user)
 }
 
 func (h *Handler) writeAuthResponse(w http.ResponseWriter, r *http.Request, status int, user models.User) {
 	response, err := h.newAuthResponse(user, nil)
+	if err != nil {
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateToken)
+		return
+	}
+
+	respond.Data(w, status, response)
+}
+
+func (h *Handler) writeLoginResponse(w http.ResponseWriter, r *http.Request, status int, user models.User) {
+	setTokenResponseHeaders(w)
+
+	response, err := h.newLoginResponse(user)
 	if err != nil {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateToken)
 		return

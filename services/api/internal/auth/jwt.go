@@ -8,7 +8,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const AccessTokenTTL = 15 * time.Minute
+const (
+	AccessTokenTTL  = 15 * time.Minute
+	RefreshTokenTTL = 7 * 24 * time.Hour
+
+	accessTokenUse  = "access"
+	refreshTokenUse = "refresh"
+)
 
 var (
 	ErrJWTSecretTooShort = errors.New("jwt secret must be at least 32 bytes")
@@ -23,7 +29,14 @@ type TokenManager struct {
 }
 
 type AccessClaims struct {
-	UserID int64 `json:"user_id"`
+	UserID   int64  `json:"user_id"`
+	TokenUse string `json:"token_use"`
+	jwt.RegisteredClaims
+}
+
+type RefreshClaims struct {
+	UserID   int64  `json:"user_id"`
+	TokenUse string `json:"token_use"`
 	jwt.RegisteredClaims
 }
 
@@ -43,7 +56,32 @@ func (m *TokenManager) CreateAccessToken(userID int64) (string, time.Time, error
 	expiresAt := now.Add(AccessTokenTTL)
 
 	claims := AccessClaims{
-		UserID: userID,
+		UserID:   userID,
+		TokenUse: accessTokenUse,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    m.issuer,
+			Subject:   strconv.FormatInt(userID, 10),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(m.secret)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	return signedToken, expiresAt, nil
+}
+
+func (m *TokenManager) CreateRefreshToken(userID int64) (string, time.Time, error) {
+	now := m.now().UTC()
+	expiresAt := now.Add(RefreshTokenTTL)
+
+	claims := RefreshClaims{
+		UserID:   userID,
+		TokenUse: refreshTokenUse,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.issuer,
 			Subject:   strconv.FormatInt(userID, 10),
@@ -82,7 +120,34 @@ func (m *TokenManager) ValidateAccessToken(tokenString string) (*AccessClaims, e
 		}
 		return nil, ErrInvalidToken
 	}
-	if !token.Valid || claims.UserID <= 0 {
+	if !token.Valid || claims.UserID <= 0 || claims.TokenUse != accessTokenUse {
+		return nil, ErrInvalidToken
+	}
+	return claims, nil
+}
+
+func (m *TokenManager) ValidateRefreshToken(tokenString string) (*RefreshClaims, error) {
+	claims := &RefreshClaims{}
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (any, error) {
+			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, ErrInvalidToken
+			}
+			return m.secret, nil
+		},
+		jwt.WithIssuer(m.issuer),
+		jwt.WithExpirationRequired(),
+		jwt.WithTimeFunc(m.now),
+	)
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrExpiredToken
+		}
+		return nil, ErrInvalidToken
+	}
+	if !token.Valid || claims.UserID <= 0 || claims.TokenUse != refreshTokenUse {
 		return nil, ErrInvalidToken
 	}
 	return claims, nil

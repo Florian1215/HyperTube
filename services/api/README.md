@@ -55,7 +55,8 @@ Validation errors use field-based messages instead of a top-level `message`:
 }
 ```
 
-Successful register, login, and OAuth callback responses use this auth payload:
+Successful register and OAuth callback responses use this auth payload. Password
+login adds a `refresh_token`, as documented in its own section below:
 
 ```json
 {
@@ -74,8 +75,9 @@ Successful register, login, and OAuth callback responses use this auth payload:
 }
 ```
 
-`access_token` is a JWT signed with `HS256`. It contains a `user_id` claim and
-expires after 15 minutes. Protected routes expect:
+`access_token` is a JWT signed with `HS256`. It contains `user_id` and
+`token_use: "access"` claims and expires after 15 minutes. Protected routes
+expect:
 
 ```http
 Authorization: Bearer <access_token>
@@ -169,7 +171,8 @@ Example:
 
 ### POST /auth/login
 
-Logs in an existing password user by email or username and returns a bearer token.
+Logs in an existing password user by email or username and returns an access
+token plus a refresh token.
 
 #### Request body
 
@@ -203,6 +206,7 @@ Content-Type: application/json
 {
   "data": {
     "access_token": "<jwt>",
+    "refresh_token": "<refresh-jwt>",
     "token_type": "Bearer",
     "expires_in": 900,
     "user": {
@@ -215,6 +219,14 @@ Content-Type: application/json
   }
 }
 ```
+
+The refresh token is issued only by this password-login endpoint. It is valid
+for 7 days and contains `token_use: "refresh"`. `expires_in` continues to
+describe only the 15-minute access token. Login responses include
+`Cache-Control: no-store` and `Pragma: no-cache`.
+
+Registration, browser OAuth callbacks, and `POST /oauth/token` do not return a
+HyperTube refresh token.
 
 #### Error responses
 
@@ -236,6 +248,59 @@ Example:
   }
 }
 ```
+
+### POST /auth/refresh-token
+
+Exchanges a valid HyperTube refresh token for a new access token. The endpoint
+is public because the previous access token may already have expired.
+
+#### Request body
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `refresh_token` | string | yes | Refresh JWT returned by `POST /auth/login`. |
+
+Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
+larger than 1 MiB are rejected.
+
+```http
+POST /api/v1/auth/refresh-token
+Content-Type: application/json
+```
+
+```json
+{
+  "refresh_token": "<refresh-jwt>"
+}
+```
+
+#### Response
+
+`200 OK`
+
+```json
+{
+  "data": {
+    "access_token": "<new-access-jwt>",
+    "token_type": "Bearer",
+    "expires_in": 900
+  }
+}
+```
+
+The response does not include a user or a new refresh token. The same refresh
+token may be reused until it expires; this minimal version has no rotation,
+server-side revocation, session management, or logout invalidation. All success
+and error responses include `Cache-Control: no-store` and `Pragma: no-cache`.
+
+#### Error responses
+
+| Status | Code | Message |
+|--------|------|---------|
+| 400 | `BAD_REQUEST` | `Invalid JSON body` |
+| 400 | `VALIDATION_ERROR` | Field error: `Refresh token is required` |
+| 401 | `INVALID_REFRESH_TOKEN` | `Refresh token is invalid or expired` |
+| 500 | `INTERNAL_ERROR` | `Authentication service is unavailable` or `Failed to create access token` |
 
 ### POST /auth/password-reset
 

@@ -40,4 +40,13 @@ func TestTranslateMessages(t *testing.T) {
 	if got := T(German, MsgProfilePictureUpdateForbidden); got != "Profilbild kann nur entfernt werden" {
 		t.Fatalf("unexpected German profile picture message: %q", got)
 	}
+	if got := T(English, MsgRefreshTokenRequired); got != "Refresh token is required" {
+		t.Fatalf("unexpected English refresh-token message: %q", got)
+	}
+	if got := T(French, MsgInvalidRefreshToken); got != "Jeton d'actualisation invalide ou expiré" {
+		t.Fatalf("unexpected French refresh-token message: %q", got)
+	}
+	if got := T(German, MsgInvalidRefreshToken); got != "Refresh-Token ist ungültig oder abgelaufen" {
+		t.Fatalf("unexpected German refresh-token message: %q", got)
+	}
 }

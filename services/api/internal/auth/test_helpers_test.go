@@ -252,6 +252,20 @@ func assertNoFrontendNameAliasFields(t *testing.T, rec *httptest.ResponseRecorde
 	}
 }
 
+func assertAuthDataFieldAbsent(t *testing.T, rec *httptest.ResponseRecorder, field string) {
+	t.Helper()
+
+	var body struct {
+		Data map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response fields: %v", err)
+	}
+	if _, ok := body.Data[field]; ok {
+		t.Fatalf("response must not include %q: %s", field, rec.Body.String())
+	}
+}
+
 func decodeErrorEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
 	Error struct {
 		Code    string `json:"code"`

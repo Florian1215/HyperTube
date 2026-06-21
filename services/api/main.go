@@ -173,6 +173,7 @@ func newRouter(
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
+			r.Post("/refresh-token", authHandler.RefreshToken)
 			r.Post("/password-reset", authHandler.RequestPasswordReset)
 			r.Post("/reset-password", authHandler.ResetPassword)
 			r.Get("/42/login", authHandler.LoginFortyTwo)

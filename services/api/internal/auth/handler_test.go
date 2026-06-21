@@ -54,6 +54,7 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if _, err := tokens.ValidateAccessToken(registerResponse.Data.AccessToken); err != nil {
 		t.Fatalf("register token should validate: %v", err)
 	}
+	assertAuthDataFieldAbsent(t, registerRec, "refresh_token")
 
 	storedUser, err := store.FindUserByEmail(context.Background(), "alice@example.com")
 	if err != nil {
@@ -88,6 +89,22 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	}
 	if _, err := tokens.ValidateAccessToken(loginResponse.Data.AccessToken); err != nil {
 		t.Fatalf("login token should validate: %v", err)
+	}
+	if loginResponse.Data.RefreshToken == "" {
+		t.Fatal("expected refresh token")
+	}
+	refreshClaims, err := tokens.ValidateRefreshToken(loginResponse.Data.RefreshToken)
+	if err != nil {
+		t.Fatalf("login refresh token should validate: %v", err)
+	}
+	if refreshClaims.UserID != loginResponse.Data.User.ID {
+		t.Fatalf("expected refresh token user id %d, got %d", loginResponse.Data.User.ID, refreshClaims.UserID)
+	}
+	if got := loginRec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("expected Cache-Control no-store, got %q", got)
+	}
+	if got := loginRec.Header().Get("Pragma"); got != "no-cache" {
+		t.Fatalf("expected Pragma no-cache, got %q", got)
 	}
 
 	usernameLoginBody := `{"login": "alice_1", "password": "correct-horse-battery"}`
