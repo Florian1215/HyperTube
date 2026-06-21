@@ -8,7 +8,7 @@ import {iComment} from "@/types/comment";
 import dayjs from "dayjs";
 import SmallText from "@/components/ui/SmallText";
 
-export default function Comments({currentUser, comments, setComments, index, setIndex, totalPage, profilePage = false}: {currentUser: iUser | null, comments: iComment[], setComments: (newComments: iComment[]) => void, index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean}) {
+export default function Comments({currentUser, comments, setComments, index, setIndex, totalPage, profilePage=false}: {currentUser: iUser | null, comments: iComment[], setComments: (newComments: iComment[]) => void, index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean}) {
     const {addNotification} = useNotification();
     const locale = useLocale();
     const t = useTranslations("comments");
@@ -38,7 +38,7 @@ export default function Comments({currentUser, comments, setComments, index, set
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col gap-6">
-            {comments.map((comment, index) => <Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment} profilePage={profilePage} />)}
+            {comments.map((comment, index) => <Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment} />)}
         </div>
     </Pagination>);
 }

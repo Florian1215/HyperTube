@@ -2,10 +2,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {iUser} from "@/types/user";
 import React, {useEffect, useRef, useState} from "react";
-import {useMovie} from "@/services/movies.service";
 import useModal from "@/contexts/ModalContext";
 import {useTranslations} from "next-intl";
-import {iComment} from "@/types/comment";
+import {iComment, iCommentDetails} from "@/types/comment";
 import MovieCard from "@/components/features/movie/MovieCard";
 import {Link} from "@/i18n/navigation";
 import ProfilePicture from "@/components/features/user/ProfilePicture";
@@ -16,12 +15,11 @@ import Button from "@/components/ui/Button/Button";
 
 dayjs.extend(relativeTime);
 
-export default function Comment({comment, currentUser, updateComment, deleteComment, profilePage = false}: {comment: iComment, currentUser: iUser | null, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void, profilePage?: boolean}) {
+export default function Comment({comment, currentUser, updateComment, deleteComment}: {comment: iComment | iCommentDetails, currentUser: iUser | null, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [hoverTrash, setHoverTrash] = useState(false);
-    const {data: movie} = useMovie(comment.movie_id, profilePage);
     const {openModal} = useModal();
     const t = useTranslations("comments");
 
@@ -33,8 +31,8 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     return (<div className="w-full"
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
-        {(!updateComment && movie) && <div className="flex justify-center mb-3">
-            <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={movie.data} /></div>}
+        {"movie" in comment && <div className="flex justify-center mb-3">
+            <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={comment.movie} /></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
