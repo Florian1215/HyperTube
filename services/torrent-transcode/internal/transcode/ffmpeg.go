@@ -84,6 +84,25 @@ func buildHEVCArgs(input, outputDir string) []string {
 	}
 }
 
+// buildAV1Args repackages an av1 source into HLS 
+func buildAV1Args(input, outputDir string) []string {
+	return []string{
+		"-i", input,
+		"-map", "0:v:0",
+		"-map", "0:a:0",
+		"-c:v", "copy",
+		"-c:a", "copy",
+		"-avoid_negative_ts", "make_zero",
+		"-hls_segment_type", "fmp4",
+		"-hls_fmp4_init_filename", "init.mp4",
+		"-hls_time", "5",
+		"-hls_list_size", "0",
+		"-hls_flags", "append_list",
+		"-f", "hls",
+		outputDir + "/stream.m3u8",
+	}
+}
+
 // ConvertPipeHLS probes the first 10 MB of reader to detect the video codec,
 // seeks back to the start, then streams the full content into ffmpeg via stdin.
 func ConvertPipeHLS(reader io.ReadSeeker, outputDir string) error {
@@ -104,6 +123,8 @@ func ConvertPipeHLS(reader io.ReadSeeker, outputDir string) error {
 		args = buildH264Args("pipe:0", outputDir)
 	case "hevc":
 		args = buildHEVCArgs("pipe:0", outputDir)
+	case "av1":
+		args = buildAV1Args("pipe:0", outputDir)
 	default:
 		return fmt.Errorf("unsupported video codec: %q", videoCodec)
 	}
