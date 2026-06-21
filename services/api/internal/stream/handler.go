@@ -13,6 +13,8 @@ import (
 // torrentStore resolves a torrent's metadata by its id.
 type torrentStore interface {
 	GetTorrent(ctx context.Context, id string) (Torrent, error)
+	GetTorrentStatus(ctx context.Context, id string) (string, error)
+	SetTorrentStatus(ctx context.Context, id, status string) error
 }
 
 type StreamHandler struct {
@@ -41,11 +43,12 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO check if the torrent stream ID has status finished, if yes exit with ok
-	// if (check DB store for torrent.id.status == finished){
-	// 	w.WriteHeader(http.StatusOK)
-	// 	return
-	// }
+	if status, err := s.store.GetTorrentStatus(r.Context(), id); err == nil && (status == "in_progress" || status == "finished") {
+        log.Printf("%s: torrent already %s, skipping download init", id, status)
+        w.WriteHeader(http.StatusOK)
+        return
+    }
+
 
 	torrent, err := s.store.GetTorrent(r.Context(), id)
 	if err != nil {
@@ -89,6 +92,10 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	defer respTranscode.Body.Close()
 
 	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
+
+	if err := s.store.SetTorrentStatus(r.Context(), id, "in_progress"); err != nil {
+		log.Printf("%s: failed to set torrent status to in_progress: %v", id, err)
+	}
 
 	// TODO add the torrent to the watch list of the user
 
