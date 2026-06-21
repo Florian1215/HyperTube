@@ -12,7 +12,7 @@ import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import GenreTag from "@/components/features/genre/GenreTag";
 
 export default function FilterGenreModal() {
-    const {activeModal, closeModal,} = useModal();
+    const {activeModal, closeModal} = useModal();
     const t = useTranslations("modal.filterGenre");
     const [modalFilterGenre, setModalFilterGenre] = useState<iGenre[]>([]);
     const locale = useLocale() as tLocale;

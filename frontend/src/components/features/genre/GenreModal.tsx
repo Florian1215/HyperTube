@@ -6,7 +6,7 @@ import ModalLayout from "@/components/layout/ModalLayout";
 import GenreTags from "@/components/features/genre/GenreTags";
 
 export default function GenreModal() {
-    const {activeModal, closeModal,} = useModal();
+    const {activeModal, closeModal} = useModal();
     const t = useTranslations("modal.genre");
 
     if (activeModal.type !== "genre" || activeModal.genres === undefined || activeModal.setFilterGenre === undefined)

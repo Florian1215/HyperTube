@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button/Button";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 
 export default function DeleteCommentModal() {
-    const {activeModal, closeModal,} = useModal();
+    const {activeModal, closeModal} = useModal();
     const t = useTranslations("modal.deleteComment");
 
     if (activeModal.type !== "delete-comment" || activeModal.commentId === undefined || activeModal.deleteComment === undefined)

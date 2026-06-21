@@ -95,7 +95,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
                 setLogoHeight(maxHeight - virtualScroll);
             }
         };
-        window.addEventListener("wheel", handleWheel, {passive: false,});
+        window.addEventListener("wheel", handleWheel, {passive: false});
         return () => {window.removeEventListener("wheel", handleWheel);};
     }, [activeModal, maxHeight, minHeight]);
 

@@ -6,7 +6,7 @@ import useModal from "@/contexts/ModalContext";
 import AuthModalLayout from "@/components/layout/AuthModalLayout";
 
 export default function SigninModal() {
-    const {openModal, activeModal, closeModal,} = useModal();
+    const {openModal, activeModal, closeModal} = useModal();
     const t = useTranslations("auth.signin");
 
     if (activeModal.type !== "signin")
