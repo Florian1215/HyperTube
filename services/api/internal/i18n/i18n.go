@@ -87,6 +87,8 @@ const (
 	MsgInvalidFormBody                 Message = "invalid form body"
 	MsgRequestBodyFormOrJSON           Message = "request body must be form encoded or JSON"
 	MsgFailedCreateAccessToken         Message = "failed to create access token"
+	MsgRefreshTokenRequired            Message = "refresh token is required"
+	MsgInvalidRefreshToken             Message = "refresh token is invalid or expired"
 	MsgMissingBearerToken              Message = "missing bearer token"
 	MsgTokenExpired                    Message = "token expired"
 	MsgInvalidBearerToken              Message = "invalid bearer token"
@@ -189,6 +191,8 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFormBody:                 "corps de formulaire invalide",
 		MsgRequestBodyFormOrJSON:           "le corps de la requête doit être encodé en formulaire ou en JSON",
 		MsgFailedCreateAccessToken:         "échec de la création du jeton d'accès",
+		MsgRefreshTokenRequired:            "jeton d'actualisation requis",
+		MsgInvalidRefreshToken:             "jeton d'actualisation invalide ou expiré",
 		MsgMissingBearerToken:              "jeton bearer manquant",
 		MsgTokenExpired:                    "jeton expiré",
 		MsgInvalidBearerToken:              "jeton bearer invalide",
@@ -283,6 +287,8 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFormBody:                 "Formular-Body ist ungültig",
 		MsgRequestBodyFormOrJSON:           "Request-Body muss formularcodiert oder JSON sein",
 		MsgFailedCreateAccessToken:         "Access-Token konnte nicht erstellt werden",
+		MsgRefreshTokenRequired:            "Refresh-Token ist erforderlich",
+		MsgInvalidRefreshToken:             "Refresh-Token ist ungültig oder abgelaufen",
 		MsgMissingBearerToken:              "Bearer-Token fehlt",
 		MsgTokenExpired:                    "Token ist abgelaufen",
 		MsgInvalidBearerToken:              "Bearer-Token ist ungültig",
