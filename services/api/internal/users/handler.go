@@ -23,6 +23,7 @@ type userStore interface {
 	FindUserByID(ctx context.Context, id int64) (models.User, error)
 	UserHasOAuthAccount(ctx context.Context, id int64) (bool, error)
 	UpdateUser(ctx context.Context, id int64, params UpdateUserParams) (models.User, error)
+	UpdatePasswordHash(ctx context.Context, id int64, expectedHash, newHash string) error
 }
 
 type Handler struct {
@@ -41,7 +42,16 @@ type validationErrors map[string]i18n.Message
 
 type updateUserParams struct {
 	UpdateUserParams
-	Password *string
+}
+
+type setPasswordRequest struct {
+	CurrentPassword string
+	NewPassword     string
+	PasswordConfirm *string
+}
+
+type setPasswordResponse struct {
+	Message string `json:"message"`
 }
 
 // ListUsers returns a paginated UserSmall list.
@@ -123,16 +133,6 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if params.Password != nil {
-		passwordHash, err := auth.HashPassword(*params.Password)
-		if err != nil {
-			respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "password", i18n.MsgPasswordInvalid)
-			return
-		}
-		params.PasswordHash = &passwordHash
-		params.Password = nil
-	}
-
 	user, err := h.store.UpdateUser(r.Context(), id, params.UpdateUserParams)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
@@ -153,7 +153,6 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 func hasOAuthRestrictedUpdate(params updateUserParams) bool {
 	return params.Email != nil ||
-		params.Password != nil ||
 		params.Username != nil ||
 		params.FirstName != nil ||
 		params.LastName != nil
@@ -173,9 +172,6 @@ func (h *Handler) ensureOAuthRestrictedUpdateAllowed(w http.ResponseWriter, r *h
 	fields := validationErrors{}
 	if params.Email != nil {
 		fields["email"] = i18n.MsgOAuthEmailUpdateForbidden
-	}
-	if params.Password != nil {
-		fields["password"] = i18n.MsgOAuthPasswordUpdateForbidden
 	}
 	if params.Username != nil {
 		fields["username"] = i18n.MsgOAuthUsernameUpdateForbidden
@@ -202,7 +198,6 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"email":           {},
 		"username":        {},
-		"password":        {},
 		"profile_picture": {},
 		"first_name":      {},
 		"last_name":       {},
@@ -237,17 +232,6 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 				params.Username = &username
 			} else {
 				fields["username"] = message
-			}
-		}
-	}
-
-	if raw, ok := body["password"]; ok {
-		value, ok := decodeStringField(raw, "password", fields)
-		if ok {
-			if message, ok := userinput.ValidateUpdatePassword(value); ok {
-				params.Password = &value
-			} else {
-				fields["password"] = message
 			}
 		}
 	}
@@ -307,6 +291,128 @@ func decodeUpdateUserParams(w http.ResponseWriter, r *http.Request) (updateUserP
 	return params, true
 }
 
+func decodeSetPasswordRequest(w http.ResponseWriter, r *http.Request) (setPasswordRequest, bool) {
+	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
+		"current_password":     {},
+		"new_password":         {},
+		"new_password_confirm": {},
+	})
+	if !ok {
+		return setPasswordRequest{}, false
+	}
+
+	req := setPasswordRequest{}
+	fields := validationErrors{}
+
+	if raw, ok := body["current_password"]; ok {
+		if value, validType := decodeStringField(raw, "current-password", fields); validType {
+			if message, valid := userinput.ValidateLoginPassword(value); valid {
+				req.CurrentPassword = value
+			} else {
+				fields["current-password"] = message
+			}
+		}
+	} else {
+		fields["current-password"] = i18n.MsgPasswordRequired
+	}
+
+	if raw, ok := body["new_password"]; ok {
+		if value, validType := decodeStringField(raw, "new-password", fields); validType {
+			if message, valid := userinput.ValidateLoginPassword(value); valid {
+				req.NewPassword = value
+			} else {
+				fields["new-password"] = message
+			}
+		}
+	} else {
+		fields["new-password"] = i18n.MsgPasswordRequired
+	}
+
+	if raw, ok := body["new_password_confirm"]; ok {
+		if value, validType := decodeStringField(raw, "confirm-new-password", fields); validType {
+			req.PasswordConfirm = &value
+		}
+	}
+
+	if len(fields) > 0 {
+		writeValidationError(w, r, fields)
+		return setPasswordRequest{}, false
+	}
+	if req.PasswordConfirm != nil && *req.PasswordConfirm != req.NewPassword {
+		writeValidationError(w, r, validationErrors{
+			"confirm-new-password": i18n.MsgPasswordConfirmationMismatch,
+		})
+		return setPasswordRequest{}, false
+	}
+
+	return req, true
+}
+
+func (h *Handler) SetPassword(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
+		return
+	}
+
+	req, ok := decodeSetPasswordRequest(w, r)
+	if !ok {
+		return
+	}
+
+	user, err := h.store.FindUserByID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgUserNotFound)
+			return
+		}
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadUser)
+		return
+	}
+
+	hasOAuthAccount, err := h.store.UserHasOAuthAccount(r.Context(), userID)
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedChangePassword)
+		return
+	}
+	if hasOAuthAccount {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "new-password", i18n.MsgOAuthPasswordUpdateForbidden)
+		return
+	}
+
+	if !auth.CheckPassword(user.PasswordHash, req.CurrentPassword) {
+		writePasswordFieldError(w, r, http.StatusUnauthorized, "INVALID_CURRENT_PASSWORD", "current-password", i18n.MsgCurrentPasswordInvalid)
+		return
+	}
+	if auth.CheckPassword(user.PasswordHash, req.NewPassword) {
+		writePasswordFieldError(w, r, http.StatusConflict, "PASSWORD_UNCHANGED", "new-password", i18n.MsgNewPasswordSameAsCurrent)
+		return
+	}
+	if message, valid := userinput.ValidateRequiredPassword(req.NewPassword); !valid {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "new-password", message)
+		return
+	}
+
+	newHash, err := auth.HashPassword(req.NewPassword)
+	if err != nil {
+		respond.LocalizedFieldValidationError(w, r, http.StatusBadRequest, "new-password", i18n.MsgPasswordInvalid)
+		return
+	}
+	if err := h.store.UpdatePasswordHash(r.Context(), userID, user.PasswordHash, newHash); err != nil {
+		if errors.Is(err, ErrPasswordChanged) {
+			writePasswordFieldError(w, r, http.StatusUnauthorized, "INVALID_CURRENT_PASSWORD", "current-password", i18n.MsgCurrentPasswordInvalid)
+			return
+		}
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedChangePassword)
+		return
+	}
+
+	respond.Data(w, http.StatusOK, setPasswordResponse{Message: i18n.T(i18n.FromRequest(r), i18n.MsgPasswordChangeSuccess)})
+}
+
 func decodeStringField(raw json.RawMessage, field string, fields validationErrors) (string, bool) {
 	value, ok := requestjson.DecodeString(raw)
 	if !ok {
@@ -323,6 +429,12 @@ func writeValidationError(w http.ResponseWriter, r *http.Request, fields validat
 		responseFields[field] = respond.FieldError{Message: i18n.T(locale, message)}
 	}
 	respond.ValidationError(w, http.StatusBadRequest, responseFields)
+}
+
+func writePasswordFieldError(w http.ResponseWriter, r *http.Request, status int, code, field string, message i18n.Message) {
+	respond.ErrorWithFields(w, status, code, respond.FieldErrors{
+		field: {Message: i18n.T(i18n.FromRequest(r), message)},
+	})
 }
 
 func writeDuplicateUserError(w http.ResponseWriter, r *http.Request, fields []string) {

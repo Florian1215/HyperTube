@@ -49,4 +49,32 @@ func TestTranslateMessages(t *testing.T) {
 	if got := T(German, MsgInvalidRefreshToken); got != "Refresh-Token ist ungültig oder abgelaufen" {
 		t.Fatalf("unexpected German refresh-token message: %q", got)
 	}
+
+	tests := []struct {
+		locale  Locale
+		message Message
+		want    string
+	}{
+		{English, MsgCurrentPasswordInvalid, "Current password is invalid"},
+		{French, MsgCurrentPasswordInvalid, "Mot de passe actuel invalide"},
+		{German, MsgCurrentPasswordInvalid, "Aktuelles Passwort ist ungültig"},
+		{English, MsgNewPasswordSameAsCurrent, "New password must differ from current password"},
+		{French, MsgNewPasswordSameAsCurrent, "Le nouveau mot de passe doit être différent du mot de passe actuel"},
+		{German, MsgNewPasswordSameAsCurrent, "Neues Passwort muss sich vom aktuellen Passwort unterscheiden"},
+		{English, MsgPasswordChangeSuccess, "Password has been changed"},
+		{French, MsgPasswordChangeSuccess, "Mot de passe modifié"},
+		{German, MsgPasswordChangeSuccess, "Passwort wurde geändert"},
+		{English, MsgFailedChangePassword, "Failed to change password"},
+		{French, MsgFailedChangePassword, "Échec de la modification du mot de passe"},
+		{German, MsgFailedChangePassword, "Passwort konnte nicht geändert werden"},
+		{English, MsgPasswordConfirmationMismatch, "Password confirmation does not match"},
+		{French, MsgPasswordConfirmationMismatch, "La confirmation du mot de passe ne correspond pas"},
+		{German, MsgPasswordConfirmationMismatch, "Passwortbestätigung stimmt nicht überein"},
+	}
+
+	for _, tt := range tests {
+		if got := T(tt.locale, tt.message); got != tt.want {
+			t.Errorf("T(%q, %q) = %q, want %q", tt.locale, tt.message, got, tt.want)
+		}
+	}
 }

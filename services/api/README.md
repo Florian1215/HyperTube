@@ -966,6 +966,93 @@ metadata.
 
 ---
 
+## PATCH /users/new-password
+
+Changes the authenticated password user's password. This route requires a valid
+access-token bearer header; the user ID is read only from that token.
+
+### Request body
+
+Only the following underscore-named JSON fields are accepted:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `current_password` | string | yes | Existing password, 1-72 bytes. |
+| `new_password` | string | yes | New password, 8-72 bytes and not a common password. Must differ from the current password. |
+| `new_password_confirm` | string | no | Frontend compatibility field. When present, it must exactly equal `new_password`. |
+
+Passwords are compared exactly as sent and are never trimmed or normalized.
+Unknown fields, hyphenated request aliases, malformed JSON, multiple JSON
+documents, and bodies larger than 1 MiB are rejected.
+
+Response validation fields deliberately use the names expected by the existing
+form: `current-password`, `new-password`, and `confirm-new-password`.
+
+```http
+PATCH /api/v1/users/new-password
+Authorization: Bearer <access_token>
+Content-Type: application/json
+Accept-Language: en
+```
+
+```json
+{
+  "current_password": "old-correct-horse",
+  "new_password": "new-correct-horse",
+  "new_password_confirm": "new-correct-horse"
+}
+```
+
+### Response
+
+```json
+{
+  "data": {
+    "message": "Password has been changed"
+  }
+}
+```
+
+No access or refresh tokens are issued, rotated, or revoked by this endpoint.
+
+### Status codes
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 200 | — | Password changed. |
+| 400 | `BAD_REQUEST` | Invalid JSON structure, unknown field, or oversized body. |
+| 400 | `VALIDATION_ERROR` | Invalid field, confirmation mismatch, common password, or OAuth user. |
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 401 | `INVALID_CURRENT_PASSWORD` | Current password is incorrect or changed concurrently. |
+| 404 | `NOT_FOUND` | The authenticated user no longer exists. |
+| 409 | `PASSWORD_UNCHANGED` | New password equals the current password. |
+| 500 | `INTERNAL_ERROR` | Loading or updating the user failed. |
+
+```json
+{
+  "error": {
+    "code": "INVALID_CURRENT_PASSWORD",
+    "fields": {
+      "current-password": { "message": "Current password is invalid" }
+    }
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "PASSWORD_UNCHANGED",
+    "fields": {
+      "new-password": { "message": "New password must differ from current password" }
+    }
+  }
+}
+```
+
+---
+
 ## PATCH /users/{id}
 
 Updates the authenticated user's own profile. The `{id}` path value must match
@@ -980,7 +1067,6 @@ JSON documents, and request bodies larger than 1 MiB are rejected.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `email` | string | Valid email address. Password users only. |
-| `password` | string | 8-72 bytes. Password users only. |
 | `username` | string | 3-32 characters. Letters, digits, and underscores only. Password users only. |
 | `first_name` | string | 1-100 characters after trimming. Password users only. |
 | `last_name` | string | 1-100 characters after trimming. Password users only. |
@@ -989,7 +1075,7 @@ JSON documents, and request bodies larger than 1 MiB are rejected.
 
 Password users can update the documented identity and appearance fields, but
 `profile_picture` can only be removed. OAuth users can update only `color` and
-remove `profile_picture` through this endpoint; `email`, `password`, `username`,
+remove `profile_picture` through this endpoint; `email`, `username`,
 `first_name`, and `last_name` are managed by the OAuth provider and are rejected.
 A user is considered an OAuth user when they have at least one linked
 `oauth_accounts` row.
@@ -1014,8 +1100,8 @@ Content-Type: application/json
 Use `profile_picture: null` to remove the stored profile picture.
 `profile_picture: ""` also removes it, matching the existing frontend behavior.
 Non-empty `profile_picture` strings are rejected.
-For password users, include credential or identity fields only when they should
-change.
+For password users, include identity fields only when they should change. Use
+`PATCH /users/new-password` for password changes.
 
 ### Response
 

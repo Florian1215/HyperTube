@@ -42,6 +42,11 @@ const (
 	MsgPasswordRequired                Message = "password is required"
 	MsgPasswordInvalid                 Message = "invalid password"
 	MsgPasswordTooCommon               Message = "password is too common"
+	MsgCurrentPasswordInvalid          Message = "current password is invalid"
+	MsgNewPasswordSameAsCurrent        Message = "new password must differ from current password"
+	MsgPasswordChangeSuccess           Message = "password has been changed"
+	MsgFailedChangePassword            Message = "failed to change password"
+	MsgPasswordConfirmationMismatch    Message = "password confirmation does not match"
 	MsgEmailAlreadyInUse               Message = "email is already in use"
 	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
@@ -146,6 +151,11 @@ var translations = map[Locale]map[Message]string{
 		MsgPasswordRequired:                "mot de passe requis",
 		MsgPasswordInvalid:                 "mot de passe invalide",
 		MsgPasswordTooCommon:               "mot de passe trop courant",
+		MsgCurrentPasswordInvalid:          "mot de passe actuel invalide",
+		MsgNewPasswordSameAsCurrent:        "le nouveau mot de passe doit être différent du mot de passe actuel",
+		MsgPasswordChangeSuccess:           "mot de passe modifié",
+		MsgFailedChangePassword:            "échec de la modification du mot de passe",
+		MsgPasswordConfirmationMismatch:    "la confirmation du mot de passe ne correspond pas",
 		MsgEmailAlreadyInUse:               "email déjà utilisé",
 		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
@@ -242,6 +252,11 @@ var translations = map[Locale]map[Message]string{
 		MsgPasswordRequired:                "Passwort ist erforderlich",
 		MsgPasswordInvalid:                 "Passwort ist ungültig",
 		MsgPasswordTooCommon:               "Passwort ist zu häufig",
+		MsgCurrentPasswordInvalid:          "aktuelles Passwort ist ungültig",
+		MsgNewPasswordSameAsCurrent:        "neues Passwort muss sich vom aktuellen Passwort unterscheiden",
+		MsgPasswordChangeSuccess:           "Passwort wurde geändert",
+		MsgFailedChangePassword:            "Passwort konnte nicht geändert werden",
+		MsgPasswordConfirmationMismatch:    "Passwortbestätigung stimmt nicht überein",
 		MsgEmailAlreadyInUse:               "E-Mail wird bereits verwendet",
 		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
