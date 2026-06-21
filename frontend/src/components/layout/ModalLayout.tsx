@@ -3,7 +3,7 @@
 import React, {useEffect} from "react";
 import CloseButton from "@/components/ui/Button/CloseButton";
 
-export default function ModalLayout({children, onCloseAction, title, addMaxWTitle=false}: {children: React.ReactNode, onCloseAction: () => void, title: string, addMaxWTitle?: boolean}) {
+export default function ModalLayout({children, onCloseAction, title, addMaxWTitle=true}: {children: React.ReactNode, onCloseAction: () => void, title: string, addMaxWTitle?: boolean}) {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape")

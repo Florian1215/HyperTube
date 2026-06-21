@@ -24,7 +24,7 @@ export default function AuthModalLayout({type, t, handleForgotPassword}: {type: 
 
     const handleLoginRegister = (data: tResponse<iUserToken | iUser>) => {
         if ("access_token" in data.data) {
-            login(data.data.user, data.data.access_token);
+            login(data.data.user, data.data.access_token, data.data.refresh_token);
             closeModal();
             if (callbackUrl) {
                 router.push(callbackUrl);

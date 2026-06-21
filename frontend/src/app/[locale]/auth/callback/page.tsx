@@ -18,15 +18,16 @@ export default function OAuthCallbackPage() {
         const hash = window.location.hash;
         const params = new URLSearchParams(hash.replace("#", ""));
         const token = params.get("access_token");
+        const refresh = params.get("refresh_token");
         const userEncoded = params.get("user");
         const redirectParam = params.get("redirect");
         let redirect = "/";
 
         try {
-            if (!userEncoded || !token)
+            if (!userEncoded || !token || !refresh)
                 throw new Error("Missing token");
             const user = JSON.parse(decodeURIComponent(decodeURIComponent(userEncoded)));
-            login(user, token);
+            login(user, token, refresh);
             if (redirectParam)
                 redirect = decodeURIComponent(redirectParam);
         } catch {

@@ -18,8 +18,8 @@ export function postSetNewPassword(locale: string, data: string[], token?: strin
     return apiClient<tResponse<iUserToken>>("/auth/reset-password", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
 }
 
-export function postToken(locale: string, login: string, password: string) {
-    return apiClient<iToken>("/oauth/token", locale, {method: "POST", body: JSON.stringify({username: login, password: password, grant_type: 'password'})});
+export function refreshToken(locale: string, refresh_token: string) {
+    return apiClient<tResponse<iToken>>("/auth/refresh-token", locale, {method: "POST", body: JSON.stringify({refresh_token: refresh_token})});
 }
 
 export function handleOauth(oatuhCompany: tOauthService, redirect: string | null) {
