@@ -64,7 +64,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
 
         return (<LinkLoginRequired href={`/movies/${movie.imdb_id}`} className="absolute z-40 max-w-2/3 bottom-1/20">
             {onClick && !onSlide ?
-                (<SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick}>{t("watch")}</SecondaryButton>)
+                (<SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick} >{t("watch")}</SecondaryButton>)
                 : (<h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
                     <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">
                         {movie.year}
@@ -75,7 +75,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
     };
 
     return (<div className="px-4 sm:px-6 min-w-full">
-        <div onContextMenu={handleRightClick} className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
+        <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
             {renderVideo && !errorStr && (<VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`} duration={movie && "runtime_minutes" in movie ? movie.runtime_minutes * 60 : 666} setErrorAction={setError}/>)}
 
             {renderImage && imageUrl && (<Image className={"absolute inset-0 size-full object-cover " + (isLoaded ? "opacity-100" : "opacity-0")}
