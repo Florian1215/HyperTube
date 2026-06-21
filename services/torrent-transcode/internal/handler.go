@@ -33,20 +33,18 @@ func NewTorrentTranscodeHandler(torrentClient *torrent.Client, store *Store, mu 
 
 func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	torrentURL, err := s.store.GetTorrentURL(r.Context(), id)
-	if err != nil {
-		http.Error(w, "torrent not found", http.StatusNotFound)
-		log.Printf("torrent not found in db for id %s: %v", id, err)
+	if id == "" {
+		http.Error(w, "missing torrent id", http.StatusBadRequest)
 		return
 	}
 
-	torrentPath, err := s.torrentClient.DownloadTorrentFile(torrentURL)
+	torrentPath, err := s.torrentClient.TorrentFilePath(id)
 	if err != nil {
-		http.Error(w, "failed to download torrent file", http.StatusInternalServerError)
-		log.Printf("failed to download torrent file: %v", err)
+		http.Error(w, "torrent file not available", http.StatusInternalServerError)
+		log.Printf("torrent file not available: %v, %s", err, id)
 		return
 	}
-	log.Printf("%s: torrent file downloaded for torrent", id)
+	log.Printf("%s: torrent file ready at %s", id, torrentPath)
 
 	IOReader, err := s.torrentClient.Add(torrentPath)
 	if err != nil {
@@ -54,7 +52,7 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 		log.Printf("failed to add torrent: %v", err)
 		return
 	}
-	log.Printf("%s: torrent init successful for torrent", id)
+	log.Printf("%s: torrent download init successfully", id)
 
 	s.mu.Lock()
 	(*s.streams)[id] = IOReader

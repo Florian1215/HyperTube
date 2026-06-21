@@ -6,6 +6,7 @@ up:
 	docker compose up --build
 
 re:
+	rm -rf data
 	$(MAKE) down
 	$(MAKE) up
 

@@ -308,7 +308,7 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	
+
 	page := parsePage(r)
 	total, err := h.store.countComments(r.Context(), movie.ImdbID)
 	if err != nil {
@@ -316,14 +316,14 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
 		return
 	}
-	
+
 	comments, err := h.store.listComments(r.Context(), movie.ImdbID, commentPageLimit, page*commentPageLimit)
 	if err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedAccessComments)
 		return
 	}
-	
+
 	result := make([]models.CommentWithUser, 0, len(comments))
 	for _, comment := range comments {
 		user, err := h.userStore.FindUserByID(r.Context(), int64(comment.UserID))
@@ -339,7 +339,7 @@ func (h *MoviesHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 			User:      models.ToUserSmallPrivate(user),
 		})
 	}
-	
+
 	respond.ListPaginated(w, http.StatusOK, result, total, page, commentPageLimit)
 }
 

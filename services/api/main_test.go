@@ -312,7 +312,7 @@ func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserStore) (http
 		auth.NewHandler(nil, tokens),
 		users.NewHandler(userStore),
 		tokens,
-		stream.NewStreamHandler(),
+		stream.NewStreamHandler(stream.NewStore(nil)),
 		"http://localhost:4200",
 	), tokens
 }

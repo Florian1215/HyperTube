@@ -66,6 +66,7 @@ func main() {
 	movieStore := movies.NewStore(db)
 	commentStore := comments.NewStore(db)
 	userStore := users.NewStore(db)
+	streamStore := stream.NewStore(db)
 
 	c411Client, err := c411.NewClient()
 	if err != nil {
@@ -86,7 +87,7 @@ func main() {
 	moviesHandler := movies.NewMoviesHandler(movieStore, userStore, searchers, tmdbClient)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
 	usersHandler := users.NewHandler(userStore)
-	streamHandler := stream.NewStreamHandler()
+	streamHandler := stream.NewStreamHandler(streamStore)
 
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
@@ -189,6 +190,7 @@ func newRouter(
 		r.Get("/movies/search", moviesHandler.SearchMovies)
 
 		requireAuth := auth.RequireAuth(tokenManager)
+		// requireAuth = auth.DevAuthenticateAs(1)
 
 		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
 		r.With(requireAuth).Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)

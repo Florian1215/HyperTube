@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -69,36 +68,27 @@ func (c *Client) Add(torrentPath string) (io.ReadSeekCloser, error) {
 	return reader, nil
 }
 
-func (c *Client) DownloadTorrentFile(torrentURL string) (string, error) {
-	if err := os.MkdirAll(c.torrentDir, 0755); err != nil {
-		return "", fmt.Errorf("create torrent dir: %w", err)
+// torrentFilename is the fixed name the api service saves each .torrent under,
+// inside its per-torrent folder (<torrentDir>/<id>/). Must match the api side.
+const torrentFilename = "source.torrent"
+
+// TorrentFilePath resolves the local path of the .torrent file for the torrent
+// with the given id. The file itself is fetched by the api service (which runs
+// outside the VPN) and written to <torrentDir>/<id>/source.torrent; this only
+// derives the path and verifies the file is present.
+func (c *Client) TorrentFilePath(id string) (string, error) {
+	if id == "" {
+		return "", fmt.Errorf("empty torrent id")
 	}
 
-	filename := filepath.Base(torrentURL)
-	destPath := filepath.Join(c.torrentDir, filename)
+	destPath := filepath.Join(c.torrentDir, id, torrentFilename)
 
-	if _, err := os.Stat(destPath); err == nil {
-		return destPath, nil
-	}
-
-	resp, err := http.Get(torrentURL)
+	info, err := os.Stat(destPath)
 	if err != nil {
-		return "", fmt.Errorf("download torrent file: %w", err)
+		return "", fmt.Errorf("torrent file not found at %q (downloader did not run?): %w", destPath, err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("download torrent file: status %d", resp.StatusCode)
-	}
-
-	f, err := os.Create(destPath)
-	if err != nil {
-		return "", fmt.Errorf("create torrent file: %w", err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, resp.Body); err != nil {
-		return "", fmt.Errorf("write torrent file: %w", err)
+	if info.IsDir() {
+		return "", fmt.Errorf("expected torrent file but %q is a directory", destPath)
 	}
 
 	return destPath, nil
