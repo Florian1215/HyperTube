@@ -39,7 +39,9 @@
     "stars": "Acteurs",
     "synopsis": "Synopsis",
     "posterAlt": "Affiche du film : {title}",
-    "movieDownloading": "Le téléchargement du film est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter..."
+    "movieDownloading": "Le téléchargement du film est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter...",
+    "torrentError": "Erreur lors du téléchargement du film. Veuillez réessayer avec un torrent différent ou réessayer plus tard.",
+    "chooseAnotherTorrent": "Choisir un autre torrent"
   },
   "comments": {
     "title": "Commentaires",
@@ -139,6 +141,18 @@
       "title": "Sélectionner des genres",
       "apply": "Appliquer",
       "reset": "Réinitialiser"
+    },
+    "selectTorrent": {
+      "title": "Sélectionner un torrent",
+      "gb": "Go",
+      "columns": {
+        "source": "Source",
+        "quality": "Qualité",
+        "size": "Taille",
+        "language": "Langue",
+        "seeds": "Seeds"
+      },
+      "choose": "Choisir"
     }
   },
   "validationErrors": {

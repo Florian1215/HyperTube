@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
-import React, { useState } from "react";
-import {iMovie, iMovieDetails} from "@/types/movie";
+import React, {useState} from "react";
+import {iMovie, iMovieDetails, iTorrent} from "@/types/movie";
 import Image from "next/image";
 import LinkLoginRequired from "@/components/ui/LinkLoginRequired";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
@@ -8,12 +8,15 @@ import useAuth from "@/contexts/AuthContext";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import { API_URL } from "@/services/apiClient";
 import SmallText from "@/components/ui/SmallText";
+import useModal from "@/contexts/ModalContext";
+import Button from "@/components/ui/Button/Button";
 
-export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo}: {movie?: iMovie | iMovieDetails; onClick?: () => void; onSlide?: (side: number) => void; torrentId?: string; startVideo?: boolean}) {
+export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo, torrents, setTorrentId}: {movie?: iMovie | iMovieDetails; onClick?: () => void; onSlide?: (side: number) => void; torrentId?: string; startVideo?: boolean, torrents?: iTorrent[], setTorrentId?: (selectTorrentId: string) => void}) {
     const t = useTranslations("movie");
     const {user} = useAuth();
     const [isLoaded, setIsLoaded] = useState(false);
     const [errorStr, setError] = useState<undefined | string>();
+    const {openModal} = useModal();
 
     const hasVideo = !!torrentId;
     const hasMovie = !!movie;
@@ -33,6 +36,21 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
             (movie && (<LinkLoginRequired href={`/movies/${movie.imdb_id}`} className="h-full w-full z-20 absolute"/>)
         )
     );
+
+    const handleRightClick = (e?: React.MouseEvent<HTMLDivElement>) => {
+        e?.preventDefault();
+        openModal({type: "select-torrent", torrents: torrents, setTorrentId: setTorrentId});
+    };
+
+    const renderTorrentError = () => {
+        return (<div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center">
+            <div className="max-w-130 bg-white border p-8 shadow-2xl text-center space-y-4">
+                <p className="text-xl font-semibold text-red">{t("torrentError")}</p>
+                <SmallText>{errorStr}</SmallText>
+                <Button onClick={handleRightClick}>{t("chooseAnotherTorrent")}</Button>
+            </div>
+        </div>);
+    };
 
     const renderContent = () => {
         if (hasVideo && !startVideo) {
@@ -57,7 +75,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
     };
 
     return (<div className="px-4 sm:px-6 min-w-full">
-        <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
+        <div onContextMenu={handleRightClick} className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
             {renderVideo && !errorStr && (<VideoPlayer color={user?.color ?? "purple"} src={`${API_URL}/stream/${torrentId}/index`} duration={movie && "runtime_minutes" in movie ? movie.runtime_minutes * 60 : 666} setErrorAction={setError}/>)}
 
             {renderImage && imageUrl && (<Image className={"absolute inset-0 size-full object-cover " + (isLoaded ? "opacity-100" : "opacity-0")}
@@ -70,7 +88,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
             {renderClickableLayer}
             <div className="absolute inset-0 text-white flex items-end justify-center text-center mx-auto">
                 <div className="custom-noise" />
-                {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center"><p className="text-2xl text-red">{errorStr}</p></div>}
+                {errorStr && renderTorrentError()}
                 <div className={isLoaded ? "bg-gradient" : "custom-loading"} />
                 {hasVideo && !errorStr && <div className="custom-loading-dark opacity-80" />}
                 {renderContent()}

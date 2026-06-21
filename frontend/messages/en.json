@@ -39,7 +39,9 @@
     "stars": "Stars",
     "synopsis": "Synopsis",
     "posterAlt": "Poster of movie: {title}",
-    "movieDownloading": "The movie is being downloaded. This may take up to 1 minute. Please wait..."
+    "movieDownloading": "The movie is being downloaded. This may take up to 1 minute. Please wait...",
+    "torrentError": "An error occurred while downloading the movie. Please try again with a different torrent or try again later.",
+    "chooseAnotherTorrent": "Choose another torrent"
   },
   "comments": {
     "title": "Comments",
@@ -139,6 +141,18 @@
       "title": "Select genres",
       "apply": "Apply",
       "reset": "Reset"
+    },
+    "selectTorrent": {
+      "title": "Select a torrent",
+      "gb": "GB",
+      "columns": {
+        "source": "Source",
+        "quality": "Quality",
+        "size": "Size",
+        "language": "Language",
+        "seeds": "Seeds"
+      },
+      "choose": "Select"
     }
   },
   "validationErrors": {
