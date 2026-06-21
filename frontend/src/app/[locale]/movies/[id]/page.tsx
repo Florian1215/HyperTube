@@ -41,7 +41,7 @@ export default function MoviePage() {
             setTorrentId(selectedTorrent.id);
             try {
                 await startTorrentStreaming(selectedTorrent.id).then(() => {
-                    setStartVideo(true);
+                    setTimeout(() => setStartVideo(true), 2000); // todo keep?
                 });
             } catch (error) {
                 if (error instanceof ApiError)
