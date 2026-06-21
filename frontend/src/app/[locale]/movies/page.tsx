@@ -54,10 +54,10 @@ export default function Page() {
     const changeSort = (type: tSort, side: boolean) => setSort({type, side});
     const changeIndex = (newIndex: number) => setIndex(newIndex);
 
-    return (<div className="flex flex-col gap-4 mx-2 md:mx-4 xl:mx-6">
+    return (<div className="flex flex-col gap-4 mx-2 md:mx-4 xl:mx-6 pb-2 md:pb-4 xl:pb-6">
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />
         <Filter viewType={viewType} onClick={handleSetViewType}/>
-        <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} >
+        <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} variableMT={true}>
             <Results movies={movies?.data} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
         </Pagination>
     </div>);
