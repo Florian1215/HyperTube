@@ -1,27 +1,45 @@
 package stream
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+
+	"hypertube/api/internal/downloader"
 )
+
+// torrentStore resolves a torrent's metadata by its id.
+type torrentStore interface {
+	GetTorrent(ctx context.Context, id string) (Torrent, error)
+}
 
 type StreamHandler struct {
 	videoBasePath   string
 	torrentBasePath string
 	transcodeURL    string
+	downloader      *downloader.Downloader
+	store           torrentStore
 }
 
-func NewStreamHandler() *StreamHandler {
+func NewStreamHandler(store torrentStore) *StreamHandler {
+	torrentBasePath := "/data/torrents"
 	return &StreamHandler{
 		videoBasePath:   "/data/videos",
-		torrentBasePath: "/data/torrents",
+		torrentBasePath: torrentBasePath,
 		transcodeURL:    "http://vpn:8081",
+		downloader:      downloader.New(torrentBasePath),
+		store:           store,
 	}
 }
 
 func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "missing torrent id", http.StatusBadRequest)
+		return
+	}
 
 	// TODO check if the torrent stream ID has status finished, if yes exit with ok
 	// if (check DB store for torrent.id.status == finished){
@@ -29,19 +47,40 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	// Init the download 
-	respDownload, err := http.Post(s.transcodeURL + "/download/" + id, "application/json", nil)
+	torrent, err := s.store.GetTorrent(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			http.Error(w, "torrent not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "db torrent error", http.StatusInternalServerError)
+		}
+		log.Printf("lookup torrent for %s: %v", id, err)
+		return
+	}
+	log.Printf("%q: initialising stream for %s", torrent.Title, id)
+
+	if _, err := s.downloader.DownloadTorrentFile(id, torrent.URL); err != nil {
+		if errors.Is(err, downloader.ErrSourceTimeout) {
+			http.Error(w, "torrent source timed out", http.StatusGatewayTimeout)
+		} else {
+			http.Error(w, "failed to download torrent source file", http.StatusBadGateway)
+		}
+		log.Printf("%q : %s downloaded torrent file: %v", torrent.Title, id, err)
+		return
+	}
+
+	// Init the download (peer-to-peer, behind the VPN)
+	respDownload, err := http.Post(s.transcodeURL+"/download/"+id, "application/json", nil)
 	if err != nil || respDownload.StatusCode != http.StatusOK {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("download service error for %s: %v", id, err)
 		return
 	}
 	defer respDownload.Body.Close()
-	
 	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
 
 	// Init transcoding — delegate to the torrent-transcode service and wait for an OK;
-	respTranscode, err := http.Post(s.transcodeURL + "/transcode/" + id, "application/json", nil)
+	respTranscode, err := http.Post(s.transcodeURL+"/transcode/"+id, "application/json", nil)
 	if err != nil || respTranscode.StatusCode != http.StatusOK {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("transcode service error for %s: %v", id, err)
@@ -51,7 +90,7 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 
 	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
 
-	// TODO add the torrent to the watch list of the user 
+	// TODO add the torrent to the watch list of the user
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -59,6 +98,10 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 
 func (s *StreamHandler) GetIndex(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "missing torrent id", http.StatusBadRequest)
+		return
+	}
 	videoPath := s.videoBasePath + "/" + id
 	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
 	if bytes, err := os.ReadFile(videoPath + "/stream.m3u8"); err != nil {
@@ -73,6 +116,10 @@ func (s *StreamHandler) GetIndex(w http.ResponseWriter, r *http.Request) {
 
 func (s *StreamHandler) GetSegment(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "missing torrent id", http.StatusBadRequest)
+		return
+	}
 	prefix := s.videoBasePath + "/" + id
 	segment := r.PathValue("segment")
 	w.Header().Set("Content-Type", "video/mp2t")

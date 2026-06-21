@@ -18,14 +18,20 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) GetTorrentURL(ctx context.Context, id string) (string, error) {
-	var url string
-	err := s.db.QueryRow(ctx, `SELECT url FROM torrents WHERE id = $1`, id).Scan(&url)
+// Torrent holds the torrent metadata needed to start a download.
+type Torrent struct {
+	URL   string
+	Title string
+}
+
+func (s *Store) GetTorrent(ctx context.Context, id string) (Torrent, error) {
+	var t Torrent
+	err := s.db.QueryRow(ctx, `SELECT url, title FROM torrents WHERE id = $1`, id).Scan(&t.URL, &t.Title)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ErrNotFound
+			return Torrent{}, ErrNotFound
 		}
-		return "", err
+		return Torrent{}, err
 	}
-	return url, nil
+	return t, nil
 }
