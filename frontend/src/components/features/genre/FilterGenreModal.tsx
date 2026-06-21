@@ -4,7 +4,7 @@ import useModal from "@/contexts/ModalContext";
 import {useLocale, useTranslations} from "next-intl";
 import {useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
-import {useGenres} from "@/hooks/useGenres";
+import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Button from "@/components/ui/Button/Button";

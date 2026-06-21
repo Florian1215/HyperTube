@@ -12,7 +12,7 @@ import {ModalProvider} from "@/contexts/ModalContext";
 import NotificationList from "@/components/ui/Notification/NotificationList";
 import SigninModal from "@/components/features/auth/SigninModal";
 import RegisterModal from "@/components/features/auth/RegisterModal";
-import {DeleteCommentModal} from "@/components/features/comment/DeleteCommentModal";
+import DeleteCommentModal from "@/components/features/comment/DeleteCommentModal";
 import GenreModal from "@/components/features/genre/GenreModal";
 import FilterGenreModal from "@/components/features/genre/FilterGenreModal";
 import ForgotPasswordModal from "@/components/features/auth/ForgotPasswordModal";

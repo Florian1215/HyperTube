@@ -6,7 +6,7 @@ import React, {useEffect, useRef, useState} from "react";
 import {GridIcon, ListIcon} from "@/components/Icons";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
-import {useGenres} from "@/hooks/useGenres";
+import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
 import {useMovies} from "@/services/movies.service";
 import computeTotalPage from "@/utils/computeTotalPage";

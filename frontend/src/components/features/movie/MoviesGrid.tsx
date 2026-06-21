@@ -1,5 +1,5 @@
 import useAuth from "@/contexts/AuthContext";
-import {useResponsiveSize} from "@/hooks/useResponsiveSize";
+import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {iMovie} from "@/types/movie";
 import MovieCard from "@/components/features/movie/MovieCard";
 

@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import useModal from "@/contexts/ModalContext";
 import {iGenre} from "@/types/genre";
-import {useResponsiveSize} from "@/hooks/useResponsiveSize";
+import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {useTranslations} from "next-intl";
 import {iSort, tSort} from "@/app/[locale]/movies/page";
 import CloseButton from "@/components/ui/Button/CloseButton";

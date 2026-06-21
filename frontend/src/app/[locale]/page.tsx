@@ -7,7 +7,7 @@ import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
-import {useResponsiveSize} from "@/hooks/useResponsiveSize";
+import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {useMovies} from "@/services/movies.service";
 import MoviesHero from "@/components/features/movie/MoviesHero";
 import GenreTags from "@/components/features/genre/GenreTags";
