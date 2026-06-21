@@ -1,10 +1,14 @@
 import {iUser} from "@/types/user";
+import {iMovie} from "@/types/movie";
 
 export interface iComment {
     id: number
-    movie_id: string
     user: iUser
     content: string
     edited: boolean
     updated_at: number
+}
+
+export interface iCommentDetails extends iComment {
+    movie: iMovie
 }
