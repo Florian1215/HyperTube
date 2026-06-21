@@ -13,13 +13,22 @@ import (
 
 // fakeStore is a torrentStore that always resolves to a fixed torrent.
 type fakeStore struct {
-	url   string
-	title string
-	err   error
+	url    string
+	title  string
+	status string
+	err    error
 }
 
 func (f fakeStore) GetTorrent(context.Context, string) (Torrent, error) {
 	return Torrent{URL: f.url, Title: f.title}, f.err
+}
+
+func (f fakeStore) GetTorrentStatus(context.Context, string) (string, error) {
+	return f.status, f.err
+}
+
+func (f fakeStore) SetTorrentStatus(context.Context, string, string) error {
+	return nil
 }
 
 // newTestHandler returns a StreamHandler wired to a temp dir and a fake server
