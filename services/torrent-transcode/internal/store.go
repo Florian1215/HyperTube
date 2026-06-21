@@ -35,3 +35,14 @@ func (s *Store) GetTorrent(ctx context.Context, id string) (Torrent, error) {
 	}
 	return t, nil
 }
+
+func (s *Store) SetTorrentStatus(ctx context.Context, id, status string) error {
+	tag, err := s.db.Exec(ctx, `UPDATE torrents SET status = $2 WHERE id = $1`, id, status)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
