@@ -1,7 +1,7 @@
 import {iTorrent} from "@/types/movie";
 
-export default function getBestTorrent(torrents: iTorrent[]) {
-    if (!torrents.length)
+export default function getBestTorrent(torrents?: iTorrent[]) {
+    if (!torrents || !torrents.length)
         return null;
 
     const qualityScore: Record<string, number> = {

@@ -38,7 +38,8 @@
     "directors": "Directors",
     "stars": "Stars",
     "synopsis": "Synopsis",
-    "posterAlt": "Poster of movie: {title}"
+    "posterAlt": "Poster of movie: {title}",
+    "movieDownloading": "The movie is being downloaded. This may take up to 1 minute. Please wait..."
   },
   "comments": {
     "title": "Comments",
@@ -175,7 +176,8 @@
       "missingToken": "Token is missing.",
       "invalidToken": "Token is invalid or has expired.",
       "invalidQueryParameter": "Invalid query parameter.",
-      "notFound": "Page '{path}' not found."
+      "notFound": "Page '{path}' not found.",
+      "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later."
     }
   }
 }

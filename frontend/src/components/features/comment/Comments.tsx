@@ -6,6 +6,7 @@ import Comment from "@/components/features/comment/Comment";
 import {iUser} from "@/types/user";
 import {iComment} from "@/types/comment";
 import dayjs from "dayjs";
+import SmallText from "@/components/ui/SmallText";
 
 export default function Comments({currentUser, comments, setComments, index, setIndex, totalPage, profilePage = false}: {currentUser: iUser | null, comments: iComment[], setComments: (newComments: iComment[]) => void, index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean}) {
     const {addNotification} = useNotification();
@@ -33,7 +34,7 @@ export default function Comments({currentUser, comments, setComments, index, set
     const deleteDisplayComment = (commentId: number) => deleteComment(locale, commentId).then(() => setComments(comments.filter(c => c.id !== commentId)));
 
     if (!comments || comments.length === 0)
-        return (<p className="small-text">{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</p>);
+        return (<SmallText>{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</SmallText>);
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col gap-6">

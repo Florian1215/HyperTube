@@ -1,21 +1,19 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import Hls from "hls.js";
 import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
+import Hls from "hls.js";
 
-// todo get subtitle
-export default function VideoPlayer({src, color}: {src: string, color: string}) {
-    const token = localStorage.getItem("token") ?? "coucou";
+export default function VideoPlayer({src, color, duration, setErrorAction}: {src: string, color: string, duration: number, setErrorAction: (e: string) => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
-    const [duration, setDuration] = useState(0);
-    const [durationString, setDurationString] = useState(formatTime(0));
+    const [downloadDuration, setDownloadDuration] = useState(0);
+    const durationString = formatTime(duration);
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);
     const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
@@ -29,39 +27,39 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
 
     useEffect(() => {
         const video = videoRef.current;
-
-        if (!video)
+        if (!video || !src)
             return;
 
-        // Safari
-        if (video.canPlayType("application/vnd.apple.mpegurl")) {
-            video.src = src;
-            return;
-        }
+        const token = localStorage.getItem("token");
 
-        // Chrome, Firefox, Edge
         if (Hls.isSupported()) {
             const hls = new Hls({
-                fetchSetup: (context, init) => {
-                    init.headers = {
-                        ...init.headers,
-                        Authorization: `Bearer ${token}`,
-                    };
-                    console.log("SETUP");
-                    return new Request(context.url, init);
+                xhrSetup: (xhr) => {
+                    if (token)
+                        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
                 },
             });
-
             hls.loadSource(src);
             hls.attachMedia(video);
-
-            return () => {
-                hls.destroy();
-            };
+            hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
+                if (data.details)
+                    setDownloadDuration(data.details.totalduration);
+            });
+            hls.on(Hls.Events.ERROR, (event, data) => setErrorAction(data.error.message));
+            return () => {hls.destroy();};
         }
-    }, [src, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [src]);
 
     /* -------------- PLAY PAUSE ------------- */
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video)
+            return;
+        video.play();
+        setIsPlaying(true);
+    }, []);
+
     const togglePlay = () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
@@ -86,6 +84,8 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
         if (!video)
             return;
         setCurrentTime(formatTime(video.currentTime));
+        if (!isSeeking)
+            setSeekTime(video.currentTime);
     };
 
     const getTimeFromClientX = (clientX: number) => {
@@ -111,11 +111,12 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
 
         const handleUp = () => {
             const video = videoRef.current;
-            if (!video) return;
-
+            if (!video)
+                return;
             setIsSeeking(false);
             video.currentTime = seekTimeRef.current;
             video.play();
+            setIsPlaying(true);
         };
 
         window.addEventListener("mousemove", handleMove);
@@ -135,6 +136,7 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
         setIsSeeking(true);
         const time = getTimeFromClientX(e.clientX);
         setSeekTime(time);
+        seekTimeRef.current = time;
         video.pause();
     };
 
@@ -226,21 +228,13 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return (<div ref={containerRef} className={"relative size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]")} onMouseMove={resetHideTimer} >
-        {isBuffering && (<div className="absolute inset-0 flex items-center justify-center  pointer-events-none bg-black/30">
+    return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/10" : "")} onMouseMove={resetHideTimer} >
+        {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black">
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 
-        <video
-            ref={videoRef} src={src} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
+        <video ref={videoRef} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
             onClick={togglePlay} onTimeUpdate={handleTimeUpdate} controls={false}
-            onLoadedMetadata={() => {
-                const video = videoRef.current;
-                if (!video)
-                    return;
-                setDuration(video.duration);
-                setDurationString(formatTime(video.duration));
-            }}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
@@ -273,8 +267,10 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
                     </div>
                 </div>
 
-                <div ref={progressBarRef} className="w-full h-4 bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart}>
-                    <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${(seekTime / duration) * 100 || 0}%`}} />
+                <div className="w-full h-4 bg-black-hover border-t-black">
+                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / duration) * 100 || 0}%`}}>
+                        <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${(seekTime / duration) * 100 || 0}%`}} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -284,11 +280,16 @@ export default function VideoPlayer({src, color}: {src: string, color: string}) 
 
 function formatTime(time: number) {
     if (!time || isNaN(time))
-        return "0h0m00";
+        return "0h0m";
 
     const hours = Math.floor(time / 3600);
     const minutes = Math.floor((time % 3600) / 60);
     const seconds = Math.floor(time % 60);
 
-    return `${hours}h${minutes}m${seconds.toString().padStart(2, "0")}`;
+    let result = `${minutes}m`;
+    if (hours > 0)
+        result = `${hours}h${result}`;
+    if (seconds > 0)
+        result += seconds.toString().padStart(2, "0");
+    return result;
 }

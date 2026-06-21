@@ -6,7 +6,7 @@
     --color-black-hover: #383838;
     --color-gray: #878787;
 
-    --color-gray-loading: #D8D8D8;
+    --color-gray-loading: #C8C8C8;
     --color-white-loading: #ECECEC;
 
     --color-yellow: #FFD600;
@@ -44,13 +44,13 @@
     h3 { @apply text-3xl sm:text-5xl; }
     p { @apply font-sans text-sm sm:text-base; }
     button:hover, Link:hover { @apply cursor-pointer; }
+    button:disabled, button[disabled] { @apply cursor-not-allowed; }
     input:focus, textarea:focus { outline: none; }
     input[type="search"]::-webkit-search-cancel-button {-webkit-appearance: none; appearance: none;}
 }
 
 /* ------------------------------------------------- CUSTOM CLASS --------------------------------------------------- */
-.small-text { @apply text-center italic text-gray }
-.bg-gradient { @apply size-full absolute inset-0 bg-linear-to-t from-black via-transparent via-40% to-transparent opacity-90; }
+.bg-gradient { @apply size-full absolute inset-0 bg-linear-to-t from-black via-transparent via-40% to-transparent opacity-90 pointer-events-none; }
 .responsive-text-hairline { @apply font-hairline text-xs sm:text-xl xl:text-3xl tracking-normal; }
 .custom-movie-title { @apply truncate hover:underline decoration-2 underline-offset-3 }
 
@@ -87,9 +87,7 @@
     background-image: url("/noise.png");
 }
 
-.custom-noise-bg {
-    @apply mix-blend-color-burn brightness-50;
-}
+.custom-noise-bg { @apply mix-blend-color-burn brightness-50; }
 
 /* --------------------------------------------------- ANIMATION ---------------------------------------------------- */
 @keyframes marquee {
@@ -98,9 +96,14 @@
 }
 .animate-marquee {animation: marquee 8s linear infinite;}
 
-.custom-loading {
+.custom-loading, .custom-loading-dark {
     @apply relative size-full overflow-hidden bg-gray;
     animation: loading-pulse 2s ease-in-out infinite;
+}
+
+.custom-loading-dark {
+    @apply bg-black;
+    animation: loading-pulse-dark 2s ease-in-out infinite;
 }
 
 @keyframes loading-pulse {
@@ -109,8 +112,8 @@
     100% {background-color: var(--color-gray-loading)}
 }
 
-@keyframes shimmer {
-    0% {left: -80%;}
-    55% {left: 120%;}
-    100% {left: 120%;}
+@keyframes loading-pulse-dark {
+    0% {background-color: var(--color-black)}
+    50% {background-color: var(--color-black-hover);}
+    100% {background-color: var(--color-black)}
 }

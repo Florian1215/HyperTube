@@ -39,14 +39,18 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
     );
 }
 
+export function startTorrentStreaming(torrentId: string) {
+    return apiClient<tListResponse<iTorrent[]>>(`/stream/${torrentId}`);
+}
+
 function getTorrents(locale: string, movieId?: string) {
     return apiClient<tListResponse<iTorrent[]>>(`/movies/${movieId}/torrents`, locale);
 }
 
-export function useTorrents(movieId?: string, enabled=false) {
+export function useTorrents(movieId?: string) {
     return useApiQuery(
         ["torrents", movieId ?? ""],
         (locale) => getTorrents(locale, movieId),
-        enabled && movieId !== undefined
+        movieId !== undefined
     );
 }
