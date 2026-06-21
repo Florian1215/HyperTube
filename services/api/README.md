@@ -757,17 +757,51 @@ Example:
 
 All user endpoints require `Authorization: Bearer <access_token>`.
 
+## GET /users/{id}
+
+Returns the public profile of the requested user. The path parameter `id` must
+be a positive integer. First and last names are reduced to initials; email,
+password data, and `updated_at` are never returned.
+
+### Response
+
+```json
+{
+  "data": {
+    "id": 7,
+    "username": "alice",
+    "first_name": "A",
+    "last_name": "L",
+    "profile_picture": null,
+    "color": "green",
+    "created_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+A syntactically valid ID for an unknown user returns `404 NOT_FOUND`.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 404 | `NOT_FOUND` | Path user ID is invalid or the user does not exist. |
+| 500 | `INTERNAL_ERROR` | Loading the user failed. |
+
+---
+
 ## GET /users/{id}/comments
 
-Returns the authenticated user's own comments. The `{id}` path value must match
-the user ID in the bearer token; comments belonging to another user cannot be
-requested through this endpoint.
+Returns comments posted by the requested user. Any authenticated user may read
+another user's comments.
 
 ### Path and query parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `id` | integer | yes | | Positive user ID; must match the access-token user ID. |
+| `id` | integer | yes | | Positive ID of the user whose comments should be displayed. |
 | `page` | integer | no | `0` | Zero-based page index. Invalid or negative values use page `0`. |
 
 Results contain 12 comments per page and are ordered by `updated_at DESC`, then
@@ -782,6 +816,12 @@ by `id DESC` when timestamps are equal.
       "id": 17,
       "user_id": 42,
       "movie_id": "tt1234567",
+      "movie": {
+        "imdb_id": "tt1234567",
+        "title": "Example Movie",
+        "year": "2025",
+        "backdrop_url": "https://example.test/backdrop.jpg"
+      },
       "content": "A very good movie.",
       "edited": false,
       "updated_at": "2026-06-20T12:00:00Z"
@@ -795,9 +835,10 @@ by `id DESC` when timestamps are equal.
 }
 ```
 
-The response contains the raw comment fields, including `user_id` and
-`movie_id`, plus pagination metadata. An empty collection is returned as
-`"data": []`, never `null`.
+The response contains the comment fields, a small `movie` object, and pagination
+metadata. `movie_id` remains present alongside `movie` for frontend
+compatibility. An empty collection is returned as `"data": []`, never `null`.
+A syntactically valid ID for an unknown user returns an empty collection.
 
 ### Error responses
 
@@ -805,9 +846,58 @@ The response contains the raw comment fields, including `user_id` and
 |--------|------|-------------|
 | 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
 | 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
-| 403 | `FORBIDDEN` | Path user ID does not match the access-token user ID. |
 | 404 | `NOT_FOUND` | Path user ID is not a positive integer. |
 | 500 | `INTERNAL_ERROR` | Counting or loading the user's comments failed. |
+
+---
+
+## GET /users/{id}/film-history
+
+Returns all stored watch-history entries for the requested user, ordered by
+`watched_at DESC`. Any authenticated user may read another user's history.
+There is no query pagination; every existing entry is returned, including
+duplicates present in `watch_history`.
+
+### Path parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | yes | Positive ID of the user whose history should be displayed. |
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "imdb_id": "tt1234567",
+      "title": "Example Movie",
+      "year": "2025",
+      "poster_url": "https://example.test/poster.jpg",
+      "backdrop_url": "https://example.test/backdrop.jpg",
+      "note": 8.1,
+      "genres": [12, 18]
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 0,
+    "per_page": 1
+  }
+}
+```
+
+A syntactically valid ID for an unknown user returns `"data": []` with zeroed
+metadata.
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 404 | `NOT_FOUND` | Path user ID is not a positive integer. |
+| 500 | `INTERNAL_ERROR` | Loading the user's film history failed. |
 
 ---
 

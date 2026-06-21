@@ -8,14 +8,16 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/models"
 )
 
 func TestListUsersReturnsUserSmallList(t *testing.T) {
+	createdAt := time.Date(2026, time.June, 20, 12, 0, 0, 0, time.UTC)
 	store := &fakeUserStore{list: []models.User{
-		{ID: 1, Username: "alice", Email: "alice@example.com", FirstName: "alice", LastName: "gu", PasswordHash: "secret", Color: models.UserColorGreen},
+		{ID: 1, Username: "alice", Email: "alice@example.com", FirstName: "alice", LastName: "gu", PasswordHash: "secret", Color: models.UserColorGreen, CreatedAt: createdAt},
 		{ID: 2, Username: "bob", Email: "bob@example.com", FirstName: "alice", LastName: "gu", PasswordHash: "hunter2", Color: models.UserColorBlue},
 	}}
 	handler := NewHandler(store)
@@ -66,6 +68,9 @@ func TestListUsersReturnsUserSmallList(t *testing.T) {
 	}
 	if raw := rec.Body.String(); strings.Contains(raw, "secret") || strings.Contains(raw, "alice@example.com") {
 		t.Fatalf("response leaked sensitive data: %s", raw)
+	}
+	if strings.Contains(rec.Body.String(), "created_at") {
+		t.Fatalf("list response unexpectedly contains created_at: %s", rec.Body.String())
 	}
 }
 
@@ -289,7 +294,8 @@ func TestListUsersCountErrorReturnsInternalError(t *testing.T) {
 	}
 }
 
-func TestGetUserReturnsUserSmall(t *testing.T) {
+func TestGetUserReturnsUserProfile(t *testing.T) {
+	createdAt := time.Date(2026, time.June, 20, 12, 0, 0, 0, time.UTC)
 	store := &fakeUserStore{users: map[int64]models.User{
 		42: {
 			ID:           42,
@@ -299,6 +305,8 @@ func TestGetUserReturnsUserSmall(t *testing.T) {
 			LastName:     "Liddell",
 			Color:        models.UserColorGreen,
 			PasswordHash: "secret",
+			CreatedAt:    createdAt,
+			UpdatedAt:    createdAt.Add(time.Hour),
 		},
 	}}
 	handler := NewHandler(store)
@@ -313,10 +321,11 @@ func TestGetUserReturnsUserSmall(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 
+	responseBytes := rec.Body.Bytes()
 	var body struct {
-		Data models.UserSmall `json:"data"`
+		Data models.UserProfile `json:"data"`
 	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+	if err := json.Unmarshal(responseBytes, &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	if body.Data.ID != 42 {
@@ -328,10 +337,26 @@ func TestGetUserReturnsUserSmall(t *testing.T) {
 	if body.Data.Color != models.UserColorGreen {
 		t.Fatalf("expected color green, got %q", body.Data.Color)
 	}
+	if body.Data.CreatedAt != createdAt {
+		t.Fatalf("expected created_at %v, got %v", createdAt, body.Data.CreatedAt)
+	}
 
-	// UserSmall must not leak sensitive fields.
-	if raw := rec.Body.String(); strings.Contains(raw, "secret") || strings.Contains(raw, "alice@example.com") {
-		t.Fatalf("response leaked sensitive data: %s", raw)
+	var raw struct {
+		Data map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(responseBytes, &raw); err != nil {
+		t.Fatalf("decode raw response: %v", err)
+	}
+	if _, ok := raw.Data["created_at"]; !ok {
+		t.Fatalf("expected exact created_at key, got %+v", raw.Data)
+	}
+	for _, forbidden := range []string{"CreatedAt", "email", "password", "password_hash", "updated_at"} {
+		if _, ok := raw.Data[forbidden]; ok {
+			t.Fatalf("response leaked forbidden key %q", forbidden)
+		}
+	}
+	if rawJSON := string(responseBytes); strings.Contains(rawJSON, "secret") || strings.Contains(rawJSON, "alice@example.com") {
+		t.Fatalf("response leaked sensitive data: %s", rawJSON)
 	}
 }
 

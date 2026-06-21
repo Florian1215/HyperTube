@@ -41,23 +41,3 @@ func TestTranslateMessages(t *testing.T) {
 		t.Fatalf("unexpected German profile picture message: %q", got)
 	}
 }
-
-func TestTranslateUserCommentsForbidden(t *testing.T) {
-	tests := []struct {
-		name   string
-		locale Locale
-		want   string
-	}{
-		{name: "English", locale: English, want: "Cannot access another user's comments"},
-		{name: "French", locale: French, want: "Impossible d'accéder aux commentaires d'un autre utilisateur"},
-		{name: "German", locale: German, want: "Kommentare eines anderen Benutzers können nicht abgerufen werden"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := T(tt.locale, MsgUserCommentsForbidden); got != tt.want {
-				t.Fatalf("unexpected message: got %q, want %q", got, tt.want)
-			}
-		})
-	}
-}

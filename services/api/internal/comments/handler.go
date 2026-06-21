@@ -28,7 +28,7 @@ type CommentStore interface {
 	create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error)
 	findByID(ctx context.Context, id int) (*models.Comment, error)
 	findAll(ctx context.Context, limit, offset int) ([]models.Comment, error)
-	findAllByUserID(ctx context.Context, userID int64, limit, offset int) ([]models.Comment, error)
+	findAllByUserID(ctx context.Context, userID int64, limit, offset int) ([]models.CommentWithMovie, error)
 	countAll(ctx context.Context) (int, error)
 	countAllByUserID(ctx context.Context, userID int64) (int, error)
 	update(ctx context.Context, content string, id int, userID int) (models.Comment, error)
@@ -102,7 +102,7 @@ func (h *CommentsHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CommentsHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
-	authenticatedUserID, ok := auth.UserIDFromContext(r.Context())
+	_, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
 		return
@@ -114,13 +114,8 @@ func (h *CommentsHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if authenticatedUserID != int64(id) {
-		respond.LocalizedError(w, r, http.StatusForbidden, "FORBIDDEN", i18n.MsgUserCommentsForbidden)
-		return
-	}
-
 	page := parsePage(r)
-	total, err := h.store.countAllByUserID(r.Context(), authenticatedUserID)
+	total, err := h.store.countAllByUserID(r.Context(), int64(id))
 	if err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadComments)
@@ -129,7 +124,7 @@ func (h *CommentsHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 
 	comments, err := h.store.findAllByUserID(
 		r.Context(),
-		authenticatedUserID,
+		int64(id),
 		commentPageLimit,
 		page*commentPageLimit,
 	)
@@ -140,7 +135,7 @@ func (h *CommentsHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if comments == nil {
-		comments = []models.Comment{}
+		comments = []models.CommentWithMovie{}
 	}
 
 	respond.ListPaginated(w, http.StatusOK, comments, total, page, commentPageLimit)

@@ -16,6 +16,7 @@ import (
 type fakeCommentStore struct {
 	comment           *models.Comment
 	comments          []models.Comment
+	userComments      []models.CommentWithMovie
 	total             int
 	createMovieID     string
 	createUserID      int
@@ -77,7 +78,7 @@ func (s *fakeCommentStore) countAllByUserID(_ context.Context, userID int64) (in
 	return s.total, nil
 }
 
-func (s *fakeCommentStore) findAllByUserID(_ context.Context, userID int64, limit, offset int) ([]models.Comment, error) {
+func (s *fakeCommentStore) findAllByUserID(_ context.Context, userID int64, limit, offset int) ([]models.CommentWithMovie, error) {
 	s.listByUserCalled = true
 	s.listByUserID = userID
 	s.requestedLimit = limit
@@ -85,7 +86,7 @@ func (s *fakeCommentStore) findAllByUserID(_ context.Context, userID int64, limi
 	if s.listByUserErr != nil {
 		return nil, s.listByUserErr
 	}
-	return s.comments, nil
+	return s.userComments, nil
 }
 
 func (s *fakeCommentStore) update(ctx context.Context, content string, id int, userID int) (models.Comment, error) {
@@ -209,8 +210,8 @@ func TestListReturnsPaginatedComments(t *testing.T) {
 
 func TestListByUserReturnsAuthenticatedUsersPaginatedComments(t *testing.T) {
 	store := &fakeCommentStore{
-		comments: []models.Comment{
-			{ID: 1, UserID: 7, MovieID: "tt123", Content: "hello"},
+		userComments: []models.CommentWithMovie{
+			{ID: 1, UserID: 7, MovieID: "tt123", Content: "hello", Movie: models.MovieSmall{ImdbID: "tt123", Title: "Example", Year: "2025", BackdropURL: "backdrop.jpg"}},
 		},
 		total: 25,
 	}
@@ -235,7 +236,7 @@ func TestListByUserReturnsAuthenticatedUsersPaginatedComments(t *testing.T) {
 		t.Fatalf("expected limit and offset %d, got limit=%d offset=%d", commentPageLimit, store.requestedLimit, store.requestedOffset)
 	}
 
-	body := decodeCommentListEnvelope(t, rec)
+	body := decodeUserCommentListEnvelope(t, rec)
 	if body.Meta.Total != 25 || body.Meta.Page != 1 || body.Meta.PerPage != commentPageLimit {
 		t.Fatalf("unexpected meta: %+v", body.Meta)
 	}
@@ -244,8 +245,21 @@ func TestListByUserReturnsAuthenticatedUsersPaginatedComments(t *testing.T) {
 	}
 }
 
-func TestListByUserRejectsDifferentAuthenticatedUser(t *testing.T) {
-	store := &fakeCommentStore{}
+func TestListByUserAllowsAuthenticatedUserToReadAnotherUsersComments(t *testing.T) {
+	store := &fakeCommentStore{userComments: []models.CommentWithMovie{
+		{
+			ID:      17,
+			UserID:  7,
+			MovieID: "tt1234567",
+			Content: "A very good movie.",
+			Movie: models.MovieSmall{
+				ImdbID:      "tt1234567",
+				Title:       "Example Movie",
+				Year:        "2025",
+				BackdropURL: "https://example.test/backdrop.jpg",
+			},
+		},
+	}, total: 1}
 	handler := NewCommentsHandler(store)
 
 	req := httptest.NewRequest(http.MethodGet, "/users/7/comments", nil)
@@ -254,18 +268,46 @@ func TestListByUserRejectsDifferentAuthenticatedUser(t *testing.T) {
 
 	serveWithUser(t, 42, http.HandlerFunc(handler.ListByUser)).ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	errorBody := decodeCommentErrorEnvelope(t, rec).Error
-	if errorBody.Code != "FORBIDDEN" {
-		t.Fatalf("expected FORBIDDEN, got %q", errorBody.Code)
+	if store.countByUserID != 7 || store.listByUserID != 7 {
+		t.Fatalf("expected URL user id 7, got count=%d list=%d", store.countByUserID, store.listByUserID)
 	}
-	if errorBody.Message != "Cannot access another user's comments" {
-		t.Fatalf("unexpected message: %q", errorBody.Message)
+
+	responseBytes := rec.Body.Bytes()
+	var body struct {
+		Data []models.CommentWithMovie `json:"data"`
 	}
-	if store.countByUserCalled || store.listByUserCalled {
-		t.Fatalf("store must not be called, got count=%v list=%v", store.countByUserCalled, store.listByUserCalled)
+	if err := json.Unmarshal(responseBytes, &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 || body.Data[0].MovieID != "tt1234567" || body.Data[0].Movie.ImdbID != "tt1234567" || body.Data[0].Movie.Title != "Example Movie" || body.Data[0].Movie.Year != "2025" || body.Data[0].Movie.BackdropURL != "https://example.test/backdrop.jpg" {
+		t.Fatalf("unexpected user comments: %+v", body.Data)
+	}
+
+	var raw struct {
+		Data []map[string]json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(responseBytes, &raw); err != nil {
+		t.Fatalf("decode raw response: %v", err)
+	}
+	if len(raw.Data) != 1 {
+		t.Fatalf("expected one raw comment, got %d", len(raw.Data))
+	}
+	for _, key := range []string{"movie_id", "movie"} {
+		if _, ok := raw.Data[0][key]; !ok {
+			t.Fatalf("missing JSON key %q in %+v", key, raw.Data[0])
+		}
+	}
+	var movie map[string]json.RawMessage
+	if err := json.Unmarshal(raw.Data[0]["movie"], &movie); err != nil {
+		t.Fatalf("decode raw movie: %v", err)
+	}
+	for _, key := range []string{"imdb_id", "title", "year", "backdrop_url"} {
+		if _, ok := movie[key]; !ok {
+			t.Fatalf("missing movie JSON key %q in %+v", key, movie)
+		}
 	}
 }
 
@@ -328,7 +370,7 @@ func TestListByUserReturnsEmptyJSONList(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	body := decodeCommentListEnvelope(t, rec)
+	body := decodeUserCommentListEnvelope(t, rec)
 	if body.Data == nil {
 		t.Fatal("expected data to be an empty array, got null")
 	}
@@ -343,7 +385,7 @@ func TestListByUserReturnsEmptyJSONList(t *testing.T) {
 func TestListByUserInvalidPageFallsBackToZero(t *testing.T) {
 	for _, query := range []string{"page=abc", "page=-1"} {
 		t.Run(query, func(t *testing.T) {
-			store := &fakeCommentStore{comments: []models.Comment{}}
+			store := &fakeCommentStore{userComments: []models.CommentWithMovie{}}
 			handler := NewCommentsHandler(store)
 
 			req := httptest.NewRequest(http.MethodGet, "/users/7/comments?"+query, nil)
@@ -361,7 +403,7 @@ func TestListByUserInvalidPageFallsBackToZero(t *testing.T) {
 			if store.requestedOffset != 0 {
 				t.Fatalf("expected offset 0, got %d", store.requestedOffset)
 			}
-			if body := decodeCommentListEnvelope(t, rec); body.Meta.Page != 0 {
+			if body := decodeUserCommentListEnvelope(t, rec); body.Meta.Page != 0 {
 				t.Fatalf("expected page 0, got %d", body.Meta.Page)
 			}
 		})
@@ -690,6 +732,30 @@ func decodeCommentListEnvelope(t *testing.T, rec *httptest.ResponseRecorder) str
 
 	var body struct {
 		Data []models.Comment `json:"data"`
+		Meta struct {
+			Total   int `json:"total"`
+			Page    int `json:"page"`
+			PerPage int `json:"per_page"`
+		} `json:"meta"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body
+}
+
+func decodeUserCommentListEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
+	Data []models.CommentWithMovie `json:"data"`
+	Meta struct {
+		Total   int `json:"total"`
+		Page    int `json:"page"`
+		PerPage int `json:"per_page"`
+	} `json:"meta"`
+} {
+	t.Helper()
+
+	var body struct {
+		Data []models.CommentWithMovie `json:"data"`
 		Meta struct {
 			Total   int `json:"total"`
 			Page    int `json:"page"`

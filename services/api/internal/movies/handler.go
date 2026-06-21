@@ -114,6 +114,32 @@ func (h *MoviesHandler) GetWatchedMovies(w http.ResponseWriter, r *http.Request)
 	respond.List(w, http.StatusOK, movieResponse)
 }
 
+func (h *MoviesHandler) GetUserFilmHistory(w http.ResponseWriter, r *http.Request) {
+	if _, ok := auth.UserIDFromContext(r.Context()); !ok {
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
+		return
+	}
+
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id <= 0 {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgUserNotFound)
+		return
+	}
+
+	movies, err := h.store.listWatched(r.Context(), id)
+	if err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
+		return
+	}
+
+	movieResponse := make([]movieResponse, len(movies))
+	for i, movie := range movies {
+		movieResponse[i] = toMovieResponse(movie)
+	}
+	respond.List(w, http.StatusOK, movieResponse)
+}
+
 func (h *MoviesHandler) GetDirectStreamMovies(w http.ResponseWriter, r *http.Request) {
 	movies, err := h.store.listDirectStream(r.Context())
 	if err != nil {

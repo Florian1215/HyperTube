@@ -90,7 +90,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respond.Data(w, http.StatusOK, models.ToUserSmallPrivate(user))
+	respond.Data(w, http.StatusOK, models.ToUserProfilePrivate(user))
 }
 
 // UpdateUser applies a partial profile update for the authenticated user's own profile.
