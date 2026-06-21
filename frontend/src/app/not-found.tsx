@@ -12,7 +12,7 @@ export default function NotFoundPage() {
     const tError = useTranslations("notifications.error");
 
     useEffect(() => {
-        addNotification(tError("notFound").replace("{path}", pathname), "error");
+        addNotification(tError("notFound", {path: pathname}), "error");
         setTimeout(() => {
             router.replace("/");
         }, 0);
