@@ -6,10 +6,6 @@
     "signin": "Anmelden",
     "createAccount": "Konto erstellen"
   },
-  "language": {
-    "english": "Englisch",
-    "french": "Französisch"
-  },
   "home": {
     "continueWatching": "Weiter ansehen",
     "featured": "Empfohlen",
@@ -57,7 +53,7 @@
     "noCommentsPrompt": "Noch keine Kommentare. Schreib den ersten!"
   },
   "profile": {
-    "memberSince": "Mitglied seit {date} · #{username}",
+    "memberSince": "Mitglied seit {date}",
     "tabs": {
       "profile": "Profil",
       "auth": "Passwort",
@@ -65,7 +61,6 @@
       "comments": "Kommentare",
       "avatar": "Avatar"
     },
-    "selectNewAvatar": "Neuen Avatar auswählen",
     "remove": "Entfernen",
     "noMoviesYet": "Sie haben noch keine Filme gesehen.",
     "fields": {
@@ -75,9 +70,6 @@
       "last_name": "Nachname",
       "username": "Benutzername"
     }
-  },
-  "users": {
-    "searchResult": "Suche {id}"
   },
   "common": {
     "profilePictureAlt": "Profilbild"
@@ -190,7 +182,7 @@
       "missingToken": "Token fehlt.",
       "invalidToken": "Token ungültig oder abgelaufen.",
       "invalidQueryParameter": "Ungültiger Abfrageparameter.",
-      "notFound": "Seite '{path}' nicht gefunden.",
+      "notFound": "Seite {path} nicht gefunden.",
       "torrentNotFound": "Torrent nicht gefunden. Dieser Film ist möglicherweise noch nicht zum Streaming verfügbar. Bitte versuchen Sie es später erneut."
     }
   }

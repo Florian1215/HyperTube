@@ -42,6 +42,11 @@ const (
 	MsgPasswordRequired                Message = "password is required"
 	MsgPasswordInvalid                 Message = "invalid password"
 	MsgPasswordTooCommon               Message = "password is too common"
+	MsgCurrentPasswordInvalid          Message = "current password is invalid"
+	MsgNewPasswordSameAsCurrent        Message = "new password must differ from current password"
+	MsgPasswordChangeSuccess           Message = "password has been changed"
+	MsgFailedChangePassword            Message = "failed to change password"
+	MsgPasswordConfirmationMismatch    Message = "password confirmation does not match"
 	MsgEmailAlreadyInUse               Message = "email is already in use"
 	MsgUsernameAlreadyInUse            Message = "username is already in use"
 	MsgFailedCreateUser                Message = "failed to create user"
@@ -87,6 +92,8 @@ const (
 	MsgInvalidFormBody                 Message = "invalid form body"
 	MsgRequestBodyFormOrJSON           Message = "request body must be form encoded or JSON"
 	MsgFailedCreateAccessToken         Message = "failed to create access token"
+	MsgRefreshTokenRequired            Message = "refresh token is required"
+	MsgInvalidRefreshToken             Message = "refresh token is invalid or expired"
 	MsgMissingBearerToken              Message = "missing bearer token"
 	MsgTokenExpired                    Message = "token expired"
 	MsgInvalidBearerToken              Message = "invalid bearer token"
@@ -144,6 +151,11 @@ var translations = map[Locale]map[Message]string{
 		MsgPasswordRequired:                "mot de passe requis",
 		MsgPasswordInvalid:                 "mot de passe invalide",
 		MsgPasswordTooCommon:               "mot de passe trop courant",
+		MsgCurrentPasswordInvalid:          "mot de passe actuel invalide",
+		MsgNewPasswordSameAsCurrent:        "le nouveau mot de passe doit être différent du mot de passe actuel",
+		MsgPasswordChangeSuccess:           "mot de passe modifié",
+		MsgFailedChangePassword:            "échec de la modification du mot de passe",
+		MsgPasswordConfirmationMismatch:    "la confirmation du mot de passe ne correspond pas",
 		MsgEmailAlreadyInUse:               "email déjà utilisé",
 		MsgUsernameAlreadyInUse:            "nom d'utilisateur déjà utilisé",
 		MsgFailedCreateUser:                "échec de la création de l'utilisateur",
@@ -189,6 +201,8 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFormBody:                 "corps de formulaire invalide",
 		MsgRequestBodyFormOrJSON:           "le corps de la requête doit être encodé en formulaire ou en JSON",
 		MsgFailedCreateAccessToken:         "échec de la création du jeton d'accès",
+		MsgRefreshTokenRequired:            "jeton d'actualisation requis",
+		MsgInvalidRefreshToken:             "jeton d'actualisation invalide ou expiré",
 		MsgMissingBearerToken:              "jeton bearer manquant",
 		MsgTokenExpired:                    "jeton expiré",
 		MsgInvalidBearerToken:              "jeton bearer invalide",
@@ -238,6 +252,11 @@ var translations = map[Locale]map[Message]string{
 		MsgPasswordRequired:                "Passwort ist erforderlich",
 		MsgPasswordInvalid:                 "Passwort ist ungültig",
 		MsgPasswordTooCommon:               "Passwort ist zu häufig",
+		MsgCurrentPasswordInvalid:          "aktuelles Passwort ist ungültig",
+		MsgNewPasswordSameAsCurrent:        "neues Passwort muss sich vom aktuellen Passwort unterscheiden",
+		MsgPasswordChangeSuccess:           "Passwort wurde geändert",
+		MsgFailedChangePassword:            "Passwort konnte nicht geändert werden",
+		MsgPasswordConfirmationMismatch:    "Passwortbestätigung stimmt nicht überein",
 		MsgEmailAlreadyInUse:               "E-Mail wird bereits verwendet",
 		MsgUsernameAlreadyInUse:            "Benutzername wird bereits verwendet",
 		MsgFailedCreateUser:                "Benutzer konnte nicht erstellt werden",
@@ -283,6 +302,8 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFormBody:                 "Formular-Body ist ungültig",
 		MsgRequestBodyFormOrJSON:           "Request-Body muss formularcodiert oder JSON sein",
 		MsgFailedCreateAccessToken:         "Access-Token konnte nicht erstellt werden",
+		MsgRefreshTokenRequired:            "Refresh-Token ist erforderlich",
+		MsgInvalidRefreshToken:             "Refresh-Token ist ungültig oder abgelaufen",
 		MsgMissingBearerToken:              "Bearer-Token fehlt",
 		MsgTokenExpired:                    "Token ist abgelaufen",
 		MsgInvalidBearerToken:              "Bearer-Token ist ungültig",

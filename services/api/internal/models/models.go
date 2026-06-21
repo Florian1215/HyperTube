@@ -24,6 +24,7 @@ type Torrent struct {
 	Size     float64 `json:"size"`
 	Language string  `json:"language"`
 	Seeds    string  `json:"seeds"`
+	Status   string  `json:"status"`
 }
 
 type Subtitle struct {

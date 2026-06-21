@@ -173,6 +173,7 @@ func newRouter(
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
+			r.Post("/refresh-token", authHandler.RefreshToken)
 			r.Post("/password-reset", authHandler.RequestPasswordReset)
 			r.Post("/reset-password", authHandler.ResetPassword)
 			r.Get("/42/login", authHandler.LoginFortyTwo)
@@ -208,6 +209,7 @@ func newRouter(
 		r.With(requireAuth).Get("/users/{id}", usersHandler.GetUser)
 		r.With(requireAuth).Get("/users/{id}/comments", commentsHandler.ListByUser)
 		r.With(requireAuth).Get("/users/{id}/film-history", moviesHandler.GetUserFilmHistory)
+		r.With(requireAuth).Patch("/users/new-password", usersHandler.SetPassword)
 		r.With(requireAuth).Patch("/users/{id}", usersHandler.UpdateUser)
 
 		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming

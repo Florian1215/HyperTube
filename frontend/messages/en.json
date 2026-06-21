@@ -6,10 +6,6 @@
     "signin": "Sign in",
     "createAccount": "Create account"
   },
-  "language": {
-    "english": "English",
-    "french": "French"
-  },
   "home": {
     "continueWatching": "Continue watching",
     "featured": "Featured",
@@ -57,7 +53,7 @@
     "noCommentsPrompt": "No comments yet. Be the first to post one!"
   },
   "profile": {
-    "memberSince": "Member since {date} · #{username}",
+    "memberSince": "Member since {date}",
     "tabs": {
       "profile": "Profile",
       "auth": "Password",
@@ -65,7 +61,6 @@
       "comments": "Comments",
       "avatar": "Avatar"
     },
-    "selectNewAvatar": "Select new avatar",
     "remove": "Remove",
     "noMoviesYet": "You haven't seen any films yet.",
     "fields": {
@@ -75,9 +70,6 @@
       "last_name": "Lastname",
       "username": "Username"
     }
-  },
-  "users": {
-    "searchResult": "Search {id}"
   },
   "common": {
     "profilePictureAlt": "Profile picture"
@@ -190,7 +182,7 @@
       "missingToken": "Token is missing.",
       "invalidToken": "Token is invalid or has expired.",
       "invalidQueryParameter": "Invalid query parameter.",
-      "notFound": "Page '{path}' not found.",
+      "notFound": "Page {path} not found.",
       "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later."
     }
   }

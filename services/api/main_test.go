@@ -48,6 +48,11 @@ func TestRouterPublicAuthJSONRoutes(t *testing.T) {
 			body: `{"email":`,
 		},
 		{
+			name: "refresh token",
+			path: "/api/v1/auth/refresh-token",
+			body: `{"refresh_token":`,
+		},
+		{
 			name: "password reset request",
 			path: "/api/v1/auth/password-reset",
 			body: `{"email":`,
@@ -326,6 +331,52 @@ func TestRouterUserPatchRouteWithValidTokenReachesHandler(t *testing.T) {
 	}
 }
 
+func TestRouterSetPasswordRouteRequiresBearerToken(t *testing.T) {
+	router, _ := newTestRouter(t)
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/new-password", strings.NewReader(`{}`))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized || decodeRouterErrorCode(t, rec) != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRouterSetPasswordRouteWithValidTokenReachesHandler(t *testing.T) {
+	router, tokens := newTestRouter(t)
+	token, _, err := tokens.CreateAccessToken(42)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/new-password", strings.NewReader(`{}`))
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var body struct {
+		Error struct {
+			Code   string                     `json:"code"`
+			Fields map[string]json.RawMessage `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	for _, field := range []string{"current-password", "new-password"} {
+		if _, ok := body.Error.Fields[field]; !ok {
+			t.Fatalf("expected field %q, got %+v", field, body.Error.Fields)
+		}
+	}
+}
+
 func newTestRouter(t *testing.T) (http.Handler, *auth.TokenManager) {
 	return newTestRouterWithUsersStore(t, &routerUserStore{})
 }
@@ -380,6 +431,11 @@ func (s *routerUserStore) UpdateUser(_ context.Context, id int64, params users.U
 		user.Color = *params.Color
 	}
 	return user, nil
+}
+
+func (s *routerUserStore) UpdatePasswordHash(_ context.Context, id int64, _, _ string) error {
+	s.requestedID = id
+	return nil
 }
 
 func decodeRouterErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string {

@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	ErrUserNotFound  = errors.New("user not found")
-	ErrDuplicateUser = errors.New("duplicate user")
+	ErrUserNotFound    = errors.New("user not found")
+	ErrDuplicateUser   = errors.New("duplicate user")
+	ErrPasswordChanged = errors.New("password changed concurrently")
 )
 
 type DuplicateUserError struct {
@@ -49,7 +50,6 @@ type UpdateUserParams struct {
 	Username            *string
 	FirstName           *string
 	LastName            *string
-	PasswordHash        *string
 	ClearProfilePicture bool
 	Color               *string
 }
@@ -132,13 +132,12 @@ func (s *Store) UpdateUser(ctx context.Context, id int64, params UpdateUserParam
 			username = COALESCE($3, username),
 			first_name = COALESCE($4, first_name),
 			last_name = COALESCE($5, last_name),
-			password_hash = COALESCE($6, password_hash),
-			profile_picture = CASE WHEN $7 THEN NULL::text ELSE profile_picture END,
-			color = COALESCE($8, color),
+			profile_picture = CASE WHEN $6 THEN NULL::text ELSE profile_picture END,
+			color = COALESCE($7, color),
 			updated_at = NOW()
 		WHERE id = $1
 		RETURNING id, email, username, first_name, last_name, COALESCE(profile_picture, ''), COALESCE(password_hash, ''), color, created_at, updated_at
-	`, id, params.Email, params.Username, params.FirstName, params.LastName, params.PasswordHash, params.ClearProfilePicture, params.Color).
+	`, id, params.Email, params.Username, params.FirstName, params.LastName, params.ClearProfilePicture, params.Color).
 		Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName, &u.ProfilePicture, &u.PasswordHash, &u.Color, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -150,6 +149,21 @@ func (s *Store) UpdateUser(ctx context.Context, id int64, params UpdateUserParam
 		return models.User{}, err
 	}
 	return u, nil
+}
+
+func (s *Store) UpdatePasswordHash(ctx context.Context, id int64, expectedHash, newHash string) error {
+	result, err := s.db.Exec(ctx, `
+		UPDATE users
+		SET password_hash = $3, updated_at = NOW()
+		WHERE id = $1 AND password_hash = $2
+	`, id, expectedHash, newHash)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return ErrPasswordChanged
+	}
+	return nil
 }
 
 func isUniqueViolation(err error) bool {

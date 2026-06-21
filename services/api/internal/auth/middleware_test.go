@@ -102,6 +102,34 @@ func TestRequireAuthRejectsInvalidBearerToken(t *testing.T) {
 	}
 }
 
+func TestRequireAuthRejectsRefreshToken(t *testing.T) {
+	tokens := newTestTokenManager(t)
+	token, _, err := tokens.CreateRefreshToken(42)
+	if err != nil {
+		t.Fatalf("create refresh token: %v", err)
+	}
+
+	nextCalled := false
+	handler := RequireAuth(tokens)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if nextCalled {
+		t.Fatal("next handler must not be called with a refresh token")
+	}
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeMiddlewareErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
 func TestRequireAuthRejectsExpiredBearerToken(t *testing.T) {
 	tokens := newTestTokenManager(t)
 	now := time.Date(2026, 5, 6, 10, 0, 0, 0, time.UTC)

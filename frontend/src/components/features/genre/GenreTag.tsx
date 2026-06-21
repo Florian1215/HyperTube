@@ -1,4 +1,4 @@
-import {useRouter} from "next/navigation";
+import {useRouter} from "@/i18n/navigation";
 import {iGenre} from "@/types/genre";
 import {Dispatch, SetStateAction} from "react";
 

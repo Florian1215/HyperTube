@@ -24,6 +24,6 @@ export default function CommentsProfileTab({user}: {user: iUser}) {
     }, [data, user]);
 
     return (<div className="max-w-3xl w-full mx-auto">
-        <Comments currentUser={currentUser} comments={actualComments} index={index} setIndex={setIndex} totalPage={totalPage} setComments={setComments} profilePage={true} />
+        <Comments currentUser={currentUser} comments={actualComments} index={index} setIndex={setIndex} totalPage={totalPage} setComments={setComments} />
     </div>);
 }

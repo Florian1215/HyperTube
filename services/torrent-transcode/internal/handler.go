@@ -1,6 +1,7 @@
 package torrent_transcode
 
 import (
+	"context"
 	"hypertube/torrent-transcode/internal/torrent"
 	"hypertube/torrent-transcode/internal/transcode"
 	"io"
@@ -92,10 +93,14 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 
 	log.Printf("%s: ConvertHLS starting", id)
 	go func() {
+		status := "finished"
 		if err := transcode.ConvertPipeHLS(torrentReader, videoPath); err != nil {
 			log.Printf("ConvertPipeHLS failed: %v", err)
+			status = "failed"
 		}
-		// TODO register that the torrent is converted and finished in the db
+		if err := s.store.SetTorrentStatus(context.Background(), id, status); err != nil {
+			log.Printf("%s: failed to set torrent status to %q: %v", id, status, err)
+		}
 	}()
 
 	m3u8Path := videoPath + "/stream.m3u8"
