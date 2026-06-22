@@ -130,11 +130,20 @@ func (h *Handler) callbackOAuth(w http.ResponseWriter, r *http.Request, provider
 }
 
 func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user models.User, locale i18n.Locale, redirectPath string, oauthMethod string) {
+	setTokenResponseHeaders(w)
+
 	response, err := h.newAuthResponse(user, &oauthMethod)
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateToken))
 		return
 	}
+
+	refreshToken, err := h.issueRefreshToken(user.ID)
+	if err != nil {
+		respond.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.T(locale, i18n.MsgFailedCreateToken))
+		return
+	}
+	response.RefreshToken = refreshToken
 
 	if h.frontendAuthCallbackURL == "" {
 		respond.Data(w, http.StatusOK, response)
@@ -155,6 +164,7 @@ func (h *Handler) writeOAuthSuccess(w http.ResponseWriter, r *http.Request, user
 
 	fragment := url.Values{}
 	fragment.Set("access_token", response.AccessToken)
+	fragment.Set("refresh_token", response.RefreshToken)
 	fragment.Set("token_type", response.TokenType)
 	fragment.Set("expires_in", strconv.FormatInt(response.ExpiresIn, 10))
 	fragment.Set("user", string(userJSON))

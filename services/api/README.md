@@ -55,8 +55,9 @@ Validation errors use field-based messages instead of a top-level `message`:
 }
 ```
 
-Successful register and OAuth callback responses use this auth payload. Password
-login adds a `refresh_token`, as documented in its own section below:
+Successful registration responses use this base auth payload. Password login
+and successful browser OAuth callbacks add a `refresh_token`, while
+registration does not:
 
 ```json
 {
@@ -220,13 +221,13 @@ Content-Type: application/json
 }
 ```
 
-The refresh token is issued only by this password-login endpoint. It is valid
-for 7 days and contains `token_use: "refresh"`. `expires_in` continues to
-describe only the 15-minute access token. Login responses include
-`Cache-Control: no-store` and `Pragma: no-cache`.
+The refresh token is issued by this password-login endpoint and by successful
+browser OAuth callbacks. It is valid for 7 days and contains
+`token_use: "refresh"`. `expires_in` continues to describe only the 15-minute
+access token. Login responses include `Cache-Control: no-store` and
+`Pragma: no-cache`.
 
-Registration, browser OAuth callbacks, and `POST /oauth/token` do not return a
-HyperTube refresh token.
+Registration and `POST /oauth/token` do not return a HyperTube refresh token.
 
 #### Error responses
 
@@ -258,7 +259,7 @@ is public because the previous access token may already have expired.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `refresh_token` | string | yes | Refresh JWT returned by `POST /auth/login`. |
+| `refresh_token` | string | yes | Refresh JWT returned by `POST /auth/login` or a successful browser OAuth callback. |
 
 Unknown JSON fields, malformed JSON, multiple JSON documents, and request bodies
 larger than 1 MiB are rejected.
@@ -503,13 +504,15 @@ Cookie: hypertube_oauth_42_state=<state>
 ##### Response
 
 When `FRONTEND_AUTH_CALLBACK_URL` is configured, which defaults to
-`http://localhost:4200/auth/callback`, the API redirects to the frontend with
+`http://localhost:4200/en/auth/callback`, the API redirects to the frontend with
 auth data in the URL fragment:
 
 `303 See Other`
 
 ```http
-Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
+Location: http://localhost:4200/en/auth/callback#access_token=<jwt>&refresh_token=<refresh-jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
+Cache-Control: no-store
+Pragma: no-cache
 Set-Cookie: hypertube_oauth_42_state=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
 ```
 
@@ -526,7 +529,10 @@ The `user` fragment value is URL-encoded JSON:
 ```
 
 If the handler is configured without a frontend callback URL, the success
-response is `200 OK` with the standard auth payload.
+response is `200 OK` with the standard auth payload plus `refresh_token`.
+Successful browser OAuth callback responses include `Cache-Control: no-store`
+and `Pragma: no-cache`. In both response forms, `expires_in` describes only the
+access token.
 
 ##### Error responses
 
@@ -534,7 +540,7 @@ With `FRONTEND_AUTH_CALLBACK_URL`, callback errors redirect to the frontend:
 
 ```http
 HTTP/1.1 303 See Other
-Location: http://localhost:4200/auth/callback?error=INVALID_OAUTH_STATE&error_description=Invalid+OAuth+state
+Location: http://localhost:4200/en/auth/callback?error=INVALID_OAUTH_STATE&error_description=Invalid+OAuth+state
 ```
 
 Without a frontend callback URL, errors use the standard JSON error envelope.
@@ -615,13 +621,15 @@ Cookie: hypertube_oauth_github_state=<state>
 ##### Response
 
 When `FRONTEND_AUTH_CALLBACK_URL` is configured, which defaults to
-`http://localhost:4200/auth/callback`, the API redirects to the frontend with
+`http://localhost:4200/en/auth/callback`, the API redirects to the frontend with
 auth data in the URL fragment:
 
 `303 See Other`
 
 ```http
-Location: http://localhost:4200/auth/callback#access_token=<jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
+Location: http://localhost:4200/en/auth/callback#access_token=<jwt>&refresh_token=<refresh-jwt>&token_type=Bearer&expires_in=900&user=%7B...%7D
+Cache-Control: no-store
+Pragma: no-cache
 Set-Cookie: hypertube_oauth_github_state=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax
 ```
 
@@ -638,7 +646,8 @@ The `user` fragment value is URL-encoded JSON:
 ```
 
 If the handler is configured without a frontend callback URL, the success
-response is `200 OK` with the standard auth payload.
+response is `200 OK` with the standard auth payload plus `refresh_token`.
+`expires_in` continues to describe only the access token.
 
 ##### Error responses
 
@@ -646,7 +655,7 @@ With `FRONTEND_AUTH_CALLBACK_URL`, callback errors redirect to the frontend:
 
 ```http
 HTTP/1.1 303 See Other
-Location: http://localhost:4200/auth/callback?error=OAUTH_EXCHANGE_FAILED&error_description=failed+to+exchange+GitHub+authorization+code
+Location: http://localhost:4200/en/auth/callback?error=OAUTH_EXCHANGE_FAILED&error_description=failed+to+exchange+GitHub+authorization+code
 ```
 
 Without a frontend callback URL, errors use the standard JSON error envelope.
@@ -715,10 +724,12 @@ Cookie: hypertube_oauth_gitlab_state=<state>
 
 ##### Response
 
-When `FRONTEND_AUTH_CALLBACK_URL` is configured, the API redirects to the
-frontend with auth data in the URL fragment, matching the 42 and GitHub
-callback shape. Without a frontend callback URL, the success response is
-`200 OK` with the standard auth payload.
+When `FRONTEND_AUTH_CALLBACK_URL` is configured, which defaults to
+`http://localhost:4200/en/auth/callback`, the API redirects to the frontend with
+`access_token`, `refresh_token`, `token_type`, `expires_in`, and `user` in the
+URL fragment, matching the 42 and GitHub callback shape. Without a frontend
+callback URL, the success response is `200 OK` with the standard auth payload
+plus `refresh_token`. `expires_in` continues to describe only the access token.
 
 ##### Error responses
 

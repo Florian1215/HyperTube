@@ -324,6 +324,7 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
+	assertNoStoreHeaders(t, rec)
 
 	response := decodeAuthEnvelope(t, rec)
 	if response.Data.User.Email != "ft.user@example.com" {
@@ -338,8 +339,35 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 	if response.Data.User.ProfilePicture == nil || *response.Data.User.ProfilePicture != "https://cdn.intra.42.fr/users/12345/medium_ft_user.jpg" {
 		t.Fatalf("expected 42 profile picture, got %+v", response.Data.User.ProfilePicture)
 	}
-	if _, err := tokens.ValidateAccessToken(response.Data.AccessToken); err != nil {
+	accessClaims, err := tokens.ValidateAccessToken(response.Data.AccessToken)
+	if err != nil {
 		t.Fatalf("42 auth token should validate: %v", err)
+	}
+	if accessClaims.UserID != response.Data.User.ID {
+		t.Fatalf("expected access token user id %d, got %d", response.Data.User.ID, accessClaims.UserID)
+	}
+	if response.Data.RefreshToken == "" {
+		t.Fatal("expected 42 OAuth refresh token")
+	}
+	refreshClaims, err := tokens.ValidateRefreshToken(response.Data.RefreshToken)
+	if err != nil {
+		t.Fatalf("42 refresh token should validate: %v", err)
+	}
+	if refreshClaims.UserID != response.Data.User.ID || refreshClaims.UserID != accessClaims.UserID {
+		t.Fatalf("expected refresh token user id %d, got %d", response.Data.User.ID, refreshClaims.UserID)
+	}
+
+	refreshRec := callRefreshToken(t, handler, response.Data.RefreshToken)
+	if refreshRec.Code != http.StatusOK {
+		t.Fatalf("expected OAuth refresh token exchange 200, got %d: %s", refreshRec.Code, refreshRec.Body.String())
+	}
+	newAccessToken := decodeRefreshTokenEnvelope(t, refreshRec).Data.AccessToken
+	newAccessClaims, err := tokens.ValidateAccessToken(newAccessToken)
+	if err != nil {
+		t.Fatalf("refreshed access token should validate: %v", err)
+	}
+	if newAccessClaims.UserID != response.Data.User.ID {
+		t.Fatalf("expected refreshed access token user id %d, got %d", response.Data.User.ID, newAccessClaims.UserID)
 	}
 
 	storedUser := store.usersByID[response.Data.User.ID]
@@ -394,6 +422,7 @@ func TestFortyTwoCallbackRedirectsToFrontendWithTokenFragment(t *testing.T) {
 	if rec.Code != http.StatusSeeOther {
 		t.Fatalf("expected 303, got %d: %s", rec.Code, rec.Body.String())
 	}
+	assertNoStoreHeaders(t, rec)
 
 	location, err := url.Parse(rec.Header().Get("Location"))
 	if err != nil {
@@ -407,8 +436,17 @@ func TestFortyTwoCallbackRedirectsToFrontendWithTokenFragment(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse redirect fragment: %v", err)
 	}
-	if _, err := tokens.ValidateAccessToken(fragment.Get("access_token")); err != nil {
+	accessClaims, err := tokens.ValidateAccessToken(fragment.Get("access_token"))
+	if err != nil {
 		t.Fatalf("redirect access token should validate: %v", err)
+	}
+	refreshToken := fragment.Get("refresh_token")
+	if refreshToken == "" {
+		t.Fatal("expected refresh_token fragment")
+	}
+	refreshClaims, err := tokens.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		t.Fatalf("redirect refresh token should validate: %v", err)
 	}
 	if fragment.Get("token_type") != "Bearer" {
 		t.Fatalf("expected Bearer token type, got %q", fragment.Get("token_type"))
@@ -420,6 +458,12 @@ func TestFortyTwoCallbackRedirectsToFrontendWithTokenFragment(t *testing.T) {
 	}
 	if user.Email != "ft.user@example.com" || user.Username != "ft_user" {
 		t.Fatalf("unexpected redirected user: %+v", user)
+	}
+	if user.ID <= 0 {
+		t.Fatalf("expected positive redirected user id, got %d", user.ID)
+	}
+	if accessClaims.UserID != user.ID || refreshClaims.UserID != user.ID {
+		t.Fatalf("expected token user ids to match redirected user id %d, got access=%d refresh=%d", user.ID, accessClaims.UserID, refreshClaims.UserID)
 	}
 
 	cookie := findCookie(t, rec, oauthStateCookieName)
@@ -750,8 +794,19 @@ func TestGitHubCallbackCreatesUserAndToken(t *testing.T) {
 	if response.Data.User.Username != "gh_user" {
 		t.Fatalf("expected GitHub login as username, got %q", response.Data.User.Username)
 	}
-	if _, err := tokens.ValidateAccessToken(response.Data.AccessToken); err != nil {
+	accessClaims, err := tokens.ValidateAccessToken(response.Data.AccessToken)
+	if err != nil {
 		t.Fatalf("GitHub auth token should validate: %v", err)
+	}
+	if response.Data.RefreshToken == "" {
+		t.Fatal("expected GitHub OAuth refresh token")
+	}
+	refreshClaims, err := tokens.ValidateRefreshToken(response.Data.RefreshToken)
+	if err != nil {
+		t.Fatalf("GitHub refresh token should validate: %v", err)
+	}
+	if accessClaims.UserID != response.Data.User.ID || refreshClaims.UserID != response.Data.User.ID {
+		t.Fatalf("expected token user ids to match user id %d, got access=%d refresh=%d", response.Data.User.ID, accessClaims.UserID, refreshClaims.UserID)
 	}
 
 	secondReq := httptest.NewRequest(http.MethodGet, "/api/v1/auth/github/callback?code=valid-code&state=second-state", nil)
@@ -868,8 +923,19 @@ func TestGitLabCallbackCreatesUserAndToken(t *testing.T) {
 	if response.Data.User.ProfilePicture == nil || *response.Data.User.ProfilePicture != "https://gitlab.com/uploads/-/system/user/avatar/13579/avatar.png" {
 		t.Fatalf("expected GitLab profile picture, got %+v", response.Data.User.ProfilePicture)
 	}
-	if _, err := tokens.ValidateAccessToken(response.Data.AccessToken); err != nil {
+	accessClaims, err := tokens.ValidateAccessToken(response.Data.AccessToken)
+	if err != nil {
 		t.Fatalf("GitLab auth token should validate: %v", err)
+	}
+	if response.Data.RefreshToken == "" {
+		t.Fatal("expected GitLab OAuth refresh token")
+	}
+	refreshClaims, err := tokens.ValidateRefreshToken(response.Data.RefreshToken)
+	if err != nil {
+		t.Fatalf("GitLab refresh token should validate: %v", err)
+	}
+	if accessClaims.UserID != response.Data.User.ID || refreshClaims.UserID != response.Data.User.ID {
+		t.Fatalf("expected token user ids to match user id %d, got access=%d refresh=%d", response.Data.User.ID, accessClaims.UserID, refreshClaims.UserID)
 	}
 
 	secondReq := httptest.NewRequest(http.MethodGet, "/api/v1/auth/gitlab/callback?code=valid-code&state=second-state", nil)
