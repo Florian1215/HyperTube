@@ -100,6 +100,14 @@ docker compose down -v
 docker compose up --build
 ```
 
+Create a local `.env` from `.env.example`. The OAuth2 token endpoint requires
+these client values for API clients:
+
+```env
+OAUTH_CLIENT_ID=<client id used by API clients>
+OAUTH_CLIENT_SECRET=<secret used by API clients>
+```
+
 | Container | Port |
 |---|---|
 | `postgres` | 5432 |
@@ -190,7 +198,7 @@ GET    /stream/:id/:segment         # temporarily public for development
 - Registration: email, username, first name, last name, password (bcrypt)
 - 42 and GitHub OAuth when configured
 - JWT on login/OAuth callback, validated on every protected request
-- OAuth2 password grant at `POST /oauth/token`, returning a Bearer access token for protected API routes
+- OAuth2 password grant at `POST /oauth/token`, protected by `client_id`/`client_secret`, returning a Bearer access token for protected API routes
 - Password reset via email when configured
 
 ---

@@ -85,6 +85,8 @@ const (
 	MsgFailedCreateAuthResponse        Message = "failed to create auth response"
 	MsgGrantTypeRequired               Message = "grant type is required"
 	MsgUnsupportedGrantType            Message = "only password grant type is supported"
+	MsgOAuthClientNotConfigured        Message = "OAuth client is not configured"
+	MsgInvalidOAuthClientCredentials   Message = "invalid OAuth client credentials"
 	MsgUsernamePasswordRequired        Message = "username and password are required"
 	MsgPasswordTooLong                 Message = "password is too long"
 	MsgInvalidUsernamePassword         Message = "invalid username or password"
@@ -194,6 +196,8 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateAuthResponse:        "échec de la création de la réponse d'authentification",
 		MsgGrantTypeRequired:               "type de grant requis",
 		MsgUnsupportedGrantType:            "seul le grant type password est pris en charge",
+		MsgOAuthClientNotConfigured:        "client OAuth non configuré",
+		MsgInvalidOAuthClientCredentials:   "identifiants client OAuth invalides",
 		MsgUsernamePasswordRequired:        "nom d'utilisateur et mot de passe requis",
 		MsgPasswordTooLong:                 "mot de passe trop long",
 		MsgInvalidUsernamePassword:         "nom d'utilisateur ou mot de passe invalide",
@@ -295,6 +299,8 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedCreateAuthResponse:        "Auth-Antwort konnte nicht erstellt werden",
 		MsgGrantTypeRequired:               "Grant Type ist erforderlich",
 		MsgUnsupportedGrantType:            "Nur password Grant Type wird unterstützt",
+		MsgOAuthClientNotConfigured:        "OAuth-Client ist nicht konfiguriert",
+		MsgInvalidOAuthClientCredentials:   "OAuth-Client-Zugangsdaten sind ungültig",
 		MsgUsernamePasswordRequired:        "Benutzername und Passwort sind erforderlich",
 		MsgPasswordTooLong:                 "Passwort ist zu lang",
 		MsgInvalidUsernamePassword:         "Benutzername oder Passwort ist ungültig",

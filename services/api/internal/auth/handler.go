@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"hypertube/api/internal/i18n"
@@ -20,6 +21,8 @@ type Handler struct {
 	fortyTwo                oauthProvider
 	github                  oauthProvider
 	gitlab                  oauthProvider
+	oauthClientID           string
+	oauthClientSecret       string
 	frontendAuthCallbackURL string
 	passwordResetMailer     passwordResetMailer
 	passwordResetURL        string
@@ -49,6 +52,13 @@ func WithGitLabOAuth(provider oauthProvider) HandlerOption {
 func WithFrontendAuthCallbackURL(callbackURL string) HandlerOption {
 	return func(h *Handler) {
 		h.frontendAuthCallbackURL = callbackURL
+	}
+}
+
+func WithOAuthTokenClient(clientID string, clientSecret string) HandlerOption {
+	return func(h *Handler) {
+		h.oauthClientID = strings.TrimSpace(clientID)
+		h.oauthClientSecret = strings.TrimSpace(clientSecret)
 	}
 }
 
