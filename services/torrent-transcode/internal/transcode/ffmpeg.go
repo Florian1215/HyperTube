@@ -7,18 +7,25 @@ import (
 	"io"
 	"log"
 	"os/exec"
+	"strings"
 )
 
 type ffprobeStream struct {
 	Index     int    `json:"index"`
 	CodecType string `json:"codec_type"`
 	CodecName string `json:"codec_name"`
-}
-
-type ffprobeOutput struct {
-	Streams []ffprobeStream `json:"streams"`
-}
-
+	Tags      struct {
+		Language string `json:"language"`
+		Title    string `json:"title"`
+		} `json:"tags"`
+	}
+	
+	type ffprobeOutput struct {
+		Streams []ffprobeStream `json:"streams"`
+	}
+	
+	const defaultAudioMap = "0:a:0"
+	
 func probeStreamsFromReader(r io.Reader) ([]ffprobeStream, error) {
 	var stdout bytes.Buffer
 	cmd := exec.Command("ffprobe",
@@ -48,12 +55,66 @@ func videoCodecName(streams []ffprobeStream) string {
 	return ""
 }
 
-// buildH264Args repackages an h264 source into HLS 
-func buildH264Args(input, outputDir string) []string {
+// iso639_1to2 maps ISO 639-1 
+var iso639_1to2 = map[string][]string{
+	"en": {"eng"},
+	"fr": {"fre", "fra"},
+	"de": {"ger", "deu"},
+	"es": {"spa"},
+	"it": {"ita"},
+	"pt": {"por"},
+	"ru": {"rus"},
+	"ja": {"jpn"},
+	"ko": {"kor"},
+	"zh": {"chi", "zho"},
+	"hi": {"hin"},
+	"ar": {"ara"},
+	"nl": {"dut", "nld"},
+	"sv": {"swe"},
+	"no": {"nor"},
+	"da": {"dan"},
+	"fi": {"fin"},
+	"pl": {"pol"},
+	"tr": {"tur"},
+	"cs": {"cze", "ces"},
+	"el": {"gre", "ell"},
+	"he": {"heb"},
+	"th": {"tha"},
+	"uk": {"ukr"},
+	"hu": {"hun"},
+	"ro": {"rum", "ron"},
+}
+
+
+func audioMapForLanguage(streams []ffprobeStream, originalLang string) string {
+	if originalLang == "" {
+		return defaultAudioMap
+	}
+	lang := strings.ToLower(strings.TrimSpace(originalLang))
+
+
+	want := map[string]bool{lang: true}
+	for _, code := range iso639_1to2[lang] {
+		want[code] = true
+	}
+
+	for _, s := range streams {
+		if s.CodecType != "audio" {
+			continue
+		}
+		if want[strings.ToLower(s.Tags.Language)] {
+			return fmt.Sprintf("0:%d", s.Index)
+		}
+	}
+	return defaultAudioMap
+}
+
+// buildH264Args repackages an h264 source into HLS
+func buildH264Args(input, outputDir, audioMap string) []string {
 	return []string{
 		"-i", input,
 		"-map", "0:v:0",
-		"-map", "0:a:0",
+		"-map", audioMap,
 		"-c:v", "copy",
 		"-c:a", "aac",
 		"-b:a", "256k",
@@ -69,11 +130,11 @@ func buildH264Args(input, outputDir string) []string {
 }
 
 // buildHEVCArgs repackages an hevc source into HLS
-func buildHEVCArgs(input, outputDir string) []string {
+func buildHEVCArgs(input, outputDir, audioMap string) []string {
 	return []string{
 		"-i", input,
 		"-map", "0:v:0",
-		"-map", "0:a:0",
+		"-map", audioMap,
 		"-c:v", "copy",
 		"-c:a", "aac",
 		"-b:a", "256k",
@@ -88,12 +149,12 @@ func buildHEVCArgs(input, outputDir string) []string {
 	}
 }
 
-// buildAV1Args repackages an av1 source into HLS 
-func buildAV1Args(input, outputDir string) []string {
+// buildAV1Args repackages an av1 source into HLS
+func buildAV1Args(input, outputDir, audioMap string) []string {
 	return []string{
 		"-i", input,
 		"-map", "0:v:0",
-		"-map", "0:a:0",
+		"-map", audioMap,
 		"-c:v", "copy",
 		"-c:a", "aac",
 		"-b:a", "256k",
@@ -109,15 +170,17 @@ func buildAV1Args(input, outputDir string) []string {
 	}
 }
 
-// ConvertPipeHLS probes the first 10 MB of reader to detect the video codec,
-// seeks back to the start, then streams the full content into ffmpeg via stdin.
-func ConvertPipeHLS(reader io.ReadSeeker, outputDir string) error {
+// ConvertPipeHLS probes the first 10 MB of reader to detect the video codec and
+// pick the audio track matching originalLang 
+func ConvertPipeHLS(reader io.ReadSeeker, outputDir string, originalLang string) error {
 	videoCodec := ""
+	audioMap := defaultAudioMap
 	if streams, err := probeStreamsFromReader(io.LimitReader(reader, 10*1024*1024)); err != nil {
-		log.Printf("probe video codec failed: %v", err)
+		log.Printf("probe streams failed: %v", err)
 	} else {
 		videoCodec = videoCodecName(streams)
-		log.Printf("source video codec: %s", videoCodec)
+		audioMap = audioMapForLanguage(streams, originalLang)
+		log.Printf("source video codec: %s, original language: %q, selected audio map: %s", videoCodec, originalLang, audioMap)
 	}
 	if _, err := reader.Seek(0, io.SeekStart); err != nil {
 		return fmt.Errorf("seek: %w", err)
@@ -126,11 +189,11 @@ func ConvertPipeHLS(reader io.ReadSeeker, outputDir string) error {
 	var args []string
 	switch videoCodec {
 	case "h264":
-		args = buildH264Args("pipe:0", outputDir)
+		args = buildH264Args("pipe:0", outputDir, audioMap)
 	case "hevc":
-		args = buildHEVCArgs("pipe:0", outputDir)
+		args = buildHEVCArgs("pipe:0", outputDir, audioMap)
 	case "av1":
-		args = buildAV1Args("pipe:0", outputDir)
+		args = buildAV1Args("pipe:0", outputDir, audioMap)
 	default:
 		return fmt.Errorf("unsupported video codec: %q", videoCodec)
 	}
@@ -139,7 +202,6 @@ func ConvertPipeHLS(reader io.ReadSeeker, outputDir string) error {
 	cmd := exec.Command("ffmpeg", args...)
 	cmd.Stdin = reader
 	cmd.Stderr = &stderr
-	log.Printf("ffmpeg args: %v", args)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("ffmpeg: %v\n%s", err, stderr.String())
 	}

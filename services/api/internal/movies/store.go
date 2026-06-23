@@ -29,25 +29,27 @@ type movieRow struct {
 	PosterURL   string  `db:"poster_url"`
 	BackdropURL string  `db:"backdrop_url"`
 	Genre       []int   `db:"genre"`
+	OriginalLanguage string `db:"original_language"`
 }
 
 func toMovie(r movieRow) models.Movie {
 	return models.Movie{
-		ImdbID:      r.ImdbID,
-		TmdbID:      r.TmdbID,
-		Title:       r.Title,
-		Year:        r.Year,
-		PosterURL:   r.PosterURL,
-		BackdropURL: r.BackdropURL,
-		Note:        r.Note,
-		Genre:       r.Genre,
+		ImdbID:           r.ImdbID,
+		TmdbID:           r.TmdbID,
+		Title:            r.Title,
+		Year:             r.Year,
+		PosterURL:        r.PosterURL,
+		BackdropURL:      r.BackdropURL,
+		Note:             r.Note,
+		Genre:            r.Genre,
+		OriginalLanguage: r.OriginalLanguage,
 	}
 }
 
 func (s *Store) listDefault(ctx context.Context) ([]models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
-		       m.poster_url, m.backdrop_url, m.note, m.genre
+		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
 		FROM movies m
 		JOIN default_movies f ON f.imdbid = m.imdbid
 		ORDER BY f.position
@@ -71,7 +73,7 @@ func (s *Store) listDefault(ctx context.Context) ([]models.Movie, error) {
 func (s *Store) listFeatured(ctx context.Context) ([]models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
-		       m.poster_url, m.backdrop_url, m.note, m.genre
+		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
 		FROM movies m
 		JOIN featured_movies f ON f.imdbid = m.imdbid
 		`)
@@ -94,7 +96,7 @@ func (s *Store) listFeatured(ctx context.Context) ([]models.Movie, error) {
 func (s *Store) listWatched(ctx context.Context, user_id int) ([]models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
-		       m.poster_url, m.backdrop_url, m.note, m.genre
+		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
 		FROM movies m
 		JOIN watch_history h ON h.imdbid = m.imdbid
 		WHERE h.user_id = $1
@@ -119,7 +121,7 @@ func (s *Store) listWatched(ctx context.Context, user_id int) ([]models.Movie, e
 func (s *Store) listDirectStream(ctx context.Context) ([]models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
-		       m.poster_url, m.backdrop_url, m.note, m.genre
+		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
 		FROM movies m
 		JOIN direct_stream_movies d ON d.imdbid = m.imdbid
 	`)
@@ -142,7 +144,7 @@ func (s *Store) listDirectStream(ctx context.Context) ([]models.Movie, error) {
 func (s *Store) findByID(ctx context.Context, id string) (*models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT imdbid, tmdbid, title, year,
-		       poster_url, backdrop_url, note, genre
+		       poster_url, backdrop_url, note, genre, original_language
 		FROM movies WHERE imdbid = $1`, id)
 	if err != nil {
 		return nil, err
@@ -162,10 +164,10 @@ func (s *Store) findByID(ctx context.Context, id string) (*models.Movie, error) 
 
 func (s *Store) UpsertMovie(ctx context.Context, m models.Movie) error {
 	_, err := s.db.Exec(ctx, `
-		INSERT INTO movies (imdbid, tmdbid, title, year, poster_url, backdrop_url, note, genre)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO movies (imdbid, tmdbid, title, year, poster_url, backdrop_url, note, genre, original_language)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (imdbid) DO NOTHING
-	`, m.ImdbID, m.TmdbID, m.Title, m.Year, m.PosterURL, m.BackdropURL, m.Note, m.Genre)
+	`, m.ImdbID, m.TmdbID, m.Title, m.Year, m.PosterURL, m.BackdropURL, m.Note, m.Genre, m.OriginalLanguage)
 	return err
 }
 
@@ -276,7 +278,7 @@ func (s *Store) upsertSearchResults(ctx context.Context, query string, imdbIDs [
 func (s *Store) listSearchResults(ctx context.Context, query string, limit, offset int) ([]models.Movie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
-		       m.poster_url, m.backdrop_url, m.note, m.genre
+		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
 		FROM movies m
 		JOIN movie_searches ms ON ms.imdbid = m.imdbid
 		WHERE ms.query = $1

@@ -64,6 +64,7 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	videoPath := s.videoBasePath + "/" + id
+	originalLang := r.URL.Query().Get("lang")
 
 	// Check if torrent is ready for transcoding
 	var torrentReader io.ReadSeekCloser
@@ -94,7 +95,7 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 	log.Printf("%s: ConvertHLS starting", id)
 	go func() {
 		status := "finished"
-		if err := transcode.ConvertPipeHLS(torrentReader, videoPath); err != nil {
+		if err := transcode.ConvertPipeHLS(torrentReader, videoPath, originalLang); err != nil {
 			log.Printf("ConvertPipeHLS failed: %v", err)
 			status = "failed"
 		}
