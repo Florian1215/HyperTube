@@ -35,13 +35,14 @@ func NewClient() (*Client, error) {
 const tmdbImageBase = "https://image.tmdb.org/t/p/w500"
 
 type movieResult struct {
-	ID           int     `json:"id"`
-	Title        string  `json:"title"`
-	PosterPath   string  `json:"poster_path"`
-	BackdropPath string  `json:"backdrop_path"`
-	ReleaseDate  string  `json:"release_date"`
-	Note         float32 `json:"vote_average"`
-	GenreIDs     []int   `json:"genre_ids"`
+	ID               int     `json:"id"`
+	Title            string  `json:"title"`
+	OriginalLanguage string  `json:"original_language"`
+	PosterPath       string  `json:"poster_path"`
+	BackdropPath     string  `json:"backdrop_path"`
+	ReleaseDate      string  `json:"release_date"`
+	Note             float32 `json:"vote_average"`
+	GenreIDs         []int   `json:"genre_ids"`
 }
 
 type findResponse struct {
@@ -120,14 +121,15 @@ func (c *Client) FindByIMDBID(ctx context.Context, imdbID string) (models.Movie,
 	}
 
 	return models.Movie{
-		ImdbID:      imdbID,
-		TmdbID:      fmt.Sprintf("%d", m.ID),
-		Title:       m.Title,
-		Year:        year,
-		PosterURL:   tmdbImageBase + m.PosterPath,
-		BackdropURL: tmdbImageBase + m.BackdropPath,
-		Note:        m.Note,
-		Genre:       m.GenreIDs,
+		ImdbID:           imdbID,
+		TmdbID:           fmt.Sprintf("%d", m.ID),
+		Title:            m.Title,
+		Year:             year,
+		PosterURL:        tmdbImageBase + m.PosterPath,
+		BackdropURL:      tmdbImageBase + m.BackdropPath,
+		Note:             m.Note,
+		Genre:            m.GenreIDs,
+		OriginalLanguage: m.OriginalLanguage,
 	}, nil
 }
 
@@ -151,14 +153,15 @@ func (c *Client) FindByName(ctx context.Context, title string, year int) (models
 	_ = c.get(ctx, fmt.Sprintf("https://api.themoviedb.org/3/movie/%d", m.ID), &detail)
 
 	return models.Movie{
-		ImdbID:      detail.ImdbID,
-		TmdbID:      fmt.Sprintf("%d", m.ID),
-		Title:       m.Title,
-		Year:        yearStr,
-		PosterURL:   tmdbImageBase + m.PosterPath,
-		BackdropURL: tmdbImageBase + m.BackdropPath,
-		Note:        m.Note,
-		Genre:       m.GenreIDs,
+		ImdbID:           detail.ImdbID,
+		TmdbID:           fmt.Sprintf("%d", m.ID),
+		Title:            m.Title,
+		Year:             yearStr,
+		PosterURL:        tmdbImageBase + m.PosterPath,
+		BackdropURL:      tmdbImageBase + m.BackdropPath,
+		Note:             m.Note,
+		Genre:            m.GenreIDs,
+		OriginalLanguage: m.OriginalLanguage,
 	}, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	"hypertube/api/internal/downloader"
@@ -83,7 +84,11 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
 
 	// Init transcoding — delegate to the torrent-transcode service and wait for an OK;
-	respTranscode, err := http.Post(s.transcodeURL+"/transcode/"+id, "application/json", nil)
+	transcodeURL := s.transcodeURL + "/transcode/" + id
+	if torrent.OriginalLanguage != "" {
+		transcodeURL += "?lang=" + url.QueryEscape(torrent.OriginalLanguage)
+	}
+	respTranscode, err := http.Post(transcodeURL, "application/json", nil)
 	if err != nil || respTranscode.StatusCode != http.StatusOK {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("transcode service error for %s: %v", id, err)

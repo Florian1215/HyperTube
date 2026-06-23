@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS movies (
     poster_url      TEXT        NOT NULL,
     backdrop_url    TEXT        NOT NULL,
     note            REAL        NOT NULL,
-    genre           INTEGER[]   NOT NULL
+    genre           INTEGER[]   NOT NULL,
+    original_language TEXT      NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS torrents (

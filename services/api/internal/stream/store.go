@@ -22,11 +22,16 @@ func NewStore(db *pgxpool.Pool) *Store {
 type Torrent struct {
 	URL   string
 	Title string
+	OriginalLanguage string
 }
 
 func (s *Store) GetTorrent(ctx context.Context, id string) (Torrent, error) {
 	var t Torrent
-	err := s.db.QueryRow(ctx, `SELECT url, title FROM torrents WHERE id = $1`, id).Scan(&t.URL, &t.Title)
+	err := s.db.QueryRow(ctx, `
+		SELECT t.url, t.title, m.original_language
+		FROM torrents t
+		JOIN movies m ON m.imdbid = t.imdbid
+		WHERE t.id = $1`, id).Scan(&t.URL, &t.Title, &t.OriginalLanguage)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Torrent{}, ErrNotFound

@@ -11,6 +11,7 @@ type Movie struct {
 	BackdropURL string  `json:"backdrop_url"`
 	Genre       []int   `json:"genres"`
 	Note        float32 `json:"note"`
+	OriginalLanguage string `json:"original_language"`
 }
 
 type Torrent struct {
