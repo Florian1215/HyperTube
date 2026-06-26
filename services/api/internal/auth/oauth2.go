@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"io"
@@ -13,10 +14,12 @@ import (
 )
 
 type oauthTokenRequest struct {
-	GrantType string `json:"grant_type"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Scope     string `json:"scope"`
+	GrantType    string `json:"grant_type"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Scope        string `json:"scope"`
 }
 
 type oauthTokenResponse struct {
@@ -30,6 +33,11 @@ type oauthErrorResponse struct {
 	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description,omitempty"`
 }
+
+var (
+	errOAuthClientNotConfigured = errors.New("oauth client is not configured")
+	errInvalidOAuthClient       = errors.New("invalid oauth client")
+)
 
 func (h *Handler) OAuthToken(w http.ResponseWriter, r *http.Request) {
 	locale := i18n.FromRequest(r)
@@ -49,6 +57,15 @@ func (h *Handler) OAuthToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req oauthTokenRequest, locale i18n.Locale) {
+	if err := h.validateOAuthClient(req); err != nil {
+		if errors.Is(err, errOAuthClientNotConfigured) {
+			writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgOAuthClientNotConfigured))
+			return
+		}
+		writeOAuthError(w, http.StatusUnauthorized, "invalid_client", i18n.T(locale, i18n.MsgInvalidOAuthClientCredentials))
+		return
+	}
+
 	if h.store == nil || h.tokens == nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
 		return
@@ -89,6 +106,29 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 	writeOAuthJSON(w, http.StatusOK, response)
 }
 
+func (h *Handler) validateOAuthClient(req oauthTokenRequest) error {
+	expectedClientID := strings.TrimSpace(h.oauthClientID)
+	expectedClientSecret := strings.TrimSpace(h.oauthClientSecret)
+	if expectedClientID == "" || expectedClientSecret == "" {
+		return errOAuthClientNotConfigured
+	}
+
+	clientID := strings.TrimSpace(req.ClientID)
+	clientSecret := strings.TrimSpace(req.ClientSecret)
+	if clientID == "" || clientSecret == "" {
+		return errInvalidOAuthClient
+	}
+
+	if subtle.ConstantTimeCompare([]byte(clientID), []byte(expectedClientID)) != 1 {
+		return errInvalidOAuthClient
+	}
+	if subtle.ConstantTimeCompare([]byte(clientSecret), []byte(expectedClientSecret)) != 1 {
+		return errInvalidOAuthClient
+	}
+
+	return nil
+}
+
 func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n.Locale) (oauthTokenRequest, bool) {
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil && r.Header.Get("Content-Type") != "" {
@@ -103,10 +143,12 @@ func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n
 			return oauthTokenRequest{}, false
 		}
 		return oauthTokenRequest{
-			GrantType: r.PostForm.Get("grant_type"),
-			Username:  r.PostForm.Get("username"),
-			Password:  r.PostForm.Get("password"),
-			Scope:     r.PostForm.Get("scope"),
+			GrantType:    r.PostForm.Get("grant_type"),
+			ClientID:     r.PostForm.Get("client_id"),
+			ClientSecret: r.PostForm.Get("client_secret"),
+			Username:     r.PostForm.Get("username"),
+			Password:     r.PostForm.Get("password"),
+			Scope:        r.PostForm.Get("scope"),
 		}, true
 	}
 
