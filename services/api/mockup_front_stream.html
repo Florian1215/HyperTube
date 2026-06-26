@@ -18,80 +18,80 @@
   </style>
 </head>
 <body>
-  <h1>torrent-stream / dev player</h1>
+<h1>torrent-stream / dev player</h1>
 
-  <div class="row">
-    <input id="imdbInput" type="text" placeholder="imdb id — e.g. tt0372784" />
-    <button onclick="fetchTorrents()">Fetch torrents</button>
-  </div>
-  <pre id="torrentsOutput">—</pre>
+<div class="row">
+  <input id="imdbInput" type="text" placeholder="imdb id — e.g. tt0372784" />
+  <button onclick="fetchTorrents()">Fetch torrents</button>
+</div>
+<pre id="torrentsOutput">—</pre>
 
-  <div class="row">
-    <input id="torrentIdInput" type="text" placeholder="torrent id" />
-    <button onclick="play()">Play</button>
-  </div>
+<div class="row">
+  <input id="torrentIdInput" type="text" placeholder="torrent id" />
+  <button onclick="play()">Play</button>
+</div>
 
-  <video id="video" controls></video>
-  <div id="status"></div>
+<video id="video" controls></video>
+<div id="status"></div>
 
-  <script>
-    const BASE = window.location.origin;
-    const status = document.getElementById('status');
-    const video  = document.getElementById('video');
-    let hls = null;
+<script>
+  const BASE = window.location.origin;
+  const status = document.getElementById('status');
+  const video  = document.getElementById('video');
+  let hls = null;
 
-    async function fetchTorrents() {
-      const id = document.getElementById('imdbInput').value.trim();
-      if (!id) return;
-      const out = document.getElementById('torrentsOutput');
-      out.textContent = 'fetching…';
-      try {
-        const res  = await fetch(`${BASE}/api/v1/movies/${id}/torrents`);
-        const body = await res.json();
-        out.textContent = JSON.stringify(body, null, 2);
-        if (body.data?.length === 1)
-          document.getElementById('torrentIdInput').value = body.data[0].id ?? body.data[0].ID ?? '';
-      } catch (e) {
-        out.textContent = `error: ${e.message}`;
-      }
+  async function fetchTorrents() {
+    const id = document.getElementById('imdbInput').value.trim();
+    if (!id) return;
+    const out = document.getElementById('torrentsOutput');
+    out.textContent = 'fetching…';
+    try {
+      const res  = await fetch(`${BASE}/api/v1/movies/${id}/torrents`);
+      const body = await res.json();
+      out.textContent = JSON.stringify(body, null, 2);
+      if (body.data?.length === 1)
+        document.getElementById('torrentIdInput').value = body.data[0].id ?? body.data[0].ID ?? '';
+    } catch (e) {
+      out.textContent = `error: ${e.message}`;
     }
+  }
 
-    async function play() {
-      const id = document.getElementById('torrentIdInput').value.trim();
-      if (!id) { status.textContent = 'enter a torrent id first'; return; }
+  async function play() {
+    const id = document.getElementById('torrentIdInput').value.trim();
+    if (!id) { status.textContent = 'enter a torrent id first'; return; }
 
-      if (hls) { hls.destroy(); hls = null; }
-      video.src = '';
-      status.textContent = 'Initialising stream…';
+    if (hls) { hls.destroy(); hls = null; }
+    video.src = '';
+    status.textContent = 'Initialising stream…';
 
-      const init = await fetch(`${BASE}/api/v1/stream/${id}`);
-      if (!init.ok) { status.textContent = `Init failed: ${init.status}`; return; }
+    const init = await fetch(`${BASE}/api/v1/stream/${id}`);
+    if (!init.ok) { status.textContent = `Init failed: ${init.status}`; return; }
 
-      const indexUrl = `${BASE}/api/v1/stream/${id}/index`;
-      status.textContent = 'Loading playlist…';
+    const indexUrl = `${BASE}/api/v1/stream/${id}/index`;
+    status.textContent = 'Loading playlist…';
 
-      if (Hls.isSupported()) {
-        hls = new Hls();
-        hls.loadSource(indexUrl);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          status.textContent = 'Playing via hls.js';
-          video.play().catch(() => {});
-        });
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (data.fatal) status.textContent = `HLS error: ${data.type}`;
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = indexUrl;
-        video.addEventListener('loadedmetadata', () => { video.play(); });
-        status.textContent = 'Playing via native HLS';
-      } else {
-        status.textContent = 'HLS not supported in this browser';
-      }
+    if (Hls.isSupported()) {
+      hls = new Hls();
+      hls.loadSource(indexUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        status.textContent = 'Playing via hls.js';
+        video.play().catch(() => {});
+      });
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) status.textContent = `HLS error: ${data.type}`;
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = indexUrl;
+      video.addEventListener('loadedmetadata', () => { video.play(); });
+      status.textContent = 'Playing via native HLS';
+    } else {
+      status.textContent = 'HLS not supported in this browser';
     }
+  }
 
-    document.getElementById('imdbInput').addEventListener('keydown', e => e.key === 'Enter' && fetchTorrents());
-    document.getElementById('torrentIdInput').addEventListener('keydown', e => e.key === 'Enter' && play());
-  </script>
+  document.getElementById('imdbInput').addEventListener('keydown', e => e.key === 'Enter' && fetchTorrents());
+  document.getElementById('torrentIdInput').addEventListener('keydown', e => e.key === 'Enter' && play());
+</script>
 </body>
 </html>
