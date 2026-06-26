@@ -43,6 +43,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     const locale = useLocale() as tLocale;
     const {openModal} = useModal();
     const handleKeyPress = useRef(true);
+    const playStateBeforeSeeking = useRef(false);
 
     useEffect(() => {
         if (downloadSubtitle)
@@ -100,6 +101,22 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     //     setIsPlaying(true);
     // }, []);
 
+    useEffect(() => {
+        const video = videoRef.current;
+
+        if (!video)
+            return;
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+
+        video.addEventListener("play", onPlay);
+        video.addEventListener("pause", onPause);
+        return () => {
+            video.removeEventListener("play", onPlay);
+            video.removeEventListener("pause", onPause);
+        };
+    }, []);
+
     const togglePlay = () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
@@ -109,11 +126,9 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
         if (video.paused) {
             video.play();
-            setIsPlaying(true);
             resetHideTimer();
         } else {
             video.pause();
-            setIsPlaying(false);
             setShowControls(true);
         }
     };
@@ -160,8 +175,8 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
                 return;
             setIsSeeking(false);
             video.currentTime = seekTimeRef.current;
-            video.play();
-            setIsPlaying(true);
+            if (playStateBeforeSeeking.current)
+                video.play();
         };
 
         window.addEventListener("mousemove", handleMove);
@@ -178,6 +193,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
         if (!video)
             return;
 
+        playStateBeforeSeeking.current = isPlaying;
         setIsSeeking(true);
         const time = getTimeFromClientX(e.clientX);
         setSeekTime(time);
