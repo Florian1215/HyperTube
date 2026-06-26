@@ -12,5 +12,5 @@ export default function RegisterModal() {
     if (activeModal.type !== "register")
         return null;
 
-    return (<AuthModalLayout type={"register"} t={t} />)
+    return (<AuthModalLayout type={"register"} t={t} activeModal={activeModal}/>)
 }

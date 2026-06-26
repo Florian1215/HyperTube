@@ -42,7 +42,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     const [currentText, setCurrentText] = useState("");
     const locale = useLocale() as tLocale;
     const {openModal} = useModal();
-    const [handleKeyPress, setHandleKeyPress] = useState(true);
+    const handleKeyPress = useRef(true);
 
     useEffect(() => {
         if (downloadSubtitle)
@@ -54,11 +54,11 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
         if (!video || !src)
             return;
 
-        const token = localStorage.getItem("token");
-
         if (Hls.isSupported()) {
             const hls = new Hls({
                 xhrSetup: (xhr) => {
+                    const token = localStorage.getItem("token");
+
                     if (token)
                         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
                 },
@@ -69,9 +69,22 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
             });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                console.log("ERROR", event, data);
-                setErrorAction(data.error.message)
+            hls.on(Hls.Events.ERROR, async (_, data) => {
+                const status = data?.response?.code;
+                console.log("ERROR", data);
+
+                if (status === 401) {
+                    try {
+                        await refreshAccessToken(locale);
+                        hls.stopLoad();
+                        hls.startLoad();
+                    } catch {
+                        videoRef?.current?.pause();
+                        handleKeyPress.current = false;
+                        openModal({type: "signin", noClose: true, setHandleKeyPress: () => {handleKeyPress.current = true;}});
+                    }
+                } else if (data.fatal)
+                    setErrorAction(data.error.message)
             });
             return () => {hls.destroy();};
         }
@@ -216,11 +229,11 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     /* --------------- KEYBOARD -------------- */
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            const video = videoRef.current;
+            if (!video || !handleKeyPress.current)
+                return;
             if (showSubtitleMenu)
                 setShowSubtitleMenu(false);
-            const video = videoRef.current;
-            if (!video)
-                return;
 
             switch (e.code) {
                 case "Space":

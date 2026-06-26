@@ -17,5 +17,5 @@ export default function SigninModal() {
         openModal({type: "send-email-forgot-password"});
     };
 
-    return (<AuthModalLayout type={"signin"} t={t} handleForgotPassword={handleForgotPassword} />)
+    return (<AuthModalLayout type={"signin"} t={t} handleForgotPassword={handleForgotPassword} activeModal={activeModal}/>)
 }
