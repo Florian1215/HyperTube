@@ -18,14 +18,31 @@ export function postSetNewPassword(locale: string, data: string[], token?: strin
     return apiClient<tResponse<iUserToken>>("/auth/reset-password", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
 }
 
-export function refreshToken(locale: string, refresh_token: string) {
-    return apiClient<tResponse<iToken>>("/auth/refresh-token", locale, {method: "POST", body: JSON.stringify({refresh_token: refresh_token})});
-}
-
 export function handleOauth(oatuhCompany: tOauthService, redirect: string | null) {
     let endpoint = `${API_URL}/auth/${oatuhCompany}/login`;
 
     if (redirect !== null)
         endpoint += `?redirect=${redirect}`;
     window.location.href = endpoint;
+}
+
+let refreshPromise: Promise<void> | null = null;
+
+export function refreshAccessToken(locale: string) {
+    const refresh_token = localStorage.getItem("refresh_token");
+
+    if (refreshPromise)
+        return refreshPromise;
+
+    if (refresh_token) {
+        refreshPromise = apiClient<tResponse<iToken>>("/auth/refresh-token", locale, {method: "POST", body: JSON.stringify({refresh_token: refresh_token})})
+            .then((res) => {
+                if (res)
+                    localStorage.setItem("token", res.data.access_token);
+                // localStorage.setItem("token", res.data.access_token);
+            }).finally(() => {
+                refreshPromise = null;
+            });
+        return refreshPromise;
+    }
 }

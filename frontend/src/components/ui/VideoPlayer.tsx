@@ -5,8 +5,19 @@ import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
+import {useDownloadSubtitle, useLoginOpenSubtitles, useSubtitles} from "@/hooks/useSubtitles";
+import {useLocale} from "next-intl";
+import loadSRT from "@/utils/loadSRT";
+import useModal from "@/contexts/ModalContext";
+import {refreshAccessToken} from "@/services/auth.service";
 
-export default function VideoPlayer({src, color, duration, setErrorAction}: {src: string, color: string, duration: number, setErrorAction: (e: string) => void}) {
+interface iSub{
+    start: number
+    end: number
+    text: string
+}
+
+export default function VideoPlayer({src, color, duration, setErrorAction, imdbId}: {src: string, color: string, duration: number, setErrorAction: (e: string) => void, imdbId: string}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -24,17 +35,31 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
     const [seekTime, setSeekTime] = useState(0);
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
+    const {data: getSubtitlesMovie} = useSubtitles(imdbId, selectedSubtitle);
+    const {data: loginOpenSubtitles} = useLoginOpenSubtitles();
+    const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0].attributes.files[0].file_id, loginOpenSubtitles?.token);
+    const [subs, setSubs] = useState<iSub[]>([]);
+    const [currentText, setCurrentText] = useState("");
+    const locale = useLocale() as tLocale;
+    const {openModal} = useModal();
+    const handleKeyPress = useRef(true);
+    const playStateBeforeSeeking = useRef(false);
+
+    useEffect(() => {
+        if (downloadSubtitle)
+            loadSRT(downloadSubtitle.link).then(setSubs);
+    }, [downloadSubtitle]);
 
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !src)
             return;
 
-        const token = localStorage.getItem("token");
-
         if (Hls.isSupported()) {
             const hls = new Hls({
                 xhrSetup: (xhr) => {
+                    const token = localStorage.getItem("token");
+
                     if (token)
                         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
                 },
@@ -45,9 +70,22 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
             });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                console.log("ERROR", event, data);
-                setErrorAction(data.error.message)
+            hls.on(Hls.Events.ERROR, async (_, data) => {
+                const status = data?.response?.code;
+                console.log("ERROR", data);
+
+                if (status === 401) {
+                    try {
+                        await refreshAccessToken(locale);
+                        hls.stopLoad();
+                        hls.startLoad();
+                    } catch {
+                        videoRef?.current?.pause();
+                        handleKeyPress.current = false;
+                        openModal({type: "signin", noClose: true, setHandleKeyPress: () => {handleKeyPress.current = true;}});
+                    }
+                } else if (data.fatal)
+                    setErrorAction(data.error.message)
             });
             return () => {hls.destroy();};
         }
@@ -63,6 +101,22 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
     //     setIsPlaying(true);
     // }, []);
 
+    useEffect(() => {
+        const video = videoRef.current;
+
+        if (!video)
+            return;
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+
+        video.addEventListener("play", onPlay);
+        video.addEventListener("pause", onPause);
+        return () => {
+            video.removeEventListener("play", onPlay);
+            video.removeEventListener("pause", onPause);
+        };
+    }, []);
+
     const togglePlay = () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
@@ -72,11 +126,9 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
 
         if (video.paused) {
             video.play();
-            setIsPlaying(true);
             resetHideTimer();
         } else {
             video.pause();
-            setIsPlaying(false);
             setShowControls(true);
         }
     };
@@ -89,6 +141,11 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
         setCurrentTime(formatTime(video.currentTime));
         if (!isSeeking)
             setSeekTime(video.currentTime);
+
+        if (subs.length > 0) {
+            const current = subs.find(s => video.currentTime >= s.start && video.currentTime <= s.end);
+            setCurrentText(current?.text ?? "");
+        }
     };
 
     const getTimeFromClientX = (clientX: number) => {
@@ -118,8 +175,8 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
                 return;
             setIsSeeking(false);
             video.currentTime = seekTimeRef.current;
-            video.play();
-            setIsPlaying(true);
+            if (playStateBeforeSeeking.current)
+                video.play();
         };
 
         window.addEventListener("mousemove", handleMove);
@@ -136,6 +193,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
         if (!video)
             return;
 
+        playStateBeforeSeeking.current = isPlaying;
         setIsSeeking(true);
         const time = getTimeFromClientX(e.clientX);
         setSeekTime(time);
@@ -164,11 +222,6 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
             return;
 
         const newLang = lang === selectedSubtitle ? undefined : lang;
-
-        Array.from(video.textTracks).forEach((track) => {
-            track.mode = track.language === newLang ? "showing" : "hidden";
-        });
-
         setSelectedSubtitle(newLang);
         setShowSubtitleMenu(false);
     };
@@ -192,11 +245,11 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
     /* --------------- KEYBOARD -------------- */
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            const video = videoRef.current;
+            if (!video || !handleKeyPress.current)
+                return;
             if (showSubtitleMenu)
                 setShowSubtitleMenu(false);
-            const video = videoRef.current;
-            if (!video)
-                return;
 
             switch (e.code) {
                 case "Space":
@@ -241,11 +294,9 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
-
-            <track kind="subtitles" src="/subtitles-fr.vtt" srcLang="fr" label="Français"/>
-            <track kind="subtitles" src="/subtitles-en.vtt" srcLang="en" label="English"/>
-            <track kind="subtitles" src="/subtitles-de.vtt" srcLang="de" label="Deutsch"/>
         </video>
+
+        {subs && <div className="absolute bottom-12 w-full text-center text-3xl pointer-events-none text-white font-bold whitespace-pre-line custom-text-shadow">{currentText}</div>}
 
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
@@ -261,7 +312,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
                     </div>
 
                     <div className="flex gap-4 items-center">
-                        <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white" : "border-white")}>CC</button>
+                        {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white" : "border-white")}>CC</button>}
                         {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
                         <button onClick={toggleFullscreen} className="p-2">
@@ -279,7 +330,6 @@ export default function VideoPlayer({src, color, duration, setErrorAction}: {src
         </div>
     </div>);
 }
-
 
 function formatTime(time: number) {
     if (!time || isNaN(time))

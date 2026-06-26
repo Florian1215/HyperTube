@@ -1,12 +1,12 @@
 "use client";
 
-import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
+import React, {createContext, Dispatch, RefObject, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 import {iTorrent} from "@/types/movie";
 
 type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-comment" | "select-torrent" | null;
 
-interface ModalState {
+export interface ModalState {
     type: ModalType;
     genres?: number[];
     filterGenre?: [filterGenre: iGenre[], handleFilterGenre: (newGenres: iGenre[]) => void];
@@ -16,6 +16,8 @@ interface ModalState {
     token?: string
     torrents?: iTorrent[]
     setTorrentId?: (selectTorrentId: string) => void
+    noClose?: boolean
+    setHandleKeyPress?: () => void
 }
 
 interface ModalContextType {
