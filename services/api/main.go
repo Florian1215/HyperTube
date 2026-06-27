@@ -195,6 +195,7 @@ func newRouter(
 
 		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
 		r.With(requireAuth).Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
+		r.With(requireAuth).Patch("/movies/{id}/progress", moviesHandler.PatchMovieProgress)
 		r.With(requireAuth).Get("/movies/{id}", moviesHandler.GetMoviesId)
 		r.With(requireAuth).Get("/movies/{id}/torrents", moviesHandler.GetMovieTorrents)
 		r.With(requireAuth).Get("/movies/{id}/comments", moviesHandler.GetComments)

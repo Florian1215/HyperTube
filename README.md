@@ -169,6 +169,7 @@ GET    /movies/watched
 GET    /movies/directstream
 GET    /movies/search
 GET    /movies/:id
+PATCH  /movies/:id/progress
 GET    /movies/:id/torrents
 GET    /movies/:id/comments
 POST   /movies/:id/comments

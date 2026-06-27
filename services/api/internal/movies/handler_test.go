@@ -14,13 +14,20 @@ import (
 )
 
 type fakeStore struct {
-	movies            []models.Movie
-	comments          []models.Comment
-	commentTotal      int
-	err               error
-	listWatchedUserID int
-	listWatchedCalled bool
-	createdComment    models.Comment
+	movies                  []models.Movie
+	watched                 []models.WatchedMovie
+	comments                []models.Comment
+	commentTotal            int
+	err                     error
+	listWatchedUserID       int
+	listWatchedCalled       bool
+	createdComment          models.Comment
+	savedProgressUserID     int
+	savedProgressImdbID     string
+	savedProgress           int
+	savedComplete           bool
+	saveMovieProgressCalled bool
+	saveMovieProgressErr    error
 }
 
 func (f *fakeStore) listDefault(_ context.Context) ([]models.Movie, error) {
@@ -81,10 +88,19 @@ func (s *fakeStore) listSearchResults(ctx context.Context, query string, limit, 
 	return nil, nil
 }
 
-func (s *fakeStore) listWatched(ctx context.Context, user_id int) ([]models.Movie, error) {
+func (s *fakeStore) listWatched(ctx context.Context, user_id int) ([]models.WatchedMovie, error) {
 	s.listWatchedCalled = true
 	s.listWatchedUserID = user_id
-	return s.movies, s.err
+	return s.watched, s.err
+}
+
+func (s *fakeStore) saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error {
+	s.saveMovieProgressCalled = true
+	s.savedProgressUserID = userID
+	s.savedProgressImdbID = imdbID
+	s.savedProgress = progress
+	s.savedComplete = complete
+	return s.saveMovieProgressErr
 }
 
 func (s *fakeStore) listDirectStream(ctx context.Context) ([]models.Movie, error) {
@@ -454,10 +470,256 @@ func TestGetWatchedMoviesUsesAuthenticatedUserID(t *testing.T) {
 	}
 }
 
+func TestPatchMovieProgressCreatesOrUpdatesForAuthenticatedUser(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data movieProgressResponse `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Progress != 1804 || body.Data.Complete {
+		t.Fatalf("unexpected response: %+v", body.Data)
+	}
+	if !store.saveMovieProgressCalled {
+		t.Fatal("expected store save to be called")
+	}
+	if store.savedProgressUserID != 42 || store.savedProgressImdbID != "tt1234567" || store.savedProgress != 1804 || store.savedComplete {
+		t.Fatalf("unexpected saved progress: user=%d imdb=%q progress=%d complete=%v", store.savedProgressUserID, store.savedProgressImdbID, store.savedProgress, store.savedComplete)
+	}
+}
+
+func TestPatchMovieProgressRequiresAuthentication(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	h.PatchMovieProgress(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called without authentication")
+	}
+}
+
+func TestPatchMovieProgressRejectsUnknownMovie(t *testing.T) {
+	store := &fakeStore{}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt404/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req.SetPathValue("id", "tt404")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called for unknown movies")
+	}
+}
+
+func TestPatchMovieProgressRejectsMalformedJSON(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "BAD_REQUEST" {
+		t.Fatalf("expected BAD_REQUEST, got %q", got)
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called for malformed JSON")
+	}
+}
+
+func TestPatchMovieProgressRejectsUnknownField(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false,"extra":true}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "BAD_REQUEST" {
+		t.Fatalf("expected BAD_REQUEST, got %q", got)
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called for unknown fields")
+	}
+}
+
+func TestPatchMovieProgressRejectsMultipleJSONDocuments(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false} {}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "BAD_REQUEST" {
+		t.Fatalf("expected BAD_REQUEST, got %q", got)
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called for multiple JSON documents")
+	}
+}
+
+func TestPatchMovieProgressRejectsMissingFields(t *testing.T) {
+	tests := []struct {
+		name         string
+		body         string
+		missingField string
+	}{
+		{name: "missing complete", body: `{"progress":1804}`, missingField: "complete"},
+		{name: "missing progress", body: `{"complete":false}`, missingField: "progress"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+			h := &MoviesHandler{store: store}
+
+			req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(tt.body))
+			req.SetPathValue("id", "tt1234567")
+			rec := httptest.NewRecorder()
+
+			serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			fields := decodeHandlerValidationFields(t, rec)
+			if _, ok := fields[tt.missingField]; !ok {
+				t.Fatalf("expected field %q, got %+v", tt.missingField, fields)
+			}
+			if store.saveMovieProgressCalled {
+				t.Fatal("store save must not be called for missing fields")
+			}
+		})
+	}
+}
+
+func TestPatchMovieProgressRejectsNullOrWrongTypeFields(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{name: "progress null", body: `{"progress":null,"complete":false}`},
+		{name: "complete null", body: `{"progress":1804,"complete":null}`},
+		{name: "progress string", body: `{"progress":"1804","complete":false}`},
+		{name: "complete string", body: `{"progress":1804,"complete":"false"}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+			h := &MoviesHandler{store: store}
+
+			req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(tt.body))
+			req.SetPathValue("id", "tt1234567")
+			rec := httptest.NewRecorder()
+
+			serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got := decodeHandlerErrorCode(t, rec); got != "VALIDATION_ERROR" {
+				t.Fatalf("expected VALIDATION_ERROR, got %q", got)
+			}
+			if store.saveMovieProgressCalled {
+				t.Fatal("store save must not be called for invalid fields")
+			}
+		})
+	}
+}
+
+func TestPatchMovieProgressRejectsNegativeProgress(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":-1,"complete":false}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	fields := decodeHandlerValidationFields(t, rec)
+	if _, ok := fields["progress"]; !ok {
+		t.Fatalf("expected progress field error, got %+v", fields)
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called for negative progress")
+	}
+}
+
+func TestPatchMovieProgressReturnsInternalError(t *testing.T) {
+	store := &fakeStore{
+		movies:               []models.Movie{{ImdbID: "tt1234567"}},
+		saveMovieProgressErr: errors.New("db down"),
+	}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !store.saveMovieProgressCalled {
+		t.Fatal("expected store save to be called")
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
+	}
+}
+
 func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
-	store := &fakeStore{movies: []models.Movie{{
+	store := &fakeStore{watched: []models.WatchedMovie{{
 		ImdbID: "tt1234567", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
-		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18},
+		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1804, Complete: false,
 	}}}
 	h := &MoviesHandler{store: store}
 
@@ -473,13 +735,43 @@ func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
 		t.Fatalf("expected URL user id 7, got %d", store.listWatchedUserID)
 	}
 	var body struct {
-		Data []movieResponse `json:"data"`
+		Data []movieHistoryResponse `json:"data"`
 	}
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	if len(body.Data) != 1 || body.Data[0].ImdbID != "tt1234567" || body.Data[0].Title != "Example Movie" || body.Data[0].Year != "2025" || body.Data[0].PosterURL != "poster.jpg" || body.Data[0].BackdropURL != "backdrop.jpg" || body.Data[0].Note != 8.1 || len(body.Data[0].Genre) != 2 {
 		t.Fatalf("unexpected history response: %+v", body.Data)
+	}
+}
+
+func TestGetUserFilmHistoryReturnsUpdatedProgressFields(t *testing.T) {
+	store := &fakeStore{watched: []models.WatchedMovie{{
+		ImdbID: "tt1234567", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
+		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1804, Complete: false,
+	}}}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data []movieHistoryResponse `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("expected one history entry, got %d", len(body.Data))
+	}
+	if body.Data[0].Progress != 1804 || body.Data[0].Complete {
+		t.Fatalf("unexpected progress fields: %+v", body.Data[0])
 	}
 }
 
@@ -548,7 +840,7 @@ func TestGetUserFilmHistoryReturnsEmptyJSONList(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 	var body struct {
-		Data []movieResponse `json:"data"`
+		Data []movieHistoryResponse `json:"data"`
 		Meta struct {
 			Total   int `json:"total"`
 			Page    int `json:"page"`
@@ -649,6 +941,42 @@ func TestPostCommentInvalidContentTypeReturnsContentFieldValidationError(t *test
 	if got := body.Error.Fields["content"].Message; got != "Invalid request body" {
 		t.Fatalf("expected content field validation, got %q", got)
 	}
+}
+
+func decodeHandlerErrorCode(t *testing.T, rec *httptest.ResponseRecorder) string {
+	t.Helper()
+
+	var body struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body.Error.Code
+}
+
+func decodeHandlerValidationFields(t *testing.T, rec *httptest.ResponseRecorder) map[string]struct {
+	Message string `json:"message"`
+} {
+	t.Helper()
+
+	var body struct {
+		Error struct {
+			Code   string `json:"code"`
+			Fields map[string]struct {
+				Message string `json:"message"`
+			} `json:"fields"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Error.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q", body.Error.Code)
+	}
+	return body.Error.Fields
 }
 
 func serveWithUser(t *testing.T, userID int64, next http.Handler) http.Handler {

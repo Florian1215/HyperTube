@@ -245,6 +245,22 @@ func TestRouterUserFilmHistoryRouteRequiresBearerToken(t *testing.T) {
 	}
 }
 
+func TestRouterMovieProgressRouteRequiresBearerToken(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected missing token 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
+		t.Fatalf("expected UNAUTHORIZED, got %q", got)
+	}
+}
+
 func TestRouterUserRouteRejectsInvalidBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 

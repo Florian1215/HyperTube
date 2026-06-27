@@ -931,8 +931,8 @@ A syntactically valid ID for an unknown user returns an empty collection.
 
 Returns all stored watch-history entries for the requested user, ordered by
 `watched_at DESC`. Any authenticated user may read another user's history.
-There is no query pagination; every existing entry is returned, including
-duplicates present in `watch_history`.
+There is no query pagination; every existing entry is returned. History has at
+most one row per user/movie.
 
 ### Path parameters
 
@@ -952,7 +952,9 @@ duplicates present in `watch_history`.
       "poster_url": "https://example.test/poster.jpg",
       "backdrop_url": "https://example.test/backdrop.jpg",
       "note": 8.1,
-      "genres": [12, 18]
+      "genres": [12, 18],
+      "progress": 1804,
+      "complete": false
     }
   ],
   "meta": {
@@ -1358,6 +1360,56 @@ No request body is used. The user is taken from the JWT.
 ```json
 { "error": { "code": "INTERNAL_ERROR", "message": "Failed to load movies" } }
 ```
+
+---
+
+## PATCH /movies/{imdbId}/progress
+
+Saves playback progress for the authenticated user and movie. Requires
+`Authorization: Bearer <access_token>`. The user is always taken from the JWT.
+
+### Path parameters
+
+| Parameter | Type   | Description          |
+|-----------|--------|----------------------|
+| `imdbId`  | string | IMDb ID of the movie |
+
+### Request body
+
+Only `progress` and `complete` are accepted. `progress` is the playback position
+in seconds and must be a non-negative integer. `complete` marks whether the
+movie was fully watched.
+
+```json
+{
+  "progress": 1804,
+  "complete": false
+}
+```
+
+### Response
+
+`200 OK`
+
+```json
+{
+  "data": {
+    "progress": 1804,
+    "complete": false
+  }
+}
+```
+
+### Error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `BAD_REQUEST` | Malformed JSON, unknown fields, or multiple JSON documents. |
+| 400 | `VALIDATION_ERROR` | Missing, null, wrong-type, or negative fields. |
+| 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
+| 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
+| 404 | `NOT_FOUND` | Movie ID is empty or unknown. |
+| 500 | `INTERNAL_ERROR` | Saving progress failed. |
 
 ---
 

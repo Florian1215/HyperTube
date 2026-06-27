@@ -87,7 +87,10 @@ CREATE TABLE IF NOT EXISTS watch_history (
     id          SERIAL PRIMARY KEY,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     imdbid      TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE,
-    watched_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    progress    INTEGER NOT NULL DEFAULT 0 CHECK (progress >= 0),
+    complete    BOOLEAN NOT NULL DEFAULT FALSE,
+    watched_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT watch_history_user_id_imdbid_key UNIQUE (user_id, imdbid)
 );
 
 CREATE TABLE IF NOT EXISTS direct_stream_movies (

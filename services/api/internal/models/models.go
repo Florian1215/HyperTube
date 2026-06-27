@@ -3,15 +3,29 @@ package models
 import "time"
 
 type Movie struct {
-	ImdbID      string  `json:"imdb_id"`
-	TmdbID      string  `json:"tmdb_id"`
-	Title       string  `json:"title"`
-	Year        string  `json:"year"`
-	PosterURL   string  `json:"poster_url"`
-	BackdropURL string  `json:"backdrop_url"`
-	Genre       []int   `json:"genres"`
-	Note        float32 `json:"note"`
-	OriginalLanguage string `json:"original_language"`
+	ImdbID           string  `json:"imdb_id"`
+	TmdbID           string  `json:"tmdb_id"`
+	Title            string  `json:"title"`
+	Year             string  `json:"year"`
+	PosterURL        string  `json:"poster_url"`
+	BackdropURL      string  `json:"backdrop_url"`
+	Genre            []int   `json:"genres"`
+	Note             float32 `json:"note"`
+	OriginalLanguage string  `json:"original_language"`
+}
+
+type WatchedMovie struct {
+	ImdbID           string  `json:"imdb_id" db:"imdbid"`
+	TmdbID           string  `json:"tmdb_id" db:"tmdbid"`
+	Title            string  `json:"title" db:"title"`
+	Year             string  `json:"year" db:"year"`
+	PosterURL        string  `json:"poster_url" db:"poster_url"`
+	BackdropURL      string  `json:"backdrop_url" db:"backdrop_url"`
+	Genre            []int   `json:"genres" db:"genre"`
+	Note             float32 `json:"note" db:"note"`
+	OriginalLanguage string  `json:"original_language" db:"original_language"`
+	Progress         int     `json:"progress" db:"progress"`
+	Complete         bool    `json:"complete" db:"complete"`
 }
 
 type Torrent struct {
