@@ -9,24 +9,14 @@ import (
 	"testing"
 )
 
-func newOAuthClientTestHandler(store userStore, tokens *TokenManager) *Handler {
-	return NewHandler(store, tokens, WithOAuthTokenClient("test-client", "test-secret"))
-}
-
-func setTestOAuthClientCredentials(form url.Values) {
-	form.Set("client_id", "test-client")
-	form.Set("client_secret", "test-secret")
-}
-
 func TestOAuthTokenPasswordGrantReturnsBearerToken(t *testing.T) {
 	store := newMemoryUserStore()
 	tokens := newTestTokenManager(t)
-	handler := newOAuthClientTestHandler(store, tokens)
+	handler := NewHandler(store, tokens)
 	user := createPasswordUser(t, store, "alice@example.com", "alice_1", "correct-horse-battery")
 
 	form := url.Values{}
 	form.Set("grant_type", "password")
-	setTestOAuthClientCredentials(form)
 	form.Set("username", "alice_1")
 	form.Set("password", "correct-horse-battery")
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(form.Encode()))
@@ -62,10 +52,10 @@ func TestOAuthTokenPasswordGrantReturnsBearerToken(t *testing.T) {
 
 func TestOAuthTokenPasswordGrantAcceptsEmailLogin(t *testing.T) {
 	store := newMemoryUserStore()
-	handler := newOAuthClientTestHandler(store, newTestTokenManager(t))
+	handler := NewHandler(store, newTestTokenManager(t))
 	createPasswordUser(t, store, "alice@example.com", "alice_1", "correct-horse-battery")
 
-	body := `{"grant_type":"password","client_id":"test-client","client_secret":"test-secret","username":"Alice@Example.COM","password":"correct-horse-battery"}`
+	body := `{"grant_type":"password","username":"Alice@Example.COM","password":"correct-horse-battery"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
@@ -79,7 +69,7 @@ func TestOAuthTokenPasswordGrantAcceptsEmailLogin(t *testing.T) {
 
 func TestOAuthTokenRejectsInvalidGrant(t *testing.T) {
 	store := newMemoryUserStore()
-	handler := newOAuthClientTestHandler(store, newTestTokenManager(t))
+	handler := NewHandler(store, newTestTokenManager(t))
 	createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
 
 	tests := []struct {
@@ -105,11 +95,9 @@ func TestOAuthTokenRejectsInvalidGrant(t *testing.T) {
 		{
 			name: "wrong password",
 			form: url.Values{
-				"grant_type":    {"password"},
-				"client_id":     {"test-client"},
-				"client_secret": {"test-secret"},
-				"username":      {"alice_1"},
-				"password":      {"wrong-password"},
+				"grant_type": {"password"},
+				"username":   {"alice_1"},
+				"password":   {"wrong-password"},
 			},
 			wantError: "invalid_grant",
 		},
@@ -134,90 +122,6 @@ func TestOAuthTokenRejectsInvalidGrant(t *testing.T) {
 				t.Fatalf("expected error %q, got %q", tt.wantError, response.Error)
 			}
 		})
-	}
-}
-
-func TestOAuthTokenRejectsMissingClientCredentials(t *testing.T) {
-	store := newMemoryUserStore()
-	handler := newOAuthClientTestHandler(store, newTestTokenManager(t))
-	createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
-
-	form := url.Values{}
-	form.Set("grant_type", "password")
-	form.Set("username", "alice_1")
-	form.Set("password", "right-password")
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
-
-	handler.OAuthToken(rec, req)
-
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
-	}
-	var response oauthErrorResponse
-	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if response.Error != "invalid_client" {
-		t.Fatalf("expected invalid_client, got %q", response.Error)
-	}
-}
-
-func TestOAuthTokenRejectsWrongClientSecret(t *testing.T) {
-	store := newMemoryUserStore()
-	handler := newOAuthClientTestHandler(store, newTestTokenManager(t))
-	createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
-
-	form := url.Values{}
-	form.Set("grant_type", "password")
-	form.Set("client_id", "test-client")
-	form.Set("client_secret", "wrong-secret")
-	form.Set("username", "alice_1")
-	form.Set("password", "right-password")
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
-
-	handler.OAuthToken(rec, req)
-
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
-	}
-	var response oauthErrorResponse
-	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if response.Error != "invalid_client" {
-		t.Fatalf("expected invalid_client, got %q", response.Error)
-	}
-}
-
-func TestOAuthTokenFailsWhenClientIsUnconfigured(t *testing.T) {
-	store := newMemoryUserStore()
-	handler := NewHandler(store, newTestTokenManager(t))
-	createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
-
-	form := url.Values{}
-	form.Set("grant_type", "password")
-	setTestOAuthClientCredentials(form)
-	form.Set("username", "alice_1")
-	form.Set("password", "right-password")
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
-
-	handler.OAuthToken(rec, req)
-
-	if rec.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
-	}
-	var response oauthErrorResponse
-	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if response.Error != "server_error" {
-		t.Fatalf("expected server_error, got %q", response.Error)
 	}
 }
 

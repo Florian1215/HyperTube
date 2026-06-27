@@ -751,16 +751,6 @@ Unlike the other auth endpoints, this endpoint uses OAuth2 token response shapes
 directly. Success responses are not wrapped in `data`, and errors are not
 wrapped in `error`.
 
-The API server validates `client_id` and `client_secret` against the
-`OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET` environment variables.
-
-Required environment variables for this endpoint:
-
-```env
-OAUTH_CLIENT_ID=<client id used by API clients>
-OAUTH_CLIENT_SECRET=<secret used by API clients>
-```
-
 #### Request body
 
 Supported content types:
@@ -772,8 +762,6 @@ Supported content types:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `grant_type` | string | yes | Must be `password`. |
-| `client_id` | string | yes | Must match `OAUTH_CLIENT_ID` configured on the API server. |
-| `client_secret` | string | yes | Must match `OAUTH_CLIENT_SECRET` configured on the API server. |
 | `username` | string | yes | Username or email address. Email login is normalized. |
 | `password` | string | yes | Existing password. Must be present and no longer than 72 bytes. |
 | `scope` | string | no | Optional OAuth scope string. Whitespace is normalized in the response. |
@@ -786,7 +774,7 @@ Content-Type: application/x-www-form-urlencoded
 ```
 
 ```text
-grant_type=password&client_id=<OAUTH_CLIENT_ID>&client_secret=<OAUTH_CLIENT_SECRET>&username=ada_lovelace&password=correct-horse-battery&scope=profile
+grant_type=password&username=ada_lovelace&password=correct-horse-battery&scope=profile
 ```
 
 JSON is also accepted:
@@ -794,8 +782,6 @@ JSON is also accepted:
 ```json
 {
   "grant_type": "password",
-  "client_id": "<OAUTH_CLIENT_ID>",
-  "client_secret": "<OAUTH_CLIENT_SECRET>",
   "username": "ada@example.com",
   "password": "correct-horse-battery",
   "scope": "profile"
@@ -829,9 +815,8 @@ Pragma: no-cache
 | 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `username` or `password`, or password too long. |
 | 400 | `unsupported_grant_type` | `grant_type` is not `password`. |
 | 400 | `invalid_grant` | Username/email or password is incorrect. |
-| 401 | `invalid_client` | Missing or invalid `client_id`/`client_secret`. |
 | 415 | `invalid_request` | Body must be form encoded or JSON. |
-| 500 | `server_error` | OAuth client is not configured, auth service unavailable, user load failed, or token creation failed. |
+| 500 | `server_error` | Auth service unavailable, user load failed, or token creation failed. |
 
 Example:
 
