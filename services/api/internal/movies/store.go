@@ -21,15 +21,15 @@ func NewStore(db *pgxpool.Pool) *Store {
 }
 
 type movieRow struct {
-	ImdbID      string  `db:"imdbid"`
-	TmdbID      string  `db:"tmdbid"`
-	Title       string  `db:"title"`
-	Year        string  `db:"year"`
-	Note        float32 `db:"note"`
-	PosterURL   string  `db:"poster_url"`
-	BackdropURL string  `db:"backdrop_url"`
-	Genre       []int   `db:"genre"`
-	OriginalLanguage string `db:"original_language"`
+	ImdbID           string  `db:"imdbid"`
+	TmdbID           string  `db:"tmdbid"`
+	Title            string  `db:"title"`
+	Year             string  `db:"year"`
+	Note             float32 `db:"note"`
+	PosterURL        string  `db:"poster_url"`
+	BackdropURL      string  `db:"backdrop_url"`
+	Genre            []int   `db:"genre"`
+	OriginalLanguage string  `db:"original_language"`
 }
 
 func toMovie(r movieRow) models.Movie {
@@ -93,29 +93,33 @@ func (s *Store) listFeatured(ctx context.Context) ([]models.Movie, error) {
 	return movies, nil
 }
 
-func (s *Store) listWatched(ctx context.Context, user_id int) ([]models.Movie, error) {
+func (s *Store) listWatched(ctx context.Context, userID int) ([]models.WatchedMovie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
-		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
+		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language,
+		       h.progress, h.complete
 		FROM movies m
 		JOIN watch_history h ON h.imdbid = m.imdbid
 		WHERE h.user_id = $1
 		ORDER BY h.watched_at DESC
-	`, user_id)
+	`, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	movieRows, err := pgx.CollectRows(rows, pgx.RowToStructByName[movieRow])
-	if err != nil {
-		return nil, err
-	}
+	return pgx.CollectRows(rows, pgx.RowToStructByName[models.WatchedMovie])
+}
 
-	movies := make([]models.Movie, len(movieRows))
-	for i, r := range movieRows {
-		movies[i] = toMovie(r)
-	}
-	return movies, nil
+func (s *Store) saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error {
+	_, err := s.db.Exec(ctx, `
+		INSERT INTO watch_history (user_id, imdbid, progress, complete, watched_at)
+		VALUES ($1, $2, $3, $4, NOW())
+		ON CONFLICT (user_id, imdbid) DO UPDATE
+		SET progress = EXCLUDED.progress,
+		    complete = EXCLUDED.complete,
+		    watched_at = NOW()
+	`, userID, imdbID, progress, complete)
+	return err
 }
 
 func (s *Store) listDirectStream(ctx context.Context) ([]models.Movie, error) {

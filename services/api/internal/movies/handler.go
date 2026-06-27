@@ -13,6 +13,7 @@ import (
 	"hypertube/api/internal/auth"
 	"hypertube/api/internal/i18n"
 	"hypertube/api/internal/models"
+	"hypertube/api/internal/requestjson"
 	"hypertube/api/internal/respond"
 )
 
@@ -36,7 +37,8 @@ type movieStore interface {
 	countSearchResults(ctx context.Context, query string) (int, error)
 	upsertSearchResults(ctx context.Context, query string, imdbIDs []string) error
 	listSearchResults(ctx context.Context, query string, limit, offset int) ([]models.Movie, error)
-	listWatched(ctx context.Context, userID int) ([]models.Movie, error)
+	listWatched(ctx context.Context, userID int) ([]models.WatchedMovie, error)
+	saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error
 	listDirectStream(ctx context.Context) ([]models.Movie, error)
 }
 
@@ -46,6 +48,11 @@ type userStore interface {
 
 const commentPageLimit = 12
 const maxJSONBodyBytes = 1 << 20
+
+type movieProgressRequest struct {
+	Progress int
+	Complete bool
+}
 
 type MovieSearcher interface {
 	SearchByTitle(ctx context.Context, title string) ([]models.Torrent, error)
@@ -109,7 +116,7 @@ func (h *MoviesHandler) GetWatchedMovies(w http.ResponseWriter, r *http.Request)
 	}
 	movieResponse := make([]movieResponse, len(movies))
 	for i, m := range movies {
-		movieResponse[i] = toMovieResponse(m)
+		movieResponse[i] = toMovieResponse(watchedMovieToMovie(m))
 	}
 	respond.List(w, http.StatusOK, movieResponse)
 }
@@ -133,9 +140,9 @@ func (h *MoviesHandler) GetUserFilmHistory(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	movieResponse := make([]movieResponse, len(movies))
+	movieResponse := make([]movieHistoryResponse, len(movies))
 	for i, movie := range movies {
-		movieResponse[i] = toMovieResponse(movie)
+		movieResponse[i] = toMovieHistoryResponse(movie)
 	}
 	respond.List(w, http.StatusOK, movieResponse)
 }
@@ -179,6 +186,47 @@ func (h *MoviesHandler) GetMoviesId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respond.Item(w, http.StatusOK, toMovieDetailResponse(*movie, details))
+}
+
+func (h *MoviesHandler) PatchMovieProgress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgMissingUserContext)
+		return
+	}
+
+	imdbID := strings.TrimSpace(r.PathValue("id"))
+	if imdbID == "" {
+		respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		return
+	}
+
+	movie, err := h.store.findByID(r.Context(), imdbID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			respond.LocalizedError(w, r, http.StatusNotFound, "NOT_FOUND", i18n.MsgMovieNotFound)
+		} else {
+			log.Println("db err:", err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovie)
+		}
+		return
+	}
+
+	body, ok := decodeMovieProgressRequest(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.store.saveMovieProgress(r.Context(), int(userID), movie.ImdbID, body.Progress, body.Complete); err != nil {
+		log.Println("db err:", err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
+		return
+	}
+
+	respond.Item(w, http.StatusOK, movieProgressResponse{
+		Progress: body.Progress,
+		Complete: body.Complete,
+	})
 }
 
 func (h *MoviesHandler) collectTorrents(ctx context.Context, title string) ([]models.Torrent, error) {
@@ -461,4 +509,60 @@ func decodeCommentContent(w http.ResponseWriter, r *http.Request) (string, bool)
 		return "", false
 	}
 	return content, true
+}
+
+func decodeMovieProgressRequest(w http.ResponseWriter, r *http.Request) (movieProgressRequest, bool) {
+	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
+		"progress": {},
+		"complete": {},
+	})
+	if !ok {
+		return movieProgressRequest{}, false
+	}
+
+	locale := i18n.FromRequest(r)
+	fields := respond.FieldErrors{}
+
+	progress, ok := decodeIntField(body, "progress")
+	if !ok || progress < 0 {
+		fields["progress"] = respond.FieldError{Message: i18n.T(locale, i18n.MsgInvalidRequestBody)}
+	}
+
+	complete, ok := decodeBoolField(body, "complete")
+	if !ok {
+		fields["complete"] = respond.FieldError{Message: i18n.T(locale, i18n.MsgInvalidRequestBody)}
+	}
+
+	if len(fields) > 0 {
+		respond.ValidationError(w, http.StatusBadRequest, fields)
+		return movieProgressRequest{}, false
+	}
+
+	return movieProgressRequest{Progress: progress, Complete: complete}, true
+}
+
+func decodeIntField(body map[string]json.RawMessage, field string) (int, bool) {
+	raw, ok := body[field]
+	if !ok || requestjson.IsNull(raw) {
+		return 0, false
+	}
+
+	var value int
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return 0, false
+	}
+	return value, true
+}
+
+func decodeBoolField(body map[string]json.RawMessage, field string) (bool, bool) {
+	raw, ok := body[field]
+	if !ok || requestjson.IsNull(raw) {
+		return false, false
+	}
+
+	var value bool
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return false, false
+	}
+	return value, true
 }

@@ -24,6 +24,51 @@ func toMovieResponse(m models.Movie) movieResponse {
 	}
 }
 
+func watchedMovieToMovie(m models.WatchedMovie) models.Movie {
+	return models.Movie{
+		ImdbID:           m.ImdbID,
+		TmdbID:           m.TmdbID,
+		Title:            m.Title,
+		Year:             m.Year,
+		PosterURL:        m.PosterURL,
+		BackdropURL:      m.BackdropURL,
+		Genre:            m.Genre,
+		Note:             m.Note,
+		OriginalLanguage: m.OriginalLanguage,
+	}
+}
+
+type movieHistoryResponse struct {
+	ImdbID      string  `json:"imdb_id"`
+	Title       string  `json:"title"`
+	Year        string  `json:"year"`
+	PosterURL   string  `json:"poster_url"`
+	BackdropURL string  `json:"backdrop_url"`
+	Note        float32 `json:"note"`
+	Genre       []int   `json:"genres"`
+	Progress    int     `json:"progress"`
+	Complete    bool    `json:"complete"`
+}
+
+func toMovieHistoryResponse(m models.WatchedMovie) movieHistoryResponse {
+	return movieHistoryResponse{
+		ImdbID:      m.ImdbID,
+		Title:       m.Title,
+		Year:        m.Year,
+		PosterURL:   m.PosterURL,
+		BackdropURL: m.BackdropURL,
+		Note:        m.Note,
+		Genre:       m.Genre,
+		Progress:    m.Progress,
+		Complete:    m.Complete,
+	}
+}
+
+type movieProgressResponse struct {
+	Progress int  `json:"progress"`
+	Complete bool `json:"complete"`
+}
+
 type movieDetailResponse struct {
 	ImdbID           string   `json:"imdb_id"`
 	TmdbID           string   `json:"tmdb_id"`
@@ -63,7 +108,7 @@ func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailRes
 }
 
 type torrentResponse struct {
-	ID       string     `json:"id"`
+	ID       string  `json:"id"`
 	Title    string  `json:"title"`
 	Source   string  `json:"source"`
 	Quality  string  `json:"quality"`
