@@ -114,4 +114,4 @@ CREATE TABLE IF NOT EXISTS movie_searches (
     rank        INTEGER     NOT NULL,
     searched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (query, imdbid)
-)
+);

@@ -134,7 +134,7 @@ func requireWatchHistoryProgressSchema(t *testing.T, ctx context.Context, db *pg
 		t.Fatalf("inspect watch_history columns: %v", err)
 	}
 	if columnCount != 2 {
-		t.Skip("watch_history progress schema is not migrated; run db/009_watch_history_progress.sql")
+		t.Skip("watch_history progress schema is not present; reset the database from db/001_schema.sql")
 	}
 
 	var hasUniqueKey bool
@@ -153,7 +153,7 @@ func requireWatchHistoryProgressSchema(t *testing.T, ctx context.Context, db *pg
 		t.Fatalf("inspect watch_history unique key: %v", err)
 	}
 	if !hasUniqueKey {
-		t.Skip("watch_history unique key is not migrated; run db/009_watch_history_progress.sql")
+		t.Skip("watch_history unique key is not present; reset the database from db/001_schema.sql")
 	}
 }
 
