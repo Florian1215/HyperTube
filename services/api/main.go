@@ -40,10 +40,6 @@ func main() {
 	gitlabRedirectURL := getEnv("GITLAB_REDIRECT_URL", "http://localhost:8080/api/v1/auth/gitlab/callback")
 	authOptions := []auth.HandlerOption{
 		auth.WithFrontendAuthCallbackURL(getEnv("FRONTEND_AUTH_CALLBACK_URL", "http://localhost:4200/en/auth/callback")),
-		auth.WithOAuthTokenClient(
-			os.Getenv("OAUTH_CLIENT_ID"),
-			os.Getenv("OAUTH_CLIENT_SECRET"),
-		),
 		auth.WithPasswordResetURL(getEnv("PASSWORD_RESET_URL", "http://localhost:4200/{locale}/reset-password")),
 		auth.WithPasswordResetTTL(getPasswordResetTTL()),
 		auth.WithFortyTwoOAuth(auth.NewFortyTwoOAuth(auth.FortyTwoOAuthConfig{
