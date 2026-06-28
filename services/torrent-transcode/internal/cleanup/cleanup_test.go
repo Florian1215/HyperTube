@@ -14,6 +14,7 @@ import (
 type fakeStore struct {
 	mu         sync.Mutex
 	finishedAt map[string]time.Time
+	inProgress map[string]bool
 	reset      []string
 }
 
@@ -29,10 +30,21 @@ func (f *fakeStore) FinishedBefore(_ context.Context, cutoff time.Time) ([]strin
 	return ids, nil
 }
 
+func (f *fakeStore) InProgress(_ context.Context) ([]string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var ids []string
+	for id := range f.inProgress {
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 func (f *fakeStore) ResetTorrent(_ context.Context, id string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.finishedAt, id)
+	delete(f.inProgress, id)
 	f.reset = append(f.reset, id)
 	return nil
 }
@@ -140,5 +152,38 @@ func TestCleanerDeletesAfterRetention(t *testing.T) {
 	}
 	if !dropper.wasDropped(id) {
 		t.Fatalf("torrent not dropped from client after deletion")
+	}
+}
+
+func TestCleanerCleanupInterrupted(t *testing.T) {
+	const id = "torrentid"
+
+	videoBase := t.TempDir()
+	torrentBase := t.TempDir()
+	videoPath := filepath.Join(videoBase, id)
+	torrentPath := filepath.Join(torrentBase, id)
+	mustWriteFile(t, videoPath, "stream.m3u8")
+	mustWriteFile(t, torrentPath, "source.torrent")
+
+	store := &fakeStore{inProgress: map[string]bool{id: true}}
+	dropper := &fakeDropper{}
+
+	c := NewCleaner(store, dropper, DefaultRetention, DefaultInterval)
+	c.videoBasePath = videoBase
+	c.torrentBasePath = torrentBase
+
+	c.CleanupInterrupted(context.Background())
+
+	if _, err := os.Stat(videoPath); !os.IsNotExist(err) {
+		t.Fatalf("interrupted video data not deleted: err=%v", err)
+	}
+	if _, err := os.Stat(torrentPath); !os.IsNotExist(err) {
+		t.Fatalf("interrupted torrent data not deleted: err=%v", err)
+	}
+	if !store.wasReset(id) {
+		t.Fatalf("interrupted torrent status not reset")
+	}
+	if !dropper.wasDropped(id) {
+		t.Fatalf("interrupted torrent not dropped from client")
 	}
 }
