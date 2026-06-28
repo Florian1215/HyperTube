@@ -11,6 +11,7 @@ import loadSRT from "@/utils/loadSRT";
 import useModal from "@/contexts/ModalContext";
 import {refreshAccessToken} from "@/services/auth.service";
 import {updateMovieProgress} from "@/services/movies.service";
+import {iMovieDetails} from "@/types/movie";
 
 interface iSub{
     start: number
@@ -18,14 +19,15 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({src, color, duration, setErrorAction, imdbId}: {src: string, color: string, duration: number, setErrorAction: (e: string) => void, imdbId: string}) {
+export default function VideoPlayer({movie, src, color, setErrorAction}: {movie: iMovieDetails, src: string, color: string, setErrorAction: (e: string) => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
     const [downloadDuration, setDownloadDuration] = useState(0);
-    const durationString = formatTime(duration);
+    const [fullDuration, setFullDuration] = useState(movie.runtime_minutes * 60);
+    const [durationString, setDurationString] = useState("");
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);
     const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
@@ -36,7 +38,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     const [seekTime, setSeekTime] = useState(0);
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
-    const {data: getSubtitlesMovie} = useSubtitles(imdbId, selectedSubtitle);
+    const {data: getSubtitlesMovie} = useSubtitles(movie.imdb_id, selectedSubtitle);
     const {data: loginOpenSubtitles} = useLoginOpenSubtitles();
     const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0].attributes.files[0].file_id, loginOpenSubtitles?.token);
     const [subs, setSubs] = useState<iSub[]>([]);
@@ -48,6 +50,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     const lastSent = useRef(0);
     const setComplete = useRef(false);
     const min15 = 15 * 60;
+    const isLiveRef = useRef(true);
 
     useEffect(() => {
         if (downloadSubtitle)
@@ -61,6 +64,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
         if (Hls.isSupported()) {
             const hls = new Hls({
+                startPosition: 0,
                 xhrSetup: (xhr) => {
                     const token = localStorage.getItem("token");
 
@@ -73,6 +77,10 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
+                if (!data.details.live) {
+                    isLiveRef.current = false;
+                    setFullDuration(data.details.totalduration);
+                }
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
                 const status = data?.response?.code;
@@ -104,6 +112,16 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     //     video.play();
     //     setIsPlaying(true);
     // }, []);
+
+    useEffect(() => {
+        setDurationString(formatTime(fullDuration));
+    }, [fullDuration]);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (video && movie.progress)
+            video.currentTime = movie.progress;
+    }, []);
 
     useEffect(() => {
         const video = videoRef.current;
@@ -152,14 +170,16 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
         }
 
         if (!setComplete.current) {
-            if (video.currentTime + min15 > duration) {
-                updateMovieProgress(imdbId, Math.floor((video.currentTime + min15) % 60), true);
+            const progress = Math.floor(video.currentTime);
+            if (isLiveRef && video.currentTime + min15 > fullDuration) {
+                updateMovieProgress(movie.imdb_id, progress, 100, true);
                 setComplete.current = true;
             } else {
                 const second = Math.floor(video.currentTime % 60);
                 if (second - lastSent.current >= 30) {
+                    const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
                     lastSent.current = second;
-                    updateMovieProgress(imdbId, second, false);
+                    updateMovieProgress(movie.imdb_id, progress, pourcent, false);
                 }
             }
         }
@@ -172,7 +192,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
         const rect = progressBarRef.current.getBoundingClientRect();
         const percent = (clientX - rect.left) / rect.width;
-        return Math.max(0, percent * duration);
+        return Math.max(0, percent * downloadDuration);
     };
 
     useEffect(() => {
@@ -330,7 +350,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
                         <button onClick={togglePlay} className="p-2">
                             <PlayPauseIcon isPlaying={isPlaying} />
                         </button>
-                        <p>{currentTime} / {durationString}</p>
+                        <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
                     </div>
 
                     <div className="flex gap-4 items-center">
@@ -344,8 +364,8 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
                 </div>
 
                 <div className="w-full h-4 bg-black-hover border-t-black">
-                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / duration) * 100 || 0}%`}}>
-                        <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${(seekTime / duration) * 100 || 0}%`}} />
+                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / fullDuration) * 100}%`}}>
+                        <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
                     </div>
                 </div>
             </div>

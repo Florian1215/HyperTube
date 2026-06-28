@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS watch_history (
     imdbid      TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE,
     progress    INTEGER NOT NULL DEFAULT 0 CHECK (progress >= 0),
     complete    BOOLEAN NOT NULL DEFAULT FALSE,
+    pourcent    INTEGER NOT NULL DEFAULT 0 CHECK (pourcent >= 0 AND pourcent <= 100),
     watched_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT watch_history_user_id_imdbid_key UNIQUE (user_id, imdbid)
 );

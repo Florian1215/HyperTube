@@ -15,10 +15,10 @@ func TestStoreSaveMovieProgressInsertsAndUpdates(t *testing.T) {
 	store := NewStore(db)
 	userID, imdbID := insertMovieProgressFixture(t, ctx, db)
 
-	if err := store.saveMovieProgress(ctx, userID, imdbID, 120, false); err != nil {
+	if err := store.saveMovieProgress(ctx, userID, imdbID, 120, false, 10); err != nil {
 		t.Fatalf("save initial progress: %v", err)
 	}
-	if err := store.saveMovieProgress(ctx, userID, imdbID, 1804, true); err != nil {
+	if err := store.saveMovieProgress(ctx, userID, imdbID, 1804, true, 50); err != nil {
 		t.Fatalf("save updated progress: %v", err)
 	}
 
@@ -53,7 +53,7 @@ func TestStoreListWatchedReturnsProgressFields(t *testing.T) {
 	store := NewStore(db)
 	userID, imdbID := insertMovieProgressFixture(t, ctx, db)
 
-	if err := store.saveMovieProgress(ctx, userID, imdbID, 1804, false); err != nil {
+	if err := store.saveMovieProgress(ctx, userID, imdbID, 1804, false, 50); err != nil {
 		t.Fatalf("save progress: %v", err)
 	}
 
@@ -80,7 +80,7 @@ func TestStoreWatchHistoryUniquePerUserMovie(t *testing.T) {
 	userID, imdbID := insertMovieProgressFixture(t, ctx, db)
 
 	for _, progress := range []int{1, 2, 3} {
-		if err := store.saveMovieProgress(ctx, userID, imdbID, progress, false); err != nil {
+		if err := store.saveMovieProgress(ctx, userID, imdbID, progress, false, 84); err != nil {
 			t.Fatalf("save progress %d: %v", progress, err)
 		}
 	}

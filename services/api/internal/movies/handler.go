@@ -38,7 +38,7 @@ type movieStore interface {
 	upsertSearchResults(ctx context.Context, query string, imdbIDs []string) error
 	listSearchResults(ctx context.Context, query string, limit, offset int) ([]models.Movie, error)
 	listWatched(ctx context.Context, userID int) ([]models.WatchedMovie, error)
-	saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error
+	saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool, pourcent int) error
 	listDirectStream(ctx context.Context) ([]models.Movie, error)
 	HasAppState(ctx context.Context, key string) (bool, error)
 	MarkAppState(ctx context.Context, key string) error
@@ -54,6 +54,7 @@ const maxJSONBodyBytes = 1 << 20
 type movieProgressRequest struct {
 	Progress int
 	Complete bool
+	Pourcent int
 }
 
 type MovieSearcher interface {
@@ -219,7 +220,7 @@ func (h *MoviesHandler) PatchMovieProgress(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.store.saveMovieProgress(r.Context(), int(userID), movie.ImdbID, body.Progress, body.Complete); err != nil {
+	if err := h.store.saveMovieProgress(r.Context(), int(userID), movie.ImdbID, body.Progress, body.Complete, body.Pourcent); err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
 		return
@@ -228,6 +229,7 @@ func (h *MoviesHandler) PatchMovieProgress(w http.ResponseWriter, r *http.Reques
 	respond.Item(w, http.StatusOK, movieProgressResponse{
 		Progress: body.Progress,
 		Complete: body.Complete,
+		Pourcent: body.Pourcent,
 	})
 }
 
@@ -559,6 +561,7 @@ func decodeMovieProgressRequest(w http.ResponseWriter, r *http.Request) (moviePr
 	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"progress": {},
 		"complete": {},
+		"pourcent": {},
 	})
 	if !ok {
 		return movieProgressRequest{}, false
@@ -577,12 +580,17 @@ func decodeMovieProgressRequest(w http.ResponseWriter, r *http.Request) (moviePr
 		fields["complete"] = respond.FieldError{Message: i18n.T(locale, i18n.MsgInvalidRequestBody)}
 	}
 
+	pourcent, ok := decodeIntField(body, "pourcent")
+	if !ok || pourcent < 0 || pourcent > 100 {
+		fields["pourcent"] = respond.FieldError{Message: i18n.T(locale, i18n.MsgInvalidRequestBody)}
+	}
+
 	if len(fields) > 0 {
 		respond.ValidationError(w, http.StatusBadRequest, fields)
 		return movieProgressRequest{}, false
 	}
 
-	return movieProgressRequest{Progress: progress, Complete: complete}, true
+	return movieProgressRequest{Progress: progress, Complete: complete, Pourcent: pourcent}, true
 }
 
 func decodeIntField(body map[string]json.RawMessage, field string) (int, bool) {
