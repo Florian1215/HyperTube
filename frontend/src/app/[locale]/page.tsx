@@ -129,5 +129,5 @@ function filterAlreadyWatch(watchHistory?: iMovie[], movies?: iMovie[]) {
         return [];
     if (!watchHistory || !watchHistory.length)
         return movies;
-    return movies.filter(m => watchHistory.find(mw => mw.imdb_id != m.imdb_id));
+    return movies.filter(m => !watchHistory.find(mw => mw.imdb_id == m.imdb_id));
 }
