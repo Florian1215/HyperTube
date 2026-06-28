@@ -28,7 +28,7 @@ export default function Navbar() {
     const pathname = usePathname()
     const t = useTranslations("nav");
 
-    const navItems: iNavItem[] = user !== null ? [{
+    const navItems: iNavItem[] = user ? [{
         name: "", icon: HypertubResponsiveLogo, href: "/"}, {
         name: t("search"), icon: SearchIcon, href: "/movies"}, {
         name: t("account"), icon: () => <ProfilePicture user={user} />, href: "/users"}, {

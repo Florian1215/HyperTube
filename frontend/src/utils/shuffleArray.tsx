@@ -1,6 +1,6 @@
 import {iMovie} from "@/types/movie";
 
-export default function shuffleArray(array: iMovie[] | null) {
+export default function shuffleArray(array?: iMovie[]) {
     if (!array)
         return []
 

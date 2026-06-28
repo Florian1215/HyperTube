@@ -9,9 +9,11 @@ import MovieCardList from "@/components/features/movie/MovieCardList";
 import {SortIcon} from "@/components/Icons";
 import {iMovie} from "@/types/movie";
 import TextButton from "@/components/ui/Button/TextButton";
+import useAuth from "@/contexts/AuthContext";
 
 export default function MoviesList({movieSets, sort, changeSort, genre} : {movieSets?: iMovie[], sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
     const {openModal} = useModal();
+    const {user} = useAuth();
     const [filterGenre, setFilterGenre] = useState<iGenre[]>(genre === undefined ? [] : [genre])
     const size = useResponsiveSize();
     const t = useTranslations("movies");
@@ -90,8 +92,8 @@ export default function MoviesList({movieSets, sort, changeSort, genre} : {movie
             </thead>
             <tbody>
             {sortedMovies ?
-                sortedMovies.map((movie) => (<MovieCardList key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre}/>)) :
-                [...Array(6)].map((_, i) => (<MovieCardList key={i} movie={null} setFilterGenre={setFilterGenre}/>))
+                sortedMovies.map((movie) => (<MovieCardList key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre} user={user}/>)) :
+                [...Array(6)].map((_, i) => (<MovieCardList key={i} setFilterGenre={setFilterGenre}/>))
             }
             </tbody>
         </table>

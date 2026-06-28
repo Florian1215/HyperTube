@@ -10,6 +10,7 @@ import {useLocale} from "next-intl";
 import loadSRT from "@/utils/loadSRT";
 import useModal from "@/contexts/ModalContext";
 import {refreshAccessToken} from "@/services/auth.service";
+import {updateMovieProgress} from "@/services/movies.service";
 
 interface iSub{
     start: number
@@ -44,6 +45,9 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
     const {openModal} = useModal();
     const handleKeyPress = useRef(true);
     const playStateBeforeSeeking = useRef(false);
+    const lastSent = useRef(0);
+    const setComplete = useRef(false);
+    const min15 = 15 * 60;
 
     useEffect(() => {
         if (downloadSubtitle)
@@ -78,7 +82,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
                     try {
                         await refreshAccessToken(locale);
                         hls.stopLoad();
-                        hls.startLoad();
+                        hls.startLoad(-1);
                     } catch {
                         videoRef?.current?.pause();
                         handleKeyPress.current = false;
@@ -145,6 +149,19 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
         if (subs.length > 0) {
             const current = subs.find(s => video.currentTime >= s.start && video.currentTime <= s.end);
             setCurrentText(current?.text ?? "");
+        }
+
+        if (!setComplete.current) {
+            if (video.currentTime + min15 > duration) {
+                updateMovieProgress(imdbId, 1000, true);
+                setComplete.current = true;
+            } else {
+                const second = Math.floor(video.currentTime % 60);
+                if (second - lastSent.current >= 30) {
+                    lastSent.current = second;
+                    updateMovieProgress(imdbId, second, false);
+                }
+            }
         }
     };
 

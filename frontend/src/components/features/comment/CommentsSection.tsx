@@ -39,7 +39,7 @@ export default function CommentsSection({movie}: {movie: iMovie}) {
         </div>
         <div className="w-full text-center">
             {
-                user !== null ?
+                user ?
                 <div className="flex gap-2 sm:gap-4">
                     <ProfilePicture user={user}/>
                     <NewComment user={user} onSubmit={addNewComment} movie={movie} />

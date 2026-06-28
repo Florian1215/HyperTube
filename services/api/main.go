@@ -209,7 +209,7 @@ func newRouter(
 		r.With(requireAuth).Get("/users", usersHandler.ListUsers)
 		r.With(requireAuth).Get("/users/{id}", usersHandler.GetUser)
 		r.With(requireAuth).Get("/users/{id}/comments", commentsHandler.ListByUser)
-		r.With(requireAuth).Get("/users/{id}/film-history", moviesHandler.GetUserFilmHistory)
+		r.With(requireAuth).Get("/users/{id}/movie-history", moviesHandler.GetUserFilmHistory)
 		r.With(requireAuth).Patch("/users/new-password", usersHandler.SetPassword)
 		r.With(requireAuth).Patch("/users/{id}", usersHandler.UpdateUser)
 
