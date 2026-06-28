@@ -20,7 +20,7 @@ func mustContainSequence(t *testing.T, haystack []string, a, b string) {
 
 // buildAV1Args must TRANSCODE the video to h264, not copy it.
 func TestBuildAV1ArgsTranscodesToH264(t *testing.T) {
-	args := buildAV1Args("pipe:0", "/out", "0:a:0")
+	args := defaultTranscodeArgs("pipe:0", "/out", "0:a:0")
 
 	mustContainSequence(t, args, "-c:v", "libx264")
 	mustContainSequence(t, args, "-c:a", "aac")
