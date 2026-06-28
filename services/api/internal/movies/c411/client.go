@@ -160,8 +160,8 @@ func (c *Client) get(ctx context.Context, rawURL string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusTooManyRequests {
-		log.Println("C411 rate limit exceeded (429) - wait 1 second before retrying")
-		time.Sleep(time.Second)
+		log.Println("C411 rate limit exceeded (429) - wait 2 second before retrying")
+		time.Sleep(time.Second * 2)
 		return c.get(ctx, rawURL)
 	}
 	if resp.StatusCode != http.StatusOK {

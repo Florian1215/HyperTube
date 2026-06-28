@@ -88,6 +88,14 @@ func (s *fakeStore) listSearchResults(ctx context.Context, query string, limit, 
 	return nil, nil
 }
 
+func (s *fakeStore) HasAppState(ctx context.Context, key string) (bool, error) {
+	return false, nil
+}
+
+func (s *fakeStore) MarkAppState(ctx context.Context, key string) error {
+	return nil
+}
+
 func (s *fakeStore) listWatched(ctx context.Context, user_id int) ([]models.WatchedMovie, error) {
 	s.listWatchedCalled = true
 	s.listWatchedUserID = user_id
