@@ -114,7 +114,6 @@ type userResponse struct {
 	CreatedAt      string  `json:"created_at"`
 	JoinedAt       int64   `json:"joined_at"`
 	Color          string  `json:"color"`
-	WatchHistory   []any   `json:"watch_history"`
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -222,7 +221,6 @@ func toUserResponse(user models.User, oauthMethod *string) userResponse {
 		CreatedAt:      user.CreatedAt.Format(time.RFC3339),
 		JoinedAt:       user.CreatedAt.UnixMilli(),
 		Color:          color,
-		WatchHistory:   []any{},
 	}
 }
 
