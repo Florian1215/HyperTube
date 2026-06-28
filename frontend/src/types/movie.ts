@@ -8,6 +8,7 @@ export interface iMovie {
     note: number
     complete?: boolean
     progress?: number
+    pourcent?: number
 }
 
 export interface iMovieDetails extends iMovie {

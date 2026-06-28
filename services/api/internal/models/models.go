@@ -26,20 +26,21 @@ type WatchedMovie struct {
 	OriginalLanguage string  `json:"original_language" db:"original_language"`
 	Progress         int     `json:"progress" db:"progress"`
 	Complete         bool    `json:"complete" db:"complete"`
+	Pourcent         int     `json:"pourcent" db:"pourcent"`
 }
 
 type Torrent struct {
-	Id       string  `json:"id"`
-	ImdbID   string  `json:"imdb_id"`
-	Title    string  `json:"title"`
-	Year     int     `json:"year"`
-	Source   string  `json:"source"`
-	URL      string  `json:"url"`
-	Quality  string  `json:"quality"`
-	Size     float64 `json:"size"`
-	Language string  `json:"language"`
-	Seeds    string  `json:"seeds"`
-	Status   string  `json:"status"`
+	Id         string     `json:"id"`
+	ImdbID     string     `json:"imdb_id"`
+	Title      string     `json:"title"`
+	Year       int        `json:"year"`
+	Source     string     `json:"source"`
+	URL        string     `json:"url"`
+	Quality    string     `json:"quality"`
+	Size       float64    `json:"size"`
+	Language   string     `json:"language"`
+	Seeds      string     `json:"seeds"`
+	Status     string     `json:"status"`
 	FinishedAt *time.Time `json:"finished_at,omitempty" db:"finished_at"`
 }
 

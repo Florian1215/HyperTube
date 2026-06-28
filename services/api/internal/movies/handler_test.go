@@ -26,6 +26,7 @@ type fakeStore struct {
 	savedProgressImdbID     string
 	savedProgress           int
 	savedComplete           bool
+	savedPourcent           int
 	saveMovieProgressCalled bool
 	saveMovieProgressErr    error
 }
@@ -102,12 +103,13 @@ func (s *fakeStore) listWatched(ctx context.Context, user_id int) ([]models.Watc
 	return s.watched, s.err
 }
 
-func (s *fakeStore) saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error {
+func (s *fakeStore) saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool, pourcent int) error {
 	s.saveMovieProgressCalled = true
 	s.savedProgressUserID = userID
 	s.savedProgressImdbID = imdbID
 	s.savedProgress = progress
 	s.savedComplete = complete
+	s.savedPourcent = pourcent
 	return s.saveMovieProgressErr
 }
 
@@ -482,7 +484,7 @@ func TestPatchMovieProgressCreatesOrUpdatesForAuthenticatedUser(t *testing.T) {
 	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false,"pourcent":50}`))
 	req.SetPathValue("id", "tt1234567")
 	rec := httptest.NewRecorder()
 
@@ -505,7 +507,7 @@ func TestPatchMovieProgressCreatesOrUpdatesForAuthenticatedUser(t *testing.T) {
 		t.Fatal("expected store save to be called")
 	}
 	if store.savedProgressUserID != 42 || store.savedProgressImdbID != "tt1234567" || store.savedProgress != 1804 || store.savedComplete {
-		t.Fatalf("unexpected saved progress: user=%d imdb=%q progress=%d complete=%v", store.savedProgressUserID, store.savedProgressImdbID, store.savedProgress, store.savedComplete)
+		t.Fatalf("unexpected saved progress: user=%d imdb=%q progress=%d complete=%v pourcent=%v", store.savedProgressUserID, store.savedProgressImdbID, store.savedProgress, store.savedComplete, store.savedPourcent)
 	}
 }
 
@@ -531,7 +533,7 @@ func TestPatchMovieProgressRejectsUnknownMovie(t *testing.T) {
 	store := &fakeStore{}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt404/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt404/progress", strings.NewReader(`{"progress":1804,"complete":false,"pourcent":50}`))
 	req.SetPathValue("id", "tt404")
 	rec := httptest.NewRecorder()
 
@@ -570,7 +572,7 @@ func TestPatchMovieProgressRejectsUnknownField(t *testing.T) {
 	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false,"extra":true}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false,"pourcent":50,"extra":true}`))
 	req.SetPathValue("id", "tt1234567")
 	rec := httptest.NewRecorder()
 
@@ -591,7 +593,7 @@ func TestPatchMovieProgressRejectsMultipleJSONDocuments(t *testing.T) {
 	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false} {}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false,"pourcent":50} {}`))
 	req.SetPathValue("id", "tt1234567")
 	rec := httptest.NewRecorder()
 
@@ -614,8 +616,9 @@ func TestPatchMovieProgressRejectsMissingFields(t *testing.T) {
 		body         string
 		missingField string
 	}{
-		{name: "missing complete", body: `{"progress":1804}`, missingField: "complete"},
-		{name: "missing progress", body: `{"complete":false}`, missingField: "progress"},
+		{name: "missing complete", body: `{"progress":1804,"pourcent":50}`, missingField: "complete"},
+		{name: "missing progress", body: `{"complete":false,"pourcent":50}`, missingField: "progress"},
+		{name: "missing pourcent", body: `{"progress":1804,"complete":false}`, missingField: "pourcent"},
 	}
 
 	for _, tt := range tests {
@@ -648,10 +651,10 @@ func TestPatchMovieProgressRejectsNullOrWrongTypeFields(t *testing.T) {
 		name string
 		body string
 	}{
-		{name: "progress null", body: `{"progress":null,"complete":false}`},
-		{name: "complete null", body: `{"progress":1804,"complete":null}`},
-		{name: "progress string", body: `{"progress":"1804","complete":false}`},
-		{name: "complete string", body: `{"progress":1804,"complete":"false"}`},
+		{name: "progress null", body: `{"progress":null,"complete":false,"pourcent":50}`},
+		{name: "complete null", body: `{"progress":1804,"complete":null,"pourcent":50}`},
+		{name: "progress string", body: `{"progress":"1804","complete":false,"pourcent":50}`},
+		{name: "complete string", body: `{"progress":1804,"complete":"false","pourcent":50}`},
 	}
 
 	for _, tt := range tests {
@@ -682,7 +685,7 @@ func TestPatchMovieProgressRejectsNegativeProgress(t *testing.T) {
 	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":-1,"complete":false}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":-1,"complete":false,"pourcent":50}`))
 	req.SetPathValue("id", "tt1234567")
 	rec := httptest.NewRecorder()
 
@@ -707,7 +710,7 @@ func TestPatchMovieProgressReturnsInternalError(t *testing.T) {
 	}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false,"pourcent":50}`))
 	req.SetPathValue("id", "tt1234567")
 	rec := httptest.NewRecorder()
 
@@ -756,7 +759,7 @@ func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
 func TestGetUserFilmHistoryReturnsUpdatedProgressFields(t *testing.T) {
 	store := &fakeStore{watched: []models.WatchedMovie{{
 		ImdbID: "tt1234567", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
-		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1804, Complete: false,
+		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1804, Complete: false, Pourcent: 50,
 	}}}
 	h := &MoviesHandler{store: store}
 

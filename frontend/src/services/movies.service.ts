@@ -39,11 +39,12 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
     );
 }
 
-export function updateMovieProgress(movieId: string, progress: number, complete: boolean) {
+export function updateMovieProgress(movieId: string, progress: number, pourcent: number, complete: boolean) {
     return apiClient<tListResponse<{
         progress: number
         complete: boolean
-    }>>(`/movies/${movieId}/progress`, undefined, {method: "PATCH", body: JSON.stringify({progress, complete})});
+        pourcent: number
+    }>>(`/movies/${movieId}/progress`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
 }
 
 export function startTorrentStreaming(torrentId: string) {

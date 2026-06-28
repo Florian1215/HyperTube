@@ -113,7 +113,7 @@ func (s *Store) listWatched(ctx context.Context, userID int) ([]models.WatchedMo
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
 		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language,
-		       h.progress, h.complete
+		       h.progress, h.complete, h.pourcent
 		FROM movies m
 		JOIN watch_history h ON h.imdbid = m.imdbid
 		WHERE h.user_id = $1
@@ -126,15 +126,16 @@ func (s *Store) listWatched(ctx context.Context, userID int) ([]models.WatchedMo
 	return pgx.CollectRows(rows, pgx.RowToStructByName[models.WatchedMovie])
 }
 
-func (s *Store) saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error {
+func (s *Store) saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool, pourcent int) error {
 	_, err := s.db.Exec(ctx, `
-		INSERT INTO watch_history (user_id, imdbid, progress, complete, watched_at)
-		VALUES ($1, $2, $3, $4, NOW())
+		INSERT INTO watch_history (user_id, imdbid, progress, complete, pourcent, watched_at)
+		VALUES ($1, $2, $3, $4, $5, NOW())
 		ON CONFLICT (user_id, imdbid) DO UPDATE
 		SET progress = EXCLUDED.progress,
 		    complete = EXCLUDED.complete,
+		    pourcent = EXCLUDED.pourcent,
 		    watched_at = NOW()
-	`, userID, imdbID, progress, complete)
+	`, userID, imdbID, progress, complete, pourcent)
 	return err
 }
 

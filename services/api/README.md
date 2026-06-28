@@ -1376,13 +1376,14 @@ Saves playback progress for the authenticated user and movie. Requires
 
 ### Request body
 
-Only `progress` and `complete` are accepted. `progress` is the playback position
+Only `progress`, `pourcent` and `complete` are accepted. `progress` is the playback position
 in seconds and must be a non-negative integer. `complete` marks whether the
-movie was fully watched.
+movie was fully watched. And `pourcent` is the percentage of the movie watched, an integer between 0 and 100.
 
 ```json
 {
   "progress": 1804,
+  "pourcent": 54,
   "complete": false
 }
 ```
@@ -1395,6 +1396,7 @@ movie was fully watched.
 {
   "data": {
     "progress": 1804,
+    "pourcent": 54,
     "complete": false
   }
 }
@@ -1446,8 +1448,6 @@ Returns full metadata for a single movie. Summary, director, and cast are fetche
     "director": "string",
     "cast": ["string"],
     "extra_backdrops": ["string"],
-    "watched": false,
-    "progression": 0.0
   }
 }
 ```

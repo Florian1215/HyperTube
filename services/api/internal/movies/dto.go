@@ -48,6 +48,7 @@ type movieHistoryResponse struct {
 	Genre       []int   `json:"genres"`
 	Progress    int     `json:"progress"`
 	Complete    bool    `json:"complete"`
+	Pourcent    int     `json:"pourcent"`
 }
 
 func toMovieHistoryResponse(m models.WatchedMovie) movieHistoryResponse {
@@ -61,12 +62,14 @@ func toMovieHistoryResponse(m models.WatchedMovie) movieHistoryResponse {
 		Genre:       m.Genre,
 		Progress:    m.Progress,
 		Complete:    m.Complete,
+		Pourcent:    m.Pourcent,
 	}
 }
 
 type movieProgressResponse struct {
 	Progress int  `json:"progress"`
 	Complete bool `json:"complete"`
+	Pourcent int  `json:"Pourcent"`
 }
 
 type movieDetailResponse struct {
