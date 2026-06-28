@@ -26,6 +26,7 @@ const (
 // tests can supply a fake without a database.
 type Store interface {
 	FinishedBefore(ctx context.Context, cutoff time.Time) ([]string, error)
+	InProgress(ctx context.Context) ([]string, error)
 	ResetTorrent(ctx context.Context, id string) error
 }
 
@@ -50,6 +51,17 @@ func NewCleaner(store Store, dropper TorrentDropper, retention, interval time.Du
 		interval:        interval,
 		videoBasePath:   "/data/videos",
 		torrentBasePath: "/data/torrents",
+	}
+}
+
+func (c *Cleaner) CleanupInterrupted(ctx context.Context) {
+	ids, err := c.store.InProgress(ctx)
+	if err != nil {
+		log.Printf("cleanup: failed to list interrupted torrents: %v", err)
+		return
+	}
+	for _, id := range ids {
+		c.delete(ctx, id)
 	}
 }
 
@@ -91,5 +103,5 @@ func (c *Cleaner) delete(ctx context.Context, id string) {
 		log.Printf("cleanup: %s: failed to reset torrent status: %v", id, err)
 		return
 	}
-	log.Printf("cleanup: %s: removed finished torrent data after retention period", id)
+	log.Printf("cleanup: %s: removed torrent data and reset status", id)
 }
