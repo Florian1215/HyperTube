@@ -38,7 +38,12 @@ export default function Comments({currentUser, comments, setComments, index, set
 
     return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col gap-6">
-            {comments.map((comment, index) => <Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment} deleteComment={deleteDisplayComment}/>)}
+            {comments.map((comment, index) => {
+                const previousComment: iCommentDetails | null = (profilePage && index > 0) ? comments[index - 1] as iCommentDetails : null;
+                console.log("previousComment", previousComment, profilePage, index);
+                return (<Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment}
+                         deleteComment={deleteDisplayComment} previousCommentMovieId={previousComment?.movie.imdb_id}/>);
+            })}
         </div>
     </Pagination>);
 }
