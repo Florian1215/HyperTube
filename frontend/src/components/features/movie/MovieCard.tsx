@@ -23,14 +23,14 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
                onLoad={() => setIsLoaded(true)}
         />
         <WatchProgress user={user} movie={movie} />
-        {!isLoaded && <div className="absolute inset-0 size-full"><div className="custom-loading" /></div>}
+        {!isLoaded && <div className="absolute inset-0 size-full"><div className="custom-loading"/></div>}
         <div className="absolute inset-0 p-4 flex items-end">
             <div className="custom-noise" />
             <div className={movie.complete ? "custom-complete-movie" : "bg-gradient"} />
             {showTitle &&
                 <h3 className="pl-[8%] flex gap-1 justify-center w-full z-10 text-white">
                     <span className="max-w-8/10 custom-movie-title">{movie.title}</span>
-                    <span className="font-hairline text-lg tracking-normal">{movie.year}</span>
+                    <span className="responsive-text-hairline xl:text-xl text-xl">{movie.year}</span>
                 </h3>}
         </div>
     </LinkLoginRequired>);

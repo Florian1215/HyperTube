@@ -20,8 +20,9 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
         return (<LoadingText center={true} />);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
-        <h1 className="relative mx-auto mb-2">{movie.title}
-            <span className="absolute -right-7 sm:-right-9 md:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
+        <h1 className="flex gap-1 justify-center w-full">
+            <span className="max-w-8/10 custom-movie-title">{movie.title}</span>
+            <span className="responsive-text-hairline">{movie.year}</span>
         </h1>
         <InfoMovie name={t("length")}>
             <p>{getLenght()}</p>

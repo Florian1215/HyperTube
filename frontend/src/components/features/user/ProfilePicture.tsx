@@ -19,7 +19,7 @@ export default function ProfilePicture({user, size = 0, color, className}: {user
         if (size === 0)
             children = <h6>{initial}</h6>;
         else if (size === 1)
-            children = <h3>{initial}</h3>;
+            children = <h4 className="text-3xl sm:text-5xl">{initial}</h4>;
         else
             children = <h1 className="text-6xl">{initial}</h1>;
     }
