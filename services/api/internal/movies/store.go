@@ -143,7 +143,10 @@ func (s *Store) listDirectStream(ctx context.Context) ([]models.Movie, error) {
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,
 		       m.poster_url, m.backdrop_url, m.note, m.genre, m.original_language
 		FROM movies m
-		JOIN direct_stream_movies d ON d.imdbid = m.imdbid
+		WHERE EXISTS (
+			SELECT 1 FROM torrents t
+			WHERE t.imdbid = m.imdbid AND t.status = 'finished'
+		)
 	`)
 	if err != nil {
 		return nil, err
