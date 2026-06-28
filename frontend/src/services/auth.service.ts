@@ -18,7 +18,7 @@ export function postSetNewPassword(locale: string, data: string[], token?: strin
     return apiClient<tResponse<iUserToken>>("/auth/reset-password", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
 }
 
-export function handleOauth(oatuhCompany: tOauthService, redirect: string | null) {
+export function handleOauth(oatuhCompany: tOauthService, redirect?: string) {
     let endpoint = `${API_URL}/auth/${oatuhCompany}/login`;
 
     if (redirect !== null)

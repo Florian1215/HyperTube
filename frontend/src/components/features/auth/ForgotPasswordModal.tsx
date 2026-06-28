@@ -20,12 +20,12 @@ export default function ForgotPasswordModal() {
         return null;
 
     const handleResetPassword = () => {
-        setCallbackUrl(null);
+        setCallbackUrl(undefined);
         closeModal();
         addNotification(tSuccess("emailResetPassword"), "warning");
     }
 
-    return (<ModalLayout onCloseAction={() => {closeModal(); setCallbackUrl(null);}} title={t("title")}>
+    return (<ModalLayout onCloseAction={() => {closeModal(); setCallbackUrl(undefined);}} title={t("title")}>
         <Form formType={"send-email-reset-password"} request={postResetPassword} handleRequest={handleResetPassword} fields={["email"]} t={t} />
     </ModalLayout>);
 }

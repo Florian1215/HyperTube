@@ -927,7 +927,7 @@ A syntactically valid ID for an unknown user returns an empty collection.
 
 ---
 
-## GET /users/{id}/film-history
+## GET /users/{id}/movie-history
 
 Returns all stored watch-history entries for the requested user, ordered by
 `watched_at DESC`. Any authenticated user may read another user's history.

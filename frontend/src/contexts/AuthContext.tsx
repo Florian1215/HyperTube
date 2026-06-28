@@ -5,21 +5,21 @@ import {iUser} from "@/types/user";
 import {usePathname, useRouter} from "@/i18n/navigation";
 
 interface AuthContextType {
-    user: iUser | null;
+    user?: iUser;
     login: (user: iUser, token: string, refresh: string) => void;
     logout: () => void;
     loading: boolean;
     updateUser: (patch: Partial<iUser>) => void;
-    callbackUrl: string | null
-    setCallbackUrl: (callbackUrl: string | null) => void;
+    callbackUrl?: string
+    setCallbackUrl: (callbackUrl?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({children}: {children: ReactNode}) {
-    const [user, setUser] = useState<iUser | null>(null);
+    const [user, setUser] = useState<iUser>();
     const [loading, setLoading] = useState(true);
-    const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+    const [callbackUrl, setCallbackUrl] = useState<string>();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -50,7 +50,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const logout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        setUser(null);
+        setUser(undefined);
         if (pathname !== "/" && pathname !== "/movies")
             router.push("/");
     };

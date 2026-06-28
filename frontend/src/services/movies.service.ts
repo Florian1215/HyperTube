@@ -39,6 +39,13 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
     );
 }
 
+export function updateMovieProgress(movieId: string, progress: number, complete: boolean) {
+    return apiClient<tListResponse<{
+        progress: number
+        complete: boolean
+    }>>(`/movies/${movieId}/progress`, undefined, {method: "PATCH", body: JSON.stringify({progress, complete})});
+}
+
 export function startTorrentStreaming(torrentId: string) {
     return apiClient<tListResponse<iTorrent[]>>(`/stream/${torrentId}`);
 }

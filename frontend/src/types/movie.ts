@@ -6,6 +6,8 @@ export interface iMovie {
     backdrop_url: string
     genres: number[]
     note: number
+    complete?: boolean
+    progress?: number
 }
 
 export interface iMovieDetails extends iMovie {
@@ -14,8 +16,6 @@ export interface iMovieDetails extends iMovie {
     summary: string
     director: string
     cast: string[]
-    watched: boolean
-    progression: number
 }
 
 export interface iTorrent {

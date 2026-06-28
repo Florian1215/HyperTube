@@ -1,7 +1,7 @@
 import useApiQuery from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse, tResponse} from "@/types/api";
-import {iComment} from "@/types/comment";
+import {iComment, iCommentDetails} from "@/types/comment";
 
 function getComments(filmId?: string, page?: number, locale?: string) {
     let endpoint = "/comments";
@@ -11,7 +11,7 @@ function getComments(filmId?: string, page?: number, locale?: string) {
 }
 
 function getUserComments(userId: number, page: number, locale: string) {
-    return apiClient<tListResponse<iComment[]>>(`/users/${userId}/comments?page=${page}`, locale);
+    return apiClient<tListResponse<iCommentDetails[]>>(`/users/${userId}/comments?page=${page}`, locale);
 }
 
 export function postComment(locale: string, movieId: string, content: string) {

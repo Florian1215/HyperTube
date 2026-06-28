@@ -15,6 +15,9 @@ import CloseButton from "@/components/ui/Button/CloseButton";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import MoviesList from "@/components/features/movie/MoviesList";
 import SmallText from "@/components/ui/SmallText";
+import {useUserFilmHistory} from "@/services/users.service";
+import useAuth from "@/contexts/AuthContext";
+import addProgressToMovie from "@/utils/addProgressToMovie";
 
 type tViewType = | "grid" | "list";
 
@@ -38,8 +41,11 @@ export default function Page() {
     const [viewType, setViewType] = useState<tViewType>(genre === undefined && mostRated === null ? "grid" : "list");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [index, setIndex] = useState(0);
-    const {data: movies} = useMovies(searchValue.trim(), index);
-    const totalPage = computeTotalPage(movies);
+    const {data: rawMovies} = useMovies(searchValue.trim(), index);
+    const {user} = useAuth();
+    const {data: watchHistory} = useUserFilmHistory(user?.id);
+    const movies = addProgressToMovie(watchHistory?.data, rawMovies?.data) as iMovie[] | undefined;
+    const totalPage = computeTotalPage(rawMovies);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -58,7 +64,7 @@ export default function Page() {
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />
         <Filter viewType={viewType} onClick={handleSetViewType}/>
         <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} variableMT={true}>
-            <Results movies={movies?.data} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+            <Results movies={movies} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
         </Pagination>
     </div>);
 }
@@ -95,5 +101,5 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
 
     if (viewType === "grid")
         return (<MoviesGrid movieSets={movies}/>);
-    return (<MoviesList movieSets={movies} sort={sort} changeSort={changeSort} genre={genre} />);
+    return (<MoviesList movieSets={movies} sort={sort} changeSort={changeSort} genre={genre}/>);
 }

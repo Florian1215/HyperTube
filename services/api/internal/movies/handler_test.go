@@ -723,7 +723,7 @@ func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
 	}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
 	rec := httptest.NewRecorder()
 	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
@@ -752,7 +752,7 @@ func TestGetUserFilmHistoryReturnsUpdatedProgressFields(t *testing.T) {
 	}}}
 	h := &MoviesHandler{store: store}
 
-	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
 	rec := httptest.NewRecorder()
 	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
@@ -778,7 +778,7 @@ func TestGetUserFilmHistoryReturnsUpdatedProgressFields(t *testing.T) {
 func TestGetUserFilmHistoryRequiresAuthentication(t *testing.T) {
 	store := &fakeStore{}
 	h := &MoviesHandler{store: store}
-	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
 	rec := httptest.NewRecorder()
 
@@ -797,7 +797,7 @@ func TestGetUserFilmHistoryRejectsInvalidUserID(t *testing.T) {
 		t.Run(value, func(t *testing.T) {
 			store := &fakeStore{}
 			h := &MoviesHandler{store: store}
-			req := httptest.NewRequest(http.MethodGet, "/users/"+value+"/film-history", nil)
+			req := httptest.NewRequest(http.MethodGet, "/users/"+value+"/movie-history", nil)
 			req.SetPathValue("id", value)
 			rec := httptest.NewRecorder()
 
@@ -816,7 +816,7 @@ func TestGetUserFilmHistoryRejectsInvalidUserID(t *testing.T) {
 func TestGetUserFilmHistoryReturnsInternalError(t *testing.T) {
 	store := &fakeStore{err: errors.New("db down")}
 	h := &MoviesHandler{store: store}
-	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
 	rec := httptest.NewRecorder()
 
@@ -830,7 +830,7 @@ func TestGetUserFilmHistoryReturnsInternalError(t *testing.T) {
 func TestGetUserFilmHistoryReturnsEmptyJSONList(t *testing.T) {
 	store := &fakeStore{}
 	h := &MoviesHandler{store: store}
-	req := httptest.NewRequest(http.MethodGet, "/users/7/film-history", nil)
+	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
 	rec := httptest.NewRecorder()
 
