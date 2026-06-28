@@ -142,7 +142,15 @@ func (h *MoviesHandler) GetUserFilmHistory(w http.ResponseWriter, r *http.Reques
 
 	movieResponse := make([]movieHistoryResponse, len(movies))
 	for i, movie := range movies {
-		movieResponse[i] = toMovieHistoryResponse(movie)
+		details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, movieDetailsLanguage(r))
+		if err != nil {
+			log.Printf("TMDB details error for TmdbID %s: %v", movie.TmdbID, err)
+			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedFetchMovieDetails)
+			return
+		}
+
+		progressPercentage := watchProgressPercentage(movie.Progress, details.Runtime, movie.Complete)
+		movieResponse[i] = toMovieHistoryResponse(movie, progressPercentage)
 	}
 	respond.List(w, http.StatusOK, movieResponse)
 }
@@ -175,11 +183,7 @@ func (h *MoviesHandler) GetMoviesId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	locale := i18n.FromRequest(r)
-	if r.Header.Get("Accept-Language") == "" && r.URL.Query().Get("lang") != "" {
-		locale = i18n.FromValue(r.URL.Query().Get("lang"))
-	}
-	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, locale.String())
+	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, movieDetailsLanguage(r))
 	if err != nil {
 		log.Printf("TMDB details error for TmdbID %s: %v", movie.TmdbID, err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedFetchMovieDetails)
@@ -217,6 +221,13 @@ func (h *MoviesHandler) PatchMovieProgress(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	details, err := h.tmdb.GetMovieDetails(r.Context(), movie.TmdbID, movieDetailsLanguage(r))
+	if err != nil {
+		log.Printf("TMDB details error for TmdbID %s: %v", movie.TmdbID, err)
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedFetchMovieDetails)
+		return
+	}
+
 	if err := h.store.saveMovieProgress(r.Context(), int(userID), movie.ImdbID, body.Progress, body.Complete); err != nil {
 		log.Println("db err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadMovies)
@@ -224,9 +235,17 @@ func (h *MoviesHandler) PatchMovieProgress(w http.ResponseWriter, r *http.Reques
 	}
 
 	respond.Item(w, http.StatusOK, movieProgressResponse{
-		Progress: body.Progress,
+		Progress: watchProgressPercentage(body.Progress, details.Runtime, body.Complete),
 		Complete: body.Complete,
 	})
+}
+
+func movieDetailsLanguage(r *http.Request) string {
+	locale := i18n.FromRequest(r)
+	if r.Header.Get("Accept-Language") == "" && r.URL.Query().Get("lang") != "" {
+		locale = i18n.FromValue(r.URL.Query().Get("lang"))
+	}
+	return locale.String()
 }
 
 func (h *MoviesHandler) collectTorrents(ctx context.Context, title string) ([]models.Torrent, error) {

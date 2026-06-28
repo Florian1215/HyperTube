@@ -953,7 +953,7 @@ most one row per user/movie.
       "backdrop_url": "https://example.test/backdrop.jpg",
       "note": 8.1,
       "genres": [12, 18],
-      "progress": 1804,
+      "progress": 50,
       "complete": false
     }
   ],
@@ -965,6 +965,11 @@ most one row per user/movie.
 }
 ```
 
+`progress` in the response is the watch percentage from `0` to `100`, computed
+from the stored playback seconds and the movie runtime returned by TMDB. It may
+be fractional with up to two decimal places. The database value remains stored
+as playback seconds.
+
 A syntactically valid ID for an unknown user returns `"data": []` with zeroed
 metadata.
 
@@ -975,7 +980,7 @@ metadata.
 | 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
 | 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
 | 404 | `NOT_FOUND` | Path user ID is not a positive integer. |
-| 500 | `INTERNAL_ERROR` | Loading the user's film history failed. |
+| 500 | `INTERNAL_ERROR` | Loading the user's film history or fetching movie runtime details failed. |
 
 ---
 
@@ -1394,11 +1399,16 @@ movie was fully watched.
 ```json
 {
   "data": {
-    "progress": 1804,
+    "progress": 50.11,
     "complete": false
   }
 }
 ```
+
+The request body `progress` is playback seconds and is stored unchanged in
+`watch_history.progress`. The response `progress` is the calculated watch
+percentage from `0` to `100`, using TMDB runtime minutes converted to seconds.
+It may be fractional with up to two decimal places.
 
 ### Error responses
 
@@ -1409,7 +1419,7 @@ movie was fully watched.
 | 401 | `UNAUTHORIZED` | Bearer token is missing or invalid. |
 | 401 | `TOKEN_EXPIRED` | Bearer token has expired. |
 | 404 | `NOT_FOUND` | Movie ID is empty or unknown. |
-| 500 | `INTERNAL_ERROR` | Saving progress failed. |
+| 500 | `INTERNAL_ERROR` | Fetching movie runtime details or saving progress failed. |
 
 ---
 
