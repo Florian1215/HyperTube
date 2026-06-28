@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	torrent_transcode "hypertube/torrent-transcode/internal"
+	"hypertube/torrent-transcode/internal/cleanup"
 	"hypertube/torrent-transcode/internal/torrent"
 	"io"
 	"log"
@@ -29,6 +30,8 @@ func main() {
 		log.Fatal("failed to create torrent client:", err)
 	}
 	torrentTranscode := torrent_transcode.NewTorrentTranscodeHandler(torrentClient, store, mu, &streams)
+
+	go cleanup.NewCleaner(store, torrentClient, cleanup.DefaultRetention, cleanup.DefaultInterval).Run(ctx)
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

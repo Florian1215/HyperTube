@@ -40,6 +40,7 @@ type Torrent struct {
 	Language string  `json:"language"`
 	Seeds    string  `json:"seeds"`
 	Status   string  `json:"status"`
+	FinishedAt *time.Time `json:"finished_at,omitempty" db:"finished_at"`
 }
 
 type Subtitle struct {
