@@ -15,7 +15,7 @@ import Button from "@/components/ui/Button/Button";
 
 dayjs.extend(relativeTime);
 
-export default function Comment({comment, currentUser, updateComment, deleteComment}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void}) {
+export default function Comment({comment, currentUser, updateComment, deleteComment, previousCommentMovieId}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void, previousCommentMovieId?: string}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -31,8 +31,8 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     return (<div className="w-full"
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
-        {"movie" in comment && <div className="flex justify-center mb-3">
-            <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={comment.movie}/></div>}
+        {"movie" in comment && previousCommentMovieId != comment.movie.imdb_id && <div className="flex justify-center mb-3">
+            <MovieCard user={currentUser} className="aspect-21/9" movie={comment.movie}/></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
