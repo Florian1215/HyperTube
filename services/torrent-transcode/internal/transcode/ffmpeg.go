@@ -86,7 +86,19 @@ var iso639_1to2 = map[string][]string{
 }
 
 
+func hasAudioStream(streams []ffprobeStream) bool {
+	for _, s := range streams {
+		if s.CodecType == "audio" {
+			return true
+		}
+	}
+	return false
+}
+
 func audioMapForLanguage(streams []ffprobeStream, originalLang string) string {
+	if !hasAudioStream(streams) {
+		return ""
+	}
 	if originalLang == "" {
 		return defaultAudioMap
 	}
@@ -109,66 +121,75 @@ func audioMapForLanguage(streams []ffprobeStream, originalLang string) string {
 	return defaultAudioMap
 }
 
-// buildH264Args repackages an h264 source into HLS
-func buildH264Args(input, outputDir, audioMap string) []string {
+func audioArgs(audioMap string) []string {
+	if audioMap == "" {
+		return nil
+	}
 	return []string{
-		"-i", input,
-		"-map", "0:v:0",
 		"-map", audioMap,
-		"-c:v", "copy",
 		"-c:a", "aac",
 		"-b:a", "256k",
 		"-ac", "2",
+	}
+}
+
+// buildH264Args repackages an h264 source into HLS
+func buildH264Args(input, outputDir, audioMap string) []string {
+	args := []string{
+		"-i", input,
+		"-map", "0:v:0",
+		"-c:v", "copy",
+	}
+	args = append(args, audioArgs(audioMap)...)
+	return append(args,
 		"-bsf:v", "h264_mp4toannexb",
 		"-avoid_negative_ts", "make_zero",
 		"-hls_time", "5",
 		"-hls_list_size", "0",
 		"-hls_flags", "append_list",
 		"-f", "hls",
-		outputDir + "/stream.m3u8",
-	}
+		outputDir+"/stream.m3u8",
+	)
 }
 
 // buildHEVCArgs repackages an hevc source into HLS
 func buildHEVCArgs(input, outputDir, audioMap string) []string {
-	return []string{
+	args := []string{
 		"-i", input,
 		"-map", "0:v:0",
-		"-map", audioMap,
 		"-c:v", "copy",
-		"-c:a", "aac",
-		"-b:a", "256k",
-		"-ac", "2",
+	}
+	args = append(args, audioArgs(audioMap)...)
+	return append(args,
 		"-bsf:v", "hevc_mp4toannexb",
 		"-avoid_negative_ts", "make_zero",
 		"-hls_time", "5",
 		"-hls_list_size", "0",
 		"-hls_flags", "append_list",
 		"-f", "hls",
-		outputDir + "/stream.m3u8",
-	}
+		outputDir+"/stream.m3u8",
+	)
 }
 
-// buildAV1Args transcodes an av1 source into h264 and packages it into HLS
-func buildAV1Args(input, outputDir, audioMap string) []string {
-	return []string{
+// transcode other sources source into h264 and packages it into HLS
+func defaultTranscodeArgs(input, outputDir, audioMap string) []string {
+	args := []string{
 		"-i", input,
 		"-map", "0:v:0",
-		"-map", audioMap,
 		"-c:v", "libx264",
 		"-preset", "veryfast",
 		"-crf", "23",
-		"-c:a", "aac",
-		"-b:a", "256k",
-		"-ac", "2",
+	}
+	args = append(args, audioArgs(audioMap)...)
+	return append(args,
 		"-bsf:v", "h264_mp4toannexb",
 		"-avoid_negative_ts", "make_zero",
 		"-hls_time", "5",
 		"-hls_list_size", "0",
 		"-hls_flags", "append_list",
 		"-f", "hls",
-		outputDir + "/stream.m3u8",
-	}
+		outputDir+"/stream.m3u8",
+	)
 }
 
 // ConvertPipeHLS probes the first 10 MB of reader to detect the video codec and
@@ -193,10 +214,9 @@ func ConvertPipeHLS(reader io.ReadSeeker, outputDir string, originalLang string)
 		args = buildH264Args("pipe:0", outputDir, audioMap)
 	case "hevc":
 		args = buildHEVCArgs("pipe:0", outputDir, audioMap)
-	case "av1":
-		args = buildAV1Args("pipe:0", outputDir, audioMap)
 	default:
-		return fmt.Errorf("unsupported video codec: %q", videoCodec)
+		args = defaultTranscodeArgs("pipe:0", outputDir, audioMap)
+
 	}
 
 	var stderr bytes.Buffer
