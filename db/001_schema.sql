@@ -93,12 +93,6 @@ CREATE TABLE IF NOT EXISTS watch_history (
     CONSTRAINT watch_history_user_id_imdbid_key UNIQUE (user_id, imdbid)
 );
 
-CREATE TABLE IF NOT EXISTS direct_stream_movies (
-    imdbid      TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (imdbid)
-);
-
 CREATE TABLE IF NOT EXISTS comments (
     id          SERIAL  PRIMARY KEY,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
