@@ -83,8 +83,6 @@ type movieDetailResponse struct {
 	Summary          string   `json:"summary"`
 	Director         string   `json:"director"`
 	Cast             []string `json:"cast"`
-	Watched          bool     `json:"watched"`
-	Progression      float32  `json:"progression"`
 }
 
 func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailResponse {
@@ -102,8 +100,6 @@ func toMovieDetailResponse(m models.Movie, d models.MovieDetails) movieDetailRes
 		Director:         firstDirector(d.Director),
 		Cast:             d.Cast,
 		Runtime:          d.Runtime,
-		Watched:          true,
-		Progression:      12,
 	}
 }
 
