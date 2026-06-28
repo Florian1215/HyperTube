@@ -93,6 +93,22 @@ func (s *Store) listFeatured(ctx context.Context) ([]models.Movie, error) {
 	return movies, nil
 }
 
+func (s *Store) HasAppState(ctx context.Context, key string) (bool, error) {
+	var exists bool
+	err := s.db.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM app_state WHERE key = $1)
+	`, key).Scan(&exists)
+	return exists, err
+}
+
+func (s *Store) MarkAppState(ctx context.Context, key string) error {
+	_, err := s.db.Exec(ctx, `
+		INSERT INTO app_state (key) VALUES ($1)
+		ON CONFLICT (key) DO NOTHING
+	`, key)
+	return err
+}
+
 func (s *Store) listWatched(ctx context.Context, userID int) ([]models.WatchedMovie, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT m.imdbid, m.tmdbid, m.title, m.year,

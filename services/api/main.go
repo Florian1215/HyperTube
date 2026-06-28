@@ -85,6 +85,7 @@ func main() {
 
 	searchers := []movies.MovieSearcher{c411Client, archiveClient}
 	moviesHandler := movies.NewMoviesHandler(movieStore, userStore, searchers, tmdbClient)
+	go moviesHandler.SeedFeaturedTorrents(ctx)
 	commentsHandler := comments.NewCommentsHandler(commentStore)
 	usersHandler := users.NewHandler(userStore)
 	streamHandler := stream.NewStreamHandler(streamStore)

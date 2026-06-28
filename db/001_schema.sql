@@ -109,3 +109,8 @@ CREATE TABLE IF NOT EXISTS movie_searches (
     searched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (query, imdbid)
 );
+
+CREATE TABLE IF NOT EXISTS app_state (
+    key         TEXT        PRIMARY KEY,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
