@@ -11,7 +11,7 @@ func TestPasswordResetEmailContentUsesLocale(t *testing.T) {
 	subject, textBody, htmlBody := passwordResetEmailContent(
 		i18n.German,
 		"Alice Example",
-		"https://frontend.test/de/reset-password?token=abc",
+		"https://frontend.test/de/password-reset/set-new-password?token=abc",
 		15,
 	)
 

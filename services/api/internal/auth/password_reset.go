@@ -147,7 +147,7 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) buildPasswordResetURL(token string, locale string) (string, error) {
 	rawURL := strings.TrimSpace(h.passwordResetURL)
 	if rawURL == "" {
-		rawURL = "http://localhost:4200/{locale}/reset-password"
+		rawURL = "http://localhost:4200/{locale}/password-reset/set-new-password"
 	}
 	locale = strings.TrimSpace(locale)
 	if locale == "" {
@@ -157,7 +157,7 @@ func (h *Handler) buildPasswordResetURL(token string, locale string) (string, er
 	if strings.Contains(rawURL, "{locale}") {
 		rawURL = strings.ReplaceAll(rawURL, "{locale}", url.PathEscape(locale))
 	} else if !strings.Contains(rawURL, "/en/") && !strings.Contains(rawURL, "/de/") && !strings.Contains(rawURL, "/fr/") {
-		rawURL = strings.TrimRight(rawURL, "/") + "/" + url.PathEscape(locale) + "/reset-password"
+		rawURL = strings.TrimRight(rawURL, "/") + "/" + url.PathEscape(locale) + "/password-reset/set-new-password"
 	}
 
 	parsed, err := url.Parse(rawURL)

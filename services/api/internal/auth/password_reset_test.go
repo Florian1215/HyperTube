@@ -35,11 +35,11 @@ func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
 		store,
 		newTestTokenManager(t),
 		WithPasswordResetMailer(mailer),
-		WithPasswordResetURL("https://frontend.test/{locale}/reset-password?source=email"),
+		WithPasswordResetURL("https://frontend.test/{locale}/password-reset/set-new-password?source=email"),
 		WithPasswordResetTTL(ttl),
 	)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset", strings.NewReader(`{"email":" Alice@Example.COM ","locale":"de"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/send-email", strings.NewReader(`{"email":" Alice@Example.COM ","locale":"de"}`))
 	rec := httptest.NewRecorder()
 
 	handler.RequestPasswordReset(rec, req)
@@ -70,7 +70,7 @@ func TestRequestPasswordResetSendsResetLinkForExistingUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse reset URL: %v", err)
 	}
-	if resetURL.Scheme != "https" || resetURL.Host != "frontend.test" || resetURL.Path != "/de/reset-password" {
+	if resetURL.Scheme != "https" || resetURL.Host != "frontend.test" || resetURL.Path != "/de/password-reset/set-new-password" {
 		t.Fatalf("unexpected reset URL: %q", mailer.resetURL)
 	}
 	if got := resetURL.Query().Get("source"); got != "email" {
@@ -108,10 +108,10 @@ func TestRequestPasswordResetUsesAcceptLanguageForEmailAndLink(t *testing.T) {
 		store,
 		newTestTokenManager(t),
 		WithPasswordResetMailer(mailer),
-		WithPasswordResetURL("https://frontend.test/{locale}/reset-password"),
+		WithPasswordResetURL("https://frontend.test/{locale}/password-reset/set-new-password"),
 	)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset", strings.NewReader(`{"email":"alice@example.com"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/send-email", strings.NewReader(`{"email":"alice@example.com"}`))
 	req.Header.Set("Accept-Language", "de-DE,de;q=0.9")
 	rec := httptest.NewRecorder()
 
@@ -127,7 +127,7 @@ func TestRequestPasswordResetUsesAcceptLanguageForEmailAndLink(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse reset URL: %v", err)
 	}
-	if resetURL.Path != "/de/reset-password" {
+	if resetURL.Path != "/de/password-reset/set-new-password" {
 		t.Fatalf("expected reset URL to use Accept-Language locale, got %q", mailer.resetURL)
 	}
 }
@@ -137,7 +137,7 @@ func TestRequestPasswordResetDoesNotRevealUnknownEmail(t *testing.T) {
 	mailer := &fakePasswordResetMailer{}
 	handler := NewHandler(store, newTestTokenManager(t), WithPasswordResetMailer(mailer))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset", strings.NewReader(`{"email":"missing@example.com"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/send-email", strings.NewReader(`{"email":"missing@example.com"}`))
 	rec := httptest.NewRecorder()
 
 	handler.RequestPasswordReset(rec, req)
@@ -209,7 +209,7 @@ func TestRequestPasswordResetRejectsInvalidInputAndMissingMailer(t *testing.T) {
 			}
 			handler := NewHandler(store, newTestTokenManager(t), opts...)
 
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset", strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/send-email", strings.NewReader(tt.body))
 			rec := httptest.NewRecorder()
 
 			handler.RequestPasswordReset(rec, req)
@@ -256,7 +256,7 @@ func TestResetPasswordConsumesTokenAndUpdatesPassword(t *testing.T) {
 	}
 	handler := NewHandler(store, newTestTokenManager(t))
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/reset-password", strings.NewReader(`{"token":"`+token+`","password":"new-password"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/set-new-password", strings.NewReader(`{"token":"`+token+`","password":"new-password"}`))
 	rec := httptest.NewRecorder()
 
 	handler.ResetPassword(rec, req)
@@ -279,7 +279,7 @@ func TestResetPasswordConsumesTokenAndUpdatesPassword(t *testing.T) {
 		t.Fatal("new password should match after reset")
 	}
 
-	reuseReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/reset-password", strings.NewReader(`{"token":"`+token+`","password":"another-password"}`))
+	reuseReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/set-new-password", strings.NewReader(`{"token":"`+token+`","password":"another-password"}`))
 	reuseRec := httptest.NewRecorder()
 
 	handler.ResetPassword(reuseRec, reuseReq)
@@ -361,7 +361,7 @@ func TestResetPasswordRejectsInvalidPasswordAndTokens(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/reset-password", strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/set-new-password", strings.NewReader(tt.body))
 			rec := httptest.NewRecorder()
 
 			handler.ResetPassword(rec, req)

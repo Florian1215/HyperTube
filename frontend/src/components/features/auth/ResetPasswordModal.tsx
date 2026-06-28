@@ -11,7 +11,7 @@ import {postSetNewPassword} from "@/services/auth.service";
 
 export default function ResetPasswordModal() {
     const {setCallbackUrl} = useAuth();
-    const {activeModal, closeModal} = useModal();
+    const {activeModal, openModal, closeModal} = useModal();
     const {addNotification} = useNotification();
     const t = useTranslations("auth.resetPassword");
     const tSuccess = useTranslations("notifications.success");
@@ -22,6 +22,7 @@ export default function ResetPasswordModal() {
     const handleNewPassword = () => {
         closeModal();
         addNotification(tSuccess("newPasswordSet"), "success");
+        openModal({type: "signin"});
     }
 
     return (<ModalLayout onCloseAction={() => {closeModal(); setCallbackUrl(undefined);}} title={t("title")}>
