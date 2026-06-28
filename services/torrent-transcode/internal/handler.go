@@ -47,7 +47,7 @@ func (s *TorrentTranscodeHandler) InitDownload(w http.ResponseWriter, r *http.Re
 	}
 	log.Printf("%s: torrent file ready at %s", id, torrentPath)
 
-	IOReader, err := s.torrentClient.Add(torrentPath)
+	IOReader, err := s.torrentClient.Add(id, torrentPath)
 	if err != nil {
 		http.Error(w, "failed to add torrent", http.StatusInternalServerError)
 		log.Printf("failed to add torrent: %v", err)

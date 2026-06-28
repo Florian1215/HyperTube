@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS torrents (
     language    TEXT    NOT NULL,
     seeds       TEXT    NOT NULL,
     status      TEXT    NOT NULL DEFAULT 'zero' CHECK (status IN ('zero', 'in_progress', 'failed', 'finished')),
+    finished_at TIMESTAMPTZ,
     UNIQUE (url)
 );
 

@@ -14,7 +14,8 @@ import (
 
 type Client struct {
 	cl *torrentlib.Client
-	streams         *map[string]io.ReadSeekCloser // torrentID → reader
+	streams         *map[string]io.ReadSeekCloser   // torrentID → reader
+	torrents        map[string]*torrentlib.Torrent  // torrentID → torrent handle
 	mu              *sync.Mutex
 	torrentDir	   string
 }
@@ -26,21 +27,40 @@ func NewClient(mu *sync.Mutex, streams *map[string]io.ReadSeekCloser) (*Client, 
 		return nil, fmt.Errorf("torrent client: %w", err)
 	}
 	log.Printf("torrent client listening on: %v", cl.ListenAddrs())
-	return &Client{cl: cl, streams: streams, mu: mu, torrentDir: torrentDir}, nil
+	return &Client{cl: cl, streams: streams, torrents: make(map[string]*torrentlib.Torrent), mu: mu, torrentDir: torrentDir}, nil
 }
 
 func (c *Client) Close() {
 	c.cl.Close()
 }
 
+func (c *Client) Drop(id string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if r, ok := (*c.streams)[id]; ok {
+		r.Close()
+		delete(*c.streams, id)
+	}
+	if t, ok := c.torrents[id]; ok {
+		t.Drop()
+		delete(c.torrents, id)
+		log.Printf("%s: dropped torrent from client", id)
+	}
+}
+
 // Add downloads the .torrent file at torrentURL to /data/torrent/, then starts
 // streaming and returns a reader over the largest file (assumed to be the video).
-func (c *Client) Add(torrentPath string) (io.ReadSeekCloser, error) {
+func (c *Client) Add(id, torrentPath string) (io.ReadSeekCloser, error) {
 
 	torrent, err := c.cl.AddTorrentFromFile(torrentPath)
 	if err != nil {
 		return nil, fmt.Errorf("add torrent: %w", err)
 	}
+
+	c.mu.Lock()
+	c.torrents[id] = torrent
+	c.mu.Unlock()
 
 	<-torrent.GotInfo()
 
