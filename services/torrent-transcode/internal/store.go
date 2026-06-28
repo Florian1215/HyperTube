@@ -71,6 +71,24 @@ func (s *Store) FinishedBefore(ctx context.Context, cutoff time.Time) ([]string,
 	return ids, rows.Err()
 }
 
+func (s *Store) InProgress(ctx context.Context) ([]string, error) {
+	rows, err := s.db.Query(ctx, `SELECT id FROM torrents WHERE status = 'in_progress'`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 func (s *Store) ResetTorrent(ctx context.Context, id string) error {
 	tag, err := s.db.Exec(ctx,
 		`UPDATE torrents SET status = 'zero', finished_at = NULL WHERE id = $1`, id)

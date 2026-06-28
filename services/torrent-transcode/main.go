@@ -31,7 +31,9 @@ func main() {
 	}
 	torrentTranscode := torrent_transcode.NewTorrentTranscodeHandler(torrentClient, store, mu, &streams)
 
-	go cleanup.NewCleaner(store, torrentClient, cleanup.DefaultRetention, cleanup.DefaultInterval).Run(ctx)
+	cleaner := cleanup.NewCleaner(store, torrentClient, cleanup.DefaultRetention, cleanup.DefaultInterval)
+	cleaner.CleanupInterrupted(ctx)
+	go cleaner.Run(ctx)
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
