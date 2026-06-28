@@ -120,14 +120,25 @@ func (f *fakeUserStore) FindUserByID(_ context.Context, id int64) (models.User, 
 
 type fakeTMDB struct {
 	lastLanguage string
+	lastTmdbID   string
+	details      models.MovieDetails
+	detailsSet   bool
+	detailsErr   error
 }
 
 func (f *fakeTMDB) FindByIMDBID(_ context.Context, imdbID string) (models.Movie, error) {
 	return models.Movie{ImdbID: imdbID}, nil
 }
 
-func (f *fakeTMDB) GetMovieDetails(_ context.Context, _ string, language string) (models.MovieDetails, error) {
+func (f *fakeTMDB) GetMovieDetails(_ context.Context, tmdbID string, language string) (models.MovieDetails, error) {
 	f.lastLanguage = language
+	f.lastTmdbID = tmdbID
+	if f.detailsErr != nil {
+		return models.MovieDetails{}, f.detailsErr
+	}
+	if f.detailsSet {
+		return f.details, nil
+	}
 	return models.MovieDetails{
 		Summary:  "A desert planet epic.",
 		Director: []string{"Denis Villeneuve"},
@@ -471,10 +482,52 @@ func TestGetWatchedMoviesUsesAuthenticatedUserID(t *testing.T) {
 }
 
 func TestPatchMovieProgressCreatesOrUpdatesForAuthenticatedUser(t *testing.T) {
-	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567"}}}
-	h := &MoviesHandler{store: store}
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567", TmdbID: "tmdb-123"}}}
+	tmdb := &fakeTMDB{details: models.MovieDetails{Runtime: 60}, detailsSet: true}
+	h := &MoviesHandler{store: store, tmdb: tmdb}
 
-	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1800,"complete":false}`))
+	req.SetPathValue("id", "tt1234567")
+	req.Header.Set("Accept-Language", "de")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var body struct {
+		Data movieProgressResponse `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.Data.Progress != 50 || body.Data.Complete {
+		t.Fatalf("unexpected response: %+v", body.Data)
+	}
+	if !store.saveMovieProgressCalled {
+		t.Fatal("expected store save to be called")
+	}
+	if store.savedProgressUserID != 42 || store.savedProgressImdbID != "tt1234567" || store.savedProgress != 1800 || store.savedComplete {
+		t.Fatalf("unexpected saved progress: user=%d imdb=%q progress=%d complete=%v", store.savedProgressUserID, store.savedProgressImdbID, store.savedProgress, store.savedComplete)
+	}
+	if tmdb.lastTmdbID != "tmdb-123" {
+		t.Fatalf("expected TMDB ID tmdb-123, got %q", tmdb.lastTmdbID)
+	}
+	if tmdb.lastLanguage != "de" {
+		t.Fatalf("expected forwarded language de, got %q", tmdb.lastLanguage)
+	}
+}
+
+func TestPatchMovieProgressReturnsCompleteProgressPercentage(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567", TmdbID: "tmdb-123"}}}
+	h := &MoviesHandler{
+		store: store,
+		tmdb:  &fakeTMDB{details: models.MovieDetails{Runtime: 120}, detailsSet: true},
+	}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1000,"complete":true}`))
 	req.SetPathValue("id", "tt1234567")
 	rec := httptest.NewRecorder()
 
@@ -490,14 +543,11 @@ func TestPatchMovieProgressCreatesOrUpdatesForAuthenticatedUser(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.Progress != 1804 || body.Data.Complete {
+	if body.Data.Progress != 100 || !body.Data.Complete {
 		t.Fatalf("unexpected response: %+v", body.Data)
 	}
-	if !store.saveMovieProgressCalled {
-		t.Fatal("expected store save to be called")
-	}
-	if store.savedProgressUserID != 42 || store.savedProgressImdbID != "tt1234567" || store.savedProgress != 1804 || store.savedComplete {
-		t.Fatalf("unexpected saved progress: user=%d imdb=%q progress=%d complete=%v", store.savedProgressUserID, store.savedProgressImdbID, store.savedProgress, store.savedComplete)
+	if store.savedProgress != 1000 || !store.savedComplete {
+		t.Fatalf("expected saved seconds and complete flag, got progress=%d complete=%v", store.savedProgress, store.savedComplete)
 	}
 }
 
@@ -694,10 +744,13 @@ func TestPatchMovieProgressRejectsNegativeProgress(t *testing.T) {
 
 func TestPatchMovieProgressReturnsInternalError(t *testing.T) {
 	store := &fakeStore{
-		movies:               []models.Movie{{ImdbID: "tt1234567"}},
+		movies:               []models.Movie{{ImdbID: "tt1234567", TmdbID: "tmdb-123"}},
 		saveMovieProgressErr: errors.New("db down"),
 	}
-	h := &MoviesHandler{store: store}
+	h := &MoviesHandler{
+		store: store,
+		tmdb:  &fakeTMDB{details: models.MovieDetails{Runtime: 60}, detailsSet: true},
+	}
 
 	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1804,"complete":false}`))
 	req.SetPathValue("id", "tt1234567")
@@ -716,12 +769,37 @@ func TestPatchMovieProgressReturnsInternalError(t *testing.T) {
 	}
 }
 
+func TestPatchMovieProgressReturnsInternalErrorWhenTMDBDetailsFail(t *testing.T) {
+	store := &fakeStore{movies: []models.Movie{{ImdbID: "tt1234567", TmdbID: "tmdb-123"}}}
+	h := &MoviesHandler{
+		store: store,
+		tmdb:  &fakeTMDB{detailsErr: errors.New("tmdb down")},
+	}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt1234567/progress", strings.NewReader(`{"progress":1800,"complete":false}`))
+	req.SetPathValue("id", "tt1234567")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called when TMDB details fail")
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
+	}
+}
+
 func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
+	tmdb := &fakeTMDB{details: models.MovieDetails{Runtime: 60}, detailsSet: true}
 	store := &fakeStore{watched: []models.WatchedMovie{{
-		ImdbID: "tt1234567", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
+		ImdbID: "tt1234567", TmdbID: "tmdb-123", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
 		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1804, Complete: false,
 	}}}
-	h := &MoviesHandler{store: store}
+	h := &MoviesHandler{store: store, tmdb: tmdb}
 
 	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
@@ -743,14 +821,18 @@ func TestGetUserFilmHistoryAllowsReadingAnotherUsersHistory(t *testing.T) {
 	if len(body.Data) != 1 || body.Data[0].ImdbID != "tt1234567" || body.Data[0].Title != "Example Movie" || body.Data[0].Year != "2025" || body.Data[0].PosterURL != "poster.jpg" || body.Data[0].BackdropURL != "backdrop.jpg" || body.Data[0].Note != 8.1 || len(body.Data[0].Genre) != 2 {
 		t.Fatalf("unexpected history response: %+v", body.Data)
 	}
+	if tmdb.lastTmdbID != "tmdb-123" {
+		t.Fatalf("expected TMDB ID tmdb-123, got %q", tmdb.lastTmdbID)
+	}
 }
 
 func TestGetUserFilmHistoryReturnsUpdatedProgressFields(t *testing.T) {
+	tmdb := &fakeTMDB{details: models.MovieDetails{Runtime: 60}, detailsSet: true}
 	store := &fakeStore{watched: []models.WatchedMovie{{
-		ImdbID: "tt1234567", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
-		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1804, Complete: false,
+		ImdbID: "tt1234567", TmdbID: "tmdb-123", Title: "Example Movie", Year: "2025", PosterURL: "poster.jpg",
+		BackdropURL: "backdrop.jpg", Note: 8.1, Genre: []int{12, 18}, Progress: 1800, Complete: false,
 	}}}
-	h := &MoviesHandler{store: store}
+	h := &MoviesHandler{store: store, tmdb: tmdb}
 
 	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
 	req.SetPathValue("id", "7")
@@ -770,8 +852,14 @@ func TestGetUserFilmHistoryReturnsUpdatedProgressFields(t *testing.T) {
 	if len(body.Data) != 1 {
 		t.Fatalf("expected one history entry, got %d", len(body.Data))
 	}
-	if body.Data[0].Progress != 1804 || body.Data[0].Complete {
+	if body.Data[0].Progress != 50 || body.Data[0].Complete {
 		t.Fatalf("unexpected progress fields: %+v", body.Data[0])
+	}
+	if store.watched[0].Progress != 1800 {
+		t.Fatalf("expected stored progress to stay in seconds, got %d", store.watched[0].Progress)
+	}
+	if tmdb.lastTmdbID != "tmdb-123" {
+		t.Fatalf("expected TMDB ID tmdb-123, got %q", tmdb.lastTmdbID)
 	}
 }
 
@@ -824,6 +912,26 @@ func TestGetUserFilmHistoryReturnsInternalError(t *testing.T) {
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGetUserFilmHistoryReturnsInternalErrorWhenTMDBDetailsFail(t *testing.T) {
+	store := &fakeStore{watched: []models.WatchedMovie{{ImdbID: "tt1234567", TmdbID: "tmdb-123", Progress: 1800}}}
+	h := &MoviesHandler{
+		store: store,
+		tmdb:  &fakeTMDB{detailsErr: errors.New("tmdb down")},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/users/7/movie-history", nil)
+	req.SetPathValue("id", "7")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.GetUserFilmHistory)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
 	}
 }
 

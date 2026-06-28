@@ -46,11 +46,11 @@ type movieHistoryResponse struct {
 	BackdropURL string  `json:"backdrop_url"`
 	Note        float32 `json:"note"`
 	Genre       []int   `json:"genres"`
-	Progress    int     `json:"progress"`
+	Progress    float64 `json:"progress"`
 	Complete    bool    `json:"complete"`
 }
 
-func toMovieHistoryResponse(m models.WatchedMovie) movieHistoryResponse {
+func toMovieHistoryResponse(m models.WatchedMovie, progressPercentage float64) movieHistoryResponse {
 	return movieHistoryResponse{
 		ImdbID:      m.ImdbID,
 		Title:       m.Title,
@@ -59,14 +59,14 @@ func toMovieHistoryResponse(m models.WatchedMovie) movieHistoryResponse {
 		BackdropURL: m.BackdropURL,
 		Note:        m.Note,
 		Genre:       m.Genre,
-		Progress:    m.Progress,
+		Progress:    progressPercentage,
 		Complete:    m.Complete,
 	}
 }
 
 type movieProgressResponse struct {
-	Progress int  `json:"progress"`
-	Complete bool `json:"complete"`
+	Progress float64 `json:"progress"`
+	Complete bool    `json:"complete"`
 }
 
 type movieDetailResponse struct {
