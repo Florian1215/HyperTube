@@ -153,7 +153,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
         if (!setComplete.current) {
             if (video.currentTime + min15 > duration) {
-                updateMovieProgress(imdbId, 1000, true);
+                updateMovieProgress(imdbId, Math.floor((video.currentTime + min15) % 60), true);
                 setComplete.current = true;
             } else {
                 const second = Math.floor(video.currentTime % 60);
@@ -172,8 +172,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
         const rect = progressBarRef.current.getBoundingClientRect();
         const percent = (clientX - rect.left) / rect.width;
-
-        return Math.min(Math.max(percent * video.duration, 0), video.duration);
+        return Math.max(0, percent * duration);
     };
 
     useEffect(() => {
@@ -182,16 +181,19 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
         const handleMove = (e: MouseEvent) => {
             const time = getTimeFromClientX(e.clientX);
-            seekTimeRef.current = time;
-            setSeekTime(time);
+            if (videoRef.current && time < videoRef.current.duration) {
+                seekTimeRef.current = time;
+                setSeekTime(time);
+            }
         };
 
         const handleUp = () => {
             const video = videoRef.current;
             if (!video)
                 return;
+            if (seekTimeRef.current < video.duration)
+                video.currentTime = seekTimeRef.current;
             setIsSeeking(false);
-            video.currentTime = seekTimeRef.current;
             if (playStateBeforeSeeking.current)
                 video.play();
         };
@@ -203,6 +205,7 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
             window.removeEventListener("mousemove", handleMove);
             window.removeEventListener("mouseup", handleUp);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSeeking, seekTime]);
 
     const handleSeekStart = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -276,12 +279,14 @@ export default function VideoPlayer({src, color, duration, setErrorAction, imdbI
 
                 case "ArrowRight":
                     e.preventDefault();
-                    video.currentTime = Math.min(video.currentTime + 10, video.duration || Infinity);
+                    const newTime = video.currentTime + 10;
+                    if (newTime < video.duration)
+                        video.currentTime = newTime;
                     break;
 
                 case "ArrowLeft":
                     e.preventDefault();
-                    video.currentTime = Math.max(video.currentTime - 10, 0);
+                    video.currentTime = Math.max(0, video.currentTime - 10);
                     break;
 
                 case "KeyF":
