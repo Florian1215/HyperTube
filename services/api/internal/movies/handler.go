@@ -40,6 +40,8 @@ type movieStore interface {
 	listWatched(ctx context.Context, userID int) ([]models.WatchedMovie, error)
 	saveMovieProgress(ctx context.Context, userID int, imdbID string, progress int, complete bool) error
 	listDirectStream(ctx context.Context) ([]models.Movie, error)
+	HasAppState(ctx context.Context, key string) (bool, error)
+	MarkAppState(ctx context.Context, key string) error
 }
 
 type userStore interface {
@@ -307,48 +309,11 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	torrents, err := h.collectTorrents(r.Context(), title)
+	allMovies, err := h.searchAndCache(r.Context(), title)
 	if err != nil {
 		log.Println("search err:", err)
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedSearchMovies)
 		return
-	}
-
-	var allMovies []models.Movie
-	imdbIdSeen := make(map[string]bool)
-
-	for _, torrent := range torrents {
-		if imdbIdSeen[torrent.ImdbID] {
-			h.store.UpsertTorrent(r.Context(), torrent)
-			continue
-		}
-		movie, torrent, err := h.resolveMovie(r.Context(), torrent)
-		if err != nil {
-			log.Printf("TMDB lookup error for %q: %v", torrent.Title, err)
-			continue
-		}
-		if !imdbIdSeen[movie.ImdbID] {
-			if err = h.store.UpsertMovie(r.Context(), movie); err != nil {
-				log.Println("db err:", err)
-				respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedStoreMovie)
-				return
-			}
-			allMovies = append(allMovies, movie)
-			imdbIdSeen[movie.ImdbID] = true
-		}
-		if err = h.store.UpsertTorrent(r.Context(), torrent); err != nil {
-			log.Println("db err:", err)
-			respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedStoreTorrent)
-			return
-		}
-	}
-
-	imdbIDs := make([]string, len(allMovies))
-	for i, m := range allMovies {
-		imdbIDs[i] = m.ImdbID
-	}
-	if err := h.store.upsertSearchResults(r.Context(), title, imdbIDs); err != nil {
-		log.Println("db err:", err)
 	}
 
 	start := page * pagnationLimit
@@ -362,6 +327,85 @@ func (h *MoviesHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
 		result[i] = toMovieResponse(m)
 	}
 	respond.ListPaginated(w, http.StatusOK, result, len(allMovies), page, pagnationLimit)
+}
+
+// featuredTorrentsSeededKey marks, in app_state, that the featured-movie torrent
+// refresh has already run for this database.
+const featuredTorrentsSeededKey = "featured_torrents_seeded"
+
+// SeedFeaturedTorrents refreshes the curated featured movies on startup by
+// running the same title search as /movies/search for each one. It runs only
+// once per database lifetime: a marker in app_state guards re-runs so restarts
+// don't re-hit the tracker. Wiping the DB volume clears the marker and lets it
+// seed fresh again.
+func (h *MoviesHandler) SeedFeaturedTorrents(ctx context.Context) {
+	seeded, err := h.store.HasAppState(ctx, featuredTorrentsSeededKey)
+	if err != nil {
+		log.Printf("startup: failed to check featured seed state: %v", err)
+		return
+	}
+	if seeded {
+		log.Println("startup: featured torrents already seeded, skipping")
+		return
+	}
+
+	featured, err := h.store.listFeatured(ctx)
+	if err != nil {
+		log.Printf("startup: failed to list featured movies: %v", err)
+		return
+	}
+	for _, m := range featured {
+		if _, err := h.searchAndCache(ctx, m.Title); err != nil {
+			log.Printf("startup: failed to refresh torrents for %q: %v", m.Title, err)
+		}
+	}
+
+	if err := h.store.MarkAppState(ctx, featuredTorrentsSeededKey); err != nil {
+		log.Printf("startup: failed to mark featured torrents seeded: %v", err)
+	}
+}
+
+func (h *MoviesHandler) searchAndCache(ctx context.Context, title string) ([]models.Movie, error) {
+	log.Println("search: ", title)
+	torrents, err := h.collectTorrents(ctx, title)
+	if err != nil {
+		return nil, err
+	}
+
+	var allMovies []models.Movie
+	imdbIdSeen := make(map[string]bool)
+
+	for _, torrent := range torrents {
+		if imdbIdSeen[torrent.ImdbID] {
+			h.store.UpsertTorrent(ctx, torrent)
+			continue
+		}
+		movie, torrent, err := h.resolveMovie(ctx, torrent)
+		if err != nil {
+			log.Printf("TMDB lookup error for %q", torrent.Title)
+			continue
+		}
+		if !imdbIdSeen[movie.ImdbID] {
+			if err = h.store.UpsertMovie(ctx, movie); err != nil {
+				return nil, err
+			}
+			allMovies = append(allMovies, movie)
+			imdbIdSeen[movie.ImdbID] = true
+		}
+		if err = h.store.UpsertTorrent(ctx, torrent); err != nil {
+			return nil, err
+		}
+	}
+
+	imdbIDs := make([]string, len(allMovies))
+	for i, m := range allMovies {
+		imdbIDs[i] = m.ImdbID
+	}
+	if err := h.store.upsertSearchResults(ctx, title, imdbIDs); err != nil {
+		log.Println("db err:", err)
+	}
+
+	return allMovies, nil
 }
 
 func (h *MoviesHandler) GetMovieTorrents(w http.ResponseWriter, r *http.Request) {
