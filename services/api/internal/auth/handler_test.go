@@ -42,11 +42,12 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 		t.Fatalf("expected register oauth_method to be nil, got %q", *registerResponse.Data.User.OAuthMethod)
 	}
 	assertNoFrontendNameAliasFields(t, registerRec)
+	assertAuthUserFieldsAbsent(t, registerRec, "watch_history")
 	if registerResponse.Data.User.JoinedAt == 0 {
 		t.Fatal("expected joined_at compatibility field")
 	}
-	if !models.IsValidUserColor(registerResponse.Data.User.Color) || registerResponse.Data.User.WatchHistory == nil {
-		t.Fatal("expected frontend profile compatibility fields")
+	if !models.IsValidUserColor(registerResponse.Data.User.Color) {
+		t.Fatal("expected frontend profile color")
 	}
 	if registerResponse.Data.AccessToken == "" {
 		t.Fatal("expected access token")
@@ -87,6 +88,7 @@ func TestRegisterAndLoginHappyPath(t *testing.T) {
 	if loginResponse.Data.User.OAuthMethod != nil {
 		t.Fatalf("expected login oauth_method to be nil, got %q", *loginResponse.Data.User.OAuthMethod)
 	}
+	assertAuthUserFieldsAbsent(t, loginRec, "watch_history")
 	if _, err := tokens.ValidateAccessToken(loginResponse.Data.AccessToken); err != nil {
 		t.Fatalf("login token should validate: %v", err)
 	}

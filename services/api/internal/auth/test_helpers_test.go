@@ -237,6 +237,12 @@ func decodeAuthEnvelope(t *testing.T, rec *httptest.ResponseRecorder) struct {
 func assertNoFrontendNameAliasFields(t *testing.T, rec *httptest.ResponseRecorder) {
 	t.Helper()
 
+	assertAuthUserFieldsAbsent(t, rec, "firstname", "lastname")
+}
+
+func assertAuthUserFieldsAbsent(t *testing.T, rec *httptest.ResponseRecorder, fields ...string) {
+	t.Helper()
+
 	var body struct {
 		Data struct {
 			User map[string]json.RawMessage `json:"user"`
@@ -245,9 +251,9 @@ func assertNoFrontendNameAliasFields(t *testing.T, rec *httptest.ResponseRecorde
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response fields: %v", err)
 	}
-	for _, field := range []string{"firstname", "lastname"} {
+	for _, field := range fields {
 		if _, ok := body.Data.User[field]; ok {
-			t.Fatalf("response must not include %q alias field: %s", field, rec.Body.String())
+			t.Fatalf("response data.user must not include %q: %s", field, rec.Body.String())
 		}
 	}
 }

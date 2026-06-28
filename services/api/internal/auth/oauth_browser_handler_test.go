@@ -325,6 +325,7 @@ func TestFortyTwoCallbackCreatesUserAndToken(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 	assertNoStoreHeaders(t, rec)
+	assertAuthUserFieldsAbsent(t, rec, "watch_history")
 
 	response := decodeAuthEnvelope(t, rec)
 	if response.Data.User.Email != "ft.user@example.com" {
@@ -461,6 +462,13 @@ func TestFortyTwoCallbackRedirectsToFrontendWithTokenFragment(t *testing.T) {
 	}
 	if user.ID <= 0 {
 		t.Fatalf("expected positive redirected user id, got %d", user.ID)
+	}
+	var userFields map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(fragment.Get("user")), &userFields); err != nil {
+		t.Fatalf("decode user fragment fields: %v", err)
+	}
+	if _, ok := userFields["watch_history"]; ok {
+		t.Fatalf("redirected user must not include watch_history: %s", fragment.Get("user"))
 	}
 	if accessClaims.UserID != user.ID || refreshClaims.UserID != user.ID {
 		t.Fatalf("expected token user ids to match redirected user id %d, got access=%d refresh=%d", user.ID, accessClaims.UserID, refreshClaims.UserID)
