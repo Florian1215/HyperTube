@@ -9,7 +9,7 @@ function getUser(locale: string, userId: string) {
 }
 
 function getUserFilmHistory(locale: string, userId?: number) {
-    return apiClient<tResponse<iMovie[]>>(`/users/${userId}/film-history`, locale);
+    return apiClient<tResponse<iMovie[]>>(`/users/${userId}/movie-history`, locale);
 }
 
 export function patchUser(locale: string, data: string[], userId?: string) {

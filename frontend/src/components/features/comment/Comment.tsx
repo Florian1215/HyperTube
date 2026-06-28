@@ -15,7 +15,7 @@ import Button from "@/components/ui/Button/Button";
 
 dayjs.extend(relativeTime);
 
-export default function Comment({comment, currentUser, updateComment, deleteComment}: {comment: iComment | iCommentDetails, currentUser: iUser | null, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void}) {
+export default function Comment({comment, currentUser, updateComment, deleteComment}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -32,7 +32,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
         {"movie" in comment && <div className="flex justify-center mb-3">
-            <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={comment.movie} /></div>}
+            <MovieCard user={currentUser} className="aspect-21/9" showTitle={false} movie={comment.movie}/></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
@@ -42,7 +42,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                         <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
                     {
-                        (currentUser !== null && comment.user.id === currentUser.id && showSettingBtn) &&
+                        (currentUser && comment.user.id === currentUser.id && showSettingBtn) &&
                         <div className="flex gap-1">
                             <button
                                 className="uppercase font-condensed text-2xl"

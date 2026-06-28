@@ -53,6 +53,7 @@
 .bg-gradient { @apply size-full absolute inset-0 bg-linear-to-t from-black via-transparent via-40% to-transparent opacity-90 pointer-events-none; }
 .responsive-text-hairline { @apply font-hairline text-xs sm:text-xl xl:text-3xl tracking-normal; }
 .custom-movie-title { @apply truncate hover:underline decoration-2 underline-offset-3 }
+.custom-complete-movie { @apply size-full absolute inset-0 bg-black/60; }
 .custom-text-shadow {
     text-shadow: 0 0 8px var(--color-black);
     -webkit-text-stroke: 0.07rem var(--color-black);

@@ -232,7 +232,7 @@ func TestRouterUserCommentsRouteRequiresBearerToken(t *testing.T) {
 func TestRouterUserFilmHistoryRouteRequiresBearerToken(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/7/film-history", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/7/movie-history", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)

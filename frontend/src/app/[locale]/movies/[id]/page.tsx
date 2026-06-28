@@ -27,30 +27,40 @@ export default function MoviePage() {
     useEffect(() => {
         if (error) {
             const node = handleError(error as ApiError, "Film");
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setErrorNode(node);
         }
-    }, [error, handleError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [error]);
+
+    useEffect(() => {
+        const startDownloading = async () => {
+            if (torrentId) {
+                try {
+                    await startTorrentStreaming(torrentId).then(() => {
+                        setStartVideo(true);
+                    });
+                } catch (error) {
+                    if (error instanceof ApiError)
+                        addNotification(error.notificationMsg, "error");
+                    else
+                        addNotification(tError("unknown"), "error");
+                    setTorrentId(undefined);
+                }
+            }
+        }
+
+        startDownloading();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [torrentId]);
 
     if (errorNode)
         return (errorNode);
 
     const handleTorrent = async () => {
         const selectedTorrent = getBestTorrent(torrents?.data);
-        if (torrents && selectedTorrent) {
+        if (torrents && selectedTorrent)
             setTorrentId(selectedTorrent.id);
-            try {
-                await startTorrentStreaming(selectedTorrent.id).then(() => {
-                    setTimeout(() => setStartVideo(true), 2000); // todo keep?
-                });
-            } catch (error) {
-                if (error instanceof ApiError)
-                    addNotification(error.notificationMsg, "error");
-                else
-                    addNotification(tError("unknown"), "error");
-                setTorrentId(undefined);
-            }
-        } else
+        else
             addNotification(tError("torrentNotFound"), "error");
     }
 

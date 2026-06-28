@@ -9,8 +9,10 @@ import {StarIcon} from "@/components/Icons";
 import Button from "@/components/ui/Button/Button";
 import GenreTags from "@/components/features/genre/GenreTags";
 import Image from "next/image";
+import {iUser} from "@/types/user";
+import WatchProgress from "@/components/WatchProgress";
 
-export default function MovieCardList({movie, setFilterGenre} : {movie: iMovie | null, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
+export default function MovieCardList({movie, user, setFilterGenre} : {movie?: iMovie, user?: iUser, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
@@ -21,11 +23,13 @@ export default function MovieCardList({movie, setFilterGenre} : {movie: iMovie |
                 <div className="custom-noise"/>
                 {!isLoaded && (<div className="custom-loading"/>)}
                 {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
+                    <WatchProgress user={user} movie={movie} />
                     <Image
                         className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`}
                         width={600} height={400} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}
                         loading="eager" onLoad={() => setIsLoaded(true)}
                     />
+                    {movie.complete && <div className="custom-complete-movie"/>}
                 </LinkLoginRequired>}
             </div>
         </td>

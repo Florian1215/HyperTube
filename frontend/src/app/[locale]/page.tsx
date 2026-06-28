@@ -3,7 +3,6 @@
 import {iMovie} from "@/types/movie";
 import React, {useEffect, useMemo, useState} from "react";
 import {HypertubeLogo} from "@/components/Icons";
-import {iUser} from "@/types/user";
 import {useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
@@ -24,47 +23,48 @@ export default function HomePage() {
     const genreCount = {xs: 3, md: 4, lg: 6, xl: 8}[size];
     const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
 
+    const {data: continueWatchingData} = useUserFilmHistory(user?.id);
     const {data: movies} = useMovies();
-    const popular = filterAlreadyWatch(user, movies?.data);
+    const popular = filterAlreadyWatch(continueWatchingData?.data, movies?.data);
     const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
 
     const {data: featuredMovies} = useMovies("featured");
-    const featured = filterAlreadyWatch(user, featuredMovies?.data);
+    const featured = filterAlreadyWatch(continueWatchingData?.data, featuredMovies?.data);
     const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
 
-    const mostRated = filterAlreadyWatch(user, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined).filter((film) => film.note > 7);
+    const mostRated = filterAlreadyWatch(continueWatchingData?.data, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined).filter((film) => film.note > 7);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
-    const {data: continueWatching=null} = useUserFilmHistory(user?.id);
+    const continueWatching = continueWatchingData ? continueWatchingData.data.filter((m) => !m.complete) : [];
 
     const {data: dirctedWatchMovies} = useMovies("directstream", undefined, !!user);
-    const filterDirectedWatchMovies = filterAlreadyWatch(user, dirctedWatchMovies?.data);
+    const filterDirectedWatchMovies = filterAlreadyWatch(continueWatchingData?.data, dirctedWatchMovies?.data);
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        <MoviesHero movies={(shuffledFeatured).slice(0, 5)} />
+        <MoviesHero movies={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
-            {(continueWatching && continueWatching.data.length > 0) &&
+            {(continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href="/users?tab=history">
-                <MoviesGrid movieSets={continueWatching.data} setLimit={true} />
+                <MoviesGrid movieSets={continueWatching} setLimit={true}/>
             </Section>}
 
             {(shuffledFeatured.length > 0) && <Section title={t("featured")} href="/movies?q=featured">
-                <MoviesGrid movieSets={shuffledFeatured} setLimit={true} />
+                <MoviesGrid movieSets={shuffledFeatured} setLimit={true}/>
             </Section>}
 
             {(shuffledPopular.length > 0) && <Section title={t("popular")} href="/movies?q=popular">
-                <MoviesGrid movieSets={shuffledPopular} setLimit={true} />
+                <MoviesGrid movieSets={shuffledPopular} setLimit={true}/>
             </Section>}
 
             {(shuffledMostRated.length > 0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
-                <MoviesGrid movieSets={shuffledMostRated} setLimit={true} />
+                <MoviesGrid movieSets={shuffledMostRated} setLimit={true}/>
             </Section>}
 
             {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
-                <MoviesGrid movieSets={filterDirectedWatchMovies} setLimit={true} />
+                <MoviesGrid movieSets={filterDirectedWatchMovies} setLimit={true}/>
             </Section>}
         </div>
 
@@ -124,16 +124,10 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
     </div>);
 }
 
-function filterAlreadyWatch(user: iUser | null, movies?: iMovie[]) {
+function filterAlreadyWatch(watchHistory?: iMovie[], movies?: iMovie[]) {
     if (!movies)
         return [];
-    if (!user)
+    if (!watchHistory || !watchHistory.length)
         return movies;
-    return movies.filter(m => {
-        for (let i = 0; i < user.watch_history.length; i++) {
-            if (user.watch_history[i].movie_id === m.imdb_id)
-                return false;
-        }
-        return true;
-    });
+    return movies.filter(m => watchHistory.find(mw => mw.imdb_id != m.imdb_id));
 }

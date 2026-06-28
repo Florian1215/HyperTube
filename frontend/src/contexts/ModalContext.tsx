@@ -1,6 +1,6 @@
 "use client";
 
-import React, {createContext, Dispatch, RefObject, SetStateAction, useContext, useEffect, useState} from "react";
+import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 import {iTorrent} from "@/types/movie";
 

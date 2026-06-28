@@ -30,7 +30,7 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
                 activeModal.setHandleKeyPress();
             if (callbackUrl) {
                 router.push(callbackUrl);
-                setCallbackUrl(null);
+                setCallbackUrl(undefined);
             }
             addNotification(tSuccess(isReg ? "accountCreatedSuccess" : "login"), "success");
         }
@@ -38,7 +38,7 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
 
     return (<ModalLayout onCloseAction={() => {
         if (activeModal.noClose === undefined) {
-            setCallbackUrl(null);
+            setCallbackUrl(undefined);
             closeModal();
         }
     }} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>
