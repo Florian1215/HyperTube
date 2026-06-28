@@ -149,19 +149,20 @@ func buildHEVCArgs(input, outputDir, audioMap string) []string {
 	}
 }
 
-// buildAV1Args repackages an av1 source into HLS
+// buildAV1Args transcodes an av1 source into h264 and packages it into HLS
 func buildAV1Args(input, outputDir, audioMap string) []string {
 	return []string{
 		"-i", input,
 		"-map", "0:v:0",
 		"-map", audioMap,
-		"-c:v", "copy",
+		"-c:v", "libx264",
+		"-preset", "veryfast",
+		"-crf", "23",
 		"-c:a", "aac",
 		"-b:a", "256k",
 		"-ac", "2",
+		"-bsf:v", "h264_mp4toannexb",
 		"-avoid_negative_ts", "make_zero",
-		"-hls_segment_type", "fmp4",
-		"-hls_fmp4_init_filename", "init.mp4",
 		"-hls_time", "5",
 		"-hls_list_size", "0",
 		"-hls_flags", "append_list",
