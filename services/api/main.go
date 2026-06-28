@@ -40,7 +40,7 @@ func main() {
 	gitlabRedirectURL := getEnv("GITLAB_REDIRECT_URL", "http://localhost:8080/api/v1/auth/gitlab/callback")
 	authOptions := []auth.HandlerOption{
 		auth.WithFrontendAuthCallbackURL(getEnv("FRONTEND_AUTH_CALLBACK_URL", "http://localhost:4200/en/auth/callback")),
-		auth.WithPasswordResetURL(getEnv("PASSWORD_RESET_URL", "http://localhost:4200/{locale}/reset-password")),
+		auth.WithPasswordResetURL(getEnv("PASSWORD_RESET_URL", "http://localhost:4200/{locale}/password-reset/set-new-password")),
 		auth.WithPasswordResetTTL(getPasswordResetTTL()),
 		auth.WithFortyTwoOAuth(auth.NewFortyTwoOAuth(auth.FortyTwoOAuthConfig{
 			ClientID:     os.Getenv("FORTYTWO_CLIENT_ID"),
@@ -175,8 +175,8 @@ func newRouter(
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
 			r.Post("/refresh-token", authHandler.RefreshToken)
-			r.Post("/password-reset", authHandler.RequestPasswordReset)
-			r.Post("/reset-password", authHandler.ResetPassword)
+			r.Post("/password-reset/send-email", authHandler.RequestPasswordReset)
+			r.Post("/password-reset/set-new-password", authHandler.ResetPassword)
 			r.Get("/42/login", authHandler.LoginFortyTwo)
 			r.Get("/42/callback", authHandler.CallbackFortyTwo)
 			r.Get("/github/login", authHandler.LoginGitHub)

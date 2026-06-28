@@ -11,11 +11,11 @@ export function postRegister(locale: string, data: string[]) {
 }
 
 export function postResetPassword(locale: string, data: string[]) {
-    return apiClient<tResponse<iUserToken>>("/auth/password-reset", locale, {method: "POST", body: JSON.stringify({email: data[0].trim()})});
+    return apiClient<tResponse<iUserToken>>("/auth/password-reset/send-email", locale, {method: "POST", body: JSON.stringify({email: data[0].trim()})});
 }
 
 export function postSetNewPassword(locale: string, data: string[], token?: string) {
-    return apiClient<tResponse<iUserToken>>("/auth/reset-password", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
+    return apiClient<tResponse<iUserToken>>("/auth/password-reset/set-new-password", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
 }
 
 export function handleOauth(oatuhCompany: tOauthService, redirect?: string) {

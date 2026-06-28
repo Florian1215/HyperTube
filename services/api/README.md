@@ -303,7 +303,7 @@ and error responses include `Cache-Control: no-store` and `Pragma: no-cache`.
 | 401 | `INVALID_REFRESH_TOKEN` | `Refresh token is invalid or expired` |
 | 500 | `INTERNAL_ERROR` | `Authentication service is unavailable` or `Failed to create access token` |
 
-### POST /auth/password-reset
+### POST /auth/password-reset/send-email
 
 Creates a single-use password-reset token and sends a reset email when email is
 configured. Unknown emails intentionally receive the same accepted response as
@@ -326,7 +326,7 @@ larger than 1 MiB are rejected.
 #### Example request
 
 ```http
-POST /api/v1/auth/password-reset
+POST /api/v1/auth/password-reset/send-email
 Content-Type: application/json
 Accept-Language: de
 ```
@@ -374,7 +374,7 @@ Example:
 }
 ```
 
-### POST /auth/reset-password
+### POST /auth/password-reset/set-new-password
 
 Consumes a password-reset token and replaces the user's password.
 
@@ -391,7 +391,7 @@ larger than 1 MiB are rejected.
 #### Example request
 
 ```http
-POST /api/v1/auth/reset-password
+POST /api/v1/auth/password-reset/set-new-password
 Content-Type: application/json
 ```
 

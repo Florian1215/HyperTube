@@ -54,12 +54,12 @@ func TestRouterPublicAuthJSONRoutes(t *testing.T) {
 		},
 		{
 			name: "password reset request",
-			path: "/api/v1/auth/password-reset",
+			path: "/api/v1/auth/password-reset/send-email",
 			body: `{"email":`,
 		},
 		{
 			name: "reset password",
-			path: "/api/v1/auth/reset-password",
+			path: "/api/v1/auth/password-reset/set-new-password",
 			body: `{"token":`,
 		},
 	}
