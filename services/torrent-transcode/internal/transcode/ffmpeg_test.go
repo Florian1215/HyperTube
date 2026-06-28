@@ -1,164 +1,100 @@
 package transcode
 
-// import (
-// 	"os"
-// 	"slices"
-// 	"strings"
-// 	"testing"
-// )
+import (
+	"os"
+	"os/exec"
+	"slices"
+	"strings"
+	"testing"
+)
 
-// // Set to false to inspect output files after a run.
-// const CLEANUP_OUTPUT = true
+func mustContainSequence(t *testing.T, haystack []string, a, b string) {
+	t.Helper()
+	for i := 0; i < len(haystack)-1; i++ {
+		if haystack[i] == a && haystack[i+1] == b {
+			return
+		}
+	}
+	t.Errorf("expected %q %q in args %v", a, b, haystack)
+}
 
-// func cleanupOutput(t *testing.T, path string) {
-// 	t.Helper()
-// 	t.Cleanup(func() {
-// 		if CLEANUP_OUTPUT {
-// 			os.RemoveAll(path)
-// 		}
-// 	})
-// }
+// buildAV1Args must TRANSCODE the video to h264, not copy it.
+func TestBuildAV1ArgsTranscodesToH264(t *testing.T) {
+	args := buildAV1Args("pipe:0", "/out", "0:a:0")
 
-// // makeStream builds an ffprobeStream for use in unit tests.
-// func makeStream(codecType, codecName string) ffprobeStream {
-// 	return ffprobeStream{CodecType: codecType, CodecName: codecName}
-// }
+	mustContainSequence(t, args, "-c:v", "libx264")
+	mustContainSequence(t, args, "-c:a", "aac")
+	mustContainSequence(t, args, "-map", "0:v:0")
+	mustContainSequence(t, args, "-map", "0:a:0")
+	mustContainSequence(t, args, "-bsf:v", "h264_mp4toannexb")
+	mustContainSequence(t, args, "-f", "hls")
 
-// // ---------------------------------------------------------------------------
-// // selectCodecs
-// // ---------------------------------------------------------------------------
+	if slices.Contains(args, "copy") {
+		t.Errorf("av1 path must not copy any stream, got %v", args)
+	}
+	if args[len(args)-1] != "/out/stream.m3u8" {
+		t.Errorf("expected output playlist last, got %q", args[len(args)-1])
+	}
+}
 
-// func TestSelectCodecs(t *testing.T) {
-// 	cases := []struct {
-// 		name      string
-// 		streams   []ffprobeStream
-// 		wantVideo string
-// 		wantAudio string
-// 	}{
-// 		{
-// 			name:      "h264+aac: both copy",
-// 			streams:   []ffprobeStream{makeStream("video", "h264"), makeStream("audio", "aac")},
-// 			wantVideo: "copy", wantAudio: "copy",
-// 		},
-// 		{
-// 			name:      "h265+aac: video transcode",
-// 			streams:   []ffprobeStream{makeStream("video", "hevc"), makeStream("audio", "aac")},
-// 			wantVideo: "libx264", wantAudio: "copy",
-// 		},
-// 		{
-// 			name:      "h264+ac3: audio transcode",
-// 			streams:   []ffprobeStream{makeStream("video", "h264"), makeStream("audio", "ac3")},
-// 			wantVideo: "copy", wantAudio: "aac",
-// 		},
-// 		{
-// 			name:      "h265+ac3: both transcode",
-// 			streams:   []ffprobeStream{makeStream("video", "hevc"), makeStream("audio", "ac3")},
-// 			wantVideo: "libx264", wantAudio: "aac",
-// 		},
-// 	}
+// TestConvertPipeHLS_AV1ToH264 runs the real ffmpeg pipeline on an AV1 source
+// and asserts the produced HLS video stream is h264. Requires ffmpeg/ffprobe.
+func TestConvertPipeHLS_AV1ToH264(t *testing.T) {
+	const fixture = "./test/sample_av1.mkv"
+	if _, err := os.Stat(fixture); err != nil {
+		t.Skipf("missing AV1 fixture %s: %v", fixture, err)
+	}
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		t.Skip("ffmpeg not in PATH")
+	}
 
-// 	for _, tc := range cases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			video, audio := selectCodecs(tc.streams)
-// 			if video != tc.wantVideo {
-// 				t.Errorf("video: got %q, want %q", video, tc.wantVideo)
-// 			}
-// 			if audio != tc.wantAudio {
-// 				t.Errorf("audio: got %q, want %q", audio, tc.wantAudio)
-// 			}
-// 		})
-// 	}
-// }
+	f, err := os.Open(fixture)
+	if err != nil {
+		t.Fatalf("open fixture: %v", err)
+	}
+	defer f.Close()
 
-// // ---------------------------------------------------------------------------
-// // buildFFmpegArgs
-// // ---------------------------------------------------------------------------
+	// Write into ./test/output/ so the produced files can be inspected after the run.
+	out := "./test/output/av1_to_h264"
+	if err := os.RemoveAll(out); err != nil {
+		t.Fatalf("clean output dir: %v", err)
+	}
+	if err := os.MkdirAll(out, 0755); err != nil {
+		t.Fatalf("create output dir: %v", err)
+	}
+	if err := ConvertPipeHLS(f, out, "en"); err != nil {
+		t.Fatalf("ConvertPipeHLS failed: %v", err)
+	}
 
-// func TestBuildFFmpegArgs(t *testing.T) {
-// 	args := buildFFmpegArgs("in.mkv", "/out", "copy", "aac")
+	if _, err := os.Stat(out + "/stream.m3u8"); err != nil {
+		t.Fatalf("expected playlist: %v", err)
+	}
+	segs, _ := os.ReadDir(out)
+	var tsCount int
+	for _, e := range segs {
+		if strings.HasSuffix(e.Name(), ".ts") {
+			tsCount++
+		}
+	}
+	if tsCount == 0 {
+		t.Fatalf("expected at least one .ts segment in %v", segs)
+	}
 
-// 	mustContainSequence(t, args, "-map", "0:v:0")
-// 	mustContainSequence(t, args, "-map", "0:a:0")
-// 	mustContainSequence(t, args, "-c:v", "copy")
-// 	mustContainSequence(t, args, "-c:a", "aac")
-// 	mustContainSequence(t, args, "-f", "hls")
-// 	mustEndWith(t, args, "/out/stream.m3u8")
-
-// 	if slices.Contains(args, "-c:s") {
-// 		t.Error("subtitle codec must not appear in video-only args")
-// 	}
-// }
-
-// // ---------------------------------------------------------------------------
-// // Integration tests — full ffmpeg pipeline
-// // ---------------------------------------------------------------------------
-
-// func TestConvertHLS(t *testing.T) {
-// 	cases := []struct {
-// 		name    string
-// 		fixture string
-// 	}{
-// 		{
-// 			name:    "h264+aac: all copy",
-// 			fixture: "1920_multi_sub_h264.mkv",
-// 		},
-// 		{
-// 			name:    "h265+aac: video transcode",
-// 			fixture: "1920_multi_sub_h265.mkv",
-// 		},
-// 		{
-// 			name:    "h264+ac3: audio transcode",
-// 			fixture: "1920_multi_sub_h264_ac3.mkv",
-// 		},
-// 		{
-// 			name:    "h264+aac: no subtitles",
-// 			fixture: "1920_nosub_h264.mkv",
-// 		},
-// 	}
-
-// 	cleanupOutput(t, "./test/output/")
-
-// 	for _, tc := range cases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			t.Parallel()
-// 			safeName := strings.NewReplacer(":", "-", " ", "_").Replace(tc.name)
-// 			out := "./test/output/" + safeName
-// 			if err := os.MkdirAll(out, 0755); err != nil {
-// 				t.Fatalf("failed to create output dir: %v", err)
-// 			}
-
-// 			if err := ConvertHLS("./test/"+tc.fixture, out); err != nil {
-// 				t.Fatalf("ConvertHLS failed: %v", err)
-// 			}
-// 			mustExist(t, out+"/stream.m3u8")
-// 		})
-// 	}
-// }
-
-// // ---------------------------------------------------------------------------
-// // Helpers
-// // ---------------------------------------------------------------------------
-
-// func mustContainSequence(t *testing.T, haystack []string, a, b string) {
-// 	t.Helper()
-// 	for i := 0; i < len(haystack)-1; i++ {
-// 		if haystack[i] == a && haystack[i+1] == b {
-// 			return
-// 		}
-// 	}
-// 	t.Errorf("expected %q %q in args %v", a, b, haystack)
-// }
-
-// func mustEndWith(t *testing.T, args []string, want string) {
-// 	t.Helper()
-// 	if len(args) == 0 || args[len(args)-1] != want {
-// 		t.Errorf("expected last arg %q, got %q", want, args[len(args)-1])
-// 	}
-// }
-
-// func mustExist(t *testing.T, path string) {
-// 	t.Helper()
-// 	if _, err := os.Stat(path); err != nil {
-// 		t.Errorf("expected file to exist: %s", path)
-// 	}
-// }
+	// Probe a segment: the output video codec must now be h264.
+	probe := exec.Command("ffprobe", "-v", "error",
+		"-select_streams", "v:0",
+		"-show_entries", "stream=codec_name",
+		"-of", "default=nw=1:nk=1",
+		out+"/stream.m3u8")
+	codec, err := probe.Output()
+	if err != nil {
+		t.Fatalf("ffprobe output: %v", err)
+	}
+	// ffprobe reports the codec once per segment; all lines should be h264.
+	for _, line := range strings.Fields(string(codec)) {
+		if line != "h264" {
+			t.Fatalf("output video codec = %q, want h264", line)
+		}
+	}
+	t.Logf("OK: AV1 source -> %d HLS segments, video codec=h264", tsCount)
+}
