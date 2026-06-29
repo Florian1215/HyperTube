@@ -13,12 +13,13 @@ CREATE TABLE IF NOT EXISTS movies (
 );
 
 CREATE TABLE IF NOT EXISTS torrents (
-    id          TEXT GENERATED ALWAYS AS (md5(url)) STORED PRIMARY KEY,
+    id          TEXT    PRIMARY KEY,
     imdbid      TEXT    NOT NULL REFERENCES movies(imdbid) ON DELETE CASCADE,
     title       TEXT    NOT NULL,
     year        INTEGER NOT NULL,
     source      TEXT    NOT NULL,
     url         TEXT    NOT NULL,
+    hash        TEXT,
     quality     TEXT    NOT NULL,
     size        FLOAT   NOT NULL,
     language    TEXT    NOT NULL,
