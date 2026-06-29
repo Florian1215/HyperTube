@@ -84,8 +84,10 @@ const (
 	MsgInvalidFrontendAuthCallbackURL  Message = "invalid frontend auth callback URL"
 	MsgFailedCreateAuthResponse        Message = "failed to create auth response"
 	MsgGrantTypeRequired               Message = "grant type is required"
-	MsgUnsupportedGrantType            Message = "only password grant type is supported"
+	MsgUnsupportedGrantType            Message = "only password and client_credentials grant types are supported"
 	MsgUsernamePasswordRequired        Message = "username and password are required"
+	MsgClientCredentialsRequired       Message = "client_id and client_secret are required"
+	MsgInvalidClientCredentials        Message = "invalid client credentials"
 	MsgPasswordTooLong                 Message = "password is too long"
 	MsgInvalidUsernamePassword         Message = "invalid username or password"
 	MsgInvalidContentType              Message = "invalid Content-Type"
@@ -193,8 +195,10 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFrontendAuthCallbackURL:  "URL de callback d'authentification frontend invalide",
 		MsgFailedCreateAuthResponse:        "échec de la création de la réponse d'authentification",
 		MsgGrantTypeRequired:               "type de grant requis",
-		MsgUnsupportedGrantType:            "seul le grant type password est pris en charge",
+		MsgUnsupportedGrantType:            "seuls les grant types password et client_credentials sont pris en charge",
 		MsgUsernamePasswordRequired:        "nom d'utilisateur et mot de passe requis",
+		MsgClientCredentialsRequired:       "client_id et client_secret sont requis",
+		MsgInvalidClientCredentials:        "identifiants client invalides",
 		MsgPasswordTooLong:                 "mot de passe trop long",
 		MsgInvalidUsernamePassword:         "nom d'utilisateur ou mot de passe invalide",
 		MsgInvalidContentType:              "Content-Type invalide",
@@ -294,8 +298,10 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFrontendAuthCallbackURL:  "Frontend-Auth-Callback-URL ist ungültig",
 		MsgFailedCreateAuthResponse:        "Auth-Antwort konnte nicht erstellt werden",
 		MsgGrantTypeRequired:               "Grant Type ist erforderlich",
-		MsgUnsupportedGrantType:            "Nur password Grant Type wird unterstützt",
+		MsgUnsupportedGrantType:            "Nur password und client_credentials Grant Types werden unterstützt",
 		MsgUsernamePasswordRequired:        "Benutzername und Passwort sind erforderlich",
+		MsgClientCredentialsRequired:       "client_id und client_secret sind erforderlich",
+		MsgInvalidClientCredentials:        "Client-Zugangsdaten sind ungültig",
 		MsgPasswordTooLong:                 "Passwort ist zu lang",
 		MsgInvalidUsernamePassword:         "Benutzername oder Passwort ist ungültig",
 		MsgInvalidContentType:              "Content-Type ist ungültig",

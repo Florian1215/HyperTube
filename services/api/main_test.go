@@ -86,7 +86,7 @@ func TestRouterOAuthTokenRoutesArePublic(t *testing.T) {
 
 	for _, path := range []string{"/api/v1/oauth/token", "/oauth/token"} {
 		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`grant_type=client_credentials`))
+			req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`grant_type=authorization_code`))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			rec := httptest.NewRecorder()
 

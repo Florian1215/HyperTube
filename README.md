@@ -147,9 +147,9 @@ docker compose up --build
 ## API
 
 Most content routes are JWT-protected. `GET /movies`, health, registration,
-login, password reset, OAuth start/callback routes, and the OAuth2 password
-grant are public. Detailed auth request and response examples are documented in
-`services/api/README.md`.
+login, password reset, OAuth start/callback routes, and the OAuth2 token
+endpoint are public. Detailed auth request and response examples are documented
+in `services/api/README.md`.
 
 ```
 GET    /health
@@ -191,7 +191,7 @@ GET    /stream/:id/:segment         # temporarily public for development
 - Registration: email, username, first name, last name, password (bcrypt)
 - 42 and GitHub OAuth when configured
 - JWT on login/OAuth callback, validated on every protected request
-- OAuth2 password grant at `POST /oauth/token`, returning a Bearer access token for protected API routes
+- OAuth2 token endpoint at `POST /oauth/token`, supporting password and configured client credentials grants
 - Password reset via email when configured
 
 ---

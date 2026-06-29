@@ -743,9 +743,9 @@ plus `refresh_token`. `expires_in` continues to describe only the access token.
 
 ### POST /oauth/token
 
-OAuth2-compatible token endpoint for the password grant. It returns a JWT bearer
-access token for API routes. This endpoint is also available at the legacy root
-path `POST /oauth/token`.
+OAuth2-compatible token endpoint for password and configured client credentials
+grants. It returns a JWT bearer access token for API routes. This endpoint is
+also available at the legacy root path `POST /oauth/token`.
 
 Unlike the other auth endpoints, this endpoint uses OAuth2 token response shapes
 directly. Success responses are not wrapped in `data`, and errors are not
@@ -759,6 +759,8 @@ Supported content types:
 - `application/json`
 - empty `Content-Type`, parsed as form data
 
+#### Password grant
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `grant_type` | string | yes | Must be `password`. |
@@ -766,7 +768,7 @@ Supported content types:
 | `password` | string | yes | Existing password. Must be present and no longer than 72 bytes. |
 | `scope` | string | no | Optional OAuth scope string. Whitespace is normalized in the response. |
 
-#### Example request
+##### Example request
 
 ```http
 POST /api/v1/oauth/token
@@ -784,6 +786,48 @@ JSON is also accepted:
   "grant_type": "password",
   "username": "ada@example.com",
   "password": "correct-horse-battery",
+  "scope": "profile"
+}
+```
+
+#### Client credentials grant
+
+For API clients, the endpoint also supports `grant_type=client_credentials`.
+Since the subject does not define client registration, this implementation uses
+one configured API client from environment variables and maps it to a configured
+API user for existing user-scoped routes.
+
+Required environment:
+
+- `OAUTH_CLIENT_ID`
+- `OAUTH_CLIENT_SECRET`
+- `OAUTH_CLIENT_USER_ID`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `grant_type` | string | yes | Must be `client_credentials`. |
+| `client_id` | string | yes | Configured API client ID. |
+| `client_secret` | string | yes | Configured API client secret. |
+| `scope` | string | no | Optional OAuth scope string. Whitespace is normalized in the response. |
+
+##### Example request
+
+```http
+POST /api/v1/oauth/token
+Content-Type: application/x-www-form-urlencoded
+```
+
+```text
+grant_type=client_credentials&client_id=hypertube-api&client_secret=replace-with-secret&scope=profile
+```
+
+JSON is also accepted:
+
+```json
+{
+  "grant_type": "client_credentials",
+  "client_id": "hypertube-api",
+  "client_secret": "replace-with-secret",
   "scope": "profile"
 }
 ```
@@ -812,11 +856,12 @@ Pragma: no-cache
 
 | Status | Error | Description |
 |--------|-------|-------------|
-| 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `username` or `password`, or password too long. |
-| 400 | `unsupported_grant_type` | `grant_type` is not `password`. |
+| 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `username` or `password`, missing `client_id` or `client_secret`, or password too long. |
+| 400 | `unsupported_grant_type` | `grant_type` is neither `password` nor `client_credentials`. |
 | 400 | `invalid_grant` | Username/email or password is incorrect. |
+| 401 | `invalid_client` | `client_id` or `client_secret` is incorrect. |
 | 415 | `invalid_request` | Body must be form encoded or JSON. |
-| 500 | `server_error` | Auth service unavailable, user load failed, or token creation failed. |
+| 500 | `server_error` | Auth service unavailable, user load failed, token creation failed, or client credentials environment configuration is missing or invalid. |
 
 Example:
 
