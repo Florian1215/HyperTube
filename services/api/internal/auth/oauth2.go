@@ -1,11 +1,15 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"io"
 	"mime"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 
 	"hypertube/api/internal/i18n"
@@ -13,10 +17,12 @@ import (
 )
 
 type oauthTokenRequest struct {
-	GrantType string `json:"grant_type"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Scope     string `json:"scope"`
+	GrantType    string `json:"grant_type"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Scope        string `json:"scope"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 }
 
 type oauthTokenResponse struct {
@@ -41,6 +47,8 @@ func (h *Handler) OAuthToken(w http.ResponseWriter, r *http.Request) {
 	switch strings.TrimSpace(req.GrantType) {
 	case "password":
 		h.oauthPasswordGrant(w, r, req, locale)
+	case "client_credentials":
+		h.oauthClientCredentialsGrant(w, req, locale)
 	case "":
 		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgGrantTypeRequired))
 	default:
@@ -89,6 +97,55 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 	writeOAuthJSON(w, http.StatusOK, response)
 }
 
+func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, req oauthTokenRequest, locale i18n.Locale) {
+	if h.tokens == nil {
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
+		return
+	}
+
+	clientID := strings.TrimSpace(req.ClientID)
+	clientSecret := req.ClientSecret
+	if clientID == "" || clientSecret == "" {
+		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgClientCredentialsRequired))
+		return
+	}
+
+	configuredClientID := strings.TrimSpace(os.Getenv("OAUTH_CLIENT_ID"))
+	configuredClientSecret := os.Getenv("OAUTH_CLIENT_SECRET")
+	configuredUserID := strings.TrimSpace(os.Getenv("OAUTH_CLIENT_USER_ID"))
+	if configuredClientID == "" || configuredClientSecret == "" || configuredUserID == "" {
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
+		return
+	}
+
+	userID, err := strconv.ParseInt(configuredUserID, 10, 64)
+	if err != nil || userID <= 0 {
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
+		return
+	}
+
+	clientIDOK := constantTimeStringEqual(clientID, configuredClientID)
+	secretOK := constantTimeStringEqual(clientSecret, configuredClientSecret)
+	if !clientIDOK || !secretOK {
+		writeOAuthError(w, http.StatusUnauthorized, "invalid_client", i18n.T(locale, i18n.MsgInvalidClientCredentials))
+		return
+	}
+
+	token, expiresIn, err := h.issueAccessToken(userID)
+	if err != nil {
+		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgFailedCreateAccessToken))
+		return
+	}
+
+	response := oauthTokenResponse{
+		AccessToken: token,
+		TokenType:   "Bearer",
+		ExpiresIn:   expiresIn,
+		Scope:       normalizeOAuthScope(req.Scope),
+	}
+	writeOAuthJSON(w, http.StatusOK, response)
+}
+
 func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n.Locale) (oauthTokenRequest, bool) {
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil && r.Header.Get("Content-Type") != "" {
@@ -103,10 +160,12 @@ func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n
 			return oauthTokenRequest{}, false
 		}
 		return oauthTokenRequest{
-			GrantType: r.PostForm.Get("grant_type"),
-			Username:  r.PostForm.Get("username"),
-			Password:  r.PostForm.Get("password"),
-			Scope:     r.PostForm.Get("scope"),
+			GrantType:    r.PostForm.Get("grant_type"),
+			Username:     r.PostForm.Get("username"),
+			Password:     r.PostForm.Get("password"),
+			Scope:        r.PostForm.Get("scope"),
+			ClientID:     r.PostForm.Get("client_id"),
+			ClientSecret: r.PostForm.Get("client_secret"),
 		}, true
 	}
 
@@ -131,6 +190,12 @@ func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n
 
 func normalizeOAuthScope(scope string) string {
 	return strings.Join(strings.Fields(scope), " ")
+}
+
+func constantTimeStringEqual(a string, b string) bool {
+	aHash := sha256.Sum256([]byte(a))
+	bHash := sha256.Sum256([]byte(b))
+	return subtle.ConstantTimeCompare(aHash[:], bHash[:]) == 1
 }
 
 func writeOAuthError(w http.ResponseWriter, status int, code string, description string) {
