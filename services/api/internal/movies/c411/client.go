@@ -107,14 +107,15 @@ func (c *Client) fetch(ctx context.Context, queryURL string) ([]models.Torrent, 
 		}
 		torrentFileURL := item.Enclosure.URL
 		torrents = append(torrents, models.Torrent{
-			ImdbID:   imdbID,
-			Title:    item.Title,
-			Source:   "C411",
-			URL:      torrentFileURL,
-			Quality:  extractQuality(item.Title),
-			Size:     formatBytes(item.Size),
+			ImdbID:  imdbID,
+			Title:   item.Title,
+			Source:  "C411",
+			URL:     torrentFileURL,
+			Hash:    item.attr("infohash"),
+			Quality: extractQuality(item.Title),
+			Size:    formatBytes(item.Size),
 			Language: extractLanguage(item.Title),
-			Seeds:    item.attr("seeders"),
+			Seeds:   item.attr("seeders"),
 		})
 	}
 	return torrents, nil

@@ -2,7 +2,9 @@ package movies
 
 import (
 	"context"
+	"crypto/md5"
 	"errors"
+	"fmt"
 
 	"hypertube/api/internal/models"
 
@@ -197,7 +199,9 @@ func (s *Store) UpsertMovie(ctx context.Context, m models.Movie) error {
 
 func (s *Store) findTorrent(ctx context.Context, imdbID string) ([]models.Torrent, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT * FROM torrents WHERE imdbid = $1
+		SELECT id, imdbid, title, year, source, url, COALESCE(hash, '') as hash,
+		       quality, size, language, seeds, status, finished_at
+		FROM torrents WHERE imdbid = $1
 	`, imdbID)
 	if err != nil {
 		return nil, err
@@ -212,13 +216,29 @@ func (s *Store) findTorrent(ctx context.Context, imdbID string) ([]models.Torren
 	return torrents, nil
 }
 
+func TorrentID(hash, url string) string {
+	if hash != "" {
+		return hash
+	}
+	return fmt.Sprintf("%x", md5.Sum([]byte(url)))
+}
+
 func (s *Store) UpsertTorrent(ctx context.Context, ts models.Torrent) error {
+	id := TorrentID(ts.Hash, ts.URL)
 	_, err := s.db.Exec(ctx, `
-		INSERT INTO torrents (imdbid, source, year, title, url, quality, size, language, seeds)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO torrents (id, imdbid, source, year, title, url, hash, quality, size, language, seeds)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		ON CONFLICT ON CONSTRAINT torrents_pkey DO NOTHING
-	`, ts.ImdbID, ts.Source, ts.Year, ts.Title, ts.URL, ts.Quality, ts.Size, ts.Language, ts.Seeds)
+	`, id, ts.ImdbID, ts.Source, ts.Year, ts.Title, ts.URL, nullStr(ts.Hash), ts.Quality, ts.Size, ts.Language, ts.Seeds)
 	return err
+}
+
+// nullStr converts an empty string to nil so it stores as SQL NULL.
+func nullStr(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 func (s *Store) UpsertDefault(ctx context.Context, imdbId string, position int) error {
