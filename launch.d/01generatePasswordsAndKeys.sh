@@ -4,7 +4,7 @@ ENV_OUTPUT=srcs/.env
 
 generate_password() {
     export LC_ALL=C
-    echo $(LC_CTYPE=C; tr -dc 'A-Za-z0-9!?%' < /dev/urandom | head -c 32)
+    echo $(LC_CTYPE=C; tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32)
 }
 
 generate_secret_key() {
