@@ -38,6 +38,12 @@ type fakeCommentStore struct {
 	listByUserErr     error
 }
 
+type existingAuthUserChecker struct{}
+
+func (existingAuthUserChecker) UserExists(context.Context, int64) (bool, error) {
+	return true, nil
+}
+
 func (s *fakeCommentStore) create(ctx context.Context, content string, movieID string, userID int) (models.Comment, error) {
 	s.createMovieID = movieID
 	s.createUserID = userID
@@ -702,7 +708,7 @@ func serveWithUser(t *testing.T, userID int64, next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.Header.Set("Authorization", "Bearer "+token)
-		auth.RequireAuth(tokens)(next).ServeHTTP(w, r)
+		auth.RequireAuth(tokens, existingAuthUserChecker{})(next).ServeHTTP(w, r)
 	})
 }
 
