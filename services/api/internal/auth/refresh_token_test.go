@@ -11,14 +11,16 @@ import (
 )
 
 func TestRefreshTokenReturnsNewAccessToken(t *testing.T) {
+	store := newMemoryUserStore()
+	user := createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
 	tokens := newTestTokenManager(t)
 	now := time.Date(2026, 5, 6, 10, 0, 0, 0, time.UTC)
 	tokens.now = func() time.Time { return now }
-	refreshToken, _, err := tokens.CreateRefreshToken(42)
+	refreshToken, _, err := tokens.CreateRefreshToken(user.ID)
 	if err != nil {
 		t.Fatalf("create refresh token: %v", err)
 	}
-	handler := NewHandler(nil, tokens)
+	handler := NewHandler(store, tokens)
 
 	rec := callRefreshToken(t, handler, refreshToken)
 	if rec.Code != http.StatusOK {
@@ -37,8 +39,8 @@ func TestRefreshTokenReturnsNewAccessToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new access token should validate: %v", err)
 	}
-	if claims.UserID != 42 {
-		t.Fatalf("expected user id 42, got %d", claims.UserID)
+	if claims.UserID != user.ID {
+		t.Fatalf("expected user id %d, got %d", user.ID, claims.UserID)
 	}
 
 	var raw struct {
@@ -59,6 +61,63 @@ func TestRefreshTokenReturnsNewAccessToken(t *testing.T) {
 	secondRec := callRefreshToken(t, handler, refreshToken)
 	if secondRec.Code != http.StatusOK {
 		t.Fatalf("expected refresh token reuse to return 200, got %d: %s", secondRec.Code, secondRec.Body.String())
+	}
+}
+
+func TestRefreshTokenRejectsMissingUser(t *testing.T) {
+	store := newMemoryUserStore()
+	tokens := newTestTokenManager(t)
+	refreshToken, _, err := tokens.CreateRefreshToken(42)
+	if err != nil {
+		t.Fatalf("create refresh token: %v", err)
+	}
+
+	rec := callRefreshToken(t, NewHandler(store, tokens), refreshToken)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertNoStoreHeaders(t, rec)
+	if got := decodeErrorEnvelope(t, rec).Error.Code; got != "INVALID_REFRESH_TOKEN" {
+		t.Fatalf("expected INVALID_REFRESH_TOKEN, got %q", got)
+	}
+}
+
+func TestRefreshTokenReturnsInternalErrorWhenUserLookupFails(t *testing.T) {
+	store := newMemoryUserStore()
+	store.userExistsErr = errors.New("db down")
+	tokens := newTestTokenManager(t)
+	refreshToken, _, err := tokens.CreateRefreshToken(42)
+	if err != nil {
+		t.Fatalf("create refresh token: %v", err)
+	}
+
+	rec := callRefreshToken(t, NewHandler(store, tokens), refreshToken)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertNoStoreHeaders(t, rec)
+	if got := decodeErrorEnvelope(t, rec).Error.Code; got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
+	}
+}
+
+func TestRefreshTokenWithoutStoreReturnsInternalError(t *testing.T) {
+	tokens := newTestTokenManager(t)
+	refreshToken, _, err := tokens.CreateRefreshToken(42)
+	if err != nil {
+		t.Fatalf("create refresh token: %v", err)
+	}
+
+	rec := callRefreshToken(t, NewHandler(nil, tokens), refreshToken)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertNoStoreHeaders(t, rec)
+	if got := decodeErrorEnvelope(t, rec).Error.Code; got != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", got)
 	}
 }
 

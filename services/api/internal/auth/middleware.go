@@ -14,7 +14,7 @@ type contextKey string
 
 const userIDContextKey contextKey = "auth_user_id"
 
-func RequireAuth(tokens *TokenManager) func(http.Handler) http.Handler {
+func RequireAuth(tokens *TokenManager, users UserExistenceChecker) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString, ok := bearerToken(r.Header.Get("Authorization"))
@@ -29,6 +29,21 @@ func RequireAuth(tokens *TokenManager) func(http.Handler) http.Handler {
 					respond.LocalizedError(w, r, http.StatusUnauthorized, "TOKEN_EXPIRED", i18n.MsgTokenExpired)
 					return
 				}
+				respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgInvalidBearerToken)
+				return
+			}
+
+			if users == nil {
+				respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgAuthServiceUnavailable)
+				return
+			}
+
+			exists, err := users.UserExists(r.Context(), claims.UserID)
+			if err != nil {
+				respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgAuthServiceUnavailable)
+				return
+			}
+			if !exists {
 				respond.LocalizedError(w, r, http.StatusUnauthorized, "UNAUTHORIZED", i18n.MsgInvalidBearerToken)
 				return
 			}

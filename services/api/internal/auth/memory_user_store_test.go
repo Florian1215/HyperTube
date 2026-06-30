@@ -15,6 +15,35 @@ func TestMemoryUserStoreFindMissing(t *testing.T) {
 	}
 }
 
+func TestMemoryUserStoreUserExists(t *testing.T) {
+	store := newMemoryUserStore()
+	exists, err := store.UserExists(context.Background(), 42)
+	if err != nil {
+		t.Fatalf("user exists: %v", err)
+	}
+	if exists {
+		t.Fatal("expected missing user id 42")
+	}
+
+	user := createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
+	exists, err = store.UserExists(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("user exists: %v", err)
+	}
+	if !exists {
+		t.Fatalf("expected user id %d to exist", user.ID)
+	}
+
+	store.userExistsErr = errors.New("db down")
+	exists, err = store.UserExists(context.Background(), user.ID)
+	if err == nil {
+		t.Fatal("expected lookup error")
+	}
+	if exists {
+		t.Fatal("expected false when lookup fails")
+	}
+}
+
 func TestMemoryUserStoreAssignsValidColor(t *testing.T) {
 	user, err := newMemoryUserStore().CreateUser(context.Background(), CreateUserParams{
 		Email:        "color@example.com",
