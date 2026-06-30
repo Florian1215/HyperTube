@@ -20,10 +20,13 @@ EOF
 > "$ENV_OUTPUT"
 
 while IFS= read -r line; do
-    if [[ $line == "POSTGRES_PASSWORD"* ]]; then
+    if [[ $line == POSTGRES_PASSWORD* ]]; then
         variable=$(echo "$line" | cut -d '=' -f 1)
-        password=$(generate_password)
-        echo "$variable=\"$password\"" >> "$ENV_OUTPUT"
+        POSTGRES_PASSWORD=$(generate_password)
+        echo "$variable=\"$POSTGRES_PASSWORD\"" >> "$ENV_OUTPUT"
+    elif [[ $line == DATABASE_URL* ]]; then
+        new_url=$(echo "$line" | sed "s/changeme/${POSTGRES_PASSWORD}/")
+        echo "$new_url" >> "$ENV_OUTPUT"
     elif [[ $line == "JWT_SECRET"* ]]; then
         variable=$(echo "$line" | cut -d '=' -f 1)
         key=$(generate_secret_key)
