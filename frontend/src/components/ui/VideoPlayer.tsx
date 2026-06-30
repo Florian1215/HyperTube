@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
+import {FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
@@ -19,7 +19,7 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({movie, src, color, setErrorAction}: {movie: iMovieDetails, src: string, color: string, setErrorAction: (e: string) => void}) {
+export default function VideoPlayer({movie, src, color, setErrorAction, tAction}: {movie: iMovieDetails, src: string, color: string, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -51,12 +51,9 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
     const setComplete = useRef(false);
     const min15 = 15 * 60;
     const isLiveRef = useRef(true);
+    const delaySubtitle = useRef(0);
 
-    useEffect(() => {
-        if (downloadSubtitle)
-            loadSRT(downloadSubtitle.link).then(setSubs);
-    }, [downloadSubtitle]);
-
+    /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !src)
@@ -84,13 +81,14 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
                 const status = data?.response?.code;
-                console.log("ERROR", data);
+                console.log("ERROR", data); // todo remove
 
                 if (status === 401) {
                     try {
                         await refreshAccessToken(locale);
                         hls.stopLoad();
-                        hls.startLoad(-1);
+                        hls.loadSource(src);
+                        hls.startLoad();
                     } catch {
                         videoRef?.current?.pause();
                         handleKeyPress.current = false;
@@ -104,7 +102,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
 
-    /* -------------- PLAY PAUSE ------------- */
+    /* ------------------------------------------------- PLAY PAUSE ------------------------------------------------- */
     // useEffect(() => { //todo keep ?
     //     const video = videoRef.current;
     //     if (!video)
@@ -114,6 +112,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
     // }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDurationString(formatTime(fullDuration));
     }, [fullDuration]);
 
@@ -121,6 +120,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         const video = videoRef.current;
         if (video && movie.progress)
             video.currentTime = movie.progress;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -155,7 +155,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         }
     };
 
-    /* --------------- PROGRESS -------------- */
+    /* --------------------------------------------------- PROGRESS ------------------------------------------------- */
     const handleTimeUpdate = () => {
         const video = videoRef.current;
         if (!video)
@@ -164,11 +164,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         if (!isSeeking)
             setSeekTime(video.currentTime);
 
-        if (subs.length > 0) {
-            const current = subs.find(s => video.currentTime >= s.start && video.currentTime <= s.end);
-            setCurrentText(current?.text ?? "");
-        }
-
         if (!setComplete.current) {
             const progress = Math.floor(video.currentTime);
             if (isLiveRef && video.currentTime + min15 > fullDuration) {
@@ -176,7 +171,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
                 setComplete.current = true;
             } else {
                 const second = Math.floor(video.currentTime % 60);
-                if (second - lastSent.current >= 30) {
+                if (second - lastSent.current >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
                     lastSent.current = second;
                     updateMovieProgress(movie.imdb_id, progress, pourcent, false);
@@ -241,7 +236,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         video.pause();
     };
 
-    /* ------------- FULL SCREEN ------------- */
+    /* ------------------------------------------------ FULL SCREEN ------------------------------------------------- */
     const toggleFullscreen = () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
@@ -255,7 +250,36 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
             document.exitFullscreen();
     }
 
-    /* -------------- SUBTITLES -------------- */
+    /* ------------------------------------------------- SUBTITLES -------------------------------------------------- */
+    useEffect(() => {
+        if (downloadSubtitle)
+            loadSRT(downloadSubtitle.link).then(setSubs);
+    }, [downloadSubtitle]);
+
+    useEffect(() => {
+        delaySubtitle.current = 0;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCurrentText("");
+    }, [selectedSubtitle]);
+
+    const updateSubtitle = (delay?: number) => {
+        const video = videoRef.current;
+
+        if (selectedSubtitle && video && subs.length > 0) {
+            if (delay)
+                delaySubtitle.current += delay;
+            const t = video.currentTime + delaySubtitle.current;
+            const current = subs.find(s => t >= s.start && t <= s.end);
+            setCurrentText(current?.text ?? "");
+        }
+    }
+
+    useEffect(() => {
+        if (subs.length > 0)
+            updateSubtitle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [seekTime, subs.length, selectedSubtitle]);
+
     const changeSubtitle = (lang: tLocale) => {
         const video = videoRef.current;
         if (!video)
@@ -266,7 +290,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         setShowSubtitleMenu(false);
     };
 
-    /* ------------ HIDE CONTROLS ------------ */
+    /* ------------------------------------------------ HIDE CONTROL ------------------------------------------------ */
     const resetHideTimer = () => {
         setShowControls(true);
         if (timeoutRef.current)
@@ -282,7 +306,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         resShowControl.current = isPlaying;
     }, [isPlaying]);
 
-    /* --------------- KEYBOARD -------------- */
+    /* -------------------------------------------------- KEYBOARD -------------------------------------------------- */
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
             const video = videoRef.current;
@@ -326,6 +350,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    /* ---------------------------------------------- REACT COMPONENT ----------------------------------------------- */
     return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/10" : "")} onMouseMove={resetHideTimer} >
         {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black">
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
@@ -338,8 +363,9 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className="absolute bottom-12 w-full text-center text-3xl pointer-events-none text-white font-bold whitespace-pre-line custom-text-shadow">{currentText}</div>}
-
+        {subs && <div className="absolute bottom-12 w-full text-center text-3xl pointer-events-none text-white font-bold custom-text-shadow">
+            <div className="max-w-1/3 mx-auto whitespace-pre-line">{currentText}</div>
+        </div>}
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
@@ -354,6 +380,8 @@ export default function VideoPlayer({movie, src, color, setErrorAction}: {movie:
                     </div>
 
                     <div className="flex gap-4 items-center">
+                        {selectedSubtitle && (<button title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}><SubDelayIcon direction={"left"}/></button>)}
+                        {selectedSubtitle && (<button title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}><SubDelayIcon direction={"right"}/></button>)}
                         {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white" : "border-white")}>CC</button>}
                         {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
