@@ -1,39 +1,96 @@
-.PHONY: up up-vpn down re build logs api stream frontend
+####################################################### VARIABLE #######################################################
+NAME		:=	hypertube
+SRCS_D		:=	srcs
+ENV_EXEMPLE	:=	.env.exemple
+DATA_DIR	:=	$(SRCS_D)/data
+ENV_FILE	:=	$(SRCS_D)/.env
+COMPOSE_F	:=	$(SRCS_D)/docker-compose.yml
+SERVICE		?=	#Leave blank
 
-up:
-	mkdir -p data/videos
-	mkdir -p data/torrents
-	docker compose up --build
+######################################################## FLAGS #########################################################
+FLAGS		=	-f $(COMPOSE_F)
+COMPOSE		=	docker compose
+DSHELL		=	/bin/sh
 
-re:
-	rm -rf data
-	$(MAKE) down
-	$(MAKE) up
+######################################################## RULES #########################################################
+.DEFAULT_GOAL = all
 
-up-vpn:
-	docker compose --profile vpn up --build
+.PHONY: all
+all			:	$(NAME)
 
-down:
-	docker compose down -v
+$(NAME)		:	secrets
+			mkdir -p $(DATA_DIR)
+			$(COMPOSE) $(FLAGS) up --build $(SERVICE)
 
-build:
-	docker compose build
+CMDS		:=	up build down ps ls images events top
+.PHONY: $(CMDS)
+$(CMDS)		:
+			$(COMPOSE) $(FLAGS) $@ $(SERVICE)
 
-logs:
-	docker compose logs -f
+.PHONY: detach
+detach		:
+			$(COMPOSE) $(FLAGS) up --$@ $(SERVICE)
 
-api:
-	cd services/api && go run .
+.PHONY: logs
+logs		:	build
+			$(COMPOSE) $(FLAGS) $@ -f $(SERVICE)
 
-api-integration-test:
-	cd services/api && go test -v -run IntegrationTest
+.PHONY: exec
+exec		:
+			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
-stream:
-	cd services/torrent-stream && go run .
+secrets		:	$(ENV_EXEMPLE)
+			./launch.d/01generatePasswordsAndKeys.sh
 
-frontend:
-	cd frontend && npm run dev
+.PHONY: clean
+clean		:
+			$(COMPOSE) $(FLAGS) down --rmi local --remove-orphans
 
-tidy:
-	cd services/api && go mod tidy
-	cd services/torrent-stream && go mod tidy
+.PHONY: vclean
+vclean		:
+			$(COMPOSE) $(FLAGS) down -v --remove-orphans
+			rm -rf $(ENV_FILE)
+			rm -rf $(DATA_DIR)
+
+.PHONY: fclean
+fclean		:
+			$(COMPOSE) $(FLAGS) down -v --rmi all --remove-orphans
+			rm -rf $(ENV_FILE)
+			rm -rf $(DATA_DIR)
+
+.PHONY: image-ls image-rm
+image-ls	:
+			docker image ls -a
+image-rm	:
+			docker image rm `docker image ls -qa`
+
+.PHONY: container-ls container-rm
+container-ls:
+			docker container ls -a
+container-rm:
+			docker container rm `docker container ls -qa`
+
+.PHONY: volume-ls volume-rm
+volume-ls	:
+			docker volume ls
+volume-rm	:
+			docker volume rm `docker volume ls -qa`
+
+.PHONY: network-ls network-rm
+network-ls	:
+			docker network ls
+network-rm	:
+			docker network rm `docker network ls -qa`
+
+.PHONY: prune
+prune		:
+			docker system prune -af
+
+.PHONY: sre
+sre			:	clean all
+
+.PHONY: vre
+vre			:	vclean all
+
+.PHONY: re
+re			:	fclean all
