@@ -12,8 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-//TODO consider writting new integration test
-
 func setupTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 

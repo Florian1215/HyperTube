@@ -81,7 +81,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
                 const status = data?.response?.code;
-                console.log("ERROR", data); // todo remove
 
                 if (status === 401) {
                     try {
@@ -349,7 +348,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         return () => window.removeEventListener("keydown", handleKey);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-// todo pb jeton undefined
 
     /* ---------------------------------------------- REACT COMPONENT ----------------------------------------------- */
     return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/10" : "")} onMouseMove={resetHideTimer} >

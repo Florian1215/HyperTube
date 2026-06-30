@@ -80,7 +80,6 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer respDownload.Body.Close()
-	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
 
 	// Init transcoding — delegate to the torrent-transcode service and wait for an OK;
 	transcodeURL := s.transcodeURL + "/transcode/" + id
@@ -95,13 +94,9 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 	}
 	defer respTranscode.Body.Close()
 
-	// TODO add a timeout for torrent that are maybe just too long to init and exist with error
-
 	if err := s.store.SetTorrentStatus(r.Context(), id, "in_progress"); err != nil {
 		log.Printf("%s: failed to set torrent status to in_progress: %v", id, err)
 	}
-
-	// TODO add the torrent to the watch list of the user
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
