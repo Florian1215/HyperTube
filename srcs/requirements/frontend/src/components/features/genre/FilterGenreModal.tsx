@@ -20,6 +20,7 @@ export default function FilterGenreModal() {
 
     useEffect(() => {
         if (activeModal.filterGenre !== undefined)
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setModalFilterGenre(activeModal.filterGenre[0]);
     }, [activeModal.filterGenre]);
 

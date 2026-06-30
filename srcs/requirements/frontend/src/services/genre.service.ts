@@ -17,14 +17,20 @@ export async function fetchGenres(language: string): Promise<tResponseGenre> {
         });
 
         if (!response.ok)
-            throw new Error("Request failed");
+            return getFallbackGenres(language);
         return await response.json();
+    } catch {
+        return getFallbackGenres(language);
     }
-    catch {
-        if (language === "fr")
-            return {genres: frGenres};
-        if (language === "de")
-            return {genres: deGenres};
-        return {genres: enGenres};
+}
+
+function getFallbackGenres(language: string) {
+    switch (language) {
+        case "fr":
+            return { genres: frGenres };
+        case "de":
+            return { genres: deGenres };
+        default:
+            return { genres: enGenres };
     }
 }

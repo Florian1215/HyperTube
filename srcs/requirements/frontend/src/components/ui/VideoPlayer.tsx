@@ -81,7 +81,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
                 const status = data?.response?.code;
-                console.log("ERROR", data); // todo remove
 
                 if (status === 401) {
                     try {
@@ -103,13 +102,13 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     }, [src]);
 
     /* ------------------------------------------------- PLAY PAUSE ------------------------------------------------- */
-    // useEffect(() => { //todo keep ?
-    //     const video = videoRef.current;
-    //     if (!video)
-    //         return;
-    //     video.play();
-    //     setIsPlaying(true);
-    // }, []);
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video)
+            return;
+        video.play();
+        setIsPlaying(true);
+    }, []);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -349,11 +348,10 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         return () => window.removeEventListener("keydown", handleKey);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-// todo pb jeton undefined
 
     /* ---------------------------------------------- REACT COMPONENT ----------------------------------------------- */
     return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/10" : "")} onMouseMove={resetHideTimer} >
-        {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black">
+        {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 

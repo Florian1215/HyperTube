@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/*// todo ameliorere css */
 /* -------------------------------------------------- DEFAULT VALUE ------------------------------------------------- */
 @theme {
     --color-black: #191919;
@@ -77,7 +76,6 @@
 
 .custom-shadow-s { box-shadow: 8px 7px 0 var(--color-black); }
 .custom-shadow-m { box-shadow: 14px 14px 0 var(--color-black); }
-.custom-shadow-l { box-shadow: 26px 26px 0 var(--color-black); }
 
 .custom-btn { transition: all 0.2s ease; }
 .custom-btn:hover {

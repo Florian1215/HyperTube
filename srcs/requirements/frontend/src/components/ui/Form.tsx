@@ -143,6 +143,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
             <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
             {showOAuth && <OauthServices oauth={"42"} title={t("oAuth")} />}
             {showOAuth && <OauthServices oauth={"github"} title={t("oAuth")} />}
+            {showOAuth && <OauthServices oauth={"gitlab"} title={t("oAuth")} />}
         </div>
     </form>)
 }

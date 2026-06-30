@@ -34,6 +34,7 @@ export default function MoviePage() {
     useEffect(() => {
         if (error) {
             const node = handleError(error as ApiError, "Film");
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setErrorNode(node);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps

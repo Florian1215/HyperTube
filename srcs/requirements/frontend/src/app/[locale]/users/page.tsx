@@ -24,7 +24,7 @@ export default function Page() {
     if (!user)
         return null;
 
-    if (user?.oauth_method && (user.oauth_method === "42" || user.oauth_method === "github"))
+    if (user?.oauth_method && !user.oauth_method)
         tabs.unshift({name: "avatar", comp: AvatarProfileTab});
     else {
         tabs.unshift({name: "auth", comp: AuthProfileTab});

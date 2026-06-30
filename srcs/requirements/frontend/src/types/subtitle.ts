@@ -9,12 +9,6 @@ export interface iSubtitle {
     }
 }
 
-export interface iSubtitleTrack {
-    language: string
-    label: string
-    url: string
-}
-
 export interface iLoginOpenSubtitles {
     user: {
         allowed_downloads: number

@@ -100,6 +100,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
     }, [activeModal, maxHeight, minHeight]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLogoHeight(maxHeight);
     }, [maxHeight]);
 
