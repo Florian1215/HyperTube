@@ -25,11 +25,13 @@ export default function OAuthCallbackPage() {
 
         try {
             if (!userEncoded || !token || !refresh)
-                throw new Error("Missing token");
-            const user = JSON.parse(decodeURIComponent(decodeURIComponent(userEncoded)));
-            login(user, token, refresh);
-            if (redirectParam)
-                redirect = decodeURIComponent(redirectParam);
+                addNotification(tError("invalidQueryParameter"), "error");
+            else {
+                const user = JSON.parse(decodeURIComponent(decodeURIComponent(userEncoded)));
+                login(user, token, refresh);
+                if (redirectParam)
+                    redirect = decodeURIComponent(redirectParam);
+            }
         } catch {
             addNotification(tError("invalidQueryParameter"), "error");
         }

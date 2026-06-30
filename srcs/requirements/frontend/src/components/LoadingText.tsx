@@ -5,6 +5,7 @@ export default function LoadingText({center=false}) {
     const [randomWidth, setRandomWidth] = useState("");
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRandomWidth(maxWidths[Math.floor(Math.random() * maxWidths.length)]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
