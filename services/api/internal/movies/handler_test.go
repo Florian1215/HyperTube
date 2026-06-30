@@ -548,6 +548,30 @@ func TestPatchMovieProgressRejectsUnknownMovie(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
 	}
+	if got := decodeHandlerErrorCode(t, rec); got != "NOT_FOUND" {
+		t.Fatalf("expected NOT_FOUND, got %q", got)
+	}
+	if store.saveMovieProgressCalled {
+		t.Fatal("store save must not be called for unknown movies")
+	}
+}
+
+func TestPatchMovieProgressMissingMovieWinsOverInvalidBody(t *testing.T) {
+	store := &fakeStore{}
+	h := &MoviesHandler{store: store}
+
+	req := httptest.NewRequest(http.MethodPatch, "/movies/tt404/progress", strings.NewReader(`{"progress":`))
+	req.SetPathValue("id", "tt404")
+	rec := httptest.NewRecorder()
+
+	serveWithUser(t, 42, http.HandlerFunc(h.PatchMovieProgress)).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := decodeHandlerErrorCode(t, rec); got != "NOT_FOUND" {
+		t.Fatalf("expected NOT_FOUND, got %q", got)
+	}
 	if store.saveMovieProgressCalled {
 		t.Fatal("store save must not be called for unknown movies")
 	}
