@@ -44,6 +44,21 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.store == nil {
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgAuthServiceUnavailable)
+		return
+	}
+
+	exists, err := h.store.UserExists(r.Context(), claims.UserID)
+	if err != nil {
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgAuthServiceUnavailable)
+		return
+	}
+	if !exists {
+		respond.LocalizedError(w, r, http.StatusUnauthorized, "INVALID_REFRESH_TOKEN", i18n.MsgInvalidRefreshToken)
+		return
+	}
+
 	accessToken, expiresIn, err := h.issueAccessToken(claims.UserID)
 	if err != nil {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedCreateAccessToken)

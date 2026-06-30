@@ -411,9 +411,16 @@ func newTestRouterWithUsersStore(t *testing.T, userStore *routerUserStore) (http
 		auth.NewHandler(nil, tokens),
 		users.NewHandler(userStore),
 		tokens,
+		routerAuthUserChecker{},
 		stream.NewStreamHandler(stream.NewStore(nil)),
 		"http://localhost:4200",
 	), tokens
+}
+
+type routerAuthUserChecker struct{}
+
+func (routerAuthUserChecker) UserExists(context.Context, int64) (bool, error) {
+	return true, nil
 }
 
 type routerUserStore struct {

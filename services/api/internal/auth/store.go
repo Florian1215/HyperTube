@@ -49,7 +49,12 @@ func duplicateUserFields(err error) []string {
 	return nil
 }
 
+type UserExistenceChecker interface {
+	UserExists(ctx context.Context, userID int64) (bool, error)
+}
+
 type userStore interface {
+	UserExistenceChecker
 	CreateUser(ctx context.Context, params CreateUserParams) (models.User, error)
 	FindUserByEmail(ctx context.Context, email string) (models.User, error)
 	FindUserByLogin(ctx context.Context, login string) (models.User, error)
@@ -61,6 +66,8 @@ type userStore interface {
 type Store struct {
 	db *pgxpool.Pool
 }
+
+var _ UserExistenceChecker = (*Store)(nil)
 
 type CreateUserParams struct {
 	Email          string
@@ -90,6 +97,18 @@ type CreatePasswordResetTokenParams struct {
 
 func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
+}
+
+func (s *Store) UserExists(ctx context.Context, userID int64) (bool, error) {
+	var exists bool
+	err := s.db.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM users
+			WHERE id = $1
+		)
+	`, userID).Scan(&exists)
+	return exists, err
 }
 
 func (s *Store) CreateUser(ctx context.Context, params CreateUserParams) (models.User, error) {
