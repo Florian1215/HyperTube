@@ -39,7 +39,7 @@ logs		:	build
 exec		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
-$(ENV_FILE)		:	$(ENV_EXEMPLE)
+$(ENV_FILE)	:	$(ENV_EXEMPLE)
 			./launch.d/01generatePasswordsAndKeys.sh
 
 .PHONY: clean
