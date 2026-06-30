@@ -232,13 +232,6 @@ export function StarIcon({color="yellow", size=20}) {
     </svg>);
 }
 
-export function CheckFillIcon({className="", size=20}) {
-    return (<svg className={className} height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-        <path fill="var(--color-black)" d="M0 0h20v20H0z" />
-        <path d="m14.827 5.625-6.353 6.352-3.303-3.303-1.421 1.423 4.724 4.727 7.776-7.776-1.423-1.423Z" fill="#fff" />
-    </svg>);
-}
-
 export function EditIcon({color="black", size=20}) {
     const fullColor = `var(--color-${color})`;
 
