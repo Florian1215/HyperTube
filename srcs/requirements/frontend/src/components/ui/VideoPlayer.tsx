@@ -102,13 +102,13 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     }, [src]);
 
     /* ------------------------------------------------- PLAY PAUSE ------------------------------------------------- */
-    // useEffect(() => { //todo keep ?
-    //     const video = videoRef.current;
-    //     if (!video)
-    //         return;
-    //     video.play();
-    //     setIsPlaying(true);
-    // }, []);
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video)
+            return;
+        video.play();
+        setIsPlaying(true);
+    }, []);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
