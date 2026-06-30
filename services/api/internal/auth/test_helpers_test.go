@@ -24,7 +24,10 @@ type memoryUserStore struct {
 	usersByUsername map[string]models.User
 	oauthAccounts   map[string]int64
 	resetTokens     map[string]memoryPasswordResetToken
+	userExistsErr   error
 }
+
+var _ UserExistenceChecker = (*memoryUserStore)(nil)
 
 type memoryPasswordResetToken struct {
 	userID    int64
@@ -40,6 +43,14 @@ func newMemoryUserStore() *memoryUserStore {
 		oauthAccounts:   make(map[string]int64),
 		resetTokens:     make(map[string]memoryPasswordResetToken),
 	}
+}
+
+func (s *memoryUserStore) UserExists(_ context.Context, userID int64) (bool, error) {
+	if s.userExistsErr != nil {
+		return false, s.userExistsErr
+	}
+	_, ok := s.usersByID[userID]
+	return ok, nil
 }
 
 func (s *memoryUserStore) CreateUser(_ context.Context, params CreateUserParams) (models.User, error) {

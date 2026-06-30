@@ -93,7 +93,7 @@ func main() {
 	addr := ":" + getEnv("PORT", "8080")
 	log.Printf("api listening on %s", addr)
 	allowedOrigin := getEnv("CORS_ALLOWED_ORIGIN", "http://localhost:4200")
-	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, usersHandler, tokenManager, streamHandler, allowedOrigin)))
+	log.Fatal(http.ListenAndServe(addr, newRouter(moviesHandler, commentsHandler, authHandler, usersHandler, tokenManager, authStore, streamHandler, allowedOrigin)))
 
 }
 
@@ -143,6 +143,7 @@ func newRouter(
 	authHandler *auth.Handler,
 	usersHandler *users.Handler,
 	tokenManager *auth.TokenManager,
+	authUsers auth.UserExistenceChecker,
 	streamHandler *stream.StreamHandler,
 	allowedOrigin string,
 ) chi.Router {
@@ -191,7 +192,7 @@ func newRouter(
 		r.Get("/movies/featured", moviesHandler.GetFeaturedMovies)
 		r.Get("/movies/search", moviesHandler.SearchMovies)
 
-		requireAuth := auth.RequireAuth(tokenManager)
+		requireAuth := auth.RequireAuth(tokenManager, authUsers)
 		// requireAuth = auth.DevAuthenticateAs(1)
 
 		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
