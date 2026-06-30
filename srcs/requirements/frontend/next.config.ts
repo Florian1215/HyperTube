@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
             {
                 protocol: "https",
                 hostname: "avatars.githubusercontent.com"
+            },
+            {
+                protocol: "https",
+                hostname: "gitlab.com",
+                pathname: "/uploads/**",
             }
         ],
     },
