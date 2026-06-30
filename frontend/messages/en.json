@@ -37,7 +37,9 @@
     "posterAlt": "Poster of movie: {title}",
     "movieDownloading": "The movie is being downloaded. This may take up to 1 minute. Please wait...",
     "torrentError": "An error occurred while downloading the movie. Please try again with a different torrent or try again later.",
-    "chooseAnotherTorrent": "Choose another torrent"
+    "chooseAnotherTorrent": "Choose another torrent",
+    "decreaseSubDelay": "Decrease subtitle delay",
+    "increaseSubDelay": "Increase subtitle delay"
   },
   "comments": {
     "title": "Comments",

@@ -37,7 +37,9 @@
     "posterAlt": "Filmplakat: {title}",
     "movieDownloading": "Der Film wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
     "torrentError": "Beim Herunterladen des Films ist ein Fehler aufgetreten. Bitte versuchen Sie es mit einem anderen Torrent oder versuchen Sie es später erneut.",
-    "chooseAnotherTorrent": "Wählen Sie einen anderen Torrent"
+    "chooseAnotherTorrent": "Wählen Sie einen anderen Torrent",
+    "decreaseSubDelay": "Untertitelverzögerung verringern",
+    "increaseSubDelay": "Untertitelverzögerung erhöhen"
   },
   "comments": {
     "title": "Kommentare",

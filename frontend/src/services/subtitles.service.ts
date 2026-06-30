@@ -34,7 +34,7 @@ export function fetchSubtitles(imdbId: string, language: string) {
 }
 
 export function loginOpenSubtitles() {
-    return fetchOpenSubtitles<iLoginOpenSubtitles>("login", JSON.stringify({username: process.env.NEXT_PUBLIC_OPENSUBTITLES_USERNAME, password: "$5pOBfO0kv6#KAzs6SHD"}));
+    return fetchOpenSubtitles<iLoginOpenSubtitles>("login", JSON.stringify({username: process.env.NEXT_PUBLIC_OPENSUBTITLES_USERNAME, password: process.env.NEXT_PUBLIC_OPENSUBTITLES_PASSWORD}));
 }
 
 export function downloadSubtitle(fileId?: number, bearerToken?: string) {

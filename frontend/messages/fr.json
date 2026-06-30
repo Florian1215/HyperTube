@@ -37,7 +37,9 @@
     "posterAlt": "Affiche du film : {title}",
     "movieDownloading": "Le téléchargement du film est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter...",
     "torrentError": "Erreur lors du téléchargement du film. Veuillez réessayer avec un torrent différent ou réessayer plus tard.",
-    "chooseAnotherTorrent": "Choisir un autre torrent"
+    "chooseAnotherTorrent": "Choisir un autre torrent",
+    "decreaseSubDelay": "Diminuer le délai des sous-titres",
+    "increaseSubDelay": "Augmenter le délai des sous-titres"
   },
   "comments": {
     "title": "Commentaires",
