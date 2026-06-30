@@ -60,25 +60,13 @@ services:
     volumes:
       - ./data:/data
 
-  # torrent-stream-novpn:
-  #   build: ./services/torrent-stream
-  #   restart: unless-stopped
-  #   env_file: .env
-  #   ports:
-  #     - "8081:8081"
-  #   profiles: [""]
-  #   depends_on:
-  #     - postgres
-  #   volumes:
-  #     - torrents:/data/torrents
-
-  # frontend:
-  #   build: ./frontend
-  #   restart: unless-stopped
-  #   ports:
-  #     - "4200:4200"
-  #   depends_on:
-  #     - api
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api
 
 volumes:
   pgdata:
