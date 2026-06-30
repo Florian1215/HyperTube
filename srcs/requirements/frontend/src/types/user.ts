@@ -1,4 +1,4 @@
-export type tOauthService = "42" | "github" | null;
+export type tOauthService = "42" | "github" | "gitlab" | null;
 
 export interface iToken {
     access_token: string
