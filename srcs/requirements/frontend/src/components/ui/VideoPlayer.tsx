@@ -369,8 +369,8 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className="absolute bottom-12 w-full text-center text-3xl pointer-events-none text-white font-bold custom-text-shadow">
-            <div className="max-w-1/3 mx-auto whitespace-pre-line">{currentText}</div>
+        {subs && <div className={"absolute bottom-8 sm:bottom-1- lg:bottom-12 w-full text-center text-lg sm:text-xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow " + (isPlaying ? "z-10" : "")}>
+            <div className="max-w-130 mx-auto whitespace-pre-line">{currentText}</div>
         </div>}
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
