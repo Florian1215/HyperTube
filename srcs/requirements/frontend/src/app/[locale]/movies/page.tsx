@@ -18,6 +18,7 @@ import SmallText from "@/components/ui/SmallText";
 import {useUserFilmHistory} from "@/services/users.service";
 import useAuth from "@/contexts/AuthContext";
 import addProgressToMovie from "@/utils/addProgressToMovie";
+import IconButton from "@/components/ui/Button/IconButton";
 
 type tViewType = | "grid" | "list";
 
@@ -88,8 +89,8 @@ function SearchBar({searchValue, onChange}: {searchValue: string, onChange: (e?:
 
 function Filter({viewType, onClick}: {viewType: tViewType, onClick: (value: tViewType) => void}) {
     return (<div className="flex w-full justify-end gap-4 px-6">
-        <button onClick={() => onClick("grid")}><GridIcon color={viewType == "grid" ? "black" : "gray"} /></button>
-        <button onClick={() => onClick("list")}><ListIcon color={viewType == "list" ? "black" : "gray"} /></button>
+        <IconButton color={viewType == "grid" ? "black" : "gray"} onClick={() => onClick("grid")}>{(color: string) => <GridIcon color={color}/>}</IconButton>
+        <IconButton color={viewType == "list" ? "black" : "gray"} onClick={() => onClick("list")}>{(color: string) => <ListIcon color={color}/>}</IconButton>
     </div>);
 }
 

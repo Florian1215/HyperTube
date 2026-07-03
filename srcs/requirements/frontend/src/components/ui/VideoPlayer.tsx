@@ -13,6 +13,7 @@ import {refreshAccessToken} from "@/services/auth.service";
 import {updateMovieProgress} from "@/services/movies.service";
 import {iMovieDetails} from "@/types/movie";
 import useNotification from "@/contexts/NotificationContext";
+import IconButton from "@/components/ui/Button/IconButton";
 
 interface iSub{
     start: number
@@ -74,6 +75,8 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             });
             hls.loadSource(src);
             hls.attachMedia(video);
+            if (video && movie.progress)
+                video.currentTime = movie.progress;
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
@@ -117,13 +120,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setDurationString(formatTime(fullDuration));
     }, [fullDuration]);
-
-    useEffect(() => {
-        const video = videoRef.current;
-        if (video && movie.progress)
-            video.currentTime = movie.progress;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     useEffect(() => {
         const video = videoRef.current;
@@ -173,7 +169,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                 setComplete.current = true;
             } else {
                 const second = Math.floor(video.currentTime % 60);
-                if (second - lastSent.current >= 15) {
+                if (Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
                     lastSent.current = second;
                     updateMovieProgress(movie.imdb_id, progress, pourcent, false);
@@ -374,31 +370,27 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className="absolute bottom-12 w-full text-center text-3xl pointer-events-none text-white font-bold custom-text-shadow">
-            <div className="max-w-1/3 mx-auto whitespace-pre-line">{currentText}</div>
+        {subs && <div className={"absolute bottom-8 sm:bottom-1- lg:bottom-12 w-full text-center text-lg sm:text-xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow " + (isPlaying ? "z-10" : "")}>
+            <div className="max-w-130 mx-auto whitespace-pre-line">{currentText}</div>
         </div>}
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
 
-            <div className="flex flex-col w-full z-20 pointer-events-auto gap-2 text-white">
+            <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
-                    <div className="flex gap-4 items-center">
-                        <button onClick={togglePlay} className="p-2">
-                            <PlayPauseIcon isPlaying={isPlaying} />
-                        </button>
+                    <div className="flex gap-2 sm:gap-4 items-center">
+                        <IconButton color={"white"} className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</IconButton>
                         <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
                     </div>
 
-                    <div className="flex gap-4 items-center">
-                        {selectedSubtitle && (<button title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}><SubDelayIcon direction={"left"}/></button>)}
-                        {selectedSubtitle && (<button title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}><SubDelayIcon direction={"right"}/></button>)}
-                        {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white" : "border-white")}>CC</button>}
+                    <div className="flex gap-2 sm:gap-4 items-center">
+                        {selectedSubtitle && <IconButton color={"white"} title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}>{(color: string) => <SubDelayIcon direction={"left"} color={color}/>}</IconButton>}
+                        {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-loading" : "border-white hover:bg-black-hover")}>CC</button>}
+                        {selectedSubtitle && <IconButton color={"white"} title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}>{(color: string) => <SubDelayIcon direction={"right"} color={color}/>}</IconButton>}
                         {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
-                        <button onClick={toggleFullscreen} className="p-2">
-                            <FullScreenIcon iFullScreen={fullscreenEnabled} />
-                        </button>
+                        <IconButton color={"white"} className="px-1 sm:px-3" onClick={toggleFullscreen}>{(color: string) => <FullScreenIcon iFullScreen={fullscreenEnabled} color={color}/>}</IconButton>
                     </div>
                 </div>
 

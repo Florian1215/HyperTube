@@ -12,6 +12,7 @@ import {EditIcon, TrashIcon} from "@/components/Icons";
 import TextButton from "@/components/ui/Button/TextButton";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import Button from "@/components/ui/Button/Button";
+import IconButton from "@/components/ui/Button/IconButton";
 
 dayjs.extend(relativeTime);
 
@@ -19,7 +20,6 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
-    const [hoverTrash, setHoverTrash] = useState(false);
     const {openModal} = useModal();
     const t = useTranslations("comments");
 
@@ -44,17 +44,15 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                     {
                         (currentUser && comment.user.id === currentUser.id && showSettingBtn) &&
                         <div className="flex gap-1">
-                            <button
-                                className="uppercase font-condensed text-2xl"
-                                onClick={() => setEditMode(true)}><EditIcon /></button>
-                            <button
-                                className="uppercase font-condensed text-2xl"
-                                onMouseLeave={() => setHoverTrash(false)}
-                                onMouseEnter={() => setHoverTrash(true)}
-                                onClick={() => {
-                                    setEditMode(false);
-                                    openModal({type: "delete-comment", commentId: comment.id, deleteComment: deleteComment});
-                                }}><TrashIcon color={hoverTrash ? "red" : "black"}/></button>
+                            <IconButton onClick={() => setEditMode(true)} className="uppercase font-condensed text-2xl">
+                                {(color: string) => <EditIcon color={color}/>}
+                            </IconButton>
+                            <IconButton onClick={() => {
+                                setEditMode(false);
+                                openModal({type: "delete-comment", commentId: comment.id, deleteComment: deleteComment});
+                            }} className="uppercase font-condensed text-2xl" hoverColor={"red"}>
+                                {(color: string) => <TrashIcon color={color}/>}
+                            </IconButton>
                         </div>
                     }
                 </div>
