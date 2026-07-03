@@ -31,6 +31,8 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
                 setCallbackUrl(undefined);
             }
             addNotification(tSuccess(isReg ? "accountCreatedSuccess" : "login"), "success");
+            if (activeModal.reload)
+                activeModal.reload();
         }
     };
 

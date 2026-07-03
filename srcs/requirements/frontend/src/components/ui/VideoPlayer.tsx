@@ -72,6 +72,16 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
                 },
             });
+
+            const reload = (currentTime?: number) => {
+                hls.loadSource(src);
+                hls.startLoad();
+                if (currentTime) {
+                    video.currentTime = currentTime;
+                    video.play();
+                }
+            }
+
             hls.loadSource(src);
             hls.attachMedia(video);
             if (video && movie.progress)
@@ -88,14 +98,15 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                 const status = data?.response?.code;
 
                 if (status === 401) {
+                    hls.stopLoad();
                     try {
                         await refreshAccessToken(locale);
-                        hls.stopLoad();
-                        hls.loadSource(src);
-                        hls.startLoad();
+                        reload();
                     } catch {
-                        videoRef?.current?.pause();
-                        openModal({type: "signin", noClose: true});
+                        video.pause();
+                        openModal({type: "signin", noClose: true, reload: () => reload(video.currentTime)});
+                    } finally {
+
                     }
                 } else if (data.fatal)
                     setErrorAction(data.error.message)
