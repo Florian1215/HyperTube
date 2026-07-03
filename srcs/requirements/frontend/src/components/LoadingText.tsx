@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 
 export default function LoadingText({center=false}) {
     const maxWidths = ["max-w-1/10", "max-w-3/10", "max-w-5/10", "max-w-7/10", "max-w-9/10"]
-    const [randomWidth, setRandomWidth] = useState("");
+    const [randomWidth, setRandomWidth] = useState("max-w-1/2");
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect

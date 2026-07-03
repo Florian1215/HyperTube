@@ -26,27 +26,27 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
         if ("access_token" in data.data) {
             login(data.data.user, data.data.access_token, data.data.refresh_token);
             closeModal();
-            if (activeModal.setHandleKeyPress)
-                activeModal.setHandleKeyPress();
             if (callbackUrl) {
                 router.push(callbackUrl);
                 setCallbackUrl(undefined);
             }
             addNotification(tSuccess(isReg ? "accountCreatedSuccess" : "login"), "success");
+            if (activeModal.reload)
+                activeModal.reload();
         }
     };
 
-    return (<ModalLayout onCloseAction={() => {
+    return (<ModalLayout onCloseAction={activeModal.noClose === undefined ? () => {
         if (activeModal.noClose === undefined) {
             setCallbackUrl(undefined);
             closeModal();
         }
-    }} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>
+    } : undefined} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>
         <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t} handleForgotPassword={handleForgotPassword}
               fields={isReg ? ["email", "first_name", "last_name", "username", "password"] : ["login", "password"]} />
         <div className="flex gap-2 mt-2">
             <span className="text-sm">{t(isReg ? "haveAccount" : "noAccount")}</span>
-            <TextButton onClick={() => {closeModal(); openModal({type: otherType, noClose: activeModal.noClose, setHandleKeyPress: activeModal.setHandleKeyPress});}}>{t(otherType)}</TextButton>
+            <TextButton onClick={() => {closeModal(); openModal({type: otherType, noClose: activeModal.noClose});}}>{t(otherType)}</TextButton>
         </div>
     </ModalLayout>);
 }

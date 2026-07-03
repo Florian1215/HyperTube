@@ -47,7 +47,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const [currentText, setCurrentText] = useState("");
     const locale = useLocale() as tLocale;
     const {openModal} = useModal();
-    const handleKeyPress = useRef(true);
     const playStateBeforeSeeking = useRef(false);
     const lastSent = useRef(0);
     const setComplete = useRef(false);
@@ -73,6 +72,16 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
                 },
             });
+
+            const reload = (currentTime?: number) => {
+                hls.loadSource(src);
+                hls.startLoad();
+                if (currentTime) {
+                    video.currentTime = currentTime;
+                    video.play();
+                }
+            }
+
             hls.loadSource(src);
             hls.attachMedia(video);
             if (video && movie.progress)
@@ -89,15 +98,15 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                 const status = data?.response?.code;
 
                 if (status === 401) {
+                    hls.stopLoad();
                     try {
                         await refreshAccessToken(locale);
-                        hls.stopLoad();
-                        hls.loadSource(src);
-                        hls.startLoad();
+                        reload();
                     } catch {
-                        videoRef?.current?.pause();
-                        handleKeyPress.current = false;
-                        openModal({type: "signin", noClose: true, setHandleKeyPress: () => {handleKeyPress.current = true;}});
+                        video.pause();
+                        openModal({type: "signin", noClose: true, reload: () => reload(video.currentTime)});
+                    } finally {
+
                     }
                 } else if (data.fatal)
                     setErrorAction(data.error.message)
@@ -316,8 +325,12 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     /* -------------------------------------------------- KEYBOARD -------------------------------------------------- */
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            const active = document.activeElement;
+
+            if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA"))
+                return;
             const video = videoRef.current;
-            if (!video || !handleKeyPress.current)
+            if (!video)
                 return;
             if (showSubtitleMenu)
                 setShowSubtitleMenu(false);
