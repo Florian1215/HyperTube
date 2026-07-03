@@ -13,6 +13,7 @@ import {refreshAccessToken} from "@/services/auth.service";
 import {updateMovieProgress} from "@/services/movies.service";
 import {iMovieDetails} from "@/types/movie";
 import useNotification from "@/contexts/NotificationContext";
+import IconButton from "@/components/ui/Button/IconButton";
 
 interface iSub{
     start: number
@@ -379,17 +380,17 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
-                        <TimelineButton className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</TimelineButton>
+                        <IconButton color={"white"} className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</IconButton>
                         <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
                     </div>
 
                     <div className="flex gap-2 sm:gap-4 items-center">
-                        {selectedSubtitle && <TimelineButton title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}>{(color: string) => <SubDelayIcon direction={"left"} color={color}/>}</TimelineButton>}
+                        {selectedSubtitle && <IconButton color={"white"} title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}>{(color: string) => <SubDelayIcon direction={"left"} color={color}/>}</IconButton>}
                         {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-loading" : "border-white hover:bg-black-hover")}>CC</button>}
-                        {selectedSubtitle && <TimelineButton title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}>{(color: string) => <SubDelayIcon direction={"right"} color={color}/>}</TimelineButton>}
+                        {selectedSubtitle && <IconButton color={"white"} title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}>{(color: string) => <SubDelayIcon direction={"right"} color={color}/>}</IconButton>}
                         {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
-                        <TimelineButton className="px-1 sm:px-3" onClick={toggleFullscreen}>{(color: string) => <FullScreenIcon iFullScreen={fullscreenEnabled} color={color}/>}</TimelineButton>
+                        <IconButton color={"white"} className="px-1 sm:px-3" onClick={toggleFullscreen}>{(color: string) => <FullScreenIcon iFullScreen={fullscreenEnabled} color={color}/>}</IconButton>
                     </div>
                 </div>
 
@@ -417,12 +418,4 @@ function formatTime(time: number) {
     if (seconds > 0)
         result += seconds.toString().padStart(2, "0");
     return result;
-}
-
-function TimelineButton({children, className, title, onClick}: {children: (color: string) => React.ReactNode, className?: string, title?: string, onClick: () => void}) {
-    const [hoverColor, setHoverColor] = useState<"white" | "white-loading">("white");
-
-    return (<button title={title} onClick={onClick} className={className} onMouseEnter={() => setHoverColor("white-loading")} onMouseLeave={() => setHoverColor("white")}>
-        {children(hoverColor)}
-    </button>)
 }

@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import {EyeIcon} from "@/components/Icons";
 import {useTranslations} from "next-intl";
+import IconButton from "@/components/ui/Button/IconButton";
 
 export default function Input(
     {id, type, placeholder, value, onChange, idx, className, requestErrorMessage, setErrorsMessage, ref, onKeyDown}:
@@ -65,6 +66,7 @@ export default function Input(
                    peer-focus:text-xs peer-focus:font-sans peer-focus:bottom-15\
                    peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl" + (requestErrorMessage ? " text-red" : "")}>{placeholder}</label>
         {isPassword && (<button type="button" className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={requestErrorMessage ? "red" : "black"} /></button>)}
+        {isPassword && (<IconButton color={requestErrorMessage ? "red" : "black"} className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}>{(color: string) => <EyeIcon crossed={isPasswordVisible} color={color}/>}</IconButton>)}
         {requestErrorMessage && <span className="text-xs text-red">{requestErrorMessage}</span>}
     </div>
     );
