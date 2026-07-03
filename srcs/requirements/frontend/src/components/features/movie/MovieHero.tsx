@@ -43,9 +43,9 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
     };
 
     const renderTorrentError = () => {
-        return (<div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center">
-            <div className="max-w-130 bg-white border p-8 shadow-2xl text-center space-y-4">
-                <p className="text-xl font-semibold text-red">{t("torrentError")}</p>
+        return (<div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">
+            <div className="max-w-4/5 sm:max-w-130 bg-white border p-4 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
+                <p className="text-sm sm:text-xl font-semibold text-red">{t("torrentError")}</p>
                 <SmallText>{errorStr}</SmallText>
                 <Button onClick={handleRightClick}>{t("chooseAnotherTorrent")}</Button>
             </div>
