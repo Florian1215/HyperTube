@@ -30,7 +30,6 @@ let refreshPromise: Promise<void> | null = null;
 
 export function refreshAccessToken(locale: string) {
     const refresh_token = localStorage.getItem("refresh_token");
-    console.log("refresh_token=", refresh_token);
 
     if (refreshPromise)
         return refreshPromise;
