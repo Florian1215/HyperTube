@@ -10,6 +10,7 @@ import Button from "@/components/ui/Button/Button";
 import {handleOauth} from "@/services/auth.service";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
+import useResponsiveSize from "@/hooks/useResponsiveSize";
 
 export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
@@ -151,8 +152,10 @@ export default function Form({formType, request, handleRequest, t, fields, handl
 function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
     const {callbackUrl} = useAuth();
     const pathname = usePathname();
+    const size = useResponsiveSize();
+    const iconSize = size === "xs" ? 23 : 30;
 
     return (<button type="button" title={title + " " + oauth} onClick={() => handleOauth(oauth, callbackUrl || pathname)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
-        <OAuthIcon oauth={oauth} />
+        <OAuthIcon oauth={oauth} size={iconSize}/>
     </button>)
 }

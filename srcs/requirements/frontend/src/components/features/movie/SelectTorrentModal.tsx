@@ -98,7 +98,7 @@ export default function SelectTorrentModal() {
 }
 
 function TorrentRow({torrent, setTorrentId, closeModal, t}: {torrent: iTorrent; setTorrentId?: (id: string) => void; closeModal: () => void; t: (key: string) => string}) {
-    const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm";
+    const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-nowrap";
 
     return (<tr className="border-t">
         <td className={className + " text-center hidden sm:table-cell"}>{torrent.source}</td>
