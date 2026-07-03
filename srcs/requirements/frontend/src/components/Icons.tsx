@@ -243,10 +243,10 @@ export function EditIcon({color="black", size=20}) {
 export function TrashIcon({color="red", size=20}) {
     const fullColor = `var(--color-${color})`;
 
-    return (<svg width={size} height={size} viewBox="0 0 23 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21.9375 4.80042L18.2373 26.9996H4.7627L1.0625 4.80042H21.9375Z" stroke={fullColor} strokeWidth="1.8"/>
-        <path d="M2 9.90002L21 9.90002" stroke={fullColor} strokeWidth="1.8"/>
-        <path d="M15 3.90002V0.900024H7V3.90002" stroke={fullColor} strokeWidth="1.8"/>
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 384">
+        <path fill={fullColor} d="M92.82,384c-6.92-2.18-12.43-7.22-13.39-14.71l-15.8-239.54h256l-17.28,241.06c-1.47,7.36-6.61,11.03-13.41,13.19H92.82ZM160.68,167.5c-5.38-5.38-14.87-3.04-17.77,3.82l-.71,156.82c2.41,13.03,19.04,12.92,21.74,0l-.59-156.19c-.89-1.29-1.62-3.39-2.68-4.45ZM229.54,164.52c-4.01.16-8.59,3.45-9.71,7.36l-.51,156.25c1.96,13.36,20.26,12.83,21.71-.75l-.51-154.74c-1.49-4.8-5.87-8.33-10.98-8.12Z"/>
+        <path fill={fullColor} d="M247.02,0c2.48.69,8.23,5.37,8.23,7.88v28.88h-127.25V7.88c0-2.5,5.75-7.19,8.23-7.88h110.78Z"/>
+        <path fill={fullColor} d="M345.08,108H38.18v-26.62c0-11.62,13-22.83,24.34-22.86l256.77-.05c11.93-.61,25.79,10.7,25.79,22.91v26.62Z"/>
     </svg>);
 }
 
