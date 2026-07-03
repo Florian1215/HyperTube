@@ -74,6 +74,8 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             });
             hls.loadSource(src);
             hls.attachMedia(video);
+            if (video && movie.progress)
+                video.currentTime = movie.progress;
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
@@ -117,13 +119,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setDurationString(formatTime(fullDuration));
     }, [fullDuration]);
-
-    useEffect(() => {
-        const video = videoRef.current;
-        if (video && movie.progress)
-            video.currentTime = movie.progress;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     useEffect(() => {
         const video = videoRef.current;
