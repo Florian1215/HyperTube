@@ -44,7 +44,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
         localStorage.setItem("token", token);
         localStorage.setItem("refresh_token", refresh);
         localStorage.setItem("user", JSON.stringify(user));
-        console.log("SET REFRESH TOKEN=", token);
         setUser(user);
     };
 
