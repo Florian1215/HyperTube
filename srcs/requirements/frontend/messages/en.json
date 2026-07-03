@@ -186,7 +186,8 @@
       "invalidToken": "Token is invalid or has expired.",
       "invalidQueryParameter": "Invalid query parameter.",
       "notFound": "Page {path} not found.",
-      "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later."
+      "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later.",
+      "subtitleNotFound": "No subtitles available in this language."
     }
   }
 }

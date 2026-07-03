@@ -186,7 +186,8 @@
       "invalidToken": "Token ungültig oder abgelaufen.",
       "invalidQueryParameter": "Ungültiger Abfrageparameter.",
       "notFound": "Seite {path} nicht gefunden.",
-      "torrentNotFound": "Torrent nicht gefunden. Dieser Film ist möglicherweise noch nicht zum Streaming verfügbar. Bitte versuchen Sie es später erneut."
+      "torrentNotFound": "Torrent nicht gefunden. Dieser Film ist möglicherweise noch nicht zum Streaming verfügbar. Bitte versuchen Sie es später erneut.",
+      "subtitleNotFound": "Keine Untertitel in dieser Sprache verfügbar."
     }
   }
 }

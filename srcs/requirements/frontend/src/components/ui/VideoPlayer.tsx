@@ -6,12 +6,13 @@ import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
 import {useDownloadSubtitle, useLoginOpenSubtitles, useSubtitles} from "@/hooks/useSubtitles";
-import {useLocale} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import loadSRT from "@/utils/loadSRT";
 import useModal from "@/contexts/ModalContext";
 import {refreshAccessToken} from "@/services/auth.service";
 import {updateMovieProgress} from "@/services/movies.service";
 import {iMovieDetails} from "@/types/movie";
+import useNotification from "@/contexts/NotificationContext";
 
 interface iSub{
     start: number
@@ -40,7 +41,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const seekTimeRef = useRef(0);
     const {data: getSubtitlesMovie} = useSubtitles(movie.imdb_id, selectedSubtitle);
     const {data: loginOpenSubtitles} = useLoginOpenSubtitles();
-    const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0].attributes.files[0].file_id, loginOpenSubtitles?.token);
+    const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0]?.attributes.files[0]?.file_id, loginOpenSubtitles?.token);
     const [subs, setSubs] = useState<iSub[]>([]);
     const [currentText, setCurrentText] = useState("");
     const locale = useLocale() as tLocale;
@@ -52,6 +53,8 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const min15 = 15 * 60;
     const isLiveRef = useRef(true);
     const delaySubtitle = useRef(0);
+    const {addNotification} = useNotification();
+    const tError = useTranslations("notifications.error");
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -254,6 +257,15 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         if (downloadSubtitle)
             loadSRT(downloadSubtitle.link).then(setSubs);
     }, [downloadSubtitle]);
+
+    useEffect(() => {
+        if (getSubtitlesMovie && (getSubtitlesMovie.data.length === 0 || getSubtitlesMovie.data[0].attributes.files.length === 0)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSelectedSubtitle(undefined);
+            addNotification(tError("subtitleNotFound"), "error");
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [getSubtitlesMovie]);
 
     useEffect(() => {
         delaySubtitle.current = 0;
