@@ -3,16 +3,14 @@
 import React, {useEffect} from "react";
 import CloseButton from "@/components/ui/Button/CloseButton";
 
-export default function ModalLayout({children, onCloseAction, title, addMaxWTitle=true}: {children: React.ReactNode, onCloseAction: () => void, title: string, addMaxWTitle?: boolean}) {
+export default function ModalLayout({children, onCloseAction, title, addMaxWTitle=true}: {children: React.ReactNode, onCloseAction?: () => void, title: string, addMaxWTitle?: boolean}) {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape")
+            if (e.key === "Escape" && onCloseAction)
                 onCloseAction();
         };
         document.addEventListener("keydown", handleKeyDown);
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
+        return () => {document.removeEventListener("keydown", handleKeyDown);};
     }, [onCloseAction]);
 
     return (<div onClick={onCloseAction} className="fixed inset-0 flex justify-center items-center z-50 bg-black/50">
@@ -20,7 +18,10 @@ export default function ModalLayout({children, onCloseAction, title, addMaxWTitl
             <div className="flex flex-col items-start">
                 <div className="flex justify-between mb-8 w-full">
                     <span className={"uppercase font-wide font-bold font-8xl" + (addMaxWTitle ? " max-w-70" : "")}>{title}</span>
-                    <CloseButton onClickAction={onCloseAction} />
+                    <CloseButton onClickAction={() => {
+                        if (onCloseAction)
+                            onCloseAction();
+                    }} disabled={onCloseAction === undefined}/>
                 </div>
                 {children}
             </div>

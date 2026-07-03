@@ -47,7 +47,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const [currentText, setCurrentText] = useState("");
     const locale = useLocale() as tLocale;
     const {openModal} = useModal();
-    const handleKeyPress = useRef(true);
     const playStateBeforeSeeking = useRef(false);
     const lastSent = useRef(0);
     const setComplete = useRef(false);
@@ -96,8 +95,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                         hls.startLoad();
                     } catch {
                         videoRef?.current?.pause();
-                        handleKeyPress.current = false;
-                        openModal({type: "signin", noClose: true, setHandleKeyPress: () => {handleKeyPress.current = true;}});
+                        openModal({type: "signin", noClose: true});
                     }
                 } else if (data.fatal)
                     setErrorAction(data.error.message)
@@ -316,8 +314,12 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     /* -------------------------------------------------- KEYBOARD -------------------------------------------------- */
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            const active = document.activeElement;
+
+            if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA"))
+                return;
             const video = videoRef.current;
-            if (!video || !handleKeyPress.current)
+            if (!video)
                 return;
             if (showSubtitleMenu)
                 setShowSubtitleMenu(false);

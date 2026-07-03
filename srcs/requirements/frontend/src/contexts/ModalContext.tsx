@@ -17,7 +17,6 @@ export interface ModalState {
     torrents?: iTorrent[]
     setTorrentId?: (selectTorrentId: string) => void
     noClose?: boolean
-    setHandleKeyPress?: () => void
 }
 
 interface ModalContextType {
