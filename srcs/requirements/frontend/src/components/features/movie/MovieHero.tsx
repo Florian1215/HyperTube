@@ -54,7 +54,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
 
     const renderContent = () => {
         if (hasVideo && !startVideo) {
-            return (<div className="absolute mx-auto w-full text-center bottom-1/20 max-w-1/5">
+            return (<div className="absolute mx-auto w-full text-center bottom-1/20 max-w-70">
                 <SmallText className="my-2 xl:my-4 text-white">{t("movieDownloading")}</SmallText>
             </div>);
         }
