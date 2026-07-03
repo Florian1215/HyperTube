@@ -168,7 +168,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                 setComplete.current = true;
             } else {
                 const second = Math.floor(video.currentTime % 60);
-                if (second - lastSent.current >= 15) {
+                if (Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
                     lastSent.current = second;
                     updateMovieProgress(movie.imdb_id, progress, pourcent, false);
