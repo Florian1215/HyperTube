@@ -41,8 +41,9 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
                     closeModal();
                     addNotification(tError("invalidToken"), "error");
                     return null;
-                } else if (error.status === 401 && setErrorsAction && formType === "signin") {
+                } else if (error.status === 401 && setErrorsAction && setFocusedIndex && formType === "signin") {
                     setErrorsAction({"login-signin": error.message});
+                    setFocusedIndex(0);
                     return null;
                 } else if (error.status === 401) {
                     logout();
