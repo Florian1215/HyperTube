@@ -12,6 +12,7 @@ export default function LinkLoginRequired({children, href, className}: {children
             e.preventDefault();
             setCallbackUrl(href.toString());
             openModal({type: "signin"});
+            return;
         }
     }} className={className} >
         {children}

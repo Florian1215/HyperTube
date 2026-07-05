@@ -55,6 +55,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const delaySubtitle = useRef(0);
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
+    const mediaStreamRef = useRef<MediaStream | null>(null);
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -115,6 +116,22 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video)
+            return;
+
+        const startCapture = async () => {
+            await video.play();
+
+            const stream = video.captureStream();
+            mediaStreamRef.current = stream;
+        };
+
+        startCapture();
+        return () => {mediaStreamRef.current?.getTracks().forEach(t => t.stop());};
+    }, []);
 
     /* ------------------------------------------------- PLAY PAUSE ------------------------------------------------- */
     useEffect(() => {
@@ -384,7 +401,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         </video>
 
         {subs && <div className={"absolute bottom-3 sm:bottom-6 lg:bottom-10 w-full text-center text-lg sm:text-2xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow " + (isPlaying ? "z-10" : "")}>
-            <div className="max-w-2/3 sm:max-w-1/2 mx-auto whitespace-pre-line wrap-break-word leading-tight">{currentText}</div>
+            <div className="max-w-2/3 sm:max-w-1/2 mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
         </div>}
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
