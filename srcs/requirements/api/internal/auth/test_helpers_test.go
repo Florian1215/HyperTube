@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +24,10 @@ type memoryUserStore struct {
 	usersByID       map[int64]models.User
 	usersByUsername map[string]models.User
 	oauthAccounts   map[string]int64
+	nextOAuthAppID  int64
+	oauthAppsByID   map[int64]models.OAuthApplication
+	oauthAppSecrets map[int64]string
+	oauthAppClient  map[string]int64
 	resetTokens     map[string]memoryPasswordResetToken
 	userExistsErr   error
 }
@@ -41,6 +46,9 @@ func newMemoryUserStore() *memoryUserStore {
 		usersByID:       make(map[int64]models.User),
 		usersByUsername: make(map[string]models.User),
 		oauthAccounts:   make(map[string]int64),
+		oauthAppsByID:   make(map[int64]models.OAuthApplication),
+		oauthAppSecrets: make(map[int64]string),
+		oauthAppClient:  make(map[string]int64),
 		resetTokens:     make(map[string]memoryPasswordResetToken),
 	}
 }
@@ -199,6 +207,86 @@ func (s *memoryUserStore) ResetPasswordWithToken(_ context.Context, tokenHash st
 	s.usersByEmail[user.Email] = user
 	s.usersByUsername[user.Username] = user
 	return user, nil
+}
+
+func (s *memoryUserStore) CreateOAuthApplication(_ context.Context, params CreateOAuthApplicationParams) (models.OAuthApplication, error) {
+	if _, ok := s.oauthAppClient[params.ClientID]; ok {
+		return models.OAuthApplication{}, ErrDuplicateOAuthClientID
+	}
+
+	s.nextOAuthAppID++
+	now := time.Now().UTC()
+	app := models.OAuthApplication{
+		ID:        s.nextOAuthAppID,
+		OwnerID:   params.OwnerUserID,
+		Name:      params.Name,
+		Scope:     params.Scope,
+		ClientID:  params.ClientID,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	s.oauthAppsByID[app.ID] = app
+	s.oauthAppSecrets[app.ID] = params.ClientSecretHash
+	s.oauthAppClient[app.ClientID] = app.ID
+	return app, nil
+}
+
+func (s *memoryUserStore) ListOAuthApplications(_ context.Context, ownerUserID int64) ([]models.OAuthApplication, error) {
+	apps := []models.OAuthApplication{}
+	for _, app := range s.oauthAppsByID {
+		if app.OwnerID == ownerUserID {
+			apps = append(apps, app)
+		}
+	}
+	sort.Slice(apps, func(i, j int) bool {
+		if apps[i].CreatedAt.Equal(apps[j].CreatedAt) {
+			return apps[i].ID > apps[j].ID
+		}
+		return apps[i].CreatedAt.After(apps[j].CreatedAt)
+	})
+	return apps, nil
+}
+
+func (s *memoryUserStore) UpdateOAuthApplication(_ context.Context, id int64, ownerUserID int64, params UpdateOAuthApplicationParams) (models.OAuthApplication, error) {
+	app, ok := s.oauthAppsByID[id]
+	if !ok || app.OwnerID != ownerUserID {
+		return models.OAuthApplication{}, ErrOAuthApplicationNotFound
+	}
+	if params.Name != nil {
+		app.Name = *params.Name
+	}
+	if params.Scope != nil {
+		app.Scope = *params.Scope
+	}
+	app.UpdatedAt = time.Now().UTC()
+	s.oauthAppsByID[id] = app
+	return app, nil
+}
+
+func (s *memoryUserStore) DeleteOAuthApplication(_ context.Context, id int64, ownerUserID int64) error {
+	app, ok := s.oauthAppsByID[id]
+	if !ok || app.OwnerID != ownerUserID {
+		return ErrOAuthApplicationNotFound
+	}
+	delete(s.oauthAppsByID, id)
+	delete(s.oauthAppSecrets, id)
+	delete(s.oauthAppClient, app.ClientID)
+	return nil
+}
+
+func (s *memoryUserStore) FindOAuthClientByClientID(_ context.Context, clientID string) (oauthClientCredentials, error) {
+	id, ok := s.oauthAppClient[clientID]
+	if !ok {
+		return oauthClientCredentials{}, ErrOAuthApplicationNotFound
+	}
+	app := s.oauthAppsByID[id]
+	return oauthClientCredentials{
+		ID:               app.ID,
+		OwnerUserID:      app.OwnerID,
+		Scope:            app.Scope,
+		ClientID:         app.ClientID,
+		ClientSecretHash: s.oauthAppSecrets[id],
+	}, nil
 }
 
 func createPasswordUser(t *testing.T, store *memoryUserStore, email string, username string, password string) models.User {

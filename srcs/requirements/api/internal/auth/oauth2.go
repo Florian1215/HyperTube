@@ -1,15 +1,11 @@
 package auth
 
 import (
-	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"io"
 	"mime"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 
 	"hypertube/api/internal/i18n"
@@ -44,11 +40,16 @@ func (h *Handler) OAuthToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch strings.TrimSpace(req.GrantType) {
+	grantType := strings.TrimSpace(req.GrantType)
+	if grantType == "" && strings.TrimSpace(req.ClientID) != "" && req.ClientSecret != "" && req.Username == "" && req.Password == "" {
+		grantType = "client_credentials"
+	}
+
+	switch grantType {
 	case "password":
 		h.oauthPasswordGrant(w, r, req, locale)
 	case "client_credentials":
-		h.oauthClientCredentialsGrant(w, req, locale)
+		h.oauthClientCredentialsGrant(w, r, req, locale)
 	case "":
 		writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgGrantTypeRequired))
 	default:
@@ -97,8 +98,8 @@ func (h *Handler) oauthPasswordGrant(w http.ResponseWriter, r *http.Request, req
 	writeOAuthJSON(w, http.StatusOK, response)
 }
 
-func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, req oauthTokenRequest, locale i18n.Locale) {
-	if h.tokens == nil {
+func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, r *http.Request, req oauthTokenRequest, locale i18n.Locale) {
+	if h.store == nil || h.tokens == nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
 		return
 	}
@@ -110,28 +111,28 @@ func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, req oauthTo
 		return
 	}
 
-	configuredClientID := strings.TrimSpace(os.Getenv("OAUTH_CLIENT_ID"))
-	configuredClientSecret := os.Getenv("OAUTH_CLIENT_SECRET")
-	configuredUserID := strings.TrimSpace(os.Getenv("OAUTH_CLIENT_USER_ID"))
-	if configuredClientID == "" || configuredClientSecret == "" || configuredUserID == "" {
+	client, err := h.store.FindOAuthClientByClientID(r.Context(), clientID)
+	if err != nil {
+		if errors.Is(err, ErrOAuthApplicationNotFound) {
+			writeOAuthError(w, http.StatusUnauthorized, "invalid_client", i18n.T(locale, i18n.MsgInvalidClientCredentials))
+			return
+		}
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
 		return
 	}
 
-	userID, err := strconv.ParseInt(configuredUserID, 10, 64)
-	if err != nil || userID <= 0 {
-		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgAuthServiceUnavailable))
-		return
-	}
-
-	clientIDOK := constantTimeStringEqual(clientID, configuredClientID)
-	secretOK := constantTimeStringEqual(clientSecret, configuredClientSecret)
-	if !clientIDOK || !secretOK {
+	if !CheckPassword(client.ClientSecretHash, clientSecret) {
 		writeOAuthError(w, http.StatusUnauthorized, "invalid_client", i18n.T(locale, i18n.MsgInvalidClientCredentials))
 		return
 	}
 
-	token, expiresIn, err := h.issueAccessToken(userID)
+	responseScope, ok := oauthClientCredentialsResponseScope(req.Scope, client.Scope)
+	if !ok {
+		writeOAuthError(w, http.StatusBadRequest, "invalid_scope", i18n.T(locale, i18n.MsgInvalidOAuthScope))
+		return
+	}
+
+	token, expiresIn, err := h.issueAccessToken(client.OwnerUserID)
 	if err != nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgFailedCreateAccessToken))
 		return
@@ -141,7 +142,7 @@ func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, req oauthTo
 		AccessToken: token,
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
-		Scope:       normalizeOAuthScope(req.Scope),
+		Scope:       responseScope,
 	}
 	writeOAuthJSON(w, http.StatusOK, response)
 }
@@ -192,10 +193,29 @@ func normalizeOAuthScope(scope string) string {
 	return strings.Join(strings.Fields(scope), " ")
 }
 
-func constantTimeStringEqual(a string, b string) bool {
-	aHash := sha256.Sum256([]byte(a))
-	bHash := sha256.Sum256([]byte(b))
-	return subtle.ConstantTimeCompare(aHash[:], bHash[:]) == 1
+func oauthClientCredentialsResponseScope(requestedScope string, applicationScope string) (string, bool) {
+	requestedScope = normalizeOAuthScope(requestedScope)
+	applicationScope = normalizeOAuthScope(applicationScope)
+	if requestedScope == "" {
+		return applicationScope, true
+	}
+	if !oauthScopeSubset(requestedScope, applicationScope) {
+		return "", false
+	}
+	return requestedScope, true
+}
+
+func oauthScopeSubset(requestedScope string, applicationScope string) bool {
+	allowed := map[string]struct{}{}
+	for _, scope := range strings.Fields(applicationScope) {
+		allowed[scope] = struct{}{}
+	}
+	for _, scope := range strings.Fields(requestedScope) {
+		if _, ok := allowed[scope]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func writeOAuthError(w http.ResponseWriter, status int, code string, description string) {

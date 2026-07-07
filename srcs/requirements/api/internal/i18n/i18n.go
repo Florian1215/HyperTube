@@ -81,6 +81,16 @@ const (
 	MsgOAuthDenied                     Message = "OAuth authorization was denied for %s"
 	MsgFailedExchangeOAuthCode         Message = "failed to exchange %s authorization code"
 	MsgFailedCreateOAuthUser           Message = "failed to create OAuth user"
+	MsgOAuthApplicationNameRequired    Message = "OAuth application name is required"
+	MsgOAuthApplicationNameTooLong     Message = "OAuth application name is too long"
+	MsgOAuthApplicationScopeTooLong    Message = "OAuth application scope is too long"
+	MsgOAuthApplicationNotFound        Message = "OAuth application not found"
+	MsgFailedCreateOAuthApplication    Message = "failed to create OAuth application"
+	MsgFailedLoadOAuthApplications     Message = "failed to load OAuth applications"
+	MsgFailedUpdateOAuthApplication    Message = "failed to update OAuth application"
+	MsgFailedDeleteOAuthApplication    Message = "failed to delete OAuth application"
+	MsgFailedCreateOAuthCredentials    Message = "failed to create OAuth credentials"
+	MsgInvalidOAuthScope               Message = "invalid OAuth scope"
 	MsgInvalidFrontendAuthCallbackURL  Message = "invalid frontend auth callback URL"
 	MsgFailedCreateAuthResponse        Message = "failed to create auth response"
 	MsgGrantTypeRequired               Message = "grant type is required"
@@ -192,6 +202,16 @@ var translations = map[Locale]map[Message]string{
 		MsgOAuthDenied:                     "autorisation OAuth refusée pour %s",
 		MsgFailedExchangeOAuthCode:         "échec de l'échange du code d'autorisation %s",
 		MsgFailedCreateOAuthUser:           "échec de la création de l'utilisateur OAuth",
+		MsgOAuthApplicationNameRequired:    "nom de l'application OAuth requis",
+		MsgOAuthApplicationNameTooLong:     "nom de l'application OAuth trop long",
+		MsgOAuthApplicationScopeTooLong:    "scope de l'application OAuth trop long",
+		MsgOAuthApplicationNotFound:        "application OAuth introuvable",
+		MsgFailedCreateOAuthApplication:    "échec de la création de l'application OAuth",
+		MsgFailedLoadOAuthApplications:     "échec du chargement des applications OAuth",
+		MsgFailedUpdateOAuthApplication:    "échec de la mise à jour de l'application OAuth",
+		MsgFailedDeleteOAuthApplication:    "échec de la suppression de l'application OAuth",
+		MsgFailedCreateOAuthCredentials:    "échec de la création des identifiants OAuth",
+		MsgInvalidOAuthScope:               "scope OAuth invalide",
 		MsgInvalidFrontendAuthCallbackURL:  "URL de callback d'authentification frontend invalide",
 		MsgFailedCreateAuthResponse:        "échec de la création de la réponse d'authentification",
 		MsgGrantTypeRequired:               "type de grant requis",
@@ -295,6 +315,16 @@ var translations = map[Locale]map[Message]string{
 		MsgOAuthDenied:                     "OAuth-Autorisierung für %s wurde abgelehnt",
 		MsgFailedExchangeOAuthCode:         "%s Autorisierungscode konnte nicht ausgetauscht werden",
 		MsgFailedCreateOAuthUser:           "OAuth-Benutzer konnte nicht erstellt werden",
+		MsgOAuthApplicationNameRequired:    "Name der OAuth-Anwendung ist erforderlich",
+		MsgOAuthApplicationNameTooLong:     "Name der OAuth-Anwendung ist zu lang",
+		MsgOAuthApplicationScopeTooLong:    "Scope der OAuth-Anwendung ist zu lang",
+		MsgOAuthApplicationNotFound:        "OAuth-Anwendung nicht gefunden",
+		MsgFailedCreateOAuthApplication:    "OAuth-Anwendung konnte nicht erstellt werden",
+		MsgFailedLoadOAuthApplications:     "OAuth-Anwendungen konnten nicht geladen werden",
+		MsgFailedUpdateOAuthApplication:    "OAuth-Anwendung konnte nicht aktualisiert werden",
+		MsgFailedDeleteOAuthApplication:    "OAuth-Anwendung konnte nicht gelöscht werden",
+		MsgFailedCreateOAuthCredentials:    "OAuth-Zugangsdaten konnten nicht erstellt werden",
+		MsgInvalidOAuthScope:               "OAuth-Scope ist ungültig",
 		MsgInvalidFrontendAuthCallbackURL:  "Frontend-Auth-Callback-URL ist ungültig",
 		MsgFailedCreateAuthResponse:        "Auth-Antwort konnte nicht erstellt werden",
 		MsgGrantTypeRequired:               "Grant Type ist erforderlich",
