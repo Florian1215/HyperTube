@@ -20,6 +20,8 @@ var (
 	ErrUserNotFound              = errors.New("user not found")
 	ErrDuplicateUser             = errors.New("duplicate user")
 	ErrInvalidPasswordResetToken = errors.New("invalid password reset token")
+	ErrOAuthApplicationNotFound  = errors.New("oauth application not found")
+	ErrDuplicateOAuthClientID    = errors.New("duplicate oauth client id")
 )
 
 type DuplicateUserError struct {
@@ -61,6 +63,11 @@ type userStore interface {
 	FindOrCreateOAuthUser(ctx context.Context, params OAuthUserParams) (models.User, error)
 	CreatePasswordResetToken(ctx context.Context, params CreatePasswordResetTokenParams) error
 	ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string) (models.User, error)
+	CreateOAuthApplication(ctx context.Context, params CreateOAuthApplicationParams) (models.OAuthApplication, error)
+	ListOAuthApplications(ctx context.Context, ownerUserID int64) ([]models.OAuthApplication, error)
+	UpdateOAuthApplication(ctx context.Context, id int64, ownerUserID int64, params UpdateOAuthApplicationParams) (models.OAuthApplication, error)
+	DeleteOAuthApplication(ctx context.Context, id int64, ownerUserID int64) error
+	FindOAuthClientByClientID(ctx context.Context, clientID string) (oauthClientCredentials, error)
 }
 
 type Store struct {
@@ -93,6 +100,27 @@ type CreatePasswordResetTokenParams struct {
 	UserID    int64
 	TokenHash string
 	ExpiresAt time.Time
+}
+
+type CreateOAuthApplicationParams struct {
+	OwnerUserID      int64
+	Name             string
+	Scope            string
+	ClientID         string
+	ClientSecretHash string
+}
+
+type UpdateOAuthApplicationParams struct {
+	Name  *string
+	Scope *string
+}
+
+type oauthClientCredentials struct {
+	ID               int64
+	OwnerUserID      int64
+	Scope            string
+	ClientID         string
+	ClientSecretHash string
 }
 
 func NewStore(db *pgxpool.Pool) *Store {
@@ -329,6 +357,110 @@ func (s *Store) ResetPasswordWithToken(ctx context.Context, tokenHash string, pa
 	return user, nil
 }
 
+func (s *Store) CreateOAuthApplication(ctx context.Context, params CreateOAuthApplicationParams) (models.OAuthApplication, error) {
+	app, err := scanOAuthApplication(s.db.QueryRow(ctx, `
+		INSERT INTO oauth_applications (owner_user_id, name, scope, client_id, client_secret_hash)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, owner_user_id, name, scope, client_id, created_at, updated_at
+	`, params.OwnerUserID, params.Name, params.Scope, params.ClientID, params.ClientSecretHash))
+	if err != nil {
+		if isUniqueViolation(err) {
+			return models.OAuthApplication{}, ErrDuplicateOAuthClientID
+		}
+		return models.OAuthApplication{}, err
+	}
+	return app, nil
+}
+
+func (s *Store) ListOAuthApplications(ctx context.Context, ownerUserID int64) ([]models.OAuthApplication, error) {
+	rows, err := s.db.Query(ctx, `
+		SELECT id, owner_user_id, name, scope, client_id, created_at, updated_at
+		FROM oauth_applications
+		WHERE owner_user_id = $1
+		ORDER BY created_at DESC, id DESC
+	`, ownerUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	apps := []models.OAuthApplication{}
+	for rows.Next() {
+		app, err := scanOAuthApplication(rows)
+		if err != nil {
+			return nil, err
+		}
+		apps = append(apps, app)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return apps, nil
+}
+
+func (s *Store) UpdateOAuthApplication(ctx context.Context, id int64, ownerUserID int64, params UpdateOAuthApplicationParams) (models.OAuthApplication, error) {
+	var name any
+	if params.Name != nil {
+		name = *params.Name
+	}
+	var scope any
+	if params.Scope != nil {
+		scope = *params.Scope
+	}
+
+	app, err := scanOAuthApplication(s.db.QueryRow(ctx, `
+		UPDATE oauth_applications
+		SET name = COALESCE($3, name),
+		    scope = COALESCE($4, scope),
+		    updated_at = NOW()
+		WHERE id = $1 AND owner_user_id = $2
+		RETURNING id, owner_user_id, name, scope, client_id, created_at, updated_at
+	`, id, ownerUserID, name, scope))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.OAuthApplication{}, ErrOAuthApplicationNotFound
+		}
+		return models.OAuthApplication{}, err
+	}
+	return app, nil
+}
+
+func (s *Store) DeleteOAuthApplication(ctx context.Context, id int64, ownerUserID int64) error {
+	tag, err := s.db.Exec(ctx, `
+		DELETE FROM oauth_applications
+		WHERE id = $1 AND owner_user_id = $2
+	`, id, ownerUserID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrOAuthApplicationNotFound
+	}
+	return nil
+}
+
+func (s *Store) FindOAuthClientByClientID(ctx context.Context, clientID string) (oauthClientCredentials, error) {
+	var client oauthClientCredentials
+	err := s.db.QueryRow(ctx, `
+		SELECT id, owner_user_id, scope, client_id, client_secret_hash
+		FROM oauth_applications
+		WHERE client_id = $1
+	`, clientID).Scan(
+		&client.ID,
+		&client.OwnerUserID,
+		&client.Scope,
+		&client.ClientID,
+		&client.ClientSecretHash,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return oauthClientCredentials{}, ErrOAuthApplicationNotFound
+		}
+		return oauthClientCredentials{}, err
+	}
+	return client, nil
+}
+
 func scanUser(row pgx.Row) (models.User, error) {
 	var user models.User
 	var profilePicture sql.NullString
@@ -351,6 +483,23 @@ func scanUser(row pgx.Row) (models.User, error) {
 		user.ProfilePicture = profilePicture.String
 	}
 	return user, nil
+}
+
+func scanOAuthApplication(row pgx.Row) (models.OAuthApplication, error) {
+	var app models.OAuthApplication
+	err := row.Scan(
+		&app.ID,
+		&app.OwnerID,
+		&app.Name,
+		&app.Scope,
+		&app.ClientID,
+		&app.CreatedAt,
+		&app.UpdatedAt,
+	)
+	if err != nil {
+		return models.OAuthApplication{}, err
+	}
+	return app, nil
 }
 
 func isUniqueViolation(err error) bool {

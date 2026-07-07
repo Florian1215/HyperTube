@@ -102,7 +102,7 @@ Copy the example environment and fill in the secrets:
 ```bash
 cp .env.example .env
 # set JWT_SECRET (e.g. openssl rand -base64 32), TMDB_API_KEY, C411_API_KEY,
-# PIA credentials, OAuth client IDs/secrets, and Brevo key for password-reset email
+# PIA credentials, OAuth provider client IDs/secrets, and Brevo key for password-reset email
 ```
 
 Then use the Makefile:
@@ -188,6 +188,9 @@ GET    /auth/42/login        GET /auth/42/callback
 GET    /auth/github/login    GET /auth/github/callback
 GET    /auth/gitlab/login    GET /auth/gitlab/callback
 POST   /oauth/token
+POST   /oauth/applications   GET /oauth/applications
+PATCH  /oauth/applications/{id}
+DELETE /oauth/applications/{id}
 
 GET    /movies                       # default/curated list (public)
 GET    /movies/featured              # public
@@ -219,9 +222,10 @@ GET    /stream/{id}/{segment}        # HLS segment (.ts)
 ## Auth
 
 - Registration: email, username, first name, last name, password (bcrypt)
-- 42, GitHub and GitLab OAuth (when client credentials are configured)
+- 42, GitHub and GitLab OAuth (when provider client credentials are configured)
 - JWT issued on login / OAuth callback, validated on every protected request, with refresh tokens
-- OAuth2 token endpoint at `POST /oauth/token` (password and client-credentials grants)
+- User-managed OAuth applications and OAuth2 token endpoint at `POST /oauth/token`
+  (password and registered client-credentials grants)
 - Password reset by email via Brevo (when configured)
 
 ---

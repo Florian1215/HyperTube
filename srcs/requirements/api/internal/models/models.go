@@ -98,3 +98,13 @@ type MovieSearchRow struct {
 	Rank       int       `json:"rank"       db:"rank"`
 	SearchedAt time.Time `json:"searched_at" db:"searched_at"`
 }
+
+type OAuthApplication struct {
+	ID        int64     `json:"id"`
+	OwnerID   int64     `json:"owner_id" db:"owner_user_id"`
+	Name      string    `json:"name"`
+	Scope     string    `json:"scope"`
+	ClientID  string    `json:"client_id" db:"client_id"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}

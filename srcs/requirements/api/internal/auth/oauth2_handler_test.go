@@ -68,9 +68,10 @@ func TestOAuthTokenPasswordGrantAcceptsEmailLogin(t *testing.T) {
 }
 
 func TestOAuthTokenClientCredentialsGrantReturnsBearerTokenFromForm(t *testing.T) {
+	store := newMemoryUserStore()
 	tokens := newTestTokenManager(t)
-	handler := NewHandler(nil, tokens)
-	setOAuthClientCredentialsEnv(t, " hypertube-api ", "replace-with-secret", "42")
+	handler := NewHandler(store, tokens)
+	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies", "hypertube-api", "replace-with-secret")
 
 	form := validOAuthClientCredentialsForm()
 	form.Set("client_id", " hypertube-api ")
@@ -96,11 +97,15 @@ func TestOAuthTokenClientCredentialsGrantReturnsBearerTokenFromForm(t *testing.T
 	if claims.UserID != 42 {
 		t.Fatalf("expected token user id 42, got %d", claims.UserID)
 	}
+	if response.Scope != "read:movies" {
+		t.Fatalf("expected application scope, got %q", response.Scope)
+	}
 }
 
 func TestOAuthTokenClientCredentialsGrantAcceptsJSON(t *testing.T) {
-	handler := NewHandler(nil, newTestTokenManager(t))
-	setOAuthClientCredentialsEnv(t, "hypertube-api", "replace-with-secret", "42")
+	store := newMemoryUserStore()
+	handler := NewHandler(store, newTestTokenManager(t))
+	createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
 
 	body := `{"grant_type":"client_credentials","client_id":"hypertube-api","client_secret":"replace-with-secret"}`
 	rec := postOAuthTokenJSON(t, handler, body)
@@ -114,20 +119,61 @@ func TestOAuthTokenClientCredentialsGrantAcceptsJSON(t *testing.T) {
 	}
 }
 
-func TestOAuthTokenClientCredentialsGrantNormalizesScope(t *testing.T) {
-	handler := NewHandler(nil, newTestTokenManager(t))
-	setOAuthClientCredentialsEnv(t, "hypertube-api", "replace-with-secret", "42")
+func TestOAuthTokenClientCredentialsGrantAcceptsJSONWithoutGrantType(t *testing.T) {
+	store := newMemoryUserStore()
+	handler := NewHandler(store, newTestTokenManager(t))
+	createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
+
+	body := `{"client_id":"hypertube-api","client_secret":"replace-with-secret"}`
+	rec := postOAuthTokenJSON(t, handler, body)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	response := decodeOAuthTokenResponse(t, rec)
+	if response.AccessToken == "" {
+		t.Fatal("expected access token")
+	}
+}
+
+func TestOAuthTokenClientCredentialsGrantScopeRules(t *testing.T) {
+	store := newMemoryUserStore()
+	handler := NewHandler(store, newTestTokenManager(t))
+	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies write:comments", "hypertube-api", "replace-with-secret")
 
 	form := validOAuthClientCredentialsForm()
-	form.Set("scope", "read:movies   read:users")
 	rec := postOAuthTokenForm(t, handler, form)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 	response := decodeOAuthTokenResponse(t, rec)
-	if response.Scope != "read:movies read:users" {
-		t.Fatalf("expected normalized scope, got %q", response.Scope)
+	if response.Scope != "read:movies write:comments" {
+		t.Fatalf("expected application scope, got %q", response.Scope)
+	}
+
+	form = validOAuthClientCredentialsForm()
+	form.Set("scope", "write:comments   read:movies")
+	rec = postOAuthTokenForm(t, handler, form)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	response = decodeOAuthTokenResponse(t, rec)
+	if response.Scope != "write:comments read:movies" {
+		t.Fatalf("expected normalized requested scope, got %q", response.Scope)
+	}
+
+	form = validOAuthClientCredentialsForm()
+	form.Set("scope", "admin")
+	rec = postOAuthTokenForm(t, handler, form)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	errorResponse := decodeOAuthTokenError(t, rec)
+	if errorResponse.Error != "invalid_scope" {
+		t.Fatalf("expected invalid_scope, got %q", errorResponse.Error)
 	}
 }
 
@@ -182,8 +228,9 @@ func TestOAuthTokenClientCredentialsGrantRejectsInvalidRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(nil, newTestTokenManager(t))
-			setOAuthClientCredentialsEnv(t, "hypertube-api", "replace-with-secret", "42")
+			store := newMemoryUserStore()
+			handler := NewHandler(store, newTestTokenManager(t))
+			createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
 			form := validOAuthClientCredentialsForm()
 			tt.mutateForm(form)
 
@@ -200,48 +247,24 @@ func TestOAuthTokenClientCredentialsGrantRejectsInvalidRequest(t *testing.T) {
 	}
 }
 
-func TestOAuthTokenClientCredentialsGrantRequiresConfiguredClient(t *testing.T) {
-	for _, envName := range []string{"OAUTH_CLIENT_ID", "OAUTH_CLIENT_SECRET", "OAUTH_CLIENT_USER_ID"} {
-		t.Run(envName, func(t *testing.T) {
-			handler := NewHandler(nil, newTestTokenManager(t))
-			setOAuthClientCredentialsEnv(t, "hypertube-api", "replace-with-secret", "42")
-			t.Setenv(envName, "")
+func TestOAuthTokenClientCredentialsGrantRejectsNilStore(t *testing.T) {
+	handler := NewHandler(nil, newTestTokenManager(t))
 
-			rec := postOAuthTokenForm(t, handler, validOAuthClientCredentialsForm())
+	rec := postOAuthTokenForm(t, handler, validOAuthClientCredentialsForm())
 
-			if rec.Code != http.StatusInternalServerError {
-				t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
-			}
-			response := decodeOAuthTokenError(t, rec)
-			if response.Error != "server_error" {
-				t.Fatalf("expected server_error, got %q", response.Error)
-			}
-		})
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
 	}
-}
-
-func TestOAuthTokenClientCredentialsGrantRejectsInvalidConfiguredUserID(t *testing.T) {
-	for _, userID := range []string{"abc", "0", "-1"} {
-		t.Run(userID, func(t *testing.T) {
-			handler := NewHandler(nil, newTestTokenManager(t))
-			setOAuthClientCredentialsEnv(t, "hypertube-api", "replace-with-secret", userID)
-
-			rec := postOAuthTokenForm(t, handler, validOAuthClientCredentialsForm())
-
-			if rec.Code != http.StatusInternalServerError {
-				t.Fatalf("expected 500, got %d: %s", rec.Code, rec.Body.String())
-			}
-			response := decodeOAuthTokenError(t, rec)
-			if response.Error != "server_error" {
-				t.Fatalf("expected server_error, got %q", response.Error)
-			}
-		})
+	response := decodeOAuthTokenError(t, rec)
+	if response.Error != "server_error" {
+		t.Fatalf("expected server_error, got %q", response.Error)
 	}
 }
 
 func TestOAuthTokenClientCredentialsGrantRejectsNilTokenManager(t *testing.T) {
-	handler := NewHandler(nil, nil)
-	setOAuthClientCredentialsEnv(t, "hypertube-api", "replace-with-secret", "42")
+	store := newMemoryUserStore()
+	handler := NewHandler(store, nil)
+	createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
 
 	rec := postOAuthTokenForm(t, handler, validOAuthClientCredentialsForm())
 
@@ -334,14 +357,6 @@ func TestOAuthTokenErrorUsesAcceptLanguage(t *testing.T) {
 	if response.ErrorDescription != "Type de grant requis" {
 		t.Fatalf("expected French OAuth error description, got %q", response.ErrorDescription)
 	}
-}
-
-func setOAuthClientCredentialsEnv(t *testing.T, clientID string, clientSecret string, userID string) {
-	t.Helper()
-
-	t.Setenv("OAUTH_CLIENT_ID", clientID)
-	t.Setenv("OAUTH_CLIENT_SECRET", clientSecret)
-	t.Setenv("OAUTH_CLIENT_USER_ID", userID)
 }
 
 func validOAuthClientCredentialsForm() url.Values {

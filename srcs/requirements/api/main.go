@@ -167,6 +167,9 @@ func newRouter(
 	// MOCKUP for dev and TEST purposes
 	////
 
+	requireAuth := auth.RequireAuth(tokenManager, authUsers)
+	// requireAuth = auth.DevAuthenticateAs(1)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -187,13 +190,14 @@ func newRouter(
 		})
 
 		r.Post("/oauth/token", authHandler.OAuthToken)
+		r.With(requireAuth).Post("/oauth/applications", authHandler.CreateOAuthApplication)
+		r.With(requireAuth).Get("/oauth/applications", authHandler.ListOAuthApplications)
+		r.With(requireAuth).Patch("/oauth/applications/{id}", authHandler.UpdateOAuthApplication)
+		r.With(requireAuth).Delete("/oauth/applications/{id}", authHandler.DeleteOAuthApplication)
 
 		r.Get("/movies", moviesHandler.GetDefaultMovies)
 		r.Get("/movies/featured", moviesHandler.GetFeaturedMovies)
 		r.Get("/movies/search", moviesHandler.SearchMovies)
-
-		requireAuth := auth.RequireAuth(tokenManager, authUsers)
-		// requireAuth = auth.DevAuthenticateAs(1)
 
 		r.With(requireAuth).Get("/movies/watched", moviesHandler.GetWatchedMovies)
 		r.With(requireAuth).Get("/movies/directstream", moviesHandler.GetDirectStreamMovies)
@@ -225,6 +229,10 @@ func newRouter(
 	r.Get("/oauth/callback/github", authHandler.CallbackGitHub)
 	r.Get("/oauth/callback/gitlab", authHandler.CallbackGitLab)
 	r.Post("/oauth/token", authHandler.OAuthToken)
+	r.With(requireAuth).Post("/oauth/applications", authHandler.CreateOAuthApplication)
+	r.With(requireAuth).Get("/oauth/applications", authHandler.ListOAuthApplications)
+	r.With(requireAuth).Patch("/oauth/applications/{id}", authHandler.UpdateOAuthApplication)
+	r.With(requireAuth).Delete("/oauth/applications/{id}", authHandler.DeleteOAuthApplication)
 
 	return r
 }

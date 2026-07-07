@@ -31,10 +31,6 @@ while IFS= read -r line; do
         variable=$(echo "$line" | cut -d '=' -f 1)
         key=$(generate_secret_key)
         echo "$variable=\"$key\"" >> "$ENV_OUTPUT"
-    elif [[ $line == "OAUTH_CLIENT_SECRET"* ]]; then
-        variable=$(echo "$line" | cut -d '=' -f 1)
-        key=$(generate_secret_key)
-        echo "$variable=\"$key\"" >> "$ENV_OUTPUT"
     else
         echo "$line" >> "$ENV_OUTPUT"
     fi

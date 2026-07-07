@@ -108,6 +108,66 @@ func TestRouterOAuthTokenRoutesArePublic(t *testing.T) {
 	}
 }
 
+func TestRouterOAuthApplicationRoutesRequireBearerToken(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	tests := []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{method: http.MethodPost, path: "/api/v1/oauth/applications", body: `{}`},
+		{method: http.MethodGet, path: "/api/v1/oauth/applications"},
+		{method: http.MethodPatch, path: "/api/v1/oauth/applications/1", body: `{}`},
+		{method: http.MethodDelete, path: "/api/v1/oauth/applications/1"},
+		{method: http.MethodPost, path: "/oauth/applications", body: `{}`},
+		{method: http.MethodGet, path: "/oauth/applications"},
+		{method: http.MethodPatch, path: "/oauth/applications/1", body: `{}`},
+		{method: http.MethodDelete, path: "/oauth/applications/1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.method+" "+tt.path, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got := decodeRouterErrorCode(t, rec); got != "UNAUTHORIZED" {
+				t.Fatalf("expected UNAUTHORIZED, got %q", got)
+			}
+		})
+	}
+}
+
+func TestRouterOAuthApplicationRoutesWithValidTokenReachHandler(t *testing.T) {
+	router, tokens := newTestRouter(t)
+	token, _, err := tokens.CreateAccessToken(42)
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	for _, path := range []string{"/api/v1/oauth/applications", "/oauth/applications"} {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusInternalServerError {
+				t.Fatalf("expected handler response, got %d: %s", rec.Code, rec.Body.String())
+			}
+			if got := decodeRouterErrorCode(t, rec); got != "INTERNAL_ERROR" {
+				t.Fatalf("expected INTERNAL_ERROR from reached handler, got %q", got)
+			}
+		})
+	}
+}
+
 func TestRouterPublicOAuthProviderRoutes(t *testing.T) {
 	router, _ := newTestRouter(t)
 

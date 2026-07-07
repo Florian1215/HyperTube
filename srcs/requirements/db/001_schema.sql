@@ -68,6 +68,20 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
     UNIQUE (user_id, provider)
 );
 
+CREATE TABLE IF NOT EXISTS oauth_applications (
+    id                 SERIAL PRIMARY KEY,
+    owner_user_id      INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name               TEXT        NOT NULL,
+    scope              TEXT        NOT NULL DEFAULT '',
+    client_id          TEXT        NOT NULL UNIQUE,
+    client_secret_hash TEXT        NOT NULL,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS oauth_applications_owner_user_id_idx
+    ON oauth_applications (owner_user_id);
+
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
     id         SERIAL      PRIMARY KEY,
     user_id    INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,

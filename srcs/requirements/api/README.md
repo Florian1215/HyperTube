@@ -741,11 +741,157 @@ plus `refresh_token`. `expires_in` continues to describe only the access token.
 | 503 | `OAUTH_NOT_CONFIGURED` | `OAuth provider GitLab is not configured` |
 | 500 | `INTERNAL_ERROR` | `Failed to create OAuth user`, `Failed to create token`, or invalid frontend callback configuration |
 
+### OAuth applications
+
+OAuth applications are managed by authenticated users. Each application belongs
+to its owner user. Successful `client_credentials` token requests issue the same
+JWT access-token type used by normal login, with the owner user ID as the token
+subject.
+
+These routes require:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Versioned routes:
+
+```text
+POST   /api/v1/oauth/applications
+GET    /api/v1/oauth/applications
+PATCH  /api/v1/oauth/applications/{id}
+DELETE /api/v1/oauth/applications/{id}
+```
+
+Root aliases are also available:
+
+```text
+POST   /oauth/applications
+GET    /oauth/applications
+PATCH  /oauth/applications/{id}
+DELETE /oauth/applications/{id}
+```
+
+#### Create application
+
+```http
+POST /api/v1/oauth/applications
+Content-Type: application/json
+Authorization: Bearer <access_token>
+```
+
+```json
+{
+  "name": "My App",
+  "scope": "read:movies"
+}
+```
+
+`name` is required and trimmed. `scope` is optional and normalized as a
+whitespace-separated string.
+
+`201 Created`
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "My App",
+    "scope": "read:movies",
+    "client_id": "htc_...",
+    "client_secret": "hts_...",
+    "created_at": "2026-07-07T12:00:00Z",
+    "updated_at": "2026-07-07T12:00:00Z"
+  }
+}
+```
+
+`client_secret` is returned only once, in the create response. The API stores
+only a bcrypt hash of the secret and never returns `client_secret_hash`.
+
+#### List applications
+
+```http
+GET /api/v1/oauth/applications
+Authorization: Bearer <access_token>
+```
+
+`200 OK`
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "My App",
+      "scope": "read:movies",
+      "client_id": "htc_...",
+      "created_at": "2026-07-07T12:00:00Z",
+      "updated_at": "2026-07-07T12:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "page": 0,
+    "per_page": 1
+  }
+}
+```
+
+An empty list returns `"data": []`.
+
+#### Update application
+
+```http
+PATCH /api/v1/oauth/applications/1
+Content-Type: application/json
+Authorization: Bearer <access_token>
+```
+
+```json
+{
+  "name": "My Renamed App",
+  "scope": "read:movies write:comments"
+}
+```
+
+At least one of `name` or `scope` is required. Only applications owned by the
+authenticated user can be updated.
+
+#### Delete application
+
+```http
+DELETE /api/v1/oauth/applications/1
+Authorization: Bearer <access_token>
+```
+
+`200 OK`
+
+```json
+{
+  "data": null
+}
+```
+
+Deleting an OAuth application prevents future token issuance for that
+application. Already-issued stateless JWT access tokens can remain valid until
+their normal expiry, currently 15 minutes.
+
+#### Application error responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `BAD_REQUEST` | Malformed JSON, unknown fields, or multiple JSON documents. |
+| 400 | `VALIDATION_ERROR` | Missing name, overly long name or scope, or empty patch body. |
+| 401 | `UNAUTHORIZED` | Missing or invalid bearer token. |
+| 404 | `NOT_FOUND` | Application ID is invalid, missing, or not owned by the authenticated user. |
+| 500 | `INTERNAL_ERROR` | Application storage or credential generation failed. |
+
 ### POST /oauth/token
 
-OAuth2-compatible token endpoint for password and configured client credentials
-grants. It returns a JWT bearer access token for API routes. This endpoint is
-also available at the legacy root path `POST /oauth/token`.
+OAuth2-compatible token endpoint for password and registered application
+client-credentials grants. It returns a JWT bearer access token for API routes.
+This endpoint is also available at the legacy root path `POST /oauth/token`.
 
 Unlike the other auth endpoints, this endpoint uses OAuth2 token response shapes
 directly. Success responses are not wrapped in `data`, and errors are not
@@ -792,23 +938,16 @@ JSON is also accepted:
 
 #### Client credentials grant
 
-For API clients, the endpoint also supports `grant_type=client_credentials`.
-Since the subject does not define client registration, this implementation uses
-one configured API client from environment variables and maps it to a configured
-API user for existing user-scoped routes.
-
-Required environment:
-
-- `OAUTH_CLIENT_ID`
-- `OAUTH_CLIENT_SECRET`
-- `OAUTH_CLIENT_USER_ID`
+Registered OAuth applications use `grant_type=client_credentials`. When the
+application authenticates successfully, the API issues a normal access token for
+the application owner user ID.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `grant_type` | string | yes | Must be `client_credentials`. |
-| `client_id` | string | yes | Configured API client ID. |
-| `client_secret` | string | yes | Configured API client secret. |
-| `scope` | string | no | Optional OAuth scope string. Whitespace is normalized in the response. |
+| `grant_type` | string | usually | Must be `client_credentials` when present. It may be omitted when the body contains only `client_id` and `client_secret`. |
+| `client_id` | string | yes | Client ID returned by application creation. Trimmed before lookup. |
+| `client_secret` | string | yes | One-time secret returned by application creation. It is not trimmed before verification. |
+| `scope` | string | no | Optional requested scope. It must be a subset of the stored application scope. |
 
 ##### Example request
 
@@ -818,19 +957,23 @@ Content-Type: application/x-www-form-urlencoded
 ```
 
 ```text
-grant_type=client_credentials&client_id=hypertube-api&client_secret=replace-with-secret&scope=profile
+grant_type=client_credentials&client_id=htc_...&client_secret=hts_...&scope=read:movies
 ```
 
-JSON is also accepted:
+JSON is also accepted, including without `grant_type`:
 
 ```json
 {
-  "grant_type": "client_credentials",
-  "client_id": "hypertube-api",
-  "client_secret": "replace-with-secret",
-  "scope": "profile"
+  "client_id": "htc_...",
+  "client_secret": "hts_..."
 }
 ```
+
+If `scope` is omitted, the response echoes the application's stored scope. If a
+requested scope is present, it is normalized and must contain only scope tokens
+assigned to the application. Scopes are not embedded in the current JWT access
+token and are not enforced by `RequireAuth`; they only constrain and document
+the `/oauth/token` response for this issue.
 
 #### Response
 
@@ -841,7 +984,7 @@ JSON is also accepted:
   "access_token": "<jwt>",
   "token_type": "Bearer",
   "expires_in": 900,
-  "scope": "profile"
+  "scope": "read:movies"
 }
 ```
 
@@ -859,9 +1002,10 @@ Pragma: no-cache
 | 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `username` or `password`, missing `client_id` or `client_secret`, or password too long. |
 | 400 | `unsupported_grant_type` | `grant_type` is neither `password` nor `client_credentials`. |
 | 400 | `invalid_grant` | Username/email or password is incorrect. |
+| 400 | `invalid_scope` | Requested scope is outside the application scope. |
 | 401 | `invalid_client` | `client_id` or `client_secret` is incorrect. |
 | 415 | `invalid_request` | Body must be form encoded or JSON. |
-| 500 | `server_error` | Auth service unavailable, user load failed, token creation failed, or client credentials environment configuration is missing or invalid. |
+| 500 | `server_error` | Auth service unavailable, user load failed, token creation failed, or application lookup failed. |
 
 Example:
 
