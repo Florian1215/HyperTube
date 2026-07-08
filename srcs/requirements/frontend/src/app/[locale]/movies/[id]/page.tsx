@@ -57,7 +57,7 @@ export default function MoviePage() {
             }
         }
 
-        startDownloading();
+        startDownloading().then(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [torrentId]);
 

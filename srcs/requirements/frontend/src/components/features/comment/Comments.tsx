@@ -22,7 +22,7 @@ export default function Comments({currentUser, comments, setComments, index, set
                 const newComment = structuredClone(comment);
                 newComment.content = newContent.replace("\n\n", "\n");
                 newComment.edited = true;
-                patchComment(locale, commentId, newComment.content);
+                patchComment(locale, commentId, newComment.content).then(() => {});
                 return newComment;
             }
             else
