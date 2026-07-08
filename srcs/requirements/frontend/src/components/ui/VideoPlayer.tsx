@@ -55,7 +55,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const delaySubtitle = useRef(0);
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
-    const mediaStreamRef = useRef<MediaStream | null>(null);
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -74,12 +73,12 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                 },
             });
 
-            const reload = (currentTime?: number) => {
+            const reload = async (currentTime?: number) => {
                 hls.loadSource(src);
                 hls.startLoad();
                 if (currentTime) {
                     video.currentTime = currentTime;
-                    video.play();
+                    await video.play();
                 }
             }
 
@@ -102,7 +101,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                     hls.stopLoad();
                     try {
                         await refreshAccessToken(locale);
-                        reload();
+                        await reload();
                     } catch {
                         video.pause();
                         openModal({type: "signin", noClose: true, reload: () => reload(video.currentTime)});
@@ -117,29 +116,12 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
 
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!video)
-            return;
-
-        const startCapture = async () => {
-            await video.play();
-
-            const stream = video.captureStream();
-            mediaStreamRef.current = stream;
-        };
-
-        startCapture();
-        return () => {mediaStreamRef.current?.getTracks().forEach(t => t.stop());};
-    }, []);
-
     /* ------------------------------------------------- PLAY PAUSE ------------------------------------------------- */
     useEffect(() => {
         const video = videoRef.current;
         if (!video)
             return;
-        video.play();
-        setIsPlaying(true);
+        video.play().then(() => {});
     }, []);
 
     useEffect(() => {
@@ -171,8 +153,9 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
             return;
 
         if (video.paused) {
-            video.play();
-            resetHideTimer();
+            video.play().then(() => {
+                resetHideTimer();
+            });
         } else {
             video.pause();
             setShowControls(true);
@@ -191,14 +174,16 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         if (!setComplete.current) {
             const progress = Math.floor(video.currentTime);
             if (isLiveRef && video.currentTime + min15 > fullDuration) {
-                updateMovieProgress(movie.imdb_id, progress, 100, true);
-                setComplete.current = true;
+                updateMovieProgress(movie.imdb_id, progress, 100, true).then(() => {
+                    setComplete.current = true;
+                });
             } else {
                 const second = Math.floor(video.currentTime % 60);
                 if (Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
-                    lastSent.current = second;
-                    updateMovieProgress(movie.imdb_id, progress, pourcent, false);
+                    updateMovieProgress(movie.imdb_id, progress, pourcent, false).then(() => {
+                        lastSent.current = second;
+                    });
                 }
             }
         }
@@ -234,7 +219,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
                 video.currentTime = seekTimeRef.current;
             setIsSeeking(false);
             if (playStateBeforeSeeking.current)
-                video.play();
+                video.play().then(() => {});
         };
 
         window.addEventListener("mousemove", handleMove);
@@ -261,7 +246,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     };
 
     /* ------------------------------------------------ FULL SCREEN ------------------------------------------------- */
-    const toggleFullscreen = () => {
+    const toggleFullscreen = async () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
         setFullscreenEnabled(!fullscreenEnabled);
@@ -269,9 +254,9 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         if (!container)
             return ;
         if (!document.fullscreenElement)
-            container.requestFullscreen();
+            await container.requestFullscreen();
         else
-            document.exitFullscreen();
+            await document.exitFullscreen();
     }
 
     /* ------------------------------------------------- SUBTITLES -------------------------------------------------- */
@@ -372,7 +357,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
 
                 case "KeyF":
                     e.preventDefault();
-                    toggleFullscreen();
+                    toggleFullscreen().then(() => {});
                     break;
 
                 case "KeyC":
