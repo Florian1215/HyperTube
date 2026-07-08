@@ -12,11 +12,12 @@ import (
 	"hypertube/api/internal/comments"
 	"hypertube/api/internal/email"
 	"hypertube/api/internal/movies"
-	"hypertube/api/internal/movies/archive.org"
 	"hypertube/api/internal/movies/c411"
 	"hypertube/api/internal/movies/tmdb"
 	"hypertube/api/internal/stream"
 	"hypertube/api/internal/users"
+
+	"hypertube/api/internal/movies/archive.org"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -156,17 +157,6 @@ func newRouter(
 		MaxAge:         600,
 	}))
 
-	////
-	// MOCKUP for dev and TEST purposes
-
-	r.Get("/mockup-stream", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(mockupHTML)
-	})
-
-	// MOCKUP for dev and TEST purposes
-	////
-
 	requireAuth := auth.RequireAuth(tokenManager, authUsers)
 	// requireAuth = auth.DevAuthenticateAs(1)
 
@@ -263,9 +253,6 @@ func getPasswordResetTTL() time.Duration {
 	}
 	return ttl
 }
-
-//go:embed mockup_front_stream.html
-var mockupHTML []byte
 
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
