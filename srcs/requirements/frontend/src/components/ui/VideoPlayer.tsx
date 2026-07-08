@@ -55,7 +55,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const delaySubtitle = useRef(0);
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
-    const mediaStreamRef = useRef<MediaStream | null>(null);
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -116,22 +115,6 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
-
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!video)
-            return;
-
-        const startCapture = async () => {
-            await video.play();
-
-            const stream = video.captureStream();
-            mediaStreamRef.current = stream;
-        };
-
-        startCapture();
-        return () => {mediaStreamRef.current?.getTracks().forEach(t => t.stop());};
-    }, []);
 
     /* ------------------------------------------------- PLAY PAUSE ------------------------------------------------- */
     useEffect(() => {
