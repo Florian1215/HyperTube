@@ -156,17 +156,6 @@ func newRouter(
 		MaxAge:         600,
 	}))
 
-	////
-	// MOCKUP for dev and TEST purposes
-
-	r.Get("/mockup-stream", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(mockupHTML)
-	})
-
-	// MOCKUP for dev and TEST purposes
-	////
-
 	requireAuth := auth.RequireAuth(tokenManager, authUsers)
 	// requireAuth = auth.DevAuthenticateAs(1)
 
