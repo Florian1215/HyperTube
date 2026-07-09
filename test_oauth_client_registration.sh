@@ -23,6 +23,9 @@ PASSWORD="${PASSWORD:-Correct-Horse-Battery-42}"
 PRIMARY_APP_NAME="${PRIMARY_APP_NAME:-Curl Test App ${RUN_SUFFIX}}"
 SECONDARY_APP_NAME="${SECONDARY_APP_NAME:-Curl Root Alias App ${RUN_SUFFIX}}"
 PRIMARY_SCOPE="${PRIMARY_SCOPE:-read:movies write:comments}"
+PRIMARY_REDIRECT_URI="${PRIMARY_REDIRECT_URI:-http://localhost:4200/auth/callback}"
+SECONDARY_REDIRECT_URI="${SECONDARY_REDIRECT_URI:-http://localhost:4200/auth/root-callback}"
+PATCHED_REDIRECT_URI="${PATCHED_REDIRECT_URI:-https://example.com/oauth/callback}"
 
 HTTP_STATUS=""
 HTTP_BODY=""
@@ -100,7 +103,8 @@ expect_status() {
 expect_jq() {
 	local filter="$1"
 	local message="$2"
-	if ! "$JQ_BIN" -e "$filter" >/dev/null <<<"$HTTP_BODY"; then
+	shift 2
+	if ! "$JQ_BIN" -e "$@" "$filter" >/dev/null <<<"$HTTP_BODY"; then
 		printf 'Assertion failed: %s\n' "$message" >&2
 		print_body >&2
 		exit 1
@@ -135,18 +139,23 @@ step "Create OAuth application via versioned route"
 CREATE_PRIMARY_BODY="$(json_payload \
 	--arg name "$PRIMARY_APP_NAME" \
 	--arg scope "  ${PRIMARY_SCOPE}   " \
-	'{name:$name,scope:$scope}')"
+	--arg redirect_uri "$PRIMARY_REDIRECT_URI" \
+	'{name:$name,scope:$scope,redirect_uri:$redirect_uri}')"
 curl_json POST "${API_V1}/oauth/applications" "$CREATE_PRIMARY_BODY" "$ACCESS_TOKEN"
 expect_status 201
 PRIMARY_APP_ID="$("$JQ_BIN" -er '.data.id' <<<"$HTTP_BODY")"
 CLIENT_ID="$("$JQ_BIN" -er '.data.client_id' <<<"$HTTP_BODY")"
 CLIENT_SECRET="$("$JQ_BIN" -er '.data.client_secret' <<<"$HTTP_BODY")"
 expect_jq '.data.scope == "read:movies write:comments"' "create normalizes scope"
+expect_jq '.data.redirect_uri == $redirect_uri' "create exposes redirect_uri" --arg redirect_uri "$PRIMARY_REDIRECT_URI"
 expect_jq '[.. | objects | select(has("client_secret_hash") or has("owner_id"))] | length == 0' "create response hides owner_id and secret hash"
 printf 'Created primary app id=%s client_id=%s\n' "$PRIMARY_APP_ID" "$CLIENT_ID"
 
 step "Create OAuth application via root alias"
-CREATE_SECONDARY_BODY="$(json_payload --arg name "$SECONDARY_APP_NAME" '{name:$name,scope:""}')"
+CREATE_SECONDARY_BODY="$(json_payload \
+	--arg name "$SECONDARY_APP_NAME" \
+	--arg redirect_uri "$SECONDARY_REDIRECT_URI" \
+	'{name:$name,scope:"",redirect_uri:$redirect_uri}')"
 curl_json POST "${API_BASE}/oauth/applications" "$CREATE_SECONDARY_BODY" "$ACCESS_TOKEN"
 expect_status 201
 SECONDARY_APP_ID="$("$JQ_BIN" -er '.data.id' <<<"$HTTP_BODY")"
@@ -157,19 +166,30 @@ curl_json GET "${API_V1}/oauth/applications" "" "$ACCESS_TOKEN"
 expect_status 200
 expect_jq ".data | map(.id) | index(${PRIMARY_APP_ID}) != null" "versioned list includes primary app"
 expect_jq ".data | map(.id) | index(${SECONDARY_APP_ID}) != null" "versioned list includes secondary app"
+expect_jq '.data | any(.id == ($id | tonumber) and .redirect_uri == $redirect_uri)' "versioned list includes primary redirect_uri" --arg id "$PRIMARY_APP_ID" --arg redirect_uri "$PRIMARY_REDIRECT_URI"
 expect_jq '[.. | objects | select(has("client_secret") or has("client_secret_hash") or has("owner_id"))] | length == 0' "list hides secrets and owner_id"
+expect_jq '.meta.page == 0' "versioned list exposes page metadata"
+expect_jq '.meta.per_page == 12' "versioned list exposes oauth application page size"
+expect_jq '.meta.total >= 2' "versioned list exposes total application count"
 
 step "List applications via root alias"
 curl_json GET "${API_BASE}/oauth/applications" "" "$ACCESS_TOKEN"
 expect_status 200
 expect_jq ".data | map(.id) | index(${PRIMARY_APP_ID}) != null" "root list includes primary app"
+expect_jq '.data | any(.id == ($id | tonumber) and .redirect_uri == $redirect_uri)' "root list includes secondary redirect_uri" --arg id "$SECONDARY_APP_ID" --arg redirect_uri "$SECONDARY_REDIRECT_URI"
+expect_jq '.meta.page == 0' "root list exposes page metadata"
+expect_jq '.meta.per_page == 12' "root list exposes oauth application page size"
+expect_jq '.meta.total >= 2' "root list exposes total application count"
 
 step "Patch primary application via versioned route"
-PATCH_PRIMARY_BODY="$(json_payload '{name:"Curl Test App Patched",scope:"read:movies"}')"
+PATCH_PRIMARY_BODY="$(json_payload \
+	--arg redirect_uri "$PATCHED_REDIRECT_URI" \
+	'{name:"Curl Test App Patched",scope:"read:movies",redirect_uri:$redirect_uri}')"
 curl_json PATCH "${API_V1}/oauth/applications/${PRIMARY_APP_ID}" "$PATCH_PRIMARY_BODY" "$ACCESS_TOKEN"
 expect_status 200
 expect_jq '.data.name == "Curl Test App Patched"' "patch updates app name"
 expect_jq '.data.scope == "read:movies"' "patch updates app scope"
+expect_jq '.data.redirect_uri == $redirect_uri' "patch updates redirect_uri" --arg redirect_uri "$PATCHED_REDIRECT_URI"
 expect_jq '[.. | objects | select(has("client_secret") or has("client_secret_hash") or has("owner_id"))] | length == 0' "patch response hides secrets and owner_id"
 
 step "Patch secondary application via root alias"

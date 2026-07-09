@@ -16,6 +16,24 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const testOAuthApplicationRedirectURI = "http://localhost:4200/auth/callback"
+
+type oauthApplicationsListResponse struct {
+	Data []oauthApplicationListItem `json:"data"`
+	Meta struct {
+		Total   int `json:"total"`
+		Page    int `json:"page"`
+		PerPage int `json:"per_page"`
+	} `json:"meta"`
+}
+
+type oauthApplicationListItem struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	RedirectURI string `json:"redirect_uri"`
+	ClientID    string `json:"client_id"`
+}
+
 func TestOAuthApplicationCredentialGeneration(t *testing.T) {
 	clientID1, err := generateOAuthClientID()
 	if err != nil {
@@ -61,7 +79,7 @@ func TestOAuthApplicationCredentialGeneration(t *testing.T) {
 
 func TestCreateOAuthApplicationRequiresAuthContext(t *testing.T) {
 	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/applications", strings.NewReader(`{"name":"My App"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/applications", strings.NewReader(`{"name":"My App","redirect_uri":"http://localhost:4200/auth/callback"}`))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
@@ -77,10 +95,23 @@ func TestCreateOAuthApplicationValidation(t *testing.T) {
 		name       string
 		body       string
 		wantStatus int
+		wantField  string
 	}{
 		{name: "invalid JSON", body: `{"name":`, wantStatus: http.StatusBadRequest},
-		{name: "missing name", body: `{}`, wantStatus: http.StatusBadRequest},
-		{name: "blank name", body: `{"name":"   "}`, wantStatus: http.StatusBadRequest},
+		{name: "missing name", body: `{"redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "name"},
+		{name: "blank name", body: `{"name":"   ","redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "name"},
+		{name: "scope too long", body: `{"name":"My App","scope":"` + strings.Repeat("s", oauthApplicationScopeMaxLength+1) + `","redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "scope"},
+		{name: "missing redirect_uri", body: `{"name":"My App"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "blank redirect_uri", body: `{"name":"My App","redirect_uri":"   "}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "null redirect_uri", body: `{"name":"My App","redirect_uri":null}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "non-string redirect_uri", body: `{"name":"My App","redirect_uri":42}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "relative redirect_uri", body: `{"name":"My App","redirect_uri":"/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "unsupported redirect_uri scheme", body: `{"name":"My App","redirect_uri":"javascript:alert(1)"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "redirect_uri missing host", body: `{"name":"My App","redirect_uri":"https:///callback"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "redirect_uri userinfo", body: `{"name":"My App","redirect_uri":"https://user:pass@example.com/callback"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "redirect_uri non-empty fragment", body: `{"name":"My App","redirect_uri":"https://example.com/callback#token"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "redirect_uri empty fragment delimiter", body: `{"name":"My App","redirect_uri":"https://example.com/callback#"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
+		{name: "redirect_uri too long", body: `{"name":"My App","redirect_uri":"https://example.com/` + strings.Repeat("a", oauthApplicationRedirectURIMaxLength) + `"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
 	}
 
 	for _, tt := range tests {
@@ -92,6 +123,9 @@ func TestCreateOAuthApplicationValidation(t *testing.T) {
 			if rec.Code != tt.wantStatus {
 				t.Fatalf("expected %d, got %d: %s", tt.wantStatus, rec.Code, rec.Body.String())
 			}
+			if tt.wantField != "" {
+				assertValidationErrorField(t, rec, tt.wantField)
+			}
 		})
 	}
 }
@@ -102,7 +136,8 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 
 	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodPost, "/oauth/applications", `{
 		"name": "  My App  ",
-		"scope": "read:movies   write:comments"
+		"scope": "read:movies   write:comments",
+		"redirect_uri": "  http://localhost:4200/auth/callback?next=/movies  "
 	}`)
 
 	if rec.Code != http.StatusCreated {
@@ -114,6 +149,7 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 			ID           int64  `json:"id"`
 			Name         string `json:"name"`
 			Scope        string `json:"scope"`
+			RedirectURI  string `json:"redirect_uri"`
 			ClientID     string `json:"client_id"`
 			ClientSecret string `json:"client_secret"`
 			CreatedAt    string `json:"created_at"`
@@ -125,6 +161,9 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 	}
 	if body.Data.ID == 0 || body.Data.Name != "My App" || body.Data.Scope != "read:movies write:comments" {
 		t.Fatalf("unexpected app response: %+v", body.Data)
+	}
+	if body.Data.RedirectURI != "http://localhost:4200/auth/callback?next=/movies" {
+		t.Fatalf("expected trimmed redirect URI, got %q", body.Data.RedirectURI)
 	}
 	if !strings.HasPrefix(body.Data.ClientID, "htc_") {
 		t.Fatalf("expected generated client id, got %q", body.Data.ClientID)
@@ -162,24 +201,22 @@ func TestListOAuthApplicationsFiltersByAuthenticatedUser(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	var body struct {
-		Data []struct {
-			Name     string `json:"name"`
-			ClientID string `json:"client_id"`
-		} `json:"data"`
-		Meta struct {
-			Total int `json:"total"`
-		} `json:"meta"`
-	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
+	body := decodeOAuthApplicationsListResponse(t, rec)
 	if len(body.Data) != 2 || body.Meta.Total != 2 {
 		t.Fatalf("expected two owned apps, got %+v", body)
+	}
+	if body.Meta.Page != 0 {
+		t.Fatalf("expected page 0, got %d", body.Meta.Page)
+	}
+	if body.Meta.PerPage != oauthApplicationPageLimit {
+		t.Fatalf("expected per_page %d, got %d", oauthApplicationPageLimit, body.Meta.PerPage)
 	}
 	for _, app := range body.Data {
 		if app.Name == "Other" || app.ClientID == "client-other" {
 			t.Fatalf("listed app owned by another user: %+v", app)
+		}
+		if app.RedirectURI != testOAuthApplicationRedirectURI {
+			t.Fatalf("expected listed redirect URI, got %+v", app)
 		}
 	}
 	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
@@ -193,8 +230,89 @@ func TestListOAuthApplicationsReturnsEmptyList(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !bytes.Contains(rec.Body.Bytes(), []byte(`"data":[]`)) {
-		t.Fatalf("expected empty list data array, got %s", rec.Body.String())
+	body := decodeOAuthApplicationsListResponse(t, rec)
+	if body.Data == nil || len(body.Data) != 0 {
+		t.Fatalf("expected empty list data array, got %+v", body.Data)
+	}
+	if body.Meta.Total != 0 || body.Meta.Page != 0 || body.Meta.PerPage != oauthApplicationPageLimit {
+		t.Fatalf("unexpected empty list metadata: %+v", body.Meta)
+	}
+}
+
+func TestListOAuthApplicationsPaginates(t *testing.T) {
+	store := newMemoryUserStore()
+	handler := NewHandler(store, newTestTokenManager(t))
+	for i := 0; i < 14; i++ {
+		suffix := strconv.Itoa(i)
+		createStoredOAuthApplication(t, store, 42, "App "+suffix, "read:movies", "client-"+suffix, "secret-"+suffix)
+	}
+	createStoredOAuthApplication(t, store, 99, "Other", "admin", "client-other", "secret-other")
+
+	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, "/oauth/applications?page=1", "")
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeOAuthApplicationsListResponse(t, rec)
+	if len(body.Data) != 2 {
+		t.Fatalf("expected second page to contain 2 apps, got %+v", body.Data)
+	}
+	if body.Meta.Total != 14 || body.Meta.Page != 1 || body.Meta.PerPage != oauthApplicationPageLimit {
+		t.Fatalf("unexpected pagination metadata: %+v", body.Meta)
+	}
+
+	wantClientIDs := map[string]bool{"client-1": true, "client-0": true}
+	for _, app := range body.Data {
+		if app.ClientID == "client-other" || app.Name == "Other" {
+			t.Fatalf("listed app owned by another user: %+v", app)
+		}
+		if !wantClientIDs[app.ClientID] {
+			t.Fatalf("expected page 1 to contain oldest owned apps, got %+v", body.Data)
+		}
+		delete(wantClientIDs, app.ClientID)
+	}
+	if len(wantClientIDs) != 0 {
+		t.Fatalf("missing expected page 1 apps: %+v", wantClientIDs)
+	}
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
+}
+
+func TestListOAuthApplicationsInvalidPageFallsBackToFirstPage(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{name: "missing page", path: "/oauth/applications"},
+		{name: "empty page", path: "/oauth/applications?page="},
+		{name: "text page", path: "/oauth/applications?page=abc"},
+		{name: "negative page", path: "/oauth/applications?page=-1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newMemoryUserStore()
+			handler := NewHandler(store, newTestTokenManager(t))
+			for i := 0; i < 13; i++ {
+				suffix := strconv.Itoa(i)
+				createStoredOAuthApplication(t, store, 42, "App "+suffix, "read:movies", "client-"+suffix, "secret-"+suffix)
+			}
+
+			rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, tt.path, "")
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			body := decodeOAuthApplicationsListResponse(t, rec)
+			if body.Meta.Total != 13 || body.Meta.Page != 0 || body.Meta.PerPage != oauthApplicationPageLimit {
+				t.Fatalf("unexpected pagination metadata: %+v", body.Meta)
+			}
+			if len(body.Data) != oauthApplicationPageLimit {
+				t.Fatalf("expected first page to contain %d apps, got %+v", oauthApplicationPageLimit, body.Data)
+			}
+			if body.Data[0].ClientID != "client-12" {
+				t.Fatalf("expected invalid page to return first page, got %+v", body.Data)
+			}
+		})
 	}
 }
 
@@ -219,23 +337,62 @@ func TestUpdateOAuthApplicationValidationAndOwnership(t *testing.T) {
 		t.Fatalf("expected foreign app 404, got %d: %s", rec.Code, rec.Body.String())
 	}
 
+	invalidRedirectURIPatches := []struct {
+		name string
+		body string
+	}{
+		{name: "blank redirect_uri", body: `{"redirect_uri":"   "}`},
+		{name: "relative redirect_uri", body: `{"redirect_uri":"/auth/callback"}`},
+		{name: "null redirect_uri", body: `{"redirect_uri":null}`},
+		{name: "fragment redirect_uri", body: `{"redirect_uri":"https://example.com/callback#token"}`},
+	}
+	for _, tt := range invalidRedirectURIPatches {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/"+strconvInt64(owned.ID), tt.body)
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected redirect URI patch 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			assertValidationErrorField(t, rec, "redirect_uri")
+		})
+	}
+
+	rec = callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/"+strconvInt64(owned.ID), `{
+		"redirect_uri": "https://example.com/oauth/callback"
+	}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected redirect URI-only patch 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var redirectOnlyBody struct {
+		Data struct {
+			RedirectURI string `json:"redirect_uri"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &redirectOnlyBody); err != nil {
+		t.Fatalf("decode redirect-only patch response: %v", err)
+	}
+	if redirectOnlyBody.Data.RedirectURI != "https://example.com/oauth/callback" {
+		t.Fatalf("unexpected redirect-only patch response: %+v", redirectOnlyBody.Data)
+	}
+
 	rec = callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/"+strconvInt64(owned.ID), `{
 		"name": "  New Name  ",
-		"scope": "write:comments   read:movies"
+		"scope": "write:comments   read:movies",
+		"redirect_uri": "  http://localhost:4200/auth/callback?next=/profile  "
 	}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected patch 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 	var body struct {
 		Data struct {
-			Name  string `json:"name"`
-			Scope string `json:"scope"`
+			Name        string `json:"name"`
+			Scope       string `json:"scope"`
+			RedirectURI string `json:"redirect_uri"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.Name != "New Name" || body.Data.Scope != "write:comments read:movies" {
+	if body.Data.Name != "New Name" || body.Data.Scope != "write:comments read:movies" || body.Data.RedirectURI != "http://localhost:4200/auth/callback?next=/profile" {
 		t.Fatalf("unexpected patch response: %+v", body.Data)
 	}
 	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
@@ -303,6 +460,7 @@ func createStoredOAuthApplication(t *testing.T, store *memoryUserStore, ownerID 
 		OwnerUserID:      ownerID,
 		Name:             name,
 		Scope:            scope,
+		RedirectURI:      testOAuthApplicationRedirectURI,
 		ClientID:         clientID,
 		ClientSecretHash: hash,
 	})
@@ -310,6 +468,16 @@ func createStoredOAuthApplication(t *testing.T, store *memoryUserStore, ownerID 
 		t.Fatalf("create oauth application: %v", err)
 	}
 	return app
+}
+
+func decodeOAuthApplicationsListResponse(t *testing.T, rec *httptest.ResponseRecorder) oauthApplicationsListResponse {
+	t.Helper()
+
+	var body oauthApplicationsListResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body
 }
 
 func assertJSONFieldsAbsent(t *testing.T, body []byte, fields ...string) {
@@ -323,6 +491,18 @@ func assertJSONFieldsAbsent(t *testing.T, body []byte, fields ...string) {
 		if jsonFieldExists(value, field) {
 			t.Fatalf("expected field %q to be absent in %s", field, string(body))
 		}
+	}
+}
+
+func assertValidationErrorField(t *testing.T, rec *httptest.ResponseRecorder, field string) {
+	t.Helper()
+
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if errorBody.Code != "VALIDATION_ERROR" {
+		t.Fatalf("expected VALIDATION_ERROR, got %q: %s", errorBody.Code, rec.Body.String())
+	}
+	if _, ok := errorBody.Fields[field]; !ok {
+		t.Fatalf("expected validation field %q, got %+v", field, errorBody.Fields)
 	}
 }
 
