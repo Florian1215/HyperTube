@@ -81,6 +81,8 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
             }
             onSubmit();
         }
+        else if (index + 1 === focusedIndex)
+            fieldRefs.current[focusedIndex]?.focus();
         else
             setFocusedIndex(index + 1);
     }

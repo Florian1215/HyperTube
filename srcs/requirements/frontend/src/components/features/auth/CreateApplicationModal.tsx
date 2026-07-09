@@ -9,8 +9,6 @@ import {patchApp, postNewApp} from "@/services/auth.service";
 import {iApplication, tResponse} from "@/types/api";
 import useNotification from "@/contexts/NotificationContext";
 
-// todo click sur entrer modal parche pas
-
 // todo make page /auth/autorize
 // todo test sign in with hypertube
 // todo fix tab responsive
