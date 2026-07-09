@@ -134,6 +134,12 @@ const (
 	MsgFailedDeleteComment             Message = "failed to delete comment"
 )
 
+const (
+	MsgOAuthApplicationRedirectURIRequired Message = "OAuth application redirect URI is required"
+	MsgOAuthApplicationRedirectURITooLong  Message = "OAuth application redirect URI is too long"
+	MsgOAuthApplicationRedirectURIInvalid  Message = "OAuth application redirect URI must be an absolute http or https URL without userinfo or fragment"
+)
+
 var matcher = language.NewMatcher([]language.Tag{
 	language.English,
 	language.French,
@@ -253,6 +259,10 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedLoadComment:               "échec du chargement du commentaire",
 		MsgFailedUpdateComment:             "échec de la mise à jour du commentaire",
 		MsgFailedDeleteComment:             "échec de la suppression du commentaire",
+
+		MsgOAuthApplicationRedirectURIRequired: "URI de redirection de l'application OAuth requis",
+		MsgOAuthApplicationRedirectURITooLong:  "URI de redirection de l'application OAuth trop long",
+		MsgOAuthApplicationRedirectURIInvalid:  "l'URI de redirection de l'application OAuth doit être une URL absolue http ou https sans informations utilisateur ni fragment",
 	},
 	German: {
 		MsgInvalidJSONBody:                 "ungültiger JSON-Body",
@@ -366,6 +376,10 @@ var translations = map[Locale]map[Message]string{
 		MsgFailedLoadComment:               "Kommentar konnte nicht geladen werden",
 		MsgFailedUpdateComment:             "Kommentar konnte nicht aktualisiert werden",
 		MsgFailedDeleteComment:             "Kommentar konnte nicht gelöscht werden",
+
+		MsgOAuthApplicationRedirectURIRequired: "Redirect-URI der OAuth-Anwendung ist erforderlich",
+		MsgOAuthApplicationRedirectURITooLong:  "Redirect-URI der OAuth-Anwendung ist zu lang",
+		MsgOAuthApplicationRedirectURIInvalid:  "Redirect-URI der OAuth-Anwendung muss eine absolute http- oder https-URL ohne Userinfo und Fragment sein",
 	},
 }
 

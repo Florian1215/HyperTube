@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -18,28 +19,32 @@ import (
 )
 
 const (
-	oauthApplicationNameMaxLength     = 100
-	oauthApplicationScopeMaxLength    = 500
-	oauthCredentialGenerationAttempts = 3
+	oauthApplicationNameMaxLength        = 100
+	oauthApplicationScopeMaxLength       = 500
+	oauthApplicationRedirectURIMaxLength = 2048
+	oauthCredentialGenerationAttempts    = 3
 )
 
 type oauthApplicationCreateRequest struct {
-	Name  string
-	Scope string
+	Name        string
+	Scope       string
+	RedirectURI string
 }
 
 type oauthApplicationPatchRequest struct {
-	Name  *string
-	Scope *string
+	Name        *string
+	Scope       *string
+	RedirectURI *string
 }
 
 type oauthApplicationResponse struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Scope     string `json:"scope"`
-	ClientID  string `json:"client_id"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Scope       string `json:"scope"`
+	RedirectURI string `json:"redirect_uri"`
+	ClientID    string `json:"client_id"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type oauthApplicationCreatedResponse struct {
@@ -214,8 +219,9 @@ func (h *Handler) createOAuthApplicationWithCredentials(r *http.Request, params 
 
 func decodeOAuthApplicationCreateRequest(w http.ResponseWriter, r *http.Request) (oauthApplicationCreateRequest, validationErrors, bool) {
 	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
-		"name":  {},
-		"scope": {},
+		"name":         {},
+		"scope":        {},
+		"redirect_uri": {},
 	})
 	if !ok {
 		return oauthApplicationCreateRequest{}, nil, false
@@ -223,7 +229,8 @@ func decodeOAuthApplicationCreateRequest(w http.ResponseWriter, r *http.Request)
 
 	fields := validationErrors{}
 	req := oauthApplicationCreateRequest{
-		Name: decodeStringField(body, "name", fields),
+		Name:        decodeStringField(body, "name", fields),
+		RedirectURI: decodeStringField(body, "redirect_uri", fields),
 	}
 	if _, ok := body["scope"]; ok {
 		req.Scope = decodeStringField(body, "scope", fields)
@@ -236,8 +243,9 @@ func decodeOAuthApplicationCreateRequest(w http.ResponseWriter, r *http.Request)
 
 func decodeOAuthApplicationPatchRequest(w http.ResponseWriter, r *http.Request) (oauthApplicationPatchRequest, validationErrors, bool) {
 	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
-		"name":  {},
-		"scope": {},
+		"name":         {},
+		"scope":        {},
+		"redirect_uri": {},
 	})
 	if !ok {
 		return oauthApplicationPatchRequest{}, nil, false
@@ -261,6 +269,14 @@ func decodeOAuthApplicationPatchRequest(w http.ResponseWriter, r *http.Request) 
 			req.Scope = &value
 		}
 	}
+	if raw, ok := body["redirect_uri"]; ok {
+		value, ok := requestjson.DecodeString(raw)
+		if !ok {
+			fields["redirect_uri"] = i18n.MsgInvalidRequestBody
+		} else {
+			req.RedirectURI = &value
+		}
+	}
 	if len(fields) > 0 {
 		return req, fields, false
 	}
@@ -271,7 +287,8 @@ func validateOAuthApplicationCreateRequest(ownerUserID int64, req oauthApplicati
 	fields := validationErrors{}
 	name, ok := validateOAuthApplicationName(req.Name, fields)
 	scope, okScope := validateOAuthApplicationScope(req.Scope, fields)
-	if !ok || !okScope {
+	redirectURI, okRedirectURI := validateOAuthApplicationRedirectURI(req.RedirectURI, fields)
+	if !ok || !okScope || !okRedirectURI {
 		return CreateOAuthApplicationParams{}, fields, false
 	}
 
@@ -279,13 +296,14 @@ func validateOAuthApplicationCreateRequest(ownerUserID int64, req oauthApplicati
 		OwnerUserID: ownerUserID,
 		Name:        name,
 		Scope:       scope,
+		RedirectURI: redirectURI,
 	}, nil, true
 }
 
 func validateOAuthApplicationPatchRequest(req oauthApplicationPatchRequest) (UpdateOAuthApplicationParams, validationErrors, bool) {
 	fields := validationErrors{}
 	params := UpdateOAuthApplicationParams{}
-	if req.Name == nil && req.Scope == nil {
+	if req.Name == nil && req.Scope == nil && req.RedirectURI == nil {
 		fields["body"] = i18n.MsgInvalidRequestBody
 		return UpdateOAuthApplicationParams{}, fields, false
 	}
@@ -300,6 +318,12 @@ func validateOAuthApplicationPatchRequest(req oauthApplicationPatchRequest) (Upd
 		scope, ok := validateOAuthApplicationScope(*req.Scope, fields)
 		if ok {
 			params.Scope = &scope
+		}
+	}
+	if req.RedirectURI != nil {
+		redirectURI, ok := validateOAuthApplicationRedirectURI(*req.RedirectURI, fields)
+		if ok {
+			params.RedirectURI = &redirectURI
 		}
 	}
 	if len(fields) > 0 {
@@ -330,6 +354,34 @@ func validateOAuthApplicationScope(scope string, fields validationErrors) (strin
 	return scope, true
 }
 
+func validateOAuthApplicationRedirectURI(raw string, fields validationErrors) (string, bool) {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		fields["redirect_uri"] = i18n.MsgOAuthApplicationRedirectURIRequired
+		return "", false
+	}
+	if len(value) > oauthApplicationRedirectURIMaxLength {
+		fields["redirect_uri"] = i18n.MsgOAuthApplicationRedirectURITooLong
+		return "", false
+	}
+	if strings.Contains(value, "#") {
+		fields["redirect_uri"] = i18n.MsgOAuthApplicationRedirectURIInvalid
+		return "", false
+	}
+
+	parsed, err := url.Parse(value)
+	if err != nil || !parsed.IsAbs() || parsed.Host == "" || parsed.Hostname() == "" || parsed.User != nil {
+		fields["redirect_uri"] = i18n.MsgOAuthApplicationRedirectURIInvalid
+		return "", false
+	}
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" {
+		fields["redirect_uri"] = i18n.MsgOAuthApplicationRedirectURIInvalid
+		return "", false
+	}
+	return value, true
+}
+
 func oauthApplicationIDFromRequest(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(strings.TrimSpace(chi.URLParam(r, "id")), 10, 64)
 	if err != nil || id <= 0 {
@@ -341,12 +393,13 @@ func oauthApplicationIDFromRequest(w http.ResponseWriter, r *http.Request) (int6
 
 func toOAuthApplicationResponse(app models.OAuthApplication) oauthApplicationResponse {
 	return oauthApplicationResponse{
-		ID:        app.ID,
-		Name:      app.Name,
-		Scope:     app.Scope,
-		ClientID:  app.ClientID,
-		CreatedAt: app.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: app.UpdatedAt.UTC().Format(time.RFC3339),
+		ID:          app.ID,
+		Name:        app.Name,
+		Scope:       app.Scope,
+		RedirectURI: app.RedirectURI,
+		ClientID:    app.ClientID,
+		CreatedAt:   app.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:   app.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 
