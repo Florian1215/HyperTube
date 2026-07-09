@@ -26,6 +26,6 @@ export default function ForgotPasswordModal() {
     }
 
     return (<ModalLayout onCloseAction={() => {closeModal(); setCallbackUrl(undefined);}} title={t("title")}>
-        <Form formType={"send-email-reset-password"} request={postResetPassword} handleRequest={handleResetPassword} fields={["email"]} t={t} />
+        <Form formType="send-email-reset-password" request={postResetPassword} handleRequest={handleResetPassword} fields={["email"]} t={t} />
     </ModalLayout>);
 }

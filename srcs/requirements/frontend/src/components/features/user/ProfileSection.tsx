@@ -19,7 +19,7 @@ export default function ProfileSection({user, updateUser}: {user: iUser, updateU
     };
 
     return (<div className="flex flex-col gap-4 items-start">
-        <Form formType={"update"} request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={String(user.id)}
+        <Form formType="update" request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={String(user.id)}
               fields={["email", "first_name", "last_name", "username"]} />
     </div>);
 }

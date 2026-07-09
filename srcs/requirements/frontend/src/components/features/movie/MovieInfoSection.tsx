@@ -45,7 +45,7 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
 
 function InfoMovie({children, name}: {children: React.ReactNode, name: string}) {
     return (<div className="flex gap-4">
-        <div className={"flex justify-end w-1/4 md:w-1/3 xl:w-1/2"}>
+        <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2">
             <span className="font-bold break-all text-sm sm:text-base">{name}</span>
         </div>
         <div className="w-3/4 md:w-2/3 xl:w-1/2">

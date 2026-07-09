@@ -26,6 +26,6 @@ export default function ResetPasswordModal() {
     }
 
     return (<ModalLayout onCloseAction={() => {closeModal(); setCallbackUrl(undefined);}} title={t("title")}>
-        <Form formType={"set-new-password"} request={postSetNewPassword} handleRequest={handleNewPassword} fields={["new-password", "confirm-new-password"]} t={t} extraParam={activeModal.token} />
+        <Form formType="set-new-password" request={postSetNewPassword} handleRequest={handleNewPassword} fields={["new-password", "confirm-new-password"]} t={t} extraParam={activeModal.token} />
     </ModalLayout>);
 }

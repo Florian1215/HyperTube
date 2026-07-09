@@ -14,7 +14,7 @@ export default function AuthProfileTab() {
     };
 
     return (<div className="max-w-9/10 sm:max-w-1/2 xl:max-w-2/6 w-full mx-auto flex flex-col items-start gap-4">
-        <Form formType={"auth"} request={postNewPassword} handleRequest={handlePasswordChange} t={t}
+        <Form formType="auth" request={postNewPassword} handleRequest={handlePasswordChange} t={t}
               fields={["current-password", "new-password", "confirm-new-password"]} />
     </div>);
 }
