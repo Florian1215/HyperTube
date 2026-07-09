@@ -106,13 +106,15 @@ type CreateOAuthApplicationParams struct {
 	OwnerUserID      int64
 	Name             string
 	Scope            string
+	RedirectURI      string
 	ClientID         string
 	ClientSecretHash string
 }
 
 type UpdateOAuthApplicationParams struct {
-	Name  *string
-	Scope *string
+	Name        *string
+	Scope       *string
+	RedirectURI *string
 }
 
 type oauthClientCredentials struct {
@@ -359,10 +361,10 @@ func (s *Store) ResetPasswordWithToken(ctx context.Context, tokenHash string, pa
 
 func (s *Store) CreateOAuthApplication(ctx context.Context, params CreateOAuthApplicationParams) (models.OAuthApplication, error) {
 	app, err := scanOAuthApplication(s.db.QueryRow(ctx, `
-		INSERT INTO oauth_applications (owner_user_id, name, scope, client_id, client_secret_hash)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, owner_user_id, name, scope, client_id, created_at, updated_at
-	`, params.OwnerUserID, params.Name, params.Scope, params.ClientID, params.ClientSecretHash))
+		INSERT INTO oauth_applications (owner_user_id, name, scope, redirect_uri, client_id, client_secret_hash)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
+	`, params.OwnerUserID, params.Name, params.Scope, params.RedirectURI, params.ClientID, params.ClientSecretHash))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return models.OAuthApplication{}, ErrDuplicateOAuthClientID
@@ -374,7 +376,7 @@ func (s *Store) CreateOAuthApplication(ctx context.Context, params CreateOAuthAp
 
 func (s *Store) ListOAuthApplications(ctx context.Context, ownerUserID int64) ([]models.OAuthApplication, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT id, owner_user_id, name, scope, client_id, created_at, updated_at
+		SELECT id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
 		FROM oauth_applications
 		WHERE owner_user_id = $1
 		ORDER BY created_at DESC, id DESC
@@ -407,15 +409,20 @@ func (s *Store) UpdateOAuthApplication(ctx context.Context, id int64, ownerUserI
 	if params.Scope != nil {
 		scope = *params.Scope
 	}
+	var redirectURI any
+	if params.RedirectURI != nil {
+		redirectURI = *params.RedirectURI
+	}
 
 	app, err := scanOAuthApplication(s.db.QueryRow(ctx, `
 		UPDATE oauth_applications
 		SET name = COALESCE($3, name),
 		    scope = COALESCE($4, scope),
+		    redirect_uri = COALESCE($5, redirect_uri),
 		    updated_at = NOW()
 		WHERE id = $1 AND owner_user_id = $2
-		RETURNING id, owner_user_id, name, scope, client_id, created_at, updated_at
-	`, id, ownerUserID, name, scope))
+		RETURNING id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
+	`, id, ownerUserID, name, scope, redirectURI))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.OAuthApplication{}, ErrOAuthApplicationNotFound
@@ -492,6 +499,7 @@ func scanOAuthApplication(row pgx.Row) (models.OAuthApplication, error) {
 		&app.OwnerID,
 		&app.Name,
 		&app.Scope,
+		&app.RedirectURI,
 		&app.ClientID,
 		&app.CreatedAt,
 		&app.UpdatedAt,

@@ -217,13 +217,14 @@ func (s *memoryUserStore) CreateOAuthApplication(_ context.Context, params Creat
 	s.nextOAuthAppID++
 	now := time.Now().UTC()
 	app := models.OAuthApplication{
-		ID:        s.nextOAuthAppID,
-		OwnerID:   params.OwnerUserID,
-		Name:      params.Name,
-		Scope:     params.Scope,
-		ClientID:  params.ClientID,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          s.nextOAuthAppID,
+		OwnerID:     params.OwnerUserID,
+		Name:        params.Name,
+		Scope:       params.Scope,
+		RedirectURI: params.RedirectURI,
+		ClientID:    params.ClientID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	s.oauthAppsByID[app.ID] = app
 	s.oauthAppSecrets[app.ID] = params.ClientSecretHash
@@ -257,6 +258,9 @@ func (s *memoryUserStore) UpdateOAuthApplication(_ context.Context, id int64, ow
 	}
 	if params.Scope != nil {
 		app.Scope = *params.Scope
+	}
+	if params.RedirectURI != nil {
+		app.RedirectURI = *params.RedirectURI
 	}
 	app.UpdatedAt = time.Now().UTC()
 	s.oauthAppsByID[id] = app

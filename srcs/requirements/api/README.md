@@ -783,12 +783,15 @@ Authorization: Bearer <access_token>
 ```json
 {
   "name": "My App",
-  "scope": "read:movies"
+  "scope": "read:movies",
+  "redirect_uri": "http://localhost:4200/auth/callback"
 }
 ```
 
-`name` is required and trimmed. `scope` is optional and normalized as a
-whitespace-separated string.
+`name` and `redirect_uri` are required and trimmed. `scope` is optional and
+normalized as a whitespace-separated string. `redirect_uri` must be an absolute
+`http` or `https` URL with a host. Query strings are allowed; URL userinfo and
+fragments are rejected.
 
 `201 Created`
 
@@ -798,6 +801,7 @@ whitespace-separated string.
     "id": 1,
     "name": "My App",
     "scope": "read:movies",
+    "redirect_uri": "http://localhost:4200/auth/callback",
     "client_id": "htc_...",
     "client_secret": "hts_...",
     "created_at": "2026-07-07T12:00:00Z",
@@ -825,6 +829,7 @@ Authorization: Bearer <access_token>
       "id": 1,
       "name": "My App",
       "scope": "read:movies",
+      "redirect_uri": "http://localhost:4200/auth/callback",
       "client_id": "htc_...",
       "created_at": "2026-07-07T12:00:00Z",
       "updated_at": "2026-07-07T12:00:00Z"
@@ -851,12 +856,30 @@ Authorization: Bearer <access_token>
 ```json
 {
   "name": "My Renamed App",
-  "scope": "read:movies write:comments"
+  "scope": "read:movies write:comments",
+  "redirect_uri": "https://example.com/oauth/callback"
 }
 ```
 
-At least one of `name` or `scope` is required. Only applications owned by the
+At least one of `name`, `scope`, or `redirect_uri` is required. `redirect_uri`
+uses the same validation rules as create. Only applications owned by the
 authenticated user can be updated.
+
+`200 OK`
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "My Renamed App",
+    "scope": "read:movies write:comments",
+    "redirect_uri": "https://example.com/oauth/callback",
+    "client_id": "htc_...",
+    "created_at": "2026-07-07T12:00:00Z",
+    "updated_at": "2026-07-07T12:05:00Z"
+  }
+}
+```
 
 #### Delete application
 
@@ -882,7 +905,7 @@ their normal expiry, currently 15 minutes.
 | Status | Code | Description |
 |--------|------|-------------|
 | 400 | `BAD_REQUEST` | Malformed JSON, unknown fields, or multiple JSON documents. |
-| 400 | `VALIDATION_ERROR` | Missing name, overly long name or scope, or empty patch body. |
+| 400 | `VALIDATION_ERROR` | Missing name or redirect URI, invalid redirect URI, overly long name, scope, or redirect URI, or empty patch body. |
 | 401 | `UNAUTHORIZED` | Missing or invalid bearer token. |
 | 404 | `NOT_FOUND` | Application ID is invalid, missing, or not owned by the authenticated user. |
 | 500 | `INTERNAL_ERROR` | Application storage or credential generation failed. |
@@ -940,7 +963,8 @@ JSON is also accepted:
 
 Registered OAuth applications use `grant_type=client_credentials`. When the
 application authenticates successfully, the API issues a normal access token for
-the application owner user ID.
+the application owner user ID. This flow does not require or use
+`redirect_uri`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|

@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS oauth_applications (
     owner_user_id      INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name               TEXT        NOT NULL,
     scope              TEXT        NOT NULL DEFAULT '',
+    redirect_uri       TEXT        NOT NULL DEFAULT '',
     client_id          TEXT        NOT NULL UNIQUE,
     client_secret_hash TEXT        NOT NULL,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
