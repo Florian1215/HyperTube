@@ -18,6 +18,22 @@ import (
 
 const testOAuthApplicationRedirectURI = "http://localhost:4200/auth/callback"
 
+type oauthApplicationsListResponse struct {
+	Data []oauthApplicationListItem `json:"data"`
+	Meta struct {
+		Total   int `json:"total"`
+		Page    int `json:"page"`
+		PerPage int `json:"per_page"`
+	} `json:"meta"`
+}
+
+type oauthApplicationListItem struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	RedirectURI string `json:"redirect_uri"`
+	ClientID    string `json:"client_id"`
+}
+
 func TestOAuthApplicationCredentialGeneration(t *testing.T) {
 	clientID1, err := generateOAuthClientID()
 	if err != nil {
@@ -185,21 +201,15 @@ func TestListOAuthApplicationsFiltersByAuthenticatedUser(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	var body struct {
-		Data []struct {
-			Name        string `json:"name"`
-			RedirectURI string `json:"redirect_uri"`
-			ClientID    string `json:"client_id"`
-		} `json:"data"`
-		Meta struct {
-			Total int `json:"total"`
-		} `json:"meta"`
-	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
+	body := decodeOAuthApplicationsListResponse(t, rec)
 	if len(body.Data) != 2 || body.Meta.Total != 2 {
 		t.Fatalf("expected two owned apps, got %+v", body)
+	}
+	if body.Meta.Page != 0 {
+		t.Fatalf("expected page 0, got %d", body.Meta.Page)
+	}
+	if body.Meta.PerPage != oauthApplicationPageLimit {
+		t.Fatalf("expected per_page %d, got %d", oauthApplicationPageLimit, body.Meta.PerPage)
 	}
 	for _, app := range body.Data {
 		if app.Name == "Other" || app.ClientID == "client-other" {
@@ -220,8 +230,89 @@ func TestListOAuthApplicationsReturnsEmptyList(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !bytes.Contains(rec.Body.Bytes(), []byte(`"data":[]`)) {
-		t.Fatalf("expected empty list data array, got %s", rec.Body.String())
+	body := decodeOAuthApplicationsListResponse(t, rec)
+	if body.Data == nil || len(body.Data) != 0 {
+		t.Fatalf("expected empty list data array, got %+v", body.Data)
+	}
+	if body.Meta.Total != 0 || body.Meta.Page != 0 || body.Meta.PerPage != oauthApplicationPageLimit {
+		t.Fatalf("unexpected empty list metadata: %+v", body.Meta)
+	}
+}
+
+func TestListOAuthApplicationsPaginates(t *testing.T) {
+	store := newMemoryUserStore()
+	handler := NewHandler(store, newTestTokenManager(t))
+	for i := 0; i < 14; i++ {
+		suffix := strconv.Itoa(i)
+		createStoredOAuthApplication(t, store, 42, "App "+suffix, "read:movies", "client-"+suffix, "secret-"+suffix)
+	}
+	createStoredOAuthApplication(t, store, 99, "Other", "admin", "client-other", "secret-other")
+
+	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, "/oauth/applications?page=1", "")
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := decodeOAuthApplicationsListResponse(t, rec)
+	if len(body.Data) != 2 {
+		t.Fatalf("expected second page to contain 2 apps, got %+v", body.Data)
+	}
+	if body.Meta.Total != 14 || body.Meta.Page != 1 || body.Meta.PerPage != oauthApplicationPageLimit {
+		t.Fatalf("unexpected pagination metadata: %+v", body.Meta)
+	}
+
+	wantClientIDs := map[string]bool{"client-1": true, "client-0": true}
+	for _, app := range body.Data {
+		if app.ClientID == "client-other" || app.Name == "Other" {
+			t.Fatalf("listed app owned by another user: %+v", app)
+		}
+		if !wantClientIDs[app.ClientID] {
+			t.Fatalf("expected page 1 to contain oldest owned apps, got %+v", body.Data)
+		}
+		delete(wantClientIDs, app.ClientID)
+	}
+	if len(wantClientIDs) != 0 {
+		t.Fatalf("missing expected page 1 apps: %+v", wantClientIDs)
+	}
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
+}
+
+func TestListOAuthApplicationsInvalidPageFallsBackToFirstPage(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{name: "missing page", path: "/oauth/applications"},
+		{name: "empty page", path: "/oauth/applications?page="},
+		{name: "text page", path: "/oauth/applications?page=abc"},
+		{name: "negative page", path: "/oauth/applications?page=-1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newMemoryUserStore()
+			handler := NewHandler(store, newTestTokenManager(t))
+			for i := 0; i < 13; i++ {
+				suffix := strconv.Itoa(i)
+				createStoredOAuthApplication(t, store, 42, "App "+suffix, "read:movies", "client-"+suffix, "secret-"+suffix)
+			}
+
+			rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, tt.path, "")
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			body := decodeOAuthApplicationsListResponse(t, rec)
+			if body.Meta.Total != 13 || body.Meta.Page != 0 || body.Meta.PerPage != oauthApplicationPageLimit {
+				t.Fatalf("unexpected pagination metadata: %+v", body.Meta)
+			}
+			if len(body.Data) != oauthApplicationPageLimit {
+				t.Fatalf("expected first page to contain %d apps, got %+v", oauthApplicationPageLimit, body.Data)
+			}
+			if body.Data[0].ClientID != "client-12" {
+				t.Fatalf("expected invalid page to return first page, got %+v", body.Data)
+			}
+		})
 	}
 }
 
@@ -377,6 +468,16 @@ func createStoredOAuthApplication(t *testing.T, store *memoryUserStore, ownerID 
 		t.Fatalf("create oauth application: %v", err)
 	}
 	return app
+}
+
+func decodeOAuthApplicationsListResponse(t *testing.T, rec *httptest.ResponseRecorder) oauthApplicationsListResponse {
+	t.Helper()
+
+	var body oauthApplicationsListResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	return body
 }
 
 func assertJSONFieldsAbsent(t *testing.T, body []byte, fields ...string) {

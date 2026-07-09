@@ -168,12 +168,18 @@ expect_jq ".data | map(.id) | index(${PRIMARY_APP_ID}) != null" "versioned list 
 expect_jq ".data | map(.id) | index(${SECONDARY_APP_ID}) != null" "versioned list includes secondary app"
 expect_jq '.data | any(.id == ($id | tonumber) and .redirect_uri == $redirect_uri)' "versioned list includes primary redirect_uri" --arg id "$PRIMARY_APP_ID" --arg redirect_uri "$PRIMARY_REDIRECT_URI"
 expect_jq '[.. | objects | select(has("client_secret") or has("client_secret_hash") or has("owner_id"))] | length == 0' "list hides secrets and owner_id"
+expect_jq '.meta.page == 0' "versioned list exposes page metadata"
+expect_jq '.meta.per_page == 12' "versioned list exposes oauth application page size"
+expect_jq '.meta.total >= 2' "versioned list exposes total application count"
 
 step "List applications via root alias"
 curl_json GET "${API_BASE}/oauth/applications" "" "$ACCESS_TOKEN"
 expect_status 200
 expect_jq ".data | map(.id) | index(${PRIMARY_APP_ID}) != null" "root list includes primary app"
 expect_jq '.data | any(.id == ($id | tonumber) and .redirect_uri == $redirect_uri)' "root list includes secondary redirect_uri" --arg id "$SECONDARY_APP_ID" --arg redirect_uri "$SECONDARY_REDIRECT_URI"
+expect_jq '.meta.page == 0' "root list exposes page metadata"
+expect_jq '.meta.per_page == 12' "root list exposes oauth application page size"
+expect_jq '.meta.total >= 2' "root list exposes total application count"
 
 step "Patch primary application via versioned route"
 PATCH_PRIMARY_BODY="$(json_payload \

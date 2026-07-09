@@ -22,6 +22,7 @@ const (
 	oauthApplicationNameMaxLength        = 100
 	oauthApplicationScopeMaxLength       = 500
 	oauthApplicationRedirectURIMaxLength = 2048
+	oauthApplicationPageLimit            = 12
 	oauthCredentialGenerationAttempts    = 3
 )
 
@@ -103,7 +104,16 @@ func (h *Handler) ListOAuthApplications(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	apps, err := h.store.ListOAuthApplications(r.Context(), userID)
+	page := parsePage(r)
+	offset := page * oauthApplicationPageLimit
+
+	total, err := h.store.CountOAuthApplications(r.Context(), userID)
+	if err != nil {
+		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadOAuthApplications)
+		return
+	}
+
+	apps, err := h.store.ListOAuthApplications(r.Context(), userID, oauthApplicationPageLimit, offset)
 	if err != nil {
 		respond.LocalizedError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", i18n.MsgFailedLoadOAuthApplications)
 		return
@@ -113,7 +123,7 @@ func (h *Handler) ListOAuthApplications(w http.ResponseWriter, r *http.Request) 
 	for _, app := range apps {
 		response = append(response, toOAuthApplicationResponse(app))
 	}
-	respond.List(w, http.StatusOK, response)
+	respond.ListPaginated(w, http.StatusOK, response, total, page, oauthApplicationPageLimit)
 }
 
 func (h *Handler) UpdateOAuthApplication(w http.ResponseWriter, r *http.Request) {
@@ -389,6 +399,14 @@ func oauthApplicationIDFromRequest(w http.ResponseWriter, r *http.Request) (int6
 		return 0, false
 	}
 	return id, true
+}
+
+func parsePage(r *http.Request) int {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 0 {
+		return 0
+	}
+	return page
 }
 
 func toOAuthApplicationResponse(app models.OAuthApplication) oauthApplicationResponse {
