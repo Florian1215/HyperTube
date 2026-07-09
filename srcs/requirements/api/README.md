@@ -816,9 +816,13 @@ only a bcrypt hash of the secret and never returns `client_secret_hash`.
 #### List applications
 
 ```http
-GET /api/v1/oauth/applications
+GET /api/v1/oauth/applications?page=0
 Authorization: Bearer <access_token>
 ```
+
+`page` is zero-based. Missing, invalid, empty, or negative values are treated as
+`0`. Results are paginated with 12 applications per page and sorted by
+`created_at DESC, id DESC`.
 
 `200 OK`
 
@@ -838,7 +842,7 @@ Authorization: Bearer <access_token>
   "meta": {
     "total": 1,
     "page": 0,
-    "per_page": 1
+    "per_page": 12
   }
 }
 ```

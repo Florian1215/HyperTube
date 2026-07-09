@@ -64,7 +64,8 @@ type userStore interface {
 	CreatePasswordResetToken(ctx context.Context, params CreatePasswordResetTokenParams) error
 	ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string) (models.User, error)
 	CreateOAuthApplication(ctx context.Context, params CreateOAuthApplicationParams) (models.OAuthApplication, error)
-	ListOAuthApplications(ctx context.Context, ownerUserID int64) ([]models.OAuthApplication, error)
+	ListOAuthApplications(ctx context.Context, ownerUserID int64, limit, offset int) ([]models.OAuthApplication, error)
+	CountOAuthApplications(ctx context.Context, ownerUserID int64) (int, error)
 	UpdateOAuthApplication(ctx context.Context, id int64, ownerUserID int64, params UpdateOAuthApplicationParams) (models.OAuthApplication, error)
 	DeleteOAuthApplication(ctx context.Context, id int64, ownerUserID int64) error
 	FindOAuthClientByClientID(ctx context.Context, clientID string) (oauthClientCredentials, error)
@@ -374,13 +375,14 @@ func (s *Store) CreateOAuthApplication(ctx context.Context, params CreateOAuthAp
 	return app, nil
 }
 
-func (s *Store) ListOAuthApplications(ctx context.Context, ownerUserID int64) ([]models.OAuthApplication, error) {
+func (s *Store) ListOAuthApplications(ctx context.Context, ownerUserID int64, limit, offset int) ([]models.OAuthApplication, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
 		FROM oauth_applications
 		WHERE owner_user_id = $1
 		ORDER BY created_at DESC, id DESC
-	`, ownerUserID)
+		LIMIT $2 OFFSET $3
+	`, ownerUserID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -398,6 +400,19 @@ func (s *Store) ListOAuthApplications(ctx context.Context, ownerUserID int64) ([
 		return nil, err
 	}
 	return apps, nil
+}
+
+func (s *Store) CountOAuthApplications(ctx context.Context, ownerUserID int64) (int, error) {
+	var total int
+	err := s.db.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM oauth_applications
+		WHERE owner_user_id = $1
+	`, ownerUserID).Scan(&total)
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 func (s *Store) UpdateOAuthApplication(ctx context.Context, id int64, ownerUserID int64, params UpdateOAuthApplicationParams) (models.OAuthApplication, error) {

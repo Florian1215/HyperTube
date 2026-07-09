@@ -232,7 +232,7 @@ func (s *memoryUserStore) CreateOAuthApplication(_ context.Context, params Creat
 	return app, nil
 }
 
-func (s *memoryUserStore) ListOAuthApplications(_ context.Context, ownerUserID int64) ([]models.OAuthApplication, error) {
+func (s *memoryUserStore) ListOAuthApplications(_ context.Context, ownerUserID int64, limit, offset int) ([]models.OAuthApplication, error) {
 	apps := []models.OAuthApplication{}
 	for _, app := range s.oauthAppsByID {
 		if app.OwnerID == ownerUserID {
@@ -245,7 +245,24 @@ func (s *memoryUserStore) ListOAuthApplications(_ context.Context, ownerUserID i
 		}
 		return apps[i].CreatedAt.After(apps[j].CreatedAt)
 	})
-	return apps, nil
+	if offset >= len(apps) {
+		return []models.OAuthApplication{}, nil
+	}
+	end := offset + limit
+	if end > len(apps) {
+		end = len(apps)
+	}
+	return apps[offset:end], nil
+}
+
+func (s *memoryUserStore) CountOAuthApplications(_ context.Context, ownerUserID int64) (int, error) {
+	total := 0
+	for _, app := range s.oauthAppsByID {
+		if app.OwnerID == ownerUserID {
+			total++
+		}
+	}
+	return total, nil
 }
 
 func (s *memoryUserStore) UpdateOAuthApplication(_ context.Context, id int64, ownerUserID int64, params UpdateOAuthApplicationParams) (models.OAuthApplication, error) {
