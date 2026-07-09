@@ -61,10 +61,29 @@
       "auth": "Passwort",
       "history": "Verlauf",
       "comments": "Kommentare",
-      "avatar": "Avatar"
+      "avatar": "Avatar",
+      "api": "API"
     },
     "remove": "Entfernen",
     "noMoviesYet": "Sie haben noch keine Filme gesehen.",
+    "application": {
+      "noApplicationsYet": "Sie haben noch keine Anwendungen erstellt.",
+      "createApplication": "Anwendung erstellen",
+      "createModal": {
+        "title": "Anwendung erstellen",
+        "name": "Name der Anwendung",
+        "uri": "URI",
+        "scope": "Umfang",
+        "submit": "Erstellen"
+      },
+      "editModal": {
+        "title": "Anwendung bearbeiten",
+        "name": "Name der Anwendung",
+        "uri": "URI",
+        "scope": "Umfang",
+        "submit": "Änderungen speichern"
+      }
+    },
     "fields": {
       "submit": "Änderungen speichern",
       "email": "E-Mail",
@@ -123,8 +142,8 @@
     }
   },
   "modal": {
-    "deleteComment": {
-      "title": "Kommentar löschen?",
+    "deleteConfirmation": {
+      "title": "Löschen bestätigen?",
       "confirm": "Ja",
       "cancel": "Nein"
     },
@@ -168,6 +187,9 @@
   },
   "notifications": {
     "success": {
+      "textCopied": "{label} in die Zwischenablage kopiert.",
+      "applicationCreated": "Anwendung erstellt. Kopieren Sie jetzt das `client_secret`. Es wird danach nicht erneut angezeigt.",
+      "applicationEdited": "Anwendung erfolgreich bearbeitet.",
       "passwordChanged": "Ihr Passwort wurde aktualisiert.",
       "newPasswordSet": "Ihr neues Passwort wurde festgelegt, Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
       "emailResetPassword": "Eine E-Mail zum Zurücksetzen Ihres Passworts wurde gesendet.",

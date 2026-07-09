@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
-import {iUser, iUserToken, tOauthService} from "@/types/user";
+import {tOauthService} from "@/types/user";
 import {OAuthIcon} from "@/components/Icons";
 import {usePathname} from "@/i18n/navigation";
 import useApiMutation from "@/hooks/useApiMutation";
@@ -12,10 +12,10 @@ import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
 
-export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
-type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
+export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "uri" | "scope";
+type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password" | "application";
 
-export default function Form({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string) => Promise<tResponse<iUserToken>>, handleRequest: (data: tResponse<iUserToken | iUser>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string}) {
+export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string) => Promise<tResponse<T>>, handleRequest: (data: tResponse<T>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
@@ -37,8 +37,9 @@ export default function Form({formType, request, handleRequest, t, fields, handl
     const newSetterError = (value: Record<string, string>) => {
         setErrors((prevErrors) => {
             const newErrors = {...prevErrors, ...value};
-            if (prevErrors[getId("email")] === tError("atLeastOneField") && !value[getId("email")])
-                newErrors[getId("email")] = "";
+            const field = formType === "application" ? "name" : "email";
+            if (prevErrors[getId(field)] === tError("atLeastOneField") && !value[getId(field)])
+                newErrors[getId(field)] = "";
             setDisableBtn(hasError(newErrors));
             return newErrors;
         });
@@ -92,11 +93,13 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         if (disableBtn)
             return ;
         const requiredErrors: Record<string, string> = {};
+        const isAllFieldRequired = !(formType === "update" || (formType === "application" && extraParam != undefined));
 
-        if (formType === "update" && fieldsValue.filter((v) => v.trim().length !== 0).length === 0) {
+        console.log("TEST", isAllFieldRequired, formType, extraParam);
+        if (!isAllFieldRequired && fieldsValue.filter((v) => v.trim().length !== 0).length === 0) {
             newSetterErrorUtils(0, "atLeastOneField")
             setFocusedIndex(0);
-        } else if (formType !== "update" && fieldsValue.filter((v) => v.trim().length === 0).length !== 0) {
+        } else if (isAllFieldRequired && fieldsValue.filter((v) => v.trim().length === 0).length !== 0) {
             let focusIsSet = false;
 
             fieldsValue.map((val: string, idx: number) => {
@@ -130,7 +133,7 @@ export default function Form({formType, request, handleRequest, t, fields, handl
     return (<form id={formType} className="w-full" onSubmit={(e) => {e.preventDefault(); onSubmit();}}>
         {fields.map((field, idx) => {
             if (field === "first_name") {
-                return (<div key={"div"} className="flex gap-2">
+                return (<div key="div" className="flex gap-2">
                     {RenderInput(field, idx)}
                     {RenderInput(fields[idx + 1], idx + 1)}
                 </div>);
@@ -142,9 +145,9 @@ export default function Form({formType, request, handleRequest, t, fields, handl
         </div>}
         <div className="flex gap-2">
             <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
-            {showOAuth && <OauthServices oauth={"42"} title={t("oAuth")} />}
-            {showOAuth && <OauthServices oauth={"github"} title={t("oAuth")} />}
-            {showOAuth && <OauthServices oauth={"gitlab"} title={t("oAuth")} />}
+            {showOAuth && <OauthServices oauth="42" title={t("oAuth")} />}
+            {showOAuth && <OauthServices oauth="github" title={t("oAuth")} />}
+            {showOAuth && <OauthServices oauth="gitlab" title={t("oAuth")} />}
         </div>
     </form>)
 }

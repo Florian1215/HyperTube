@@ -3,21 +3,24 @@
 import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 import {iTorrent} from "@/types/movie";
+import {iApplication} from "@/types/api";
 
-type ModalType = | "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-comment" | "select-torrent" | null;
+type ModalType = "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-confirmation" | "select-torrent" | "application" | null;
 
 export interface ModalState {
     type: ModalType;
     genres?: number[];
     filterGenre?: [filterGenre: iGenre[], handleFilterGenre: (newGenres: iGenre[]) => void];
     setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>
-    commentId?: number
-    deleteComment?: (commentId: number) => void
+    deleteObjId?: number
+    deleteFunc?: (objId: number) => void
     token?: string
     torrents?: iTorrent[]
     setTorrentId?: (selectTorrentId: string) => void
     noClose?: boolean
     reload?: () => void
+    setApplications?: (app: iApplication) => void
+    appId?: string
 }
 
 interface ModalContextType {

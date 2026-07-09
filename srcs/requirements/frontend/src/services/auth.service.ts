@@ -1,6 +1,7 @@
 import apiClient, {API_URL} from "@/services/apiClient";
-import {tResponse} from "@/types/api";
+import {iApplication, tListResponse, tResponse} from "@/types/api";
 import {iToken, iUserToken, tOauthService} from "@/types/user";
+import useApiQuery from "@/hooks/useApiQuery";
 
 export function postLogin(locale: string, data: string[]) {
     return apiClient<tResponse<iUserToken>>("/auth/login", locale, {method: "POST", body: JSON.stringify({login: data[0].trim(), password: data[1]})});
@@ -45,4 +46,34 @@ export function refreshAccessToken(locale: string) {
             });
         return refreshPromise;
     }
+}
+
+function getApplications(locale: string, idx: number) {
+    return apiClient<tListResponse<iApplication[]>>(`/oauth/applications?page=${idx}`, locale);
+}
+
+export function patchApp(locale: string, data: string[], appId?: string) {
+    const updateData: Record<string, string> = {};
+
+    ["name", "uri", "scope"].forEach((field, index) => {
+        const newValue = data[index].trim();
+        if (newValue)
+            updateData[field] = newValue;
+    })
+    return apiClient<tResponse<iApplication>>(`/oauth/applications/${appId}`, locale, {method: "PATCH", body: JSON.stringify(updateData)});
+}
+
+export function postNewApp(locale: string, data: string[]) {
+    return apiClient<tResponse<iApplication>>("/oauth/applications", locale, {method: "POST", body: JSON.stringify({name: data[0].trim(), scope: data[1].trim()})});// todo add, uri: data[2].trim()})});
+}
+
+export function deleteApp(locale: string, appId: number) {
+    return apiClient<tResponse<iApplication>>(`/oauth/applications/${appId}`, locale, {method: "DELETE"});
+}
+
+export function useApplications(idx: number) {
+    return useApiQuery(
+        ["app", String(idx)],
+        (locale: string) => getApplications(locale, idx),
+    );
 }

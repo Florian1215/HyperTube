@@ -49,8 +49,8 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                             </IconButton>
                             <IconButton onClick={() => {
                                 setEditMode(false);
-                                openModal({type: "delete-comment", commentId: comment.id, deleteComment: deleteComment});
-                            }} className="uppercase font-condensed text-2xl" hoverColor={"red"}>
+                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: deleteComment});
+                            }} className="uppercase font-condensed text-2xl" hoverColor="red">
                                 {(color: string) => <TrashIcon color={color}/>}
                             </IconButton>
                         </div>

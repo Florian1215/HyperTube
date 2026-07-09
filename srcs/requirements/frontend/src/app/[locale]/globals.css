@@ -74,15 +74,12 @@
 .custom-cursor-right:hover { cursor: var(--cursor-right); }
 .custom-cursor-play:hover { cursor: var(--cursor-play); }
 
-.custom-shadow-s { box-shadow: 8px 7px 0 var(--color-black); }
-.custom-shadow-m { box-shadow: 14px 14px 0 var(--color-black); }
+.custom-shadow-m { box-shadow: 8px 7px 0 var(--color-black); }
+.custom-shadow-l { box-shadow: 14px 14px 0 var(--color-black); }
 
-.custom-btn { transition: all 0.2s ease; }
-.custom-btn:hover {
-    transform: translate(-4px, -4px);
-    box-shadow: 4px 4px 0 var(--color-black);
-    border: 1px solid var(--color-black);
-}
+.custom-shadow-animation-l, .custom-shadow-animation-s { transition: all 0.2s ease; }
+.custom-shadow-animation-s:hover { box-shadow: 3px 3px 0 var(--color-black); transform: translate(-3px, -3px); }
+.custom-shadow-animation-l:hover { box-shadow: 8px 7px 0 var(--color-black); transform: translate(-8px, -7px); }
 
 .custom-noise, .custom-noise-bg {
     @apply size-full absolute inset-0 pointer-events-none opacity-50 bg-repeat mix-blend-overlay contrast-150 brightness-125;
