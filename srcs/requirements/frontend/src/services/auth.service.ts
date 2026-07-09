@@ -55,7 +55,7 @@ function getApplications(locale: string, idx: number) {
 export function patchApp(locale: string, data: string[], appId?: string) {
     const updateData: Record<string, string> = {};
 
-    ["name", "uri", "scope"].forEach((field, index) => {
+    ["name", "redirect_uri", "scope"].forEach((field, index) => {
         const newValue = data[index].trim();
         if (newValue)
             updateData[field] = newValue;
@@ -64,7 +64,7 @@ export function patchApp(locale: string, data: string[], appId?: string) {
 }
 
 export function postNewApp(locale: string, data: string[]) {
-    return apiClient<tResponse<iApplication>>("/oauth/applications", locale, {method: "POST", body: JSON.stringify({name: data[0].trim(), scope: data[1].trim()})});// todo add, uri: data[2].trim()})});
+    return apiClient<tResponse<iApplication>>("/oauth/applications", locale, {method: "POST", body: JSON.stringify({name: data[0].trim(), redirect_uri: data[1].trim(), scope: data[2].trim()})});
 }
 
 export function deleteApp(locale: string, appId: number) {

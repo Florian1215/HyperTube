@@ -9,13 +9,15 @@ import {patchApp, postNewApp} from "@/services/auth.service";
 import {iApplication, tResponse} from "@/types/api";
 import useNotification from "@/contexts/NotificationContext";
 
-// todo fix probleme
-// todo add field verification
-// todo handle edit field
-// todo test sign in with hypertube
+// todo click sur entrer modal parche pas
+
 // todo make page /auth/autorize
+// todo test sign in with hypertube
 // todo fix tab responsive
 // todo make API documentation page
+
+// todo add field verification scope
+// todo remake scope ui
 
 export default function CreateApplicationModal() {
     const {activeModal, closeModal} = useModal();
@@ -40,8 +42,8 @@ export default function CreateApplicationModal() {
         }
     }
 
-    return (<ModalLayout onCloseAction={closeModal} title={t("title")} addMaxWTitle={false}>
+    return (<ModalLayout onCloseAction={closeModal} title={t("title")}>
         <Form formType="application" request={isCreate ? postNewApp : patchApp} handleRequest={handleCreateNewApp} t={t}
-              fields={["name", "uri", "scope"]} extraParam={activeModal.appId} />
+              fields={["name", "redirect_uri", "scope"]} extraParam={activeModal.appId} />
     </ModalLayout>);
 }

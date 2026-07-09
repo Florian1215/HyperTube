@@ -72,14 +72,14 @@
       "createModal": {
         "title": "Anwendung erstellen",
         "name": "Name der Anwendung",
-        "uri": "URI",
+        "redirect_uri": "URI",
         "scope": "Umfang",
         "submit": "Erstellen"
       },
       "editModal": {
         "title": "Anwendung bearbeiten",
         "name": "Name der Anwendung",
-        "uri": "URI",
+        "redirect_uri": "URI",
         "scope": "Umfang",
         "submit": "Änderungen speichern"
       }
@@ -182,6 +182,8 @@
     "passwordTooLong": "Das Passwort ist zu lang.",
     "passwordSameAsOld": "Das neue Passwort darf nicht mit dem alten Passwort übereinstimmen.",
     "passwordsDontMatch": "Die Passwörter stimmen nicht überein.",
+    "redirectURIStartHTTP": "Die URI muss mit http:// oder https:// beginnen.",
+    "redirectURIInvalid": "Die URI muss eine gültige URL sein.",
     "requiredField": "Dieses Feld ist erforderlich.",
     "atLeastOneField": "Bitte füllen Sie mindestens eines der Felder aus."
   },

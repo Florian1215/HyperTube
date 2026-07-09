@@ -3,6 +3,8 @@ import React from "react";
 import {useTranslations} from "next-intl";
 import LoadingText from "@/components/LoadingText";
 import GenreTags from "@/components/features/genre/GenreTags";
+import Label from "@/components/ui/Label";
+import Join from "@/components/Join";
 
 export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
     const t = useTranslations("movie");
@@ -46,7 +48,7 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
 function InfoMovie({children, name}: {children: React.ReactNode, name: string}) {
     return (<div className="flex gap-4">
         <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2">
-            <span className="font-bold break-all text-sm sm:text-base">{name}</span>
+            <Label>{name}</Label>
         </div>
         <div className="w-3/4 md:w-2/3 xl:w-1/2">
             {children}
@@ -56,11 +58,6 @@ function InfoMovie({children, name}: {children: React.ReactNode, name: string}) 
 
 function InfoPeoplesMovie({name, items}: {name: string, items: string[]}) {
     return (<InfoMovie name={name}>
-        <p>
-            {items.map((i, index) => (<span key={index}>
-                    <button className="custom-underline">{i}</button>
-                {index < items.length - 1 && " ,   "}
-                </span>))}
-        </p>
+        <Join items={items}/>
     </InfoMovie>);
 }

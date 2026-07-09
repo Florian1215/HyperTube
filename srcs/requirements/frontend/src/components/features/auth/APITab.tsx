@@ -1,6 +1,6 @@
 import Pagination from "@/components/ui/Pagination";
 import computeTotalPage from "@/utils/computeTotalPage";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {deleteApp, useApplications} from "@/services/auth.service";
 import {iApplication} from "@/types/api";
 import SmallText from "@/components/ui/SmallText";
@@ -10,6 +10,8 @@ import useModal, {ModalState} from "@/contexts/ModalContext";
 import IconButton from "@/components/ui/Button/IconButton";
 import {TrashIcon} from "@/components/Icons";
 import Code from "@/components/ui/Code";
+import Label from "@/components/ui/Label";
+import Join from "@/components/Join";
 
 export default function APITab() {
     const locale = useLocale();
@@ -34,12 +36,12 @@ export default function APITab() {
             setApps(data.data);
     }, [data]);
 
-    return (<div className="mx-auto space-y-5">
+    return (<div className="mx-auto space-y-6">
         {
             (apps && apps.length > 0) ?
-            <Pagination currenIndex={index} totalPage={totalPage} onClick={setIndex}>
+            <Pagination currenIndex={index} totalPage={totalPage} onClick={setIndex} variableMT={true}>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {apps.map((a, idx) => <Application locale={locale} openModal={openModal} deleteDisplayApp={deleteDisplayApp} key={idx} app={a} setApplications={setApplications}/>)}
+                    {apps.map((a, idx) => <Application locale={locale} openModal={openModal} deleteDisplayApp={deleteDisplayApp} key={idx} app={a} setApplications={setApplications} t={t}/>)}
                 </div>
             </Pagination> :
                 <SmallText>{t("noApplicationsYet")}</SmallText>
@@ -48,27 +50,25 @@ export default function APITab() {
     </div>);
 }
 
-function Application({app, openModal, deleteDisplayApp, locale, setApplications}: {app: iApplication, openModal: (modal: ModalState) => void, deleteDisplayApp: (appId: number) => void, locale: string, setApplications: (newApp: iApplication) => void}) {
+function Application({app, openModal, deleteDisplayApp, locale, setApplications, t}: {app: iApplication, openModal: (modal: ModalState) => void, deleteDisplayApp: (appId: number) => void, locale: string, setApplications: (newApp: iApplication) => void, t: (txt: string) => string}) {
     const date = new Date(app.created_at);
     const createdAt = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 
-    // todo show uri
-    // todo remake scope validation
-    // todo remake scope ui
-    return (<div className="w-full flex justify-between group items-center border p-5 custom-shadow-animation-l">
-        <div className="space-y-2 w-full">
-            <div className="flex justify-between items-center hover:cursor-pointer">
+    return (<div className="w-full flex justify-between group/card items-center border p-5 custom-shadow-animation-l">
+        <div className="space-y-1 w-full">
+            <div className="flex justify-between items-center hover:cursor-pointer group/title mb-2">
                 <div className="flex w-9/10 items-end gap-2" onClick={() => openModal({type: "application", appId: String(app.id), setApplications: setApplications})}>
-                    <h3 className="truncate">{app.name}</h3>
+                    <h3 className="group-hover/title:underline truncate">{app.name}</h3>
                     <span>{createdAt}</span>
                 </div>
-                <div className="opacity-0 group-hover:opacity-100">
+                <div className="opacity-0 group-hover/card:opacity-100">
                     <IconButton onClick={() => openModal({type: "delete-confirmation", deleteFunc: deleteDisplayApp, deleteObjId: app.id})} hoverColor="red">{(color: string) => <TrashIcon color={color} size={25}/>}</IconButton>
                 </div>
             </div>
             <Code label="client_id">{app.client_id}</Code>
             {app.client_secret && <Code label="client_secret">{app.client_secret}</Code>}
-            <p>Scope: {app.scope}</p>
+            <div className="mt-2"><Label>{t("createModal.redirect_uri")}</Label>: <a href={app.redirect_uri} target="_blank" className="inline hover:underline hover:underline-offset-3 text-sm text-gray">{app.redirect_uri}</a></div>
+            <div><Label>{t("createModal.scope")}</Label>: {<Join items={app.scope.split(",")}/>}</div>
         </div>
     </div>)
 }

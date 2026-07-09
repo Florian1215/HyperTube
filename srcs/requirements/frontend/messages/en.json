@@ -72,14 +72,14 @@
       "createModal": {
         "title": "Create application",
         "name": "Name of the application",
-        "uri": "URI",
+        "redirect_uri": "Redirect URI",
         "scope": "scope",
         "submit": "Create"
       },
       "editModal": {
         "title": "Edit application",
         "name": "Name of the application",
-        "uri": "URI",
+        "redirect_uri": "Redirect URI",
         "scope": "scope",
         "submit": "Save changes"
       }
@@ -182,6 +182,8 @@
     "passwordTooLong": "Password is too long.",
     "passwordSameAsOld": "New password must be different from the current password.",
     "passwordsDontMatch": "Passwords do not match.",
+    "redirectURIStartHTTP": "URI must start with http:// or https:// and be a valid URL.",
+    "redirectURIInvalid": "URI must be a valid URL.",
     "requiredField": "This field is required.",
     "atLeastOneField": "At least one field must be filled."
   },

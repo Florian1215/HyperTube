@@ -13,10 +13,9 @@ export default function Input(
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     const emailRegex = /^(?=.{1,64}@)(?!.*\.\.)([a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*)@(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
     const nameRegex = /^\p{L}+(?:[ '-]\p{L}+)*$/u;
+    const urlRegex = /^https?:\/\/[^\s]+$/;
 
-    const handleTogglePasswordVisibility = () => {
-        setIsPasswordVisible(!isPasswordVisible);
-    }
+    const handleTogglePasswordVisibility = () => setIsPasswordVisible(!isPasswordVisible);
 
     const handleFieldVerification = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
         const newValue = e.target.value;
@@ -46,6 +45,11 @@ export default function Input(
                     message = t("passwordTooShort");
                 else if (newValue.length > 72)
                     message = t("passwordTooLong");
+            } else if (id.includes("redirect_uri")) {
+                if (tNewValue && !tNewValue.startsWith("http://") && !tNewValue.startsWith("https://"))
+                    message = t("redirectURIStartHTTP");
+                else if (tNewValue && !urlRegex.test(tNewValue))
+                    message = t("redirectURIInvalid");
             }
             setErrorsMessage({[id]: message});
         }
@@ -67,7 +71,7 @@ export default function Input(
                    peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl" + (requestErrorMessage ? " text-red" : "")}>{placeholder}</label>
         {isPassword && (<button type="button" className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={requestErrorMessage ? "red" : "black"} /></button>)}
         {isPassword && (<IconButton color={requestErrorMessage ? "red" : "black"} className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}>{(color: string) => <EyeIcon crossed={isPasswordVisible} color={color}/>}</IconButton>)}
-        {requestErrorMessage && <span className="text-xs text-red">{requestErrorMessage}</span>}
+        {requestErrorMessage && <span className="max-w-80 text-xs text-red overflow-x-scroll text-nowrap scrollbar-hide">{requestErrorMessage}</span>}
     </div>
     );
 }
