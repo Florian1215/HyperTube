@@ -31,7 +31,7 @@ export default function useHandleError() {
                 return (<SmallText>{tError("notFound" + translation)}</SmallText>);
         } else
             addNotification(tError("network"), "error");
-        return (<Link href={"/"}><p className="text-center italic text-red">{tError("unknown")}</p></Link>);
+        return (<Link href="/"><p className="text-center italic text-red">{tError("unknown")}</p></Link>);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname, tError]);
 }

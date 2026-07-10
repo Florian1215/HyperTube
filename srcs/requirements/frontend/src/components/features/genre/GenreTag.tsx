@@ -19,7 +19,7 @@ export default function GenreTag({children, closeModal, setFilterGenre, selected
         if (closeModal)
             closeModal();
     }
-    return (<button onClick={handleClick} className={"text-nowrap px-3 custom-condensed border text-2xl custom-btn" + (selected ? " text-white bg-black" : "")}>
+    return (<button onClick={handleClick} className={"text-nowrap px-3 custom-condensed border text-2xl custom-shadow-animation-s" + (selected ? " text-white bg-black" : "")}>
         {children.name}
     </button>);
 }

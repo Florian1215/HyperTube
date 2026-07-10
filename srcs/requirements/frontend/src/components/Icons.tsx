@@ -314,3 +314,14 @@ export function SubDelayIcon({direction="left", color="white", size=20}) {
         <path d="M0 1.00122C0.00012226 0.219265 0.857203 -0.259781 1.52344 0.149658L13 7.20239V1.31372C13 0.471751 13.9773 0.00646258 14.6309 0.537354L29.6348 12.7258C30.1274 13.126 30.1273 13.8783 29.6348 14.2786L14.6309 26.467C13.9773 26.9979 13 26.5327 13 25.6907V19.802L1.52344 26.8557C0.857186 27.2649 -3.4181e-08 26.7851 0 26.0032V1.00122Z" fill={fullColor}/>
     </svg>);
 }
+
+export function CopyIcon({color="white", size=15}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} aria-hidden="true" focusable="false"
+                 viewBox="0 0 16 16" fill="currentColor" display="inline-block"
+                 overflow="visible">
+        <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" fill={fullColor}/>
+        <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" fill={fullColor}/>
+    </svg>);
+}

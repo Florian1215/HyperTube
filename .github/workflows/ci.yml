@@ -39,7 +39,7 @@ jobs:
       - run: go test ./...
 
   frontend:
-    name: Build React + Next.js frontend
+    name: Frontend (React + Next.js)
     runs-on: ubuntu-latest
 
     steps:

@@ -10,3 +10,14 @@ export type tListResponse<T> = {
 export type tResponse<T> = {
     data: T;
 };
+
+export interface iApplication {
+    id: number,
+    name: string,
+    scope: string,
+    redirect_uri: string
+    client_id: string,
+    client_secret: string,
+    created_at: string,
+    updated_at: string
+}

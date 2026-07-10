@@ -41,11 +41,16 @@
     h2 { @apply text-4xl sm:text-6xl; }
     h3 { @apply text-5xl; }
     p { @apply font-sans text-sm sm:text-base; }
-    button:hover, Link:hover { @apply cursor-pointer; }
+    a, button:hover, Link:hover { @apply cursor-pointer; }
     button:disabled, button[disabled] { @apply cursor-not-allowed; }
     input:focus, textarea:focus { outline: none; }
     input[type="search"]::-webkit-search-cancel-button {-webkit-appearance: none; appearance: none;}
     .responsive-text-hairline { @apply font-hairline text-xs sm:text-xl xl:text-3xl tracking-normal; }
+}
+
+@layer utilities {
+    .scrollbar-hide {-ms-overflow-style: none; scrollbar-width: none;}
+    .scrollbar-hide::-webkit-scrollbar {display: none;}
 }
 
 /* ------------------------------------------------- CUSTOM CLASS --------------------------------------------------- */
@@ -74,15 +79,12 @@
 .custom-cursor-right:hover { cursor: var(--cursor-right); }
 .custom-cursor-play:hover { cursor: var(--cursor-play); }
 
-.custom-shadow-s { box-shadow: 8px 7px 0 var(--color-black); }
-.custom-shadow-m { box-shadow: 14px 14px 0 var(--color-black); }
+.custom-shadow-m { box-shadow: 8px 7px 0 var(--color-black); }
+.custom-shadow-l { box-shadow: 14px 14px 0 var(--color-black); }
 
-.custom-btn { transition: all 0.2s ease; }
-.custom-btn:hover {
-    transform: translate(-4px, -4px);
-    box-shadow: 4px 4px 0 var(--color-black);
-    border: 1px solid var(--color-black);
-}
+.custom-shadow-animation-l, .custom-shadow-animation-s { transition: all 0.2s ease; }
+.custom-shadow-animation-s:hover { box-shadow: 3px 3px 0 var(--color-black); transform: translate(-3px, -3px); }
+.custom-shadow-animation-l:hover { box-shadow: 8px 7px 0 var(--color-black); transform: translate(-8px, -7px); }
 
 .custom-noise, .custom-noise-bg {
     @apply size-full absolute inset-0 pointer-events-none opacity-50 bg-repeat mix-blend-overlay contrast-150 brightness-125;

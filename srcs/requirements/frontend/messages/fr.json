@@ -61,10 +61,29 @@
       "auth": "Mot de passe",
       "history": "Historique",
       "comments": "Commentaires",
-      "avatar": "Avatar"
+      "avatar": "Avatar",
+      "api": "API"
     },
     "remove": "Supprimer",
     "noMoviesYet": "Vous n'avez encore vu aucun film.",
+    "application": {
+      "noApplicationsYet": "Vous n'avez encore créé aucune application.",
+      "createApplication": "Créer une application",
+      "createModal": {
+        "title": "Créer une application",
+        "name": "Nom de l'application",
+        "redirect_uri": "URI de redirection",
+        "scope": "scope",
+        "submit": "Créer"
+      },
+      "editModal": {
+        "title": "Modifier l'application",
+        "name": "Nom de l'application",
+        "redirect_uri": "URI de redirection",
+        "scope": "scope",
+        "submit": "Enregistrer les modifications"
+      }
+    },
     "fields": {
       "submit": "Enregistrer les modifications",
       "email": "E-mail",
@@ -123,8 +142,8 @@
     }
   },
   "modal": {
-    "deleteComment": {
-      "title": "Supprimer le commentaire ?",
+    "deleteConfirmation": {
+      "title": "Etes-vous sûr de vouloir supprimer ?",
       "confirm": "Oui",
       "cancel": "Non"
     },
@@ -163,11 +182,16 @@
     "passwordTooLong": "Le mot de passe est trop long.",
     "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
     "passwordsDontMatch": "Les mots de passe ne correspondent pas.",
+    "redirectURIStartHTTP": "L'URI doit commencer par `http://` ou `https://`.",
+    "redirectURIInvalid": "L'URI doit être une URL valide.",
     "requiredField": "Ce champ est obligatoire.",
     "atLeastOneField": "Au moins un champ doit être rempli."
   },
   "notifications": {
     "success": {
+      "textCopied": "{label} copié dans le presse-papiers.",
+      "applicationEdited": "Application modifiée avec succès.",
+      "applicationCreated": "Application créée. Copiez le `client_secret` maintenant. Il ne sera plus affiché ensuite.",
       "passwordChanged": "Votre mot de passe a bien été modifié.",
       "newPasswordSet": "Votre nouveau mot de passe a été défini, vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
       "emailResetPassword": "Un e-mail vient de vous être envoyé pour réinitialiser votre mot de passe.",

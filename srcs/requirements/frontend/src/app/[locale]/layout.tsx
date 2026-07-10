@@ -12,13 +12,14 @@ import {ModalProvider} from "@/contexts/ModalContext";
 import NotificationList from "@/components/ui/Notification/NotificationList";
 import SigninModal from "@/components/features/auth/SigninModal";
 import RegisterModal from "@/components/features/auth/RegisterModal";
-import DeleteCommentModal from "@/components/features/comment/DeleteCommentModal";
 import GenreModal from "@/components/features/genre/GenreModal";
 import FilterGenreModal from "@/components/features/genre/FilterGenreModal";
 import ForgotPasswordModal from "@/components/features/auth/ForgotPasswordModal";
 import ResetPasswordModal from "@/components/features/auth/ResetPasswordModal";
 import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
 import SelectTorrentModal from "@/components/features/movie/SelectTorrentModal";
+import CreateApplicationModal from "@/components/features/auth/CreateApplicationModal";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
@@ -28,7 +29,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
     <body>
 
     <div className="fixed inset-0 -z-10">
-        <Colors heigth={"h-full"} />
+        <Colors heigth="h-full"/>
     </div>
 
     <div className="bg-white min-h-screen">
@@ -46,8 +47,9 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <FilterGenreModal/>
                             <ForgotPasswordModal/>
                             <ResetPasswordModal/>
-                            <DeleteCommentModal/>
+                            <DeleteConfirmationModal/>
                             <SelectTorrentModal />
+                            <CreateApplicationModal />
 
                             <Navbar/>
 
