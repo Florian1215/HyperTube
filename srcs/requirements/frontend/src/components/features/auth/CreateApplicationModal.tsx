@@ -9,13 +9,6 @@ import {patchApp, postNewApp} from "@/services/auth.service";
 import {iApplication, tResponse} from "@/types/api";
 import useNotification from "@/contexts/NotificationContext";
 
-// todo make page /auth/autorize
-// todo test sign in with hypertube
-// todo make API documentation page
-
-// todo add field verification scope
-// todo remake scope ui
-
 export default function CreateApplicationModal() {
     const {activeModal, closeModal} = useModal();
     const tCreate = useTranslations("profile.application.createModal");
