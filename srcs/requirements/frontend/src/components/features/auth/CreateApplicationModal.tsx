@@ -11,7 +11,6 @@ import useNotification from "@/contexts/NotificationContext";
 
 // todo make page /auth/autorize
 // todo test sign in with hypertube
-// todo fix tab responsive
 // todo make API documentation page
 
 // todo add field verification scope

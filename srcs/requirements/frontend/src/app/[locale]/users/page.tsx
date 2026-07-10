@@ -10,11 +10,13 @@ import AuthProfileTab from "@/components/features/auth/AuthProfileTab";
 import AvatarProfileTab from "@/components/features/user/AvatarProfileTab";
 import ProfileTab from "@/components/features/user/UserProfileTab";
 import APITab from "@/components/features/auth/APITab";
+import useResponsiveSize from "@/hooks/useResponsiveSize";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
-    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}, {name: "api", comp: APITab}];
+    const size = useResponsiveSize();
+    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}];
 
     useEffect(() => {
         if (!loading && !user)
@@ -25,6 +27,8 @@ export default function Page() {
     if (!user)
         return null;
 
+    if (size !== "xs")
+        tabs.push({name: "api", comp: APITab});
     if (user.oauth_method)
         tabs.unshift({name: "avatar", comp: AvatarProfileTab});
     else {
