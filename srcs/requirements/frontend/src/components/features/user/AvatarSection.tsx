@@ -28,7 +28,7 @@ export default function AvatarSection({user, updateUser}: {user: iUser, updateUs
     return (<div className="flex flex-col gap-2 items-center justify-center">
         <ProfilePicture user={user} size={2} className="mb-2" />
         <TextButton
-            className={user.profile_picture ? "text-red  custom-underline-red" : "custom-no-underline"}
+            className={user.profile_picture ? "text-red custom-underline-red" : "hover:no-underline"}
             onClick={() => handleNewAvatar(["profile_picture", ""])}>{t("remove")}</TextButton>
 
         {!user.profile_picture && (

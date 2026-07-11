@@ -4,9 +4,8 @@ import {iNavItem} from "@/components/layout/nav/Navbar";
 
 export default function NavItem({item, selected, logoutBtn}: {item: iNavItem, selected: boolean, logoutBtn: string}) {
     const isLogoutBtn = item.name === logoutBtn;
-    const hoverColor = isLogoutBtn ? "hover:text-red custom-underline-red" : "custom-underline";
     const className = "uppercase flex items-center";
-    const PName = item.name ? <span style={{transform: "translateY(-1px)"}} className={`pl-1 xl:pl-2 text-lg xl:text-2xl hidden md:block text-nowrap + ${selected ? "font-base font-light" : "font-hairline"} ${hoverColor}`}>{item.name}</span> : null;
+    const PName = item.name ? <span style={{transform: "translateY(-1px)"}} className={"custom-underline pl-1 xl:pl-2 text-lg xl:text-2xl hidden md:block text-nowrap " + (selected ? "font-base font-light" : "font-hairline") + (isLogoutBtn ? " hover:text-red" : "")}>{item.name}</span> : null;
     const [isHover, setIsHover] = useState(false);
 
     if (item.href !== undefined) {
