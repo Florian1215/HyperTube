@@ -97,7 +97,6 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
         const requiredErrors: Record<string, string> = {};
         const isAllFieldRequired = !(formType === "update" || (formType === "application" && extraParam != undefined));
 
-        console.log("TEST", isAllFieldRequired, formType, extraParam);
         if (!isAllFieldRequired && fieldsValue.filter((v) => v.trim().length !== 0).length === 0) {
             newSetterErrorUtils(0, "atLeastOneField")
             setFocusedIndex(0);

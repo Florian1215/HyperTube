@@ -13,7 +13,7 @@ export interface ModalState {
     filterGenre?: [filterGenre: iGenre[], handleFilterGenre: (newGenres: iGenre[]) => void];
     setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>
     deleteObjId?: number
-    deleteFunc?: (objId: number) => void
+    deleteFunc?: (objId: number) => Promise<void>;
     token?: string
     torrents?: iTorrent[]
     setTorrentId?: (selectTorrentId: string) => void

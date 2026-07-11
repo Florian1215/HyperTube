@@ -50,7 +50,7 @@ export default function APITab() {
     </div>);
 }
 
-function Application({app, openModal, deleteDisplayApp, locale, setApplications, t}: {app: iApplication, openModal: (modal: ModalState) => void, deleteDisplayApp: (appId: number) => void, locale: string, setApplications: (newApp: iApplication) => void, t: (txt: string) => string}) {
+function Application({app, openModal, deleteDisplayApp, locale, setApplications, t}: {app: iApplication, openModal: (modal: ModalState) => void, deleteDisplayApp: (appId: number) => Promise<void>, locale: string, setApplications: (newApp: iApplication) => void, t: (txt: string) => string}) {
     const date = new Date(app.created_at);
     const createdAt = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 

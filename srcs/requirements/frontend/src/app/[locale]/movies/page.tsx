@@ -54,7 +54,7 @@ export default function Page() {
     useEffect(() => {
         const savedViewType = localStorage.getItem("searchViewType") as tViewType;
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setViewType(savedViewType ?? (genre === undefined && mostRated === null ? "grid" : "list"));
+        setViewType((genre === undefined && mostRated === null ? (savedViewType ?? "grid") : "list"));
     }, [genre, mostRated]);
 
     useEffect(() => {

@@ -16,6 +16,12 @@ export default function NewComment({user, movie, onSubmit}: {user: iUser, movie:
     const {execute} = useApiMutation(setErrors);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const reset = () => {
+        setComment("");
+        setExpendComment(false);
+        textareaRef?.current?.blur();
+    };
+
     const handleComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (expendComment)
             setComment(e.target.value);
@@ -30,11 +36,9 @@ export default function NewComment({user, movie, onSubmit}: {user: iUser, movie:
             if (data) {
                 data.data.user = user;
                 const newComment = data.data as iComment;
-                setComment("");
-                setExpendComment(false);
-                textareaRef?.current?.blur();
                 onSubmit(newComment);
             }
+            reset();
         })
     }
 
@@ -54,6 +58,6 @@ export default function NewComment({user, movie, onSubmit}: {user: iUser, movie:
         </textarea>
         {errors["content"] && <span className="text-red text-xs">{errors["content"]}</span>}
         {expendComment && <Button onClick={handlePostComment} disabled={comment.trim().length <= 0} className="w-full">{t("publishComment")}</Button>}
-        {expendComment && <TextButton onClick={() => setExpendComment(false)}>{t("cancel")}</TextButton>}
+        {expendComment && <TextButton onClick={reset}>{t("cancel")}</TextButton>}
     </div>);
 }

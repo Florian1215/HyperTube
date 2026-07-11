@@ -16,7 +16,7 @@ import IconButton from "@/components/ui/Button/IconButton";
 
 dayjs.extend(relativeTime);
 
-export default function Comment({comment, currentUser, updateComment, deleteComment, previousCommentMovieId}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => void, previousCommentMovieId?: string}) {
+export default function Comment({comment, currentUser, updateComment, deleteComment, previousCommentMovieId}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => Promise<void>, previousCommentMovieId?: string}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
