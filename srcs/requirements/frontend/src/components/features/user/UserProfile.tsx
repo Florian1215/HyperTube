@@ -5,6 +5,7 @@ import ProfilePicture from "@/components/features/user/ProfilePicture";
 import {iUser} from "@/types/user";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
+import {usePathname, useRouter} from "@/i18n/navigation";
 
 export type tTab = {
     name: string
@@ -12,6 +13,8 @@ export type tTab = {
 
 export default function UserProfile({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
     const tabParam = searchParams.get("tab");
     let initialTab: number = 0;
     if (tabParam) {
@@ -31,8 +34,12 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 
     const switchTab = (tabIdx: number) => {
-        if (activeTab !== tabIdx)
+        if (activeTab !== tabIdx) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("tab", tabs[tabIdx].name);
+            router.push(`${pathname}?${params.toString()}`);
             setActiveTab(tabIdx);
+        }
     }
 
     return (<div className="flex flex-col gap-6 sm:gap-10 xl:gap-17 px-2 md:px-4">
