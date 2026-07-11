@@ -1,6 +1,5 @@
 "use client";
 
-import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {tLocale} from "@/i18n/request";
 import {ApiError} from "@/services/ApiError";
@@ -10,7 +9,6 @@ import {fieldType} from "@/components/ui/Form";
 import useAuth from "@/contexts/AuthContext";
 
 export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string, fields?: fieldType[]) {
-    const router = useRouter();
     const {logout} = useAuth();
     const {openModal, closeModal} = useModal();
     const locale = useLocale() as tLocale;
@@ -48,9 +46,6 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
                 } else if (error.status === 401) {
                     logout();
                     openModal({type: "signin"});
-                    return null;
-                } else if (error.status === 404) {
-                    router.push("/404");
                     return null;
                 } else
                     addNotification(error.notificationMsg, "error");
