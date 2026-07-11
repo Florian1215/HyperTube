@@ -25,9 +25,7 @@ export default function Page() {
                 else
                     addNotification(tError("missingToken"), "error");
             }
-            setTimeout(() => {
-                router.replace("/");
-            }, 0);
+            setTimeout(() => router.replace("/"), 0);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loading]);
