@@ -18,7 +18,7 @@ DSHELL		=	/bin/sh
 .PHONY: all
 all			:	$(NAME)
 
-$(NAME)		:	$(ENV_FILE)
+$(NAME)		:
 			mkdir -p $(DATA_DIR)
 			$(COMPOSE) $(FLAGS) up --build $(SERVICE)
 
@@ -39,7 +39,7 @@ logs		:	build
 exec		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
-$(ENV_FILE)	:	$(ENV_EXEMPLE)
+env			:
 			./launch.d/01generatePasswordsAndKeys.sh
 
 .PHONY: clean
@@ -93,4 +93,4 @@ sre			:	clean all
 vre			:	vclean all
 
 .PHONY: re
-re			:	fclean all
+re			:	fclean env all
