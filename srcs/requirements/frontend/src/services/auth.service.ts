@@ -15,7 +15,7 @@ export function postResetPassword(locale: string, data: string[]) {
     return apiClient<tResponse<iUserToken>>("/auth/password-reset/send-email", locale, {method: "POST", body: JSON.stringify({email: data[0].trim()})});
 }
 
-export function postSetNewPassword(locale: string, data: string[], token?: string) {
+export function postSetNewPassword(locale: string, data: string[], token?: string | number) {
     return apiClient<tResponse<iUserToken>>("/auth/password-reset/set-new-password", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
 }
 
@@ -52,7 +52,7 @@ function getApplications(locale: string, idx: number) {
     return apiClient<tListResponse<iApplication[]>>(`/oauth/applications?page=${idx}`, locale);
 }
 
-export function patchApp(locale: string, data: string[], appId?: string) {
+export function patchApp(locale: string, data: string[], appId?: string | number) {
     const updateData: Record<string, string> = {};
 
     ["name", "redirect_uri", "scope"].forEach((field, index) => {
@@ -73,7 +73,7 @@ export function deleteApp(locale: string, appId: number) {
 
 export function useApplications(idx: number) {
     return useApiQuery(
-        ["app", String(idx)],
+        ["applications", idx],
         (locale: string) => getApplications(locale, idx),
     );
 }

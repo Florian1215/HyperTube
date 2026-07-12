@@ -16,7 +16,7 @@ import IconButton from "@/components/ui/Button/IconButton";
 
 dayjs.extend(relativeTime);
 
-export default function Comment({comment, currentUser, updateComment, deleteComment, previousCommentMovieId}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (commentId: number, newContent: string) => void, deleteComment: (commentId: number) => Promise<void>, previousCommentMovieId?: string}) {
+export default function Comment({comment, currentUser, updateComment, deleteComment, previousCommentMovieId}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (comment: iComment, newContent: string) => void, deleteComment: (commentId: number, movieId?: string) => Promise<void>, previousCommentMovieId?: string}) {
     let user: iUser;
     const [showSettingBtn, setShowSettingBtn] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -94,7 +94,7 @@ function CommentText({comment}: {comment: iComment}) {
     </div>);
 }
 
-function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComment, setEditMode: (newEditMode: boolean) => void, updateComment: (commentId: number, newContent: string) => void}) {
+function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComment | iCommentDetails, setEditMode: (newEditMode: boolean) => void, updateComment: (comment: iComment, newContent: string) => void}) {
     const [newEditedComment, setNewEditedComment] = useState(comment.content);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const t = useTranslations("comments");
@@ -116,7 +116,7 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComme
     };
 
     const saveChange = () => {
-        updateComment(comment.id, newEditedComment.trim());
+        updateComment(comment, newEditedComment.trim());
         setEditMode(false);
     };
 

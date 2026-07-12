@@ -76,7 +76,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
 
     return (<div className="px-4 sm:px-6 min-w-full">
         <div className="relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border">
-            {user && movie && renderVideo && !errorStr && (<VideoPlayer movie={movie as iMovieDetails} color={user.color} src={`${API_URL}/stream/${torrentId}/index`} setErrorAction={setError} tAction={t}/>)}
+            {user && movie && renderVideo && !errorStr && (<VideoPlayer movie={movie as iMovieDetails} user={user} src={`${API_URL}/stream/${torrentId}/index`} setErrorAction={setError} tAction={t}/>)}
 
             {renderImage && imageUrl && (<Image className={"absolute inset-0 size-full object-cover " + (isLoaded ? "opacity-100" : "opacity-0")}
                     width={5000} height={5000} loading="eager"

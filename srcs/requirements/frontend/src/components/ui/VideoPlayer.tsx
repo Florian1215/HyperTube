@@ -10,10 +10,12 @@ import {useLocale, useTranslations} from "next-intl";
 import loadSRT from "@/utils/loadSRT";
 import useModal from "@/contexts/ModalContext";
 import {refreshAccessToken} from "@/services/auth.service";
-import {updateMovieProgress} from "@/services/movies.service";
+import {syncMovieProgress, updateMovieProgress} from "@/services/movies.service";
 import {iMovieDetails} from "@/types/movie";
 import useNotification from "@/contexts/NotificationContext";
 import IconButton from "@/components/ui/Button/IconButton";
+import {useQueryClient} from "@tanstack/react-query";
+import {iUser} from "@/types/user";
 
 interface iSub{
     start: number
@@ -21,7 +23,7 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({movie, src, color, setErrorAction, tAction}: {movie: iMovieDetails, src: string, color: string, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
+export default function VideoPlayer({movie, src, user, setErrorAction, tAction}: {movie: iMovieDetails, src: string, user: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -55,6 +57,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
     const delaySubtitle = useRef(0);
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
+    const queryClient = useQueryClient();
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -174,14 +177,16 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
         if (!setComplete.current) {
             const progress = Math.floor(video.currentTime);
             if (isLiveRef && video.currentTime + min15 > fullDuration) {
-                updateMovieProgress(movie.imdb_id, progress, 100, true).then(() => {
+                updateMovieProgress(movie.imdb_id, progress, 100, true).then((data) => {
+                    syncMovieProgress(queryClient, user.id, movie, data.data);
                     setComplete.current = true;
                 });
             } else {
                 const second = Math.floor(video.currentTime % 60);
                 if (Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
-                    updateMovieProgress(movie.imdb_id, progress, pourcent, false).then(() => {
+                    updateMovieProgress(movie.imdb_id, progress, pourcent, false).then((data) => {
+                        syncMovieProgress(queryClient, user.id, movie, data.data);
                         lastSent.current = second;
                     });
                 }
@@ -411,7 +416,7 @@ export default function VideoPlayer({movie, src, color, setErrorAction, tAction}
 
                 <div className="w-full h-4 bg-black-hover border-t-black">
                     <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / fullDuration) * 100}%`}}>
-                        <div className={`pointer-events-none h-full bg-${color}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
+                        <div className={`pointer-events-none h-full bg-${user.color}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
                     </div>
                 </div>
             </div>

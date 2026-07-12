@@ -20,7 +20,7 @@ export function useLoginOpenSubtitles() {
 
 export function useDownloadSubtitle(fileId?: number, token?: string) {
     return useQuery({
-        queryKey: ["dl-subtitles", String(fileId), token],
+        queryKey: ["dl-subtitles", fileId, token],
         queryFn: () => downloadSubtitle(fileId, token),
         enabled: fileId !== undefined && token !== undefined,
     });

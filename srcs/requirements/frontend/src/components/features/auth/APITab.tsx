@@ -12,6 +12,8 @@ import {TrashIcon} from "@/components/Icons";
 import Code from "@/components/ui/Code";
 import Label from "@/components/ui/Label";
 import Join from "@/components/Join";
+import {useQueryClient} from "@tanstack/react-query";
+import {removeQuery} from "@/hooks/useApiQuery";
 
 export default function APITab() {
     const locale = useLocale();
@@ -21,14 +23,10 @@ export default function APITab() {
     const totalPage = computeTotalPage(data);
     const {openModal} = useModal();
     const t = useTranslations("profile.application");
-    const deleteDisplayApp = (appId: number) => deleteApp(locale, appId).then(() => setApps(apps.filter(a => a.id !== appId)));
-    const setApplications = (newApp: iApplication) => {
-        setApps(prev => {
-            if (prev.find(a => a.id === newApp.id))
-                return prev.map(app => app.id === newApp.id ? newApp : app);
-            return [...prev, newApp];
-        });
-    }
+    const queryClient = useQueryClient();
+    const deleteDisplayApp = (appId: number) => deleteApp(locale, appId).then(() => {
+        removeQuery(queryClient, ["applications"], appId);
+    });
 
     useEffect(() => {
         if (data)
@@ -41,23 +39,23 @@ export default function APITab() {
             (apps && apps.length > 0) ?
             <Pagination currenIndex={index} totalPage={totalPage} onClick={setIndex} variableMT={true}>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {apps.map((a, idx) => <Application locale={locale} openModal={openModal} deleteDisplayApp={deleteDisplayApp} key={idx} app={a} setApplications={setApplications} t={t}/>)}
+                    {apps.map((a, idx) => <Application locale={locale} pageIndex={index} openModal={openModal} deleteDisplayApp={deleteDisplayApp} key={idx} app={a} t={t}/>)}
                 </div>
             </Pagination> :
                 <SmallText>{t("noApplicationsYet")}</SmallText>
         }
-        <CreateNewApplication openModal={openModal} setApplications={setApplications} t={t} />
+        <CreateNewApplication pageIndex={index} openModal={openModal} t={t} />
     </div>);
 }
 
-function Application({app, openModal, deleteDisplayApp, locale, setApplications, t}: {app: iApplication, openModal: (modal: ModalState) => void, deleteDisplayApp: (appId: number) => Promise<void>, locale: string, setApplications: (newApp: iApplication) => void, t: (txt: string) => string}) {
+function Application({app, openModal, deleteDisplayApp, locale, pageIndex, t}: {app: iApplication, openModal: (modal: ModalState) => void, deleteDisplayApp: (appId: number) => Promise<void>, locale: string, pageIndex: number, t: (txt: string) => string}) {
     const date = new Date(app.created_at);
     const createdAt = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 
     return (<div className="w-full flex justify-between group/card items-center border p-5 custom-shadow-animation-l">
         <div className="space-y-1 w-full">
             <div className="flex justify-between items-center hover:cursor-pointer group/title mb-2">
-                <div className="flex w-9/10 items-end gap-2" onClick={() => openModal({type: "application", appId: String(app.id), setApplications: setApplications})}>
+                <div className="flex w-9/10 items-end gap-2" onClick={() => openModal({type: "application", appId: app.id, pageIndex: pageIndex})}>
                     <h3 className="group-hover/title:underline truncate">{app.name}</h3>
                     <span>{createdAt}</span>
                 </div>
@@ -73,8 +71,8 @@ function Application({app, openModal, deleteDisplayApp, locale, setApplications,
     </div>)
 }
 
-function CreateNewApplication({setApplications, t, openModal}: {setApplications: (newApp: iApplication) => void, t: (str: string) => string, openModal: (modal: ModalState) => void}) {
+function CreateNewApplication({t, openModal, pageIndex}: {t: (str: string) => string, openModal: (modal: ModalState) => void, pageIndex: number}) {
     return (<div className="text-center">
-        <Button onClick={() => openModal({type: "application", setApplications: setApplications})}>{t("createApplication")}</Button>
+        <Button onClick={() => openModal({type: "application", pageIndex: pageIndex})}>{t("createApplication")}</Button>
     </div>)
 }

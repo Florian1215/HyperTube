@@ -12,7 +12,7 @@ function getUserFilmHistory(locale: string, userId?: number) {
     return apiClient<tResponse<iMovie[]>>(`/users/${userId}/movie-history`, locale);
 }
 
-export function patchUser(locale: string, data: string[], userId?: string) {
+export function patchUser(locale: string, data: string[], userId?: number | string) {
     const updateData: Record<string, string> = {};
 
     if (data.length === 2) {
@@ -40,7 +40,7 @@ export function useUser(userId: string) {
 
 export function useUserFilmHistory(userId?: number) {
     return useApiQuery(
-        ["user-film-history", String(userId)],
+        ["user-movie-history", userId],
         (locale: string) => getUserFilmHistory(locale, userId),
         !!userId
     );

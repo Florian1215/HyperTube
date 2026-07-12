@@ -15,7 +15,7 @@ import useResponsiveSize from "@/hooks/useResponsiveSize";
 export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "redirect_uri" | "scope";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password" | "application";
 
-export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string) => Promise<tResponse<T>>, handleRequest: (data: tResponse<T>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string}) {
+export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<tResponse<T>>, handleRequest: (data: tResponse<T>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);

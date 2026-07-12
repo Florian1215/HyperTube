@@ -1,8 +1,9 @@
-import {iMovie, iMovieDetails, iTorrent} from "@/types/movie";
+import {iMovie, iMovieDetails, iProgress, iTorrent} from "@/types/movie";
 import {useDebounce} from "use-debounce";
-import useApiQuery from "@/hooks/useApiQuery";
+import useApiQuery, {updateTotal} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse, tResponse} from "@/types/api";
+import {QueryClient} from "@tanstack/react-query";
 
 function getMovie(movieId: string, locale: string) {
     return apiClient<tResponse<iMovieDetails>>(`/movies/${movieId}`, locale);
@@ -33,18 +34,31 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
     const [debouncedQuery] = useDebounce(search_title ?? "", 200);
 
     return useApiQuery(
-        ["movies", debouncedQuery, page?.toString() ?? "0"],
+        ["movies", debouncedQuery, page ?? 0],
         (locale, signal) => getMovies(locale, debouncedQuery, page, signal),
         enabled
     );
 }
 
 export function updateMovieProgress(movieId: string, progress: number, pourcent: number, complete: boolean) {
-    return apiClient<tListResponse<{
-        progress: number
-        complete: boolean
-        pourcent: number
-    }>>(`/movies/${movieId}/progress`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
+    return apiClient<tListResponse<iProgress>>(`/movies/${movieId}/progress`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
+}
+
+export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress: iProgress) {
+    const updatedMovie = {...movie, ...progress};
+    const historyQueries = queryClient.getQueriesData<tListResponse<iMovie[]>>({queryKey: ["user-movie-history", userId]});
+    historyQueries.forEach(([queryKey, current]) => {
+        if (!current)
+            return;
+        const nextHistory = current.data.some((item) => item.imdb_id === movie.imdb_id)
+            ? current.data.map((item) => item.imdb_id === movie.imdb_id ? updatedMovie : item)
+            : [updatedMovie, ...current.data];
+        queryClient.setQueryData(queryKey, {
+            ...current,
+            data: nextHistory,
+            meta: updateTotal(current.meta, 1),
+        });
+    });
 }
 
 export function startTorrentStreaming(torrentId: string) {

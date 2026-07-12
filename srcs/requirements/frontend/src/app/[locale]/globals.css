@@ -23,8 +23,11 @@
     --color-blue-hover: #BEF7FF;
     --color-red-hover: #FF787E;
 
+    /*noinspection ALL*/
     --cursor-left: url("/svg/left-cursor.svg") 25 25, auto;
+    /*noinspection ALL*/
     --cursor-right: url("/svg/right-cursor.svg") 25 25, auto;
+    /*noinspection ALL*/
     --cursor-play: url("/svg/play-cursor.svg") 25 25, auto;
 
     --font-body: "FT Calhern", sans-serif;
@@ -60,6 +63,7 @@
 
     .custom-noise, .custom-noise-bg {
         @apply size-full absolute inset-0 pointer-events-none opacity-50 bg-repeat mix-blend-overlay contrast-150 brightness-125;
+        /*noinspection ALL*/
         background-image: url("/noise.png");
     }
     .custom-noise-bg { @apply mix-blend-color-burn brightness-50; }

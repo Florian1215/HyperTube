@@ -69,7 +69,7 @@ func toMovieHistoryResponse(m models.WatchedMovie) movieHistoryResponse {
 type movieProgressResponse struct {
 	Progress int  `json:"progress"`
 	Complete bool `json:"complete"`
-	Pourcent int  `json:"Pourcent"`
+	Pourcent int  `json:"pourcent"`
 }
 
 type movieDetailResponse struct {

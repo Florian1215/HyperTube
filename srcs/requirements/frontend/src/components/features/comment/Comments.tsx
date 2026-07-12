@@ -7,31 +7,37 @@ import {iUser} from "@/types/user";
 import {iComment, iCommentDetails} from "@/types/comment";
 import dayjs from "dayjs";
 import SmallText from "@/components/ui/SmallText";
+import {useQueryClient} from "@tanstack/react-query";
+import {removeCommentCache, updateCommentCache} from "@/services/comments.service";
+import {iMovie} from "@/types/movie";
 
-export default function Comments({currentUser, comments, setComments, index, setIndex, totalPage, profilePage=false}: {currentUser?: iUser, comments: iComment[], setComments: (newComments: iComment[] | iCommentDetails[]) => void, index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean}) {
+export default function Comments({currentUser, comments, index, setIndex, totalPage, profilePage=false, currentMovie}: {currentUser?: iUser, comments: iComment[], index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean, currentMovie?: iMovie}) {
     const {addNotification} = useNotification();
     const locale = useLocale();
     const t = useTranslations("comments");
+    const queryClient = useQueryClient();
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
     const tSuccess = useTranslations("notifications.success");
     dayjs.locale(locale);
 
-    const updateComment = (commentId: number, newContent: string) => {
-        setComments(comments.map((comment) => {
-            if (comment.id === commentId) {
-                const newComment = structuredClone(comment);
-                newComment.content = newContent.replace("\n\n", "\n");
-                newComment.edited = true;
-                patchComment(locale, commentId, newComment.content).then(() => {});
-                return newComment;
-            }
-            else
-                return comment;
-        }));
+    const updateComment = (comment: iComment, newContent: string) => {
+        const newComment = structuredClone(comment) as iCommentDetails;
+        newComment.content = newContent.replace("\n\n", "\n");
+        newComment.edited = true;
+        if (currentMovie)
+            newComment.movie = currentMovie;
+        patchComment(locale, newComment.id, newComment.content).then(() => {
+            updateCommentCache(queryClient, newComment, newComment.user.id);
+        });
         addNotification(tSuccess("commentChange"), "success");
     }
 
-    const deleteDisplayComment = (commentId: number) => deleteComment(locale, commentId).then(() => setComments(comments.filter(c => c.id !== commentId)));
+    const deleteDisplayComment = async (commentId: number, movieId?: string) => {
+        deleteComment(locale, commentId).then(() => {
+            if (currentUser)
+                removeCommentCache(queryClient, commentId, movieId ?? (currentMovie?.imdb_id ?? ""), currentUser.id);
+        });
+    };
 
     if (!comments || comments.length === 0)
         return (<SmallText>{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</SmallText>);

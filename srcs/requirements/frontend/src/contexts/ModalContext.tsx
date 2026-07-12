@@ -3,7 +3,6 @@
 import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 import {iTorrent} from "@/types/movie";
-import {iApplication} from "@/types/api";
 
 type ModalType = "signin" | "register" | "genre" | "filter-genre" | "send-email-forgot-password" | "set-new-password" | "delete-confirmation" | "select-torrent" | "application" | null;
 
@@ -19,8 +18,8 @@ export interface ModalState {
     setTorrentId?: (selectTorrentId: string) => void
     noClose?: boolean
     reload?: () => void
-    setApplications?: (app: iApplication) => void
-    appId?: string
+    appId?: number
+    pageIndex?: number
 }
 
 interface ModalContextType {

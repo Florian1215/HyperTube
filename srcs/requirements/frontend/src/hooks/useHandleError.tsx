@@ -19,8 +19,8 @@ export default function useHandleError() {
     return useCallback((error: ApiError, translation: "Film" | "User") => {
         if (error instanceof ApiError) {
             if (error.status === 401) {
-                openModal({type: "signin"});
                 setCallbackUrl(pathname);
+                openModal({type: "signin"});
                 logout();
                 return (<button className="w-full hover:underline" onClick={() =>
                     openModal({type: "signin"})

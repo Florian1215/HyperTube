@@ -1,3 +1,4 @@
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern";
     src: url("/fonts/FTCalhern/FTCalhern-Bold.woff2") format("woff2"),
@@ -7,6 +8,7 @@
     font-display: swap;
 }
 
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern Condensed";
     src: url("/fonts/FTCalhern/FTCalhern-CondensedRegular.woff2") format("woff2"),
@@ -16,6 +18,7 @@
     font-display: swap;
 }
 
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern Hairline";
     src: url("/fonts/FTCalhern/FTCalhern-Hairline.woff2") format("woff2"),
@@ -25,6 +28,7 @@
     font-display: swap;
 }
 
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern";
     src: url("/fonts/FTCalhern/FTCalhern-Light.woff2") format("woff2"),
@@ -34,6 +38,7 @@
     font-display: swap;
 }
 
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern";
     src: url("/fonts/FTCalhern/FTCalhern.woff2") format("woff2"),
@@ -43,6 +48,7 @@
     font-display: swap;
 }
 
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern";
     src: url("/fonts/FTCalhern/FTCalhern-RegularItalic.woff2") format("woff2"),
@@ -52,6 +58,7 @@
     font-display: swap;
 }
 
+/*noinspection ALL*/
 @font-face {
     font-family: "FT Calhern Wide";
     src: url("/fonts/FTCalhern/FTCalhern-WideBold.woff2") format("woff2"),
