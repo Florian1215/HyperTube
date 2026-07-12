@@ -12,7 +12,7 @@ export default function AvatarSection({user, updateUser}: {user: iUser, updateUs
 
     const handleNewAvatar = (newData: string[]) => {
         const makePostRequest = async () => {
-            return await execute((locale) => patchUser(locale, newData, String(user.id)));
+            return await execute((locale) => patchUser(locale, newData, user.id));
         };
 
         makePostRequest().then((data) => {

@@ -25,3 +25,9 @@ export interface iUser {
     profile_picture: null | string
     created_at: number
 }
+
+export interface iProgress {
+    progress: number
+    complete: boolean
+    pourcent: number
+}

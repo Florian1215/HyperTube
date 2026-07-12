@@ -8,6 +8,8 @@ import Form from "@/components/ui/Form";
 import {patchApp, postNewApp} from "@/services/auth.service";
 import {iApplication, tResponse} from "@/types/api";
 import useNotification from "@/contexts/NotificationContext";
+import {useQueryClient} from "@tanstack/react-query";
+import {addQuery, updateQuery} from "@/hooks/useApiQuery";
 
 export default function CreateApplicationModal() {
     const {activeModal, closeModal} = useModal();
@@ -15,6 +17,7 @@ export default function CreateApplicationModal() {
     const tEdit = useTranslations("profile.application.editModal");
     const {addNotification} = useNotification();
     const tSuccess = useTranslations("notifications.success");
+    const queryClient = useQueryClient();
 
     if (activeModal.type !== "application")
         return null;
@@ -24,16 +27,17 @@ export default function CreateApplicationModal() {
 
     const handleCreateNewApp = (data: tResponse<iApplication>) => {
         if (data) {
+            if (isCreate)
+                addQuery(queryClient, ["applications", 0], data.data);
+            else
+                updateQuery(queryClient, ["applications"], data.data);
             closeModal();
-            if (activeModal.setApplications) {
-                activeModal.setApplications(data.data);
-                addNotification(tSuccess(isCreate ? "applicationCreated" : "applicationEdited"), "success");
-            }
+            addNotification(tSuccess(isCreate ? "applicationCreated" : "applicationEdited"), "success");
         }
     }
 
     return (<ModalLayout onCloseAction={closeModal} title={t("title")}>
         <Form formType="application" request={isCreate ? postNewApp : patchApp} handleRequest={handleCreateNewApp} t={t}
-              fields={["name", "redirect_uri", "scope"]} extraParam={activeModal.appId} />
+              fields={["name", "redirect_uri", "scope"]} extraParam={activeModal.appId}/>
     </ModalLayout>);
 }

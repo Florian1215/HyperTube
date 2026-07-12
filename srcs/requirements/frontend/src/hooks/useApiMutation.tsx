@@ -7,13 +7,15 @@ import useNotification from "@/contexts/NotificationContext";
 import useModal from "@/contexts/ModalContext";
 import {fieldType} from "@/components/ui/Form";
 import useAuth from "@/contexts/AuthContext";
+import {usePathname} from "@/i18n/navigation";
 
 export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string, fields?: fieldType[]) {
-    const {logout} = useAuth();
+    const {setCallbackUrl, logout} = useAuth();
     const {openModal, closeModal} = useModal();
     const locale = useLocale() as tLocale;
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
+    const pathname = usePathname();
 
     async function execute<T>(callback: (locale: string) => Promise<T>): Promise<T | null> {
         try {
@@ -44,8 +46,9 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
                     setFocusedIndex(0);
                     return null;
                 } else if (error.status === 401) {
-                    logout();
+                    setCallbackUrl(pathname);
                     openModal({type: "signin"});
+                    logout();
                     return null;
                 } else
                     addNotification(error.notificationMsg, "error");

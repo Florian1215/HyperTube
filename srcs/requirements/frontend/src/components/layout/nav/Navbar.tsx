@@ -42,7 +42,7 @@ export default function Navbar() {
         name: "", icon: LanguageIcon, hover: SwitchLanguage,
     },];
 
-    return (<nav className="flex justify-between px-6 sm:px-10 xl:px-16 py-4 sm:py-8">
+    return (<nav className="flex justify-between px-6 sm:px-10 xl:px-16 py-4 sm:py-10">
         {navItems.map((item, index) => (<NavItem key={index} item={item} selected={pathname === item.href} logoutBtn={t("logout")} />))}
     </nav>)
 }

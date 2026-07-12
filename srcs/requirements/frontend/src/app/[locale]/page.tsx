@@ -32,7 +32,7 @@ export default function HomePage() {
     const featured = filterAlreadyWatch(continueWatchingData?.data, featuredMovies?.data);
     const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
 
-    const mostRated = filterAlreadyWatch(continueWatchingData?.data, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined).filter((film) => film.note > 7);
+    const mostRated = filterAlreadyWatch(continueWatchingData?.data, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined).filter((m) => m.note > 7);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
     const continueWatching = continueWatchingData ? continueWatchingData.data.filter((m) => !m.complete) : [];

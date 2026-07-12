@@ -1,20 +1,22 @@
 import React, {useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import useApiMutation from "@/hooks/useApiMutation";
-import {postComment} from "@/services/comments.service";
-import {iComment} from "@/types/comment";
+import {addCommentCache, postComment} from "@/services/comments.service";
+import {iCommentDetails} from "@/types/comment";
 import Button from "@/components/ui/Button/Button";
 import TextButton from "@/components/ui/Button/TextButton";
 import {iUser} from "@/types/user";
 import {iMovie} from "@/types/movie";
+import {useQueryClient} from "@tanstack/react-query";
 
-export default function NewComment({user, movie, onSubmit}: {user: iUser, movie: iMovie, onSubmit: (value: iComment) => void}) {
+export default function NewComment({user, movie}: {user: iUser, movie: iMovie}) {
     const [expendComment, setExpendComment] = useState(false);
     const [comment, setComment] = useState("");
     const t = useTranslations("comments");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const {execute} = useApiMutation(setErrors);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const queryClient = useQueryClient();
 
     const reset = () => {
         setComment("");
@@ -35,8 +37,8 @@ export default function NewComment({user, movie, onSubmit}: {user: iUser, movie:
         makePostRequest().then((data) => {
             if (data) {
                 data.data.user = user;
-                const newComment = data.data as iComment;
-                onSubmit(newComment);
+                const newComment = data.data as iCommentDetails;
+                addCommentCache(queryClient, newComment, movie, newComment.user.id);
             }
             reset();
         })
