@@ -15,7 +15,7 @@ export default function useApiQuery<T>(key: unknown[], fn: (locale: string, sign
     });
 }
 
-function updateTotal(meta: tListResponse<unknown[]>["meta"], delta: number) {
+export function updateTotal(meta: tListResponse<unknown[]>["meta"], delta: number) {
     if (!meta)
         return meta;
     return {...meta, total: Math.max(0, meta.total + delta)};
@@ -29,7 +29,7 @@ export function addQuery<T>(queryClient: QueryClient, key: unknown[], newContent
         queryClient.setQueryData(queryKey, {
             ...current,
             data: [newContent, ...current.data],
-            meta: updateTotal(current.meta, -1),
+            meta: updateTotal(current.meta, 1),
         });
     });
 }

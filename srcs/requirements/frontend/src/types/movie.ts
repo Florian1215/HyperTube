@@ -28,3 +28,9 @@ export interface iTorrent {
     language: string
     seeds: string
 }
+
+export interface iProgress {
+    progress: number
+    complete: boolean
+    pourcent: number
+}
