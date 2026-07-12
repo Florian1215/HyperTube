@@ -39,6 +39,7 @@ logs		:	build
 exec		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
+.PHONY: env
 env			:
 			./launch.d/01generatePasswordsAndKeys.sh
 
@@ -52,7 +53,7 @@ vclean		:
 			rm -rf $(ENV_FILE)
 			rm -rf $(DATA_DIR)
 
-.PHONY: fclean
+PHONY: fclean
 fclean		:
 			$(COMPOSE) $(FLAGS) down -v --rmi all --remove-orphans
 			rm -rf $(ENV_FILE)
