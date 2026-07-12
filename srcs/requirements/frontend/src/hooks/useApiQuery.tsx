@@ -17,7 +17,7 @@ export default function useApiQuery<T>(key: unknown[], fn: (locale: string, sign
 
 export function updateTotal(meta: tListResponse<unknown[]>["meta"], delta: number) {
     if (!meta)
-        return meta;
+        return {page: 0, per_page: 12, total: 1};
     return {...meta, total: Math.max(0, meta.total + delta)};
 }
 
