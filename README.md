@@ -233,6 +233,11 @@ GET    /stream/{id}/{segment}        # HLS segment (.ts)
   application scope are rejected with `invalid_scope`. Current JWT access tokens
   do not embed or enforce scopes on protected routes; they authenticate as the
   application owner user.
+- Application scopes are optional free-form tokens, not a predefined permission
+  catalogue. Enter them separated by spaces, for example
+  `read:movies write:comments`; leaving the field empty is valid. The stored
+  scope documents and constrains OAuth token requests, while API authorization
+  continues to use the authenticated user model.
 - Password reset by email via Brevo (when configured)
 
 ---

@@ -789,9 +789,13 @@ Authorization: Bearer <access_token>
 ```
 
 `name` and `redirect_uri` are required and trimmed. `scope` is optional and
-normalized as a whitespace-separated string. `redirect_uri` must be an absolute
-`http` or `https` URL with a host. Query strings are allowed; URL userinfo and
-fragments are rejected.
+normalized as a whitespace-separated string. There is no predefined scope
+catalogue; use free-form tokens separated by spaces, for example
+`read:movies write:comments`. Leaving `scope` empty is valid. The normalized
+stored scope may be up to 500 characters.
+
+`redirect_uri` must be an absolute `http` or `https` URL with a host. Query
+strings are allowed; URL userinfo and fragments are rejected.
 
 `201 Created`
 
@@ -969,9 +973,13 @@ JSON is also accepted, including without `grant_type`:
 
 If `scope` is omitted, the response echoes the application's stored scope. If a
 requested scope is present, it is normalized and must contain only scope tokens
-assigned to the application. Scopes are not embedded in the current JWT access
-token and are not enforced by `RequireAuth`; they only constrain and document
-the `/oauth/token` response for this issue.
+assigned to the application, for example requesting `read:movies` from an
+application stored with `read:movies write:comments`. Requesting any token that
+was not assigned to the application returns `invalid_scope`.
+
+Scopes are not embedded in the current JWT access token and are not enforced by
+`RequireAuth`; they constrain and document the `/oauth/token` response while API
+authorization continues to use the authenticated user model.
 
 #### Response
 
