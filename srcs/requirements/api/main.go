@@ -218,11 +218,6 @@ func newRouter(
 	r.Get("/oauth/callback/42", authHandler.CallbackFortyTwo)
 	r.Get("/oauth/callback/github", authHandler.CallbackGitHub)
 	r.Get("/oauth/callback/gitlab", authHandler.CallbackGitLab)
-	r.Post("/oauth/token", authHandler.OAuthToken)
-	r.With(requireAuth).Post("/oauth/applications", authHandler.CreateOAuthApplication)
-	r.With(requireAuth).Get("/oauth/applications", authHandler.ListOAuthApplications)
-	r.With(requireAuth).Patch("/oauth/applications/{id}", authHandler.UpdateOAuthApplication)
-	r.With(requireAuth).Delete("/oauth/applications/{id}", authHandler.DeleteOAuthApplication)
 
 	return r
 }

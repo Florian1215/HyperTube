@@ -67,20 +67,19 @@
     "remove": "Supprimer",
     "noMoviesYet": "Vous n'avez encore vu aucun film.",
     "application": {
+      "seeAPIDocumentation": "Voir la documentation de l'API",
       "noApplicationsYet": "Vous n'avez encore créé aucune application.",
       "createApplication": "Créer une application",
       "createModal": {
         "title": "Créer une application",
         "name": "Nom de l'application",
         "redirect_uri": "URI de redirection",
-        "scope": "scope",
         "submit": "Créer"
       },
       "editModal": {
         "title": "Modifier l'application",
         "name": "Nom de l'application",
         "redirect_uri": "URI de redirection",
-        "scope": "scope",
         "submit": "Enregistrer les modifications"
       }
     },

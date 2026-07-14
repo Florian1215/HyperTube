@@ -49,7 +49,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                             </IconButton>
                             <IconButton onClick={() => {
                                 setEditMode(false);
-                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: deleteComment});
+                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "movie" in comment ? comment.movie.imdb_id : undefined)});
                             }} className="uppercase font-condensed text-2xl" hoverColor="red">
                                 {(color: string) => <TrashIcon color={color}/>}
                             </IconButton>
@@ -123,7 +123,7 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComme
     return (<div className="flex flex-col gap-3">
         <textarea ref={textareaRef} value={newEditedComment}
                   onInput={autoResize}
-                  className="w-full resize-none font-sans"
+                  className="w-full resize-none font-light"
                   onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();

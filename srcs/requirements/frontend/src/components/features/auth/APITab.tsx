@@ -11,9 +11,10 @@ import IconButton from "@/components/ui/Button/IconButton";
 import {TrashIcon} from "@/components/Icons";
 import Code from "@/components/ui/Code";
 import Label from "@/components/ui/Label";
-import Join from "@/components/Join";
 import {useQueryClient} from "@tanstack/react-query";
 import {removeQuery} from "@/hooks/useApiQuery";
+import TextButton from "@/components/ui/Button/TextButton";
+import {useRouter} from "@/i18n/navigation";
 
 export default function APITab() {
     const locale = useLocale();
@@ -23,6 +24,7 @@ export default function APITab() {
     const totalPage = computeTotalPage(data);
     const {openModal} = useModal();
     const t = useTranslations("profile.application");
+    const router = useRouter();
     const queryClient = useQueryClient();
     const deleteDisplayApp = (appId: number) => deleteApp(locale, appId).then(() => {
         removeQuery(queryClient, ["applications"], appId);
@@ -34,7 +36,7 @@ export default function APITab() {
             setApps(data.data);
     }, [data]);
 
-    return (<div className="mx-auto space-y-6">
+    return (<div className="mx-auto space-y-6 text-center">
         {
             (apps && apps.length > 0) ?
             <Pagination currenIndex={index} totalPage={totalPage} onClick={setIndex} variableMT={true}>
@@ -45,6 +47,7 @@ export default function APITab() {
                 <SmallText>{t("noApplicationsYet")}</SmallText>
         }
         <CreateNewApplication pageIndex={index} openModal={openModal} t={t} />
+        <TextButton onClick={() => router.push("/api-documentation")}>{t("seeAPIDocumentation")}</TextButton>
     </div>);
 }
 
@@ -52,7 +55,7 @@ function Application({app, openModal, deleteDisplayApp, locale, pageIndex, t}: {
     const date = new Date(app.created_at);
     const createdAt = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
 
-    return (<div className="w-full flex justify-between group/card items-center border p-5 custom-shadow-animation-l">
+    return (<div className="w-full flex justify-between group/card items-center border p-5 custom-shadow-animation-l text-left">
         <div className="space-y-1 w-full">
             <div className="flex justify-between items-center hover:cursor-pointer group/title mb-2">
                 <div className="flex w-9/10 items-end gap-2" onClick={() => openModal({type: "application", appId: app.id, pageIndex: pageIndex})}>
@@ -66,7 +69,6 @@ function Application({app, openModal, deleteDisplayApp, locale, pageIndex, t}: {
             <Code label="client_id">{app.client_id}</Code>
             {app.client_secret && <Code label="client_secret">{app.client_secret}</Code>}
             <div className="mt-2"><Label>{t("createModal.redirect_uri")}</Label>: <a href={app.redirect_uri} target="_blank" className="inline hover:underline hover:underline-offset-3 text-sm text-gray">{app.redirect_uri}</a></div>
-            <div><Label>{t("createModal.scope")}</Label>: {<Join items={app.scope.split(",")}/>}</div>
         </div>
     </div>)
 }
