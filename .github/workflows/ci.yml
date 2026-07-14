@@ -41,7 +41,9 @@ jobs:
   frontend:
     name: Frontend (React + Next.js)
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: srcs/requirements/frontend
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
