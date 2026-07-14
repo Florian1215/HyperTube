@@ -34,7 +34,6 @@
     --font-wide: "FT Calhern Wide", sans-serif;
     --font-hairline: "FT Calhern Hairline", sans-serif;
     --font-condensed: "FT Calhern Condensed", sans-serif;
-    --font-sans: "FT Calhern Light", sans-serif;
 }
 
 @layer base {
@@ -43,7 +42,7 @@
     h1 { @apply text-4xl sm:text-5xl md:text-6xl xl:text-8xl 2xl:text-9xl; }
     h2 { @apply text-4xl sm:text-6xl; }
     h3 { @apply text-5xl; }
-    p { @apply font-sans text-sm sm:text-base; }
+    p { @apply font-light text-sm sm:text-base; }
     a, button:hover, Link:hover { @apply cursor-pointer; }
     button:disabled, button[disabled] { @apply cursor-not-allowed; }
     input:focus, textarea:focus { outline: none; }

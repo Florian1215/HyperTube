@@ -67,6 +67,7 @@
     "remove": "Supprimer",
     "noMoviesYet": "Vous n'avez encore vu aucun film.",
     "application": {
+      "seeAPIDocumentation": "Voir la documentation de l'API",
       "noApplicationsYet": "Vous n'avez encore créé aucune application.",
       "createApplication": "Créer une application",
       "createModal": {

@@ -66,8 +66,8 @@ export default function Input(
                className={"peer py-4 m-0 w-full h-8 bg-white  border-b focus:border-b-2 " + (requestErrorMessage ? "border-b-red text-red" : "text-black")}
         />
         <label htmlFor={id}
-               className={"pointer-events-none uppercase absolute text-xs font-sans bottom-15\
-                   peer-focus:text-xs peer-focus:font-sans peer-focus:bottom-15\
+               className={"pointer-events-none uppercase absolute text-xs font-light bottom-15\
+                   peer-focus:text-xs peer-focus:font-light peer-focus:bottom-15\
                    peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl" + (requestErrorMessage ? " text-red" : "")}>{placeholder}</label>
         {isPassword && (<button type="button" className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={requestErrorMessage ? "red" : "black"} /></button>)}
         {isPassword && (<IconButton color={requestErrorMessage ? "red" : "black"} className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}>{(color: string) => <EyeIcon crossed={isPasswordVisible} color={color}/>}</IconButton>)}
