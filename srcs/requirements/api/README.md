@@ -916,9 +916,10 @@ their normal expiry, currently 15 minutes.
 
 ### POST /oauth/token
 
-OAuth2-compatible token endpoint for password and registered application
-client-credentials grants. It returns a JWT bearer access token for API routes.
+OAuth2-compatible token endpoint for registered application
+`client_credentials` grants. It returns a JWT bearer access token for API routes.
 This endpoint is also available at the legacy root path `POST /oauth/token`.
+User password login belongs to `POST /api/v1/auth/login`.
 
 Unlike the other auth endpoints, this endpoint uses OAuth2 token response shapes
 directly. Success responses are not wrapped in `data`, and errors are not
@@ -932,37 +933,6 @@ Supported content types:
 - `application/json`
 - empty `Content-Type`, parsed as form data
 
-#### Password grant
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `grant_type` | string | yes | Must be `password`. |
-| `username` | string | yes | Username or email address. Email login is normalized. |
-| `password` | string | yes | Existing password. Must be present and no longer than 72 bytes. |
-| `scope` | string | no | Optional OAuth scope string. Whitespace is normalized in the response. |
-
-##### Example request
-
-```http
-POST /api/v1/oauth/token
-Content-Type: application/x-www-form-urlencoded
-```
-
-```text
-grant_type=password&username=ada_lovelace&password=correct-horse-battery&scope=profile
-```
-
-JSON is also accepted:
-
-```json
-{
-  "grant_type": "password",
-  "username": "ada@example.com",
-  "password": "correct-horse-battery",
-  "scope": "profile"
-}
-```
-
 #### Client credentials grant
 
 Registered OAuth applications use `grant_type=client_credentials`. When the
@@ -972,7 +942,7 @@ the application owner user ID. This flow does not require or use
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `grant_type` | string | usually | Must be `client_credentials` when present. It may be omitted when the body contains only `client_id` and `client_secret`. |
+| `grant_type` | string | usually | Must be `client_credentials` when present. It may be omitted when `client_id` and `client_secret` are present and password-login fields are absent. Optional `scope` is still allowed in this implicit path. |
 | `client_id` | string | yes | Client ID returned by application creation. Trimmed before lookup. |
 | `client_secret` | string | yes | One-time secret returned by application creation. It is not trimmed before verification. |
 | `scope` | string | no | Optional requested scope. It must be a subset of the stored application scope. |
@@ -1027,20 +997,19 @@ Pragma: no-cache
 
 | Status | Error | Description |
 |--------|-------|-------------|
-| 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `username` or `password`, missing `client_id` or `client_secret`, or password too long. |
-| 400 | `unsupported_grant_type` | `grant_type` is neither `password` nor `client_credentials`. |
-| 400 | `invalid_grant` | Username/email or password is incorrect. |
+| 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `client_id` or `client_secret`, or omitted `grant_type` with password-login fields present. |
+| 400 | `unsupported_grant_type` | `grant_type` is not `client_credentials`. |
 | 400 | `invalid_scope` | Requested scope is outside the application scope. |
 | 401 | `invalid_client` | `client_id` or `client_secret` is incorrect. |
 | 415 | `invalid_request` | Body must be form encoded or JSON. |
-| 500 | `server_error` | Auth service unavailable, user load failed, token creation failed, or application lookup failed. |
+| 500 | `server_error` | Auth service unavailable, token creation failed, or application lookup failed. |
 
 Example:
 
 ```json
 {
-  "error": "invalid_grant",
-  "error_description": "Invalid username or password"
+  "error": "unsupported_grant_type",
+  "error_description": "Only client_credentials grant type is supported"
 }
 ```
 

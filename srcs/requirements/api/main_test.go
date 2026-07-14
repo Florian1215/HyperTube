@@ -84,9 +84,19 @@ func TestRouterPublicAuthJSONRoutes(t *testing.T) {
 func TestRouterOAuthTokenRoutesArePublic(t *testing.T) {
 	router, _ := newTestRouter(t)
 
-	for _, path := range []string{"/api/v1/oauth/token", "/oauth/token"} {
-		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`grant_type=authorization_code`))
+	tests := []struct {
+		path string
+		body string
+	}{
+		{path: "/api/v1/oauth/token", body: "grant_type=authorization_code"},
+		{path: "/api/v1/oauth/token", body: "grant_type=password&username=alice_1&password=correct-horse-battery"},
+		{path: "/oauth/token", body: "grant_type=authorization_code"},
+		{path: "/oauth/token", body: "grant_type=password&username=alice_1&password=correct-horse-battery"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path+" "+tt.body, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			rec := httptest.NewRecorder()
 
