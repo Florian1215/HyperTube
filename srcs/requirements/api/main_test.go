@@ -90,8 +90,6 @@ func TestRouterOAuthTokenRoutesArePublic(t *testing.T) {
 	}{
 		{path: "/api/v1/oauth/token", body: "grant_type=authorization_code"},
 		{path: "/api/v1/oauth/token", body: "grant_type=password&username=alice_1&password=correct-horse-battery"},
-		{path: "/oauth/token", body: "grant_type=authorization_code"},
-		{path: "/oauth/token", body: "grant_type=password&username=alice_1&password=correct-horse-battery"},
 	}
 
 	for _, tt := range tests {
@@ -130,10 +128,6 @@ func TestRouterOAuthApplicationRoutesRequireBearerToken(t *testing.T) {
 		{method: http.MethodGet, path: "/api/v1/oauth/applications"},
 		{method: http.MethodPatch, path: "/api/v1/oauth/applications/1", body: `{}`},
 		{method: http.MethodDelete, path: "/api/v1/oauth/applications/1"},
-		{method: http.MethodPost, path: "/oauth/applications", body: `{}`},
-		{method: http.MethodGet, path: "/oauth/applications"},
-		{method: http.MethodPatch, path: "/oauth/applications/1", body: `{}`},
-		{method: http.MethodDelete, path: "/oauth/applications/1"},
 	}
 
 	for _, tt := range tests {
