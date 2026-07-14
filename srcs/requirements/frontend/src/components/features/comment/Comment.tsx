@@ -49,7 +49,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                             </IconButton>
                             <IconButton onClick={() => {
                                 setEditMode(false);
-                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: deleteComment});
+                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "movie" in comment ? comment.movie.imdb_id : undefined)});
                             }} className="uppercase font-condensed text-2xl" hoverColor="red">
                                 {(color: string) => <TrashIcon color={color}/>}
                             </IconButton>
