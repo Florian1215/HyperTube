@@ -763,15 +763,6 @@ PATCH  /api/v1/oauth/applications/{id}
 DELETE /api/v1/oauth/applications/{id}
 ```
 
-Root aliases are also available:
-
-```text
-POST   /oauth/applications
-GET    /oauth/applications
-PATCH  /oauth/applications/{id}
-DELETE /oauth/applications/{id}
-```
-
 #### Create application
 
 ```http
