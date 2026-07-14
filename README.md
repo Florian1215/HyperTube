@@ -1,8 +1,8 @@
 # HyperTube
 
-A web application to search for and stream movies downloaded via Torrent — playback begins before the download completes.
+A web application to search for and stream movies downloaded via Torrent, playback begins before the download completes.
 
-Built as a 42 Berlin project by Jules Bernard, Omio Ohoro and Florian Guirama.
+Built as a 42 Berlin project by Jules Bernard, Omio Ohoro and Florian Guiramand.
 
 ---
 
@@ -28,17 +28,17 @@ A user searches for a movie. Results are pulled from two torrent sources (archiv
 ## Architecture
 
 ```
-browser (Next.js + hls.js)
+browser (Next.js in srcs/requirements/frontend + hls.js)
   │  REST  /api/v1/*
   ▼
-api service (Go, :8080)
+api service (Go, srcs/requirements/api, :8080)
   ├── auth — email/password, 42 / GitHub / GitLab OAuth, JWT + refresh tokens
   ├── users, comments, watch history & progress
   ├── movie search + metadata (archive.org, C411, TMDb)
   └── stream — serves the HLS playlist + segments from the shared /data volume
         │  HTTP (internal)  →  torrent-transcode (:8081, behind VPN)
         ▼
-torrent-transcode service (Go)
+torrent-transcode service (Go, srcs/requirements/torrent-transcode)
   ├── anacrolix/torrent — sequential piece download
   ├── ffmpeg — transcode to HLS (H.264 / AAC, 5s segments)
   └── cleanup — removes unfinished torrents on restart, old videos after 30 days
@@ -46,9 +46,9 @@ torrent-transcode service (Go)
 ALL torrent traffic shares the VPN container's network namespace (Gluetun / PIA)
 ```
 
-The `api` and `torrent-transcode` services share the `./data` volume: `torrent-transcode`
-downloads and transcodes into `/data/videos/{id}/`, and the `api` stream handler serves
-those HLS files to the browser.
+The `api` and `torrent-transcode` services share the `srcs/data` volume:
+`torrent-transcode` downloads and transcodes into `srcs/data/videos/{id}/`, and the `api`
+stream handler serves those HLS files to the browser.
 
 ---
 
@@ -97,32 +97,34 @@ torrent-transcode:
 
 ## Running it
 
-Copy the example environment and fill in the secrets:
+Generate the environment file and fill in any provider-specific secrets:
 
 ```bash
-cp .env.example .env
-# set JWT_SECRET (e.g. openssl rand -base64 32), TMDB_API_KEY, C411_API_KEY,
-# PIA credentials, OAuth provider client IDs/secrets, and Brevo key for password-reset email
+make env
+# srcs/.env is generated from .env.exemple
 ```
 
 Then use the Makefile:
 
 ```bash
-make up        # build & start postgres + api + vpn + torrent-transcode
-make up-vpn    # same, enabling the VPN profile
-make re        # wipe ./data, recreate the stack from scratch
-make down      # stop and remove volumes
-make logs      # follow all logs
+make             # build & start the stack
+make up          # compose up
+make build       # build images
+make down        # stop containers
+make logs        # follow all logs
+make logs SERVICE=api   # follow one service
+make exec SERVICE=api   # open a shell in one service
 ```
 
 The frontend container is not started by Compose; run it locally:
 
 ```bash
-make frontend  # cd frontend && npm run dev  (http://localhost:4200)
+cd srcs/requirements/frontend && npm run dev  # http://localhost:4200
 ```
 
-PostgreSQL initializes its schema from `db/` only when its volume is first created.
-After a schema change, recreate the database (`make down` removes volumes, or `make re`).
+PostgreSQL initializes its schema from `srcs/requirements/db/` only when its volume is
+first created.
+After a schema change, recreate the database with `make vclean` or `make re`.
 
 | Service | Port |
 |---|---|
@@ -134,10 +136,12 @@ After a schema change, recreate the database (`make down` removes volumes, or `m
 ### Useful dev commands
 
 ```bash
-make api                   # run the api service directly (go run .)
-make stream                # run the torrent service directly
-make api-integration-test  # API integration tests
-make tidy                  # go mod tidy across services
+make ps           # list containers
+make detach       # compose up in detached mode
+make clean        # remove containers and local images
+make vclean       # remove containers, volumes, env, and data
+make fclean       # remove everything, including images
+make re           # reset env/data and start again
 ```
 
 ---
@@ -147,24 +151,51 @@ make tidy                  # go mod tidy across services
 ```
 /
 ├── README.md
-├── docker-compose.yml
 ├── Makefile
-├── .env.example
-├── db/                       # SQL migrations + dev/curated seeds (auto-loaded by postgres)
-├── data/                     # shared volume: torrents/ and videos/ (git-ignored)
-├── services/
-│   ├── api/                  # Go REST API (chi)
-│   │   ├── main.go
-│   │   └── internal/
-│   │       ├── auth/         # password + 42/GitHub/GitLab OAuth, JWT, refresh, reset
-│   │       ├── movies/       # search + metadata; sources: archive.org/, c411/, tmdb/
-│   │       ├── stream/       # serves HLS index + segments
-│   │       ├── downloader/   # fetches .torrent files
-│   │       ├── comments/ users/ email/ i18n/ models/ ...
-│   │       └── README.md     # detailed auth request/response docs
-│   └── torrent-transcode/    # Go: torrent download + ffmpeg HLS transcode + cleanup
-│       └── internal/{torrent,transcode,cleanup}/
-└── frontend/                 # Next.js app (src/app/[locale]/…), i18n: en / de / fr
+├── .env.exemple
+├── launch.d/
+│   └── 01generatePasswordsAndKeys.sh
+└── srcs/
+    ├── docker-compose.yml
+    ├── .env
+    ├── data/                 # shared volume: torrents/ and videos/ (git-ignored)
+    └── requirements/
+        ├── api/              # Go REST API (chi)
+        │   ├── main.go
+        │   └── internal/
+        │       ├── auth/     # password + 42/GitHub/GitLab OAuth, JWT, refresh, reset
+        │       ├── comments/
+        │       ├── downloader/
+        │       ├── email/
+        │       ├── i18n/
+        │       ├── models/
+        │       ├── movies/
+        │       ├── requestjson/
+        │       ├── respond/
+        │       ├── stream/
+        │       ├── userinput/
+        │       └── users/
+        ├── db/              # SQL schema + seeds (auto-loaded by postgres)
+        │   ├── 001_schema.sql
+        │   ├── 002_seed_dev.sql
+        │   └── 007_seed_curated_movies.sql
+        ├── frontend/        # Next.js app
+        │   ├── messages/{de,en,fr}.json
+        │   ├── public/
+        │   └── src/
+        │       ├── app/[locale]/
+        │       ├── components/{features,layout,ui}
+        │       ├── contexts/
+        │       ├── hooks/
+        │       ├── i18n/
+        │       ├── services/
+        │       ├── types/
+        │       └── utils/
+        └── torrent-transcode/
+            └── internal/
+                ├── cleanup/
+                ├── torrent/
+                └── transcode/
 ```
 
 ---
@@ -174,7 +205,7 @@ make tidy                  # go mod tidy across services
 Base path: `/api/v1`. Most content routes are JWT-protected. Public routes: health,
 movie listing/search, registration, login, refresh, password-reset, OAuth start/callback,
 and the OAuth2 token endpoint. Detailed auth request/response examples live in
-`services/api/README.md`.
+`srcs/requirements/api/README.md`.
 
 ```
 GET    /health
