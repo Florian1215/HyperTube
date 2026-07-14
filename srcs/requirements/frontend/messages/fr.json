@@ -73,14 +73,12 @@
         "title": "Créer une application",
         "name": "Nom de l'application",
         "redirect_uri": "URI de redirection",
-        "scope": "scope",
         "submit": "Créer"
       },
       "editModal": {
         "title": "Modifier l'application",
         "name": "Nom de l'application",
         "redirect_uri": "URI de redirection",
-        "scope": "scope",
         "submit": "Enregistrer les modifications"
       }
     },

@@ -38,6 +38,6 @@ export default function CreateApplicationModal() {
 
     return (<ModalLayout onCloseAction={closeModal} title={t("title")}>
         <Form formType="application" request={isCreate ? postNewApp : patchApp} handleRequest={handleCreateNewApp} t={t}
-              fields={["name", "redirect_uri", "scope"]} extraParam={activeModal.appId}/>
+              fields={["name", "redirect_uri"]} extraParam={activeModal.appId}/>
     </ModalLayout>);
 }

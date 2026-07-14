@@ -66,7 +66,6 @@ function Application({app, openModal, deleteDisplayApp, locale, pageIndex, t}: {
             <Code label="client_id">{app.client_id}</Code>
             {app.client_secret && <Code label="client_secret">{app.client_secret}</Code>}
             <div className="mt-2"><Label>{t("createModal.redirect_uri")}</Label>: <a href={app.redirect_uri} target="_blank" className="inline hover:underline hover:underline-offset-3 text-sm text-gray">{app.redirect_uri}</a></div>
-            <div><Label>{t("createModal.scope")}</Label>: {<Join items={app.scope.split(",")}/>}</div>
         </div>
     </div>)
 }

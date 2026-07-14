@@ -73,14 +73,12 @@
         "title": "Anwendung erstellen",
         "name": "Name der Anwendung",
         "redirect_uri": "URI",
-        "scope": "Umfang",
         "submit": "Erstellen"
       },
       "editModal": {
         "title": "Anwendung bearbeiten",
         "name": "Name der Anwendung",
         "redirect_uri": "URI",
-        "scope": "Umfang",
         "submit": "Änderungen speichern"
       }
     },

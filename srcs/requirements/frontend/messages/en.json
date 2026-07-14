@@ -73,14 +73,12 @@
         "title": "Create application",
         "name": "Name of the application",
         "redirect_uri": "Redirect URI",
-        "scope": "scope",
         "submit": "Create"
       },
       "editModal": {
         "title": "Edit application",
         "name": "Name of the application",
         "redirect_uri": "Redirect URI",
-        "scope": "scope",
         "submit": "Save changes"
       }
     },
