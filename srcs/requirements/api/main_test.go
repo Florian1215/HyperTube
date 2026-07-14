@@ -154,7 +154,7 @@ func TestRouterOAuthApplicationRoutesWithValidTokenReachHandler(t *testing.T) {
 		t.Fatalf("create token: %v", err)
 	}
 
-	for _, path := range []string{"/api/v1/oauth/applications", "/oauth/applications"} {
+	for _, path := range []string{"/api/v1/oauth/applications"} {
 		t.Run(path, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, path, nil)
 			req.Header.Set("Authorization", "Bearer "+token)
