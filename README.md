@@ -222,10 +222,17 @@ GET    /stream/{id}/{segment}        # HLS segment (.ts)
 ## Auth
 
 - Registration: email, username, first name, last name, password (bcrypt)
-- 42, GitHub and GitLab OAuth (when provider client credentials are configured)
+- 42, GitHub and GitLab OAuth (when provider client credentials are configured);
+  browser provider flows request fixed profile scopes: 42 `public`, GitHub
+  `read:user user:email`, GitLab `read_user`
 - JWT issued on login / OAuth callback, validated on every protected request, with refresh tokens
 - User-managed OAuth applications and OAuth2 token endpoint at `POST /oauth/token`
-  for registered client-credentials grants
+  for registered `client_credentials` grants. Application `scope` is stored as a
+  normalized whitespace-separated string; token requests may omit it to receive
+  the app's full stored scope, or request a subset. Requested scopes outside the
+  application scope are rejected with `invalid_scope`. Current JWT access tokens
+  do not embed or enforce scopes on protected routes; they authenticate as the
+  application owner user.
 - Password reset by email via Brevo (when configured)
 
 ---
