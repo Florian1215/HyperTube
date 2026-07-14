@@ -225,7 +225,7 @@ GET    /stream/{id}/{segment}        # HLS segment (.ts)
 - 42, GitHub and GitLab OAuth (when provider client credentials are configured)
 - JWT issued on login / OAuth callback, validated on every protected request, with refresh tokens
 - User-managed OAuth applications and OAuth2 token endpoint at `POST /oauth/token`
-  (password and registered client-credentials grants)
+  for registered client-credentials grants
 - Password reset by email via Brevo (when configured)
 
 ---

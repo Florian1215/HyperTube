@@ -94,7 +94,7 @@ const (
 	MsgInvalidFrontendAuthCallbackURL  Message = "invalid frontend auth callback URL"
 	MsgFailedCreateAuthResponse        Message = "failed to create auth response"
 	MsgGrantTypeRequired               Message = "grant type is required"
-	MsgUnsupportedGrantType            Message = "only password and client_credentials grant types are supported"
+	MsgUnsupportedGrantType            Message = "only client_credentials grant type is supported"
 	MsgUsernamePasswordRequired        Message = "username and password are required"
 	MsgClientCredentialsRequired       Message = "client_id and client_secret are required"
 	MsgInvalidClientCredentials        Message = "invalid client credentials"
@@ -221,7 +221,7 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFrontendAuthCallbackURL:  "URL de callback d'authentification frontend invalide",
 		MsgFailedCreateAuthResponse:        "échec de la création de la réponse d'authentification",
 		MsgGrantTypeRequired:               "type de grant requis",
-		MsgUnsupportedGrantType:            "seuls les grant types password et client_credentials sont pris en charge",
+		MsgUnsupportedGrantType:            "seul le grant type client_credentials est pris en charge",
 		MsgUsernamePasswordRequired:        "nom d'utilisateur et mot de passe requis",
 		MsgClientCredentialsRequired:       "client_id et client_secret sont requis",
 		MsgInvalidClientCredentials:        "identifiants client invalides",
@@ -338,7 +338,7 @@ var translations = map[Locale]map[Message]string{
 		MsgInvalidFrontendAuthCallbackURL:  "Frontend-Auth-Callback-URL ist ungültig",
 		MsgFailedCreateAuthResponse:        "Auth-Antwort konnte nicht erstellt werden",
 		MsgGrantTypeRequired:               "Grant Type ist erforderlich",
-		MsgUnsupportedGrantType:            "Nur password und client_credentials Grant Types werden unterstützt",
+		MsgUnsupportedGrantType:            "Nur der client_credentials Grant Type wird unterstützt",
 		MsgUsernamePasswordRequired:        "Benutzername und Passwort sind erforderlich",
 		MsgClientCredentialsRequired:       "client_id und client_secret sind erforderlich",
 		MsgInvalidClientCredentials:        "Client-Zugangsdaten sind ungültig",

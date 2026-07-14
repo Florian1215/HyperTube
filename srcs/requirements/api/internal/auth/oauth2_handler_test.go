@@ -9,61 +9,45 @@ import (
 	"testing"
 )
 
-func TestOAuthTokenPasswordGrantReturnsBearerToken(t *testing.T) {
-	store := newMemoryUserStore()
-	tokens := newTestTokenManager(t)
-	handler := NewHandler(store, tokens)
-	user := createPasswordUser(t, store, "alice@example.com", "alice_1", "correct-horse-battery")
+func TestOAuthTokenPasswordGrantIsUnsupported(t *testing.T) {
+	handler := NewHandler(newMemoryUserStore(), newTestTokenManager(t))
 
-	form := url.Values{}
-	form.Set("grant_type", "password")
-	form.Set("username", "alice_1")
-	form.Set("password", "correct-horse-battery")
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	rec := httptest.NewRecorder()
+	tests := []struct {
+		name        string
+		contentType string
+		body        string
+	}{
+		{
+			name:        "form",
+			contentType: "application/x-www-form-urlencoded",
+			body:        "grant_type=password&username=alice_1&password=correct-horse-battery",
+		},
+		{
+			name:        "json",
+			contentType: "application/json",
+			body:        `{"grant_type":"password","username":"alice_1","password":"correct-horse-battery"}`,
+		},
+	}
 
-	handler.OAuthToken(rec, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", tt.contentType)
+			rec := httptest.NewRecorder()
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
-	}
-	var response oauthTokenResponse
-	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if response.AccessToken == "" {
-		t.Fatal("expected access token")
-	}
-	if response.TokenType != "Bearer" {
-		t.Fatalf("expected Bearer token type, got %q", response.TokenType)
-	}
-	if response.ExpiresIn != int64(AccessTokenTTL.Seconds()) {
-		t.Fatalf("expected expires_in %d, got %d", int64(AccessTokenTTL.Seconds()), response.ExpiresIn)
-	}
-	claims, err := tokens.ValidateAccessToken(response.AccessToken)
-	if err != nil {
-		t.Fatalf("token should validate: %v", err)
-	}
-	if claims.UserID != user.ID {
-		t.Fatalf("expected token user id %d, got %d", user.ID, claims.UserID)
-	}
-}
+			handler.OAuthToken(rec, req)
 
-func TestOAuthTokenPasswordGrantAcceptsEmailLogin(t *testing.T) {
-	store := newMemoryUserStore()
-	handler := NewHandler(store, newTestTokenManager(t))
-	createPasswordUser(t, store, "alice@example.com", "alice_1", "correct-horse-battery")
-
-	body := `{"grant_type":"password","username":"Alice@Example.COM","password":"correct-horse-battery"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/oauth/token", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
-
-	handler.OAuthToken(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			response := decodeOAuthTokenError(t, rec)
+			if response.Error != "unsupported_grant_type" {
+				t.Fatalf("expected unsupported_grant_type, got %q", response.Error)
+			}
+			if strings.Contains(response.ErrorDescription, "password") {
+				t.Fatalf("error description must not say password is supported: %q", response.ErrorDescription)
+			}
+		})
 	}
 }
 
@@ -122,9 +106,9 @@ func TestOAuthTokenClientCredentialsGrantAcceptsJSON(t *testing.T) {
 func TestOAuthTokenClientCredentialsGrantAcceptsJSONWithoutGrantType(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
+	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies write:comments", "hypertube-api", "replace-with-secret")
 
-	body := `{"client_id":"hypertube-api","client_secret":"replace-with-secret"}`
+	body := `{"client_id":"hypertube-api","client_secret":"replace-with-secret","scope":"read:movies"}`
 	rec := postOAuthTokenJSON(t, handler, body)
 
 	if rec.Code != http.StatusOK {
@@ -133,6 +117,30 @@ func TestOAuthTokenClientCredentialsGrantAcceptsJSONWithoutGrantType(t *testing.
 	response := decodeOAuthTokenResponse(t, rec)
 	if response.AccessToken == "" {
 		t.Fatal("expected access token")
+	}
+	if response.Scope != "read:movies" {
+		t.Fatalf("expected requested scope, got %q", response.Scope)
+	}
+}
+
+func TestOAuthTokenDoesNotInferClientCredentialsWhenPasswordFieldsArePresent(t *testing.T) {
+	store := newMemoryUserStore()
+	handler := NewHandler(store, newTestTokenManager(t))
+	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies", "hypertube-api", "replace-with-secret")
+
+	form := url.Values{}
+	form.Set("client_id", "hypertube-api")
+	form.Set("client_secret", "replace-with-secret")
+	form.Set("username", "alice_1")
+	form.Set("password", "correct-horse-battery")
+	rec := postOAuthTokenForm(t, handler, form)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	response := decodeOAuthTokenError(t, rec)
+	if response.Error != "invalid_request" {
+		t.Fatalf("expected invalid_request, got %q", response.Error)
 	}
 }
 
@@ -280,7 +288,6 @@ func TestOAuthTokenClientCredentialsGrantRejectsNilTokenManager(t *testing.T) {
 func TestOAuthTokenRejectsInvalidGrant(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	createPasswordUser(t, store, "alice@example.com", "alice_1", "right-password")
 
 	tests := []struct {
 		name      string
@@ -301,15 +308,6 @@ func TestOAuthTokenRejectsInvalidGrant(t *testing.T) {
 				"grant_type": {"authorization_code"},
 			},
 			wantError: "unsupported_grant_type",
-		},
-		{
-			name: "wrong password",
-			form: url.Values{
-				"grant_type": {"password"},
-				"username":   {"alice_1"},
-				"password":   {"wrong-password"},
-			},
-			wantError: "invalid_grant",
 		},
 	}
 
