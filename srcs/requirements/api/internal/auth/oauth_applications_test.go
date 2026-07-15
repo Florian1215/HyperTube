@@ -92,15 +92,16 @@ func TestCreateOAuthApplicationRequiresAuthContext(t *testing.T) {
 
 func TestCreateOAuthApplicationValidation(t *testing.T) {
 	tests := []struct {
-		name       string
-		body       string
-		wantStatus int
-		wantField  string
+		name          string
+		body          string
+		wantStatus    int
+		wantField     string
+		wantErrorCode string
 	}{
-		{name: "invalid JSON", body: `{"name":`, wantStatus: http.StatusBadRequest},
+		{name: "invalid JSON", body: `{"name":`, wantStatus: http.StatusBadRequest, wantErrorCode: "BAD_REQUEST"},
 		{name: "missing name", body: `{"redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "name"},
 		{name: "blank name", body: `{"name":"   ","redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "name"},
-		{name: "scope too long", body: `{"name":"My App","scope":"` + strings.Repeat("s", oauthApplicationScopeMaxLength+1) + `","redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantField: "scope"},
+		{name: "unknown scope", body: `{"name":"My App","scope":"read:movies","redirect_uri":"http://localhost:4200/auth/callback"}`, wantStatus: http.StatusBadRequest, wantErrorCode: "BAD_REQUEST"},
 		{name: "missing redirect_uri", body: `{"name":"My App"}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
 		{name: "blank redirect_uri", body: `{"name":"My App","redirect_uri":"   "}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
 		{name: "null redirect_uri", body: `{"name":"My App","redirect_uri":null}`, wantStatus: http.StatusBadRequest, wantField: "redirect_uri"},
@@ -126,6 +127,9 @@ func TestCreateOAuthApplicationValidation(t *testing.T) {
 			if tt.wantField != "" {
 				assertValidationErrorField(t, rec, tt.wantField)
 			}
+			if tt.wantErrorCode != "" {
+				assertErrorCode(t, rec, tt.wantErrorCode)
+			}
 		})
 	}
 }
@@ -136,7 +140,6 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 
 	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodPost, "/oauth/applications", `{
 		"name": "  My App  ",
-		"scope": "read:movies   write:comments",
 		"redirect_uri": "  http://localhost:4200/auth/callback?next=/movies  "
 	}`)
 
@@ -148,7 +151,6 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 		Data struct {
 			ID           int64  `json:"id"`
 			Name         string `json:"name"`
-			Scope        string `json:"scope"`
 			RedirectURI  string `json:"redirect_uri"`
 			ClientID     string `json:"client_id"`
 			ClientSecret string `json:"client_secret"`
@@ -159,7 +161,7 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.ID == 0 || body.Data.Name != "My App" || body.Data.Scope != "read:movies write:comments" {
+	if body.Data.ID == 0 || body.Data.Name != "My App" {
 		t.Fatalf("unexpected app response: %+v", body.Data)
 	}
 	if body.Data.RedirectURI != "http://localhost:4200/auth/callback?next=/movies" {
@@ -175,7 +177,7 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 		t.Fatalf("expected timestamps, got %+v", body.Data)
 	}
 
-	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret_hash", "owner_id")
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret_hash", "owner_id", "scope")
 
 	client, err := store.FindOAuthClientByClientID(context.Background(), body.Data.ClientID)
 	if err != nil {
@@ -192,9 +194,9 @@ func TestCreateOAuthApplicationReturnsOneTimeSecret(t *testing.T) {
 func TestListOAuthApplicationsFiltersByAuthenticatedUser(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	createStoredOAuthApplication(t, store, 42, "First", "read:movies", "client-one", "secret-one")
-	createStoredOAuthApplication(t, store, 99, "Other", "admin", "client-other", "secret-other")
-	createStoredOAuthApplication(t, store, 42, "Second", "write:comments", "client-two", "secret-two")
+	createStoredOAuthApplication(t, store, 42, "First", "client-one", "secret-one")
+	createStoredOAuthApplication(t, store, 99, "Other", "client-other", "secret-other")
+	createStoredOAuthApplication(t, store, 42, "Second", "client-two", "secret-two")
 
 	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, "/oauth/applications", "")
 
@@ -219,7 +221,7 @@ func TestListOAuthApplicationsFiltersByAuthenticatedUser(t *testing.T) {
 			t.Fatalf("expected listed redirect URI, got %+v", app)
 		}
 	}
-	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id", "scope")
 }
 
 func TestListOAuthApplicationsReturnsEmptyList(t *testing.T) {
@@ -244,9 +246,9 @@ func TestListOAuthApplicationsPaginates(t *testing.T) {
 	handler := NewHandler(store, newTestTokenManager(t))
 	for i := 0; i < 14; i++ {
 		suffix := strconv.Itoa(i)
-		createStoredOAuthApplication(t, store, 42, "App "+suffix, "read:movies", "client-"+suffix, "secret-"+suffix)
+		createStoredOAuthApplication(t, store, 42, "App "+suffix, "client-"+suffix, "secret-"+suffix)
 	}
-	createStoredOAuthApplication(t, store, 99, "Other", "admin", "client-other", "secret-other")
+	createStoredOAuthApplication(t, store, 99, "Other", "client-other", "secret-other")
 
 	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, "/oauth/applications?page=1", "")
 
@@ -274,7 +276,7 @@ func TestListOAuthApplicationsPaginates(t *testing.T) {
 	if len(wantClientIDs) != 0 {
 		t.Fatalf("missing expected page 1 apps: %+v", wantClientIDs)
 	}
-	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id", "scope")
 }
 
 func TestListOAuthApplicationsInvalidPageFallsBackToFirstPage(t *testing.T) {
@@ -294,7 +296,7 @@ func TestListOAuthApplicationsInvalidPageFallsBackToFirstPage(t *testing.T) {
 			handler := NewHandler(store, newTestTokenManager(t))
 			for i := 0; i < 13; i++ {
 				suffix := strconv.Itoa(i)
-				createStoredOAuthApplication(t, store, 42, "App "+suffix, "read:movies", "client-"+suffix, "secret-"+suffix)
+				createStoredOAuthApplication(t, store, 42, "App "+suffix, "client-"+suffix, "secret-"+suffix)
 			}
 
 			rec := callOAuthApplicationRoute(t, handler, 42, http.MethodGet, tt.path, "")
@@ -319,8 +321,8 @@ func TestListOAuthApplicationsInvalidPageFallsBackToFirstPage(t *testing.T) {
 func TestUpdateOAuthApplicationValidationAndOwnership(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	owned := createStoredOAuthApplication(t, store, 42, "Old", "read:movies", "owned-client", "owned-secret")
-	other := createStoredOAuthApplication(t, store, 99, "Other", "read:movies", "other-client", "other-secret")
+	owned := createStoredOAuthApplication(t, store, 42, "Old", "owned-client", "owned-secret")
+	other := createStoredOAuthApplication(t, store, 99, "Other", "other-client", "other-secret")
 
 	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/not-a-number", `{"name":"New"}`)
 	if rec.Code != http.StatusNotFound {
@@ -331,6 +333,12 @@ func TestUpdateOAuthApplicationValidationAndOwnership(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected empty patch 400, got %d: %s", rec.Code, rec.Body.String())
 	}
+
+	rec = callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/"+strconvInt64(owned.ID), `{"scope":"read:movies"}`)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected scope patch 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+	assertErrorCode(t, rec, "BAD_REQUEST")
 
 	rec = callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/"+strconvInt64(other.ID), `{"name":"Nope"}`)
 	if rec.Code != http.StatusNotFound {
@@ -376,7 +384,6 @@ func TestUpdateOAuthApplicationValidationAndOwnership(t *testing.T) {
 
 	rec = callOAuthApplicationRoute(t, handler, 42, http.MethodPatch, "/oauth/applications/"+strconvInt64(owned.ID), `{
 		"name": "  New Name  ",
-		"scope": "write:comments   read:movies",
 		"redirect_uri": "  http://localhost:4200/auth/callback?next=/profile  "
 	}`)
 	if rec.Code != http.StatusOK {
@@ -385,24 +392,23 @@ func TestUpdateOAuthApplicationValidationAndOwnership(t *testing.T) {
 	var body struct {
 		Data struct {
 			Name        string `json:"name"`
-			Scope       string `json:"scope"`
 			RedirectURI string `json:"redirect_uri"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Data.Name != "New Name" || body.Data.Scope != "write:comments read:movies" || body.Data.RedirectURI != "http://localhost:4200/auth/callback?next=/profile" {
+	if body.Data.Name != "New Name" || body.Data.RedirectURI != "http://localhost:4200/auth/callback?next=/profile" {
 		t.Fatalf("unexpected patch response: %+v", body.Data)
 	}
-	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id")
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "client_secret", "client_secret_hash", "owner_id", "scope")
 }
 
 func TestDeleteOAuthApplicationDeletesOnlyOwnedApp(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	owned := createStoredOAuthApplication(t, store, 42, "Owned", "", "owned-client", "owned-secret")
-	other := createStoredOAuthApplication(t, store, 99, "Other", "", "other-client", "other-secret")
+	owned := createStoredOAuthApplication(t, store, 42, "Owned", "owned-client", "owned-secret")
+	other := createStoredOAuthApplication(t, store, 99, "Other", "other-client", "other-secret")
 
 	rec := callOAuthApplicationRoute(t, handler, 42, http.MethodDelete, "/oauth/applications/"+strconvInt64(other.ID), "")
 	if rec.Code != http.StatusNotFound {
@@ -449,7 +455,7 @@ func callOAuthApplicationRoute(t *testing.T, handler *Handler, userID int64, met
 	return rec
 }
 
-func createStoredOAuthApplication(t *testing.T, store *memoryUserStore, ownerID int64, name string, scope string, clientID string, secret string) models.OAuthApplication {
+func createStoredOAuthApplication(t *testing.T, store *memoryUserStore, ownerID int64, name string, clientID string, secret string) models.OAuthApplication {
 	t.Helper()
 
 	hash, err := HashPassword(secret)
@@ -459,7 +465,6 @@ func createStoredOAuthApplication(t *testing.T, store *memoryUserStore, ownerID 
 	app, err := store.CreateOAuthApplication(context.Background(), CreateOAuthApplicationParams{
 		OwnerUserID:      ownerID,
 		Name:             name,
-		Scope:            scope,
 		RedirectURI:      testOAuthApplicationRedirectURI,
 		ClientID:         clientID,
 		ClientSecretHash: hash,
@@ -503,6 +508,15 @@ func assertValidationErrorField(t *testing.T, rec *httptest.ResponseRecorder, fi
 	}
 	if _, ok := errorBody.Fields[field]; !ok {
 		t.Fatalf("expected validation field %q, got %+v", field, errorBody.Fields)
+	}
+}
+
+func assertErrorCode(t *testing.T, rec *httptest.ResponseRecorder, code string) {
+	t.Helper()
+
+	errorBody := decodeErrorEnvelope(t, rec).Error
+	if errorBody.Code != code {
+		t.Fatalf("expected error code %q, got %q: %s", code, errorBody.Code, rec.Body.String())
 	}
 }
 

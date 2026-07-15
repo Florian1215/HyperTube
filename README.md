@@ -218,10 +218,10 @@ POST   /auth/password-reset/set-new-password
 GET    /auth/42/login        GET /auth/42/callback
 GET    /auth/github/login    GET /auth/github/callback
 GET    /auth/gitlab/login    GET /auth/gitlab/callback
-POST   /oauth/token
-POST   /oauth/applications   GET /oauth/applications
-PATCH  /oauth/applications/{id}
-DELETE /oauth/applications/{id}
+POST   /api/v1/oauth/token
+POST   /api/v1/oauth/applications   GET /api/v1/oauth/applications
+PATCH  /api/v1/oauth/applications/{id}
+DELETE /api/v1/oauth/applications/{id}
 
 GET    /movies                       # default/curated list (public)
 GET    /movies/featured              # public
@@ -257,18 +257,10 @@ GET    /stream/{id}/{segment}        # HLS segment (.ts)
   browser provider flows request fixed profile scopes: 42 `public`, GitHub
   `read:user user:email`, GitLab `read_user`
 - JWT issued on login / OAuth callback, validated on every protected request, with refresh tokens
-- User-managed OAuth applications and OAuth2 token endpoint at `POST /oauth/token`
-  for registered `client_credentials` grants. Application `scope` is stored as a
-  normalized whitespace-separated string; token requests may omit it to receive
-  the app's full stored scope, or request a subset. Requested scopes outside the
-  application scope are rejected with `invalid_scope`. Current JWT access tokens
-  do not embed or enforce scopes on protected routes; they authenticate as the
-  application owner user.
-- Application scopes are optional free-form tokens, not a predefined permission
-  catalogue. Enter them separated by spaces, for example
-  `read:movies write:comments`; leaving the field empty is valid. The stored
-  scope documents and constrains OAuth token requests, while API authorization
-  continues to use the authenticated user model.
+- User-managed OAuth applications at `/api/v1/oauth/applications` and the
+  OAuth2 token endpoint at `POST /api/v1/oauth/token` support registered
+  `client_credentials` grants. Client credentials issue a normal owner-user
+  bearer token and do not support application or token scopes.
 - Password reset by email via Brevo (when configured)
 
 ---

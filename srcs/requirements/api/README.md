@@ -227,7 +227,7 @@ browser OAuth callbacks. It is valid for 7 days and contains
 access token. Login responses include `Cache-Control: no-store` and
 `Pragma: no-cache`.
 
-Registration and `POST /oauth/token` do not return a HyperTube refresh token.
+Registration and `POST /api/v1/oauth/token` do not return a HyperTube refresh token.
 
 #### Error responses
 
@@ -774,16 +774,11 @@ Authorization: Bearer <access_token>
 ```json
 {
   "name": "My App",
-  "scope": "read:movies",
   "redirect_uri": "http://localhost:4200/auth/callback"
 }
 ```
 
-`name` and `redirect_uri` are required and trimmed. `scope` is optional and
-normalized as a whitespace-separated string. There is no predefined scope
-catalogue; use free-form tokens separated by spaces, for example
-`read:movies write:comments`. Leaving `scope` empty is valid. The normalized
-stored scope may be up to 500 characters.
+`name` and `redirect_uri` are required and trimmed.
 
 `redirect_uri` must be an absolute `http` or `https` URL with a host. Query
 strings are allowed; URL userinfo and fragments are rejected.
@@ -795,7 +790,6 @@ strings are allowed; URL userinfo and fragments are rejected.
   "data": {
     "id": 1,
     "name": "My App",
-    "scope": "read:movies",
     "redirect_uri": "http://localhost:4200/auth/callback",
     "client_id": "htc_...",
     "client_secret": "hts_...",
@@ -827,7 +821,6 @@ Authorization: Bearer <access_token>
     {
       "id": 1,
       "name": "My App",
-      "scope": "read:movies",
       "redirect_uri": "http://localhost:4200/auth/callback",
       "client_id": "htc_...",
       "created_at": "2026-07-07T12:00:00Z",
@@ -855,14 +848,13 @@ Authorization: Bearer <access_token>
 ```json
 {
   "name": "My Renamed App",
-  "scope": "read:movies write:comments",
   "redirect_uri": "https://example.com/oauth/callback"
 }
 ```
 
-At least one of `name`, `scope`, or `redirect_uri` is required. `redirect_uri`
-uses the same validation rules as create. Only applications owned by the
-authenticated user can be updated.
+At least one of `name` or `redirect_uri` is required. `redirect_uri` uses the
+same validation rules as create. Only applications owned by the authenticated
+user can be updated.
 
 `200 OK`
 
@@ -871,7 +863,6 @@ authenticated user can be updated.
   "data": {
     "id": 1,
     "name": "My Renamed App",
-    "scope": "read:movies write:comments",
     "redirect_uri": "https://example.com/oauth/callback",
     "client_id": "htc_...",
     "created_at": "2026-07-07T12:00:00Z",
@@ -904,16 +895,15 @@ their normal expiry, currently 15 minutes.
 | Status | Code | Description |
 |--------|------|-------------|
 | 400 | `BAD_REQUEST` | Malformed JSON, unknown fields, or multiple JSON documents. |
-| 400 | `VALIDATION_ERROR` | Missing name or redirect URI, invalid redirect URI, overly long name, scope, or redirect URI, or empty patch body. |
+| 400 | `VALIDATION_ERROR` | Missing name or redirect URI, invalid redirect URI, overly long name or redirect URI, or empty patch body. |
 | 401 | `UNAUTHORIZED` | Missing or invalid bearer token. |
 | 404 | `NOT_FOUND` | Application ID is invalid, missing, or not owned by the authenticated user. |
 | 500 | `INTERNAL_ERROR` | Application storage or credential generation failed. |
 
-### POST /oauth/token
+### POST /api/v1/oauth/token
 
 OAuth2-compatible token endpoint for registered application
 `client_credentials` grants. It returns a JWT bearer access token for API routes.
-This endpoint is also available at the legacy root path `POST /oauth/token`.
 User password login belongs to `POST /api/v1/auth/login`.
 
 Unlike the other auth endpoints, this endpoint uses OAuth2 token response shapes
@@ -933,14 +923,13 @@ Supported content types:
 Registered OAuth applications use `grant_type=client_credentials`. When the
 application authenticates successfully, the API issues a normal access token for
 the application owner user ID. This flow does not require or use
-`redirect_uri`.
+`redirect_uri` and does not support OAuth scopes.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `grant_type` | string | usually | Must be `client_credentials` when present. It may be omitted when `client_id` and `client_secret` are present and password-login fields are absent. Optional `scope` is still allowed in this implicit path. |
+| `grant_type` | string | usually | Must be `client_credentials` when present. It may be omitted when `client_id` and `client_secret` are present and password-login fields are absent. |
 | `client_id` | string | yes | Client ID returned by application creation. Trimmed before lookup. |
 | `client_secret` | string | yes | One-time secret returned by application creation. It is not trimmed before verification. |
-| `scope` | string | no | Optional requested scope. It must be a subset of the stored application scope. |
 
 ##### Example request
 
@@ -950,7 +939,7 @@ Content-Type: application/x-www-form-urlencoded
 ```
 
 ```text
-grant_type=client_credentials&client_id=htc_...&client_secret=hts_...&scope=read:movies
+grant_type=client_credentials&client_id=htc_...&client_secret=hts_...
 ```
 
 JSON is also accepted, including without `grant_type`:
@@ -962,15 +951,8 @@ JSON is also accepted, including without `grant_type`:
 }
 ```
 
-If `scope` is omitted, the response echoes the application's stored scope. If a
-requested scope is present, it is normalized and must contain only scope tokens
-assigned to the application, for example requesting `read:movies` from an
-application stored with `read:movies write:comments`. Requesting any token that
-was not assigned to the application returns `invalid_scope`.
-
-Scopes are not embedded in the current JWT access token and are not enforced by
-`RequireAuth`; they constrain and document the `/oauth/token` response while API
-authorization continues to use the authenticated user model.
+The endpoint issues a normal owner-user bearer token. It does not accept,
+return, or enforce OAuth scopes.
 
 #### Response
 
@@ -980,8 +962,7 @@ authorization continues to use the authenticated user model.
 {
   "access_token": "<jwt>",
   "token_type": "Bearer",
-  "expires_in": 900,
-  "scope": "read:movies"
+  "expires_in": 900
 }
 ```
 
@@ -998,7 +979,6 @@ Pragma: no-cache
 |--------|-------|-------------|
 | 400 | `invalid_request` | Invalid `Content-Type`, invalid body, missing `grant_type`, missing `client_id` or `client_secret`, or omitted `grant_type` with password-login fields present. |
 | 400 | `unsupported_grant_type` | `grant_type` is not `client_credentials`. |
-| 400 | `invalid_scope` | Requested scope is outside the application scope. |
 | 401 | `invalid_client` | `client_id` or `client_secret` is incorrect. |
 | 415 | `invalid_request` | Body must be form encoded or JSON. |
 | 500 | `server_error` | Auth service unavailable, token creation failed, or application lookup failed. |

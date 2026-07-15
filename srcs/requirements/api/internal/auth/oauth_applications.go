@@ -20,7 +20,6 @@ import (
 
 const (
 	oauthApplicationNameMaxLength        = 100
-	oauthApplicationScopeMaxLength       = 500
 	oauthApplicationRedirectURIMaxLength = 2048
 	oauthApplicationPageLimit            = 12
 	oauthCredentialGenerationAttempts    = 3
@@ -28,20 +27,17 @@ const (
 
 type oauthApplicationCreateRequest struct {
 	Name        string
-	Scope       string
 	RedirectURI string
 }
 
 type oauthApplicationPatchRequest struct {
 	Name        *string
-	Scope       *string
 	RedirectURI *string
 }
 
 type oauthApplicationResponse struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
-	Scope       string `json:"scope"`
 	RedirectURI string `json:"redirect_uri"`
 	ClientID    string `json:"client_id"`
 	CreatedAt   string `json:"created_at"`
@@ -230,7 +226,6 @@ func (h *Handler) createOAuthApplicationWithCredentials(r *http.Request, params 
 func decodeOAuthApplicationCreateRequest(w http.ResponseWriter, r *http.Request) (oauthApplicationCreateRequest, validationErrors, bool) {
 	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"name":         {},
-		"scope":        {},
 		"redirect_uri": {},
 	})
 	if !ok {
@@ -242,9 +237,6 @@ func decodeOAuthApplicationCreateRequest(w http.ResponseWriter, r *http.Request)
 		Name:        decodeStringField(body, "name", fields),
 		RedirectURI: decodeStringField(body, "redirect_uri", fields),
 	}
-	if _, ok := body["scope"]; ok {
-		req.Scope = decodeStringField(body, "scope", fields)
-	}
 	if len(fields) > 0 {
 		return req, fields, false
 	}
@@ -254,7 +246,6 @@ func decodeOAuthApplicationCreateRequest(w http.ResponseWriter, r *http.Request)
 func decodeOAuthApplicationPatchRequest(w http.ResponseWriter, r *http.Request) (oauthApplicationPatchRequest, validationErrors, bool) {
 	body, ok := requestjson.DecodeJSONObject(w, r, map[string]struct{}{
 		"name":         {},
-		"scope":        {},
 		"redirect_uri": {},
 	})
 	if !ok {
@@ -269,14 +260,6 @@ func decodeOAuthApplicationPatchRequest(w http.ResponseWriter, r *http.Request) 
 			fields["name"] = i18n.MsgInvalidRequestBody
 		} else {
 			req.Name = &value
-		}
-	}
-	if raw, ok := body["scope"]; ok {
-		value, ok := requestjson.DecodeString(raw)
-		if !ok {
-			fields["scope"] = i18n.MsgInvalidRequestBody
-		} else {
-			req.Scope = &value
 		}
 	}
 	if raw, ok := body["redirect_uri"]; ok {
@@ -296,16 +279,14 @@ func decodeOAuthApplicationPatchRequest(w http.ResponseWriter, r *http.Request) 
 func validateOAuthApplicationCreateRequest(ownerUserID int64, req oauthApplicationCreateRequest) (CreateOAuthApplicationParams, validationErrors, bool) {
 	fields := validationErrors{}
 	name, ok := validateOAuthApplicationName(req.Name, fields)
-	scope, okScope := validateOAuthApplicationScope(req.Scope, fields)
 	redirectURI, okRedirectURI := validateOAuthApplicationRedirectURI(req.RedirectURI, fields)
-	if !ok || !okScope || !okRedirectURI {
+	if !ok || !okRedirectURI {
 		return CreateOAuthApplicationParams{}, fields, false
 	}
 
 	return CreateOAuthApplicationParams{
 		OwnerUserID: ownerUserID,
 		Name:        name,
-		Scope:       scope,
 		RedirectURI: redirectURI,
 	}, nil, true
 }
@@ -313,7 +294,7 @@ func validateOAuthApplicationCreateRequest(ownerUserID int64, req oauthApplicati
 func validateOAuthApplicationPatchRequest(req oauthApplicationPatchRequest) (UpdateOAuthApplicationParams, validationErrors, bool) {
 	fields := validationErrors{}
 	params := UpdateOAuthApplicationParams{}
-	if req.Name == nil && req.Scope == nil && req.RedirectURI == nil {
+	if req.Name == nil && req.RedirectURI == nil {
 		fields["body"] = i18n.MsgInvalidRequestBody
 		return UpdateOAuthApplicationParams{}, fields, false
 	}
@@ -322,12 +303,6 @@ func validateOAuthApplicationPatchRequest(req oauthApplicationPatchRequest) (Upd
 		name, ok := validateOAuthApplicationName(*req.Name, fields)
 		if ok {
 			params.Name = &name
-		}
-	}
-	if req.Scope != nil {
-		scope, ok := validateOAuthApplicationScope(*req.Scope, fields)
-		if ok {
-			params.Scope = &scope
 		}
 	}
 	if req.RedirectURI != nil {
@@ -353,15 +328,6 @@ func validateOAuthApplicationName(name string, fields validationErrors) (string,
 		return "", false
 	}
 	return name, true
-}
-
-func validateOAuthApplicationScope(scope string, fields validationErrors) (string, bool) {
-	scope = normalizeOAuthScope(scope)
-	if len(scope) > oauthApplicationScopeMaxLength {
-		fields["scope"] = i18n.MsgOAuthApplicationScopeTooLong
-		return "", false
-	}
-	return scope, true
 }
 
 func validateOAuthApplicationRedirectURI(raw string, fields validationErrors) (string, bool) {
@@ -413,7 +379,6 @@ func toOAuthApplicationResponse(app models.OAuthApplication) oauthApplicationRes
 	return oauthApplicationResponse{
 		ID:          app.ID,
 		Name:        app.Name,
-		Scope:       app.Scope,
 		RedirectURI: app.RedirectURI,
 		ClientID:    app.ClientID,
 		CreatedAt:   app.CreatedAt.UTC().Format(time.RFC3339),

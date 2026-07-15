@@ -15,7 +15,6 @@ type oauthTokenRequest struct {
 	GrantType    string `json:"grant_type"`
 	Username     string `json:"username"`
 	Password     string `json:"password"`
-	Scope        string `json:"scope"`
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 }
@@ -24,7 +23,6 @@ type oauthTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int64  `json:"expires_in"`
-	Scope       string `json:"scope,omitempty"`
 }
 
 type oauthErrorResponse struct {
@@ -82,12 +80,6 @@ func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	responseScope, ok := oauthClientCredentialsResponseScope(req.Scope, client.Scope)
-	if !ok {
-		writeOAuthError(w, http.StatusBadRequest, "invalid_scope", i18n.T(locale, i18n.MsgInvalidOAuthScope))
-		return
-	}
-
 	token, expiresIn, err := h.issueAccessToken(client.OwnerUserID)
 	if err != nil {
 		writeOAuthError(w, http.StatusInternalServerError, "server_error", i18n.T(locale, i18n.MsgFailedCreateAccessToken))
@@ -98,7 +90,6 @@ func (h *Handler) oauthClientCredentialsGrant(w http.ResponseWriter, r *http.Req
 		AccessToken: token,
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
-		Scope:       responseScope,
 	}
 	writeOAuthJSON(w, http.StatusOK, response)
 }
@@ -116,11 +107,14 @@ func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n
 			writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgInvalidFormBody))
 			return oauthTokenRequest{}, false
 		}
+		if _, ok := r.PostForm["scope"]; ok {
+			writeOAuthError(w, http.StatusBadRequest, "invalid_request", i18n.T(locale, i18n.MsgInvalidFormBody))
+			return oauthTokenRequest{}, false
+		}
 		return oauthTokenRequest{
 			GrantType:    r.PostForm.Get("grant_type"),
 			Username:     r.PostForm.Get("username"),
 			Password:     r.PostForm.Get("password"),
-			Scope:        r.PostForm.Get("scope"),
 			ClientID:     r.PostForm.Get("client_id"),
 			ClientSecret: r.PostForm.Get("client_secret"),
 		}, true
@@ -143,35 +137,6 @@ func decodeOAuthTokenRequest(w http.ResponseWriter, r *http.Request, locale i18n
 
 	writeOAuthError(w, http.StatusUnsupportedMediaType, "invalid_request", i18n.T(locale, i18n.MsgRequestBodyFormOrJSON))
 	return oauthTokenRequest{}, false
-}
-
-func normalizeOAuthScope(scope string) string {
-	return strings.Join(strings.Fields(scope), " ")
-}
-
-func oauthClientCredentialsResponseScope(requestedScope string, applicationScope string) (string, bool) {
-	requestedScope = normalizeOAuthScope(requestedScope)
-	applicationScope = normalizeOAuthScope(applicationScope)
-	if requestedScope == "" {
-		return applicationScope, true
-	}
-	if !oauthScopeSubset(requestedScope, applicationScope) {
-		return "", false
-	}
-	return requestedScope, true
-}
-
-func oauthScopeSubset(requestedScope string, applicationScope string) bool {
-	allowed := map[string]struct{}{}
-	for _, scope := range strings.Fields(applicationScope) {
-		allowed[scope] = struct{}{}
-	}
-	for _, scope := range strings.Fields(requestedScope) {
-		if _, ok := allowed[scope]; !ok {
-			return false
-		}
-	}
-	return true
 }
 
 func writeOAuthError(w http.ResponseWriter, status int, code string, description string) {
