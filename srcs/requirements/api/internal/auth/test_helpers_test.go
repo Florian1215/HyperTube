@@ -220,7 +220,6 @@ func (s *memoryUserStore) CreateOAuthApplication(_ context.Context, params Creat
 		ID:          s.nextOAuthAppID,
 		OwnerID:     params.OwnerUserID,
 		Name:        params.Name,
-		Scope:       params.Scope,
 		RedirectURI: params.RedirectURI,
 		ClientID:    params.ClientID,
 		CreatedAt:   now,
@@ -273,9 +272,6 @@ func (s *memoryUserStore) UpdateOAuthApplication(_ context.Context, id int64, ow
 	if params.Name != nil {
 		app.Name = *params.Name
 	}
-	if params.Scope != nil {
-		app.Scope = *params.Scope
-	}
 	if params.RedirectURI != nil {
 		app.RedirectURI = *params.RedirectURI
 	}
@@ -304,7 +300,6 @@ func (s *memoryUserStore) FindOAuthClientByClientID(_ context.Context, clientID 
 	return oauthClientCredentials{
 		ID:               app.ID,
 		OwnerUserID:      app.OwnerID,
-		Scope:            app.Scope,
 		ClientID:         app.ClientID,
 		ClientSecretHash: s.oauthAppSecrets[id],
 	}, nil

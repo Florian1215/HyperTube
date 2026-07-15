@@ -106,7 +106,6 @@ type CreatePasswordResetTokenParams struct {
 type CreateOAuthApplicationParams struct {
 	OwnerUserID      int64
 	Name             string
-	Scope            string
 	RedirectURI      string
 	ClientID         string
 	ClientSecretHash string
@@ -114,14 +113,12 @@ type CreateOAuthApplicationParams struct {
 
 type UpdateOAuthApplicationParams struct {
 	Name        *string
-	Scope       *string
 	RedirectURI *string
 }
 
 type oauthClientCredentials struct {
 	ID               int64
 	OwnerUserID      int64
-	Scope            string
 	ClientID         string
 	ClientSecretHash string
 }
@@ -362,10 +359,10 @@ func (s *Store) ResetPasswordWithToken(ctx context.Context, tokenHash string, pa
 
 func (s *Store) CreateOAuthApplication(ctx context.Context, params CreateOAuthApplicationParams) (models.OAuthApplication, error) {
 	app, err := scanOAuthApplication(s.db.QueryRow(ctx, `
-		INSERT INTO oauth_applications (owner_user_id, name, scope, redirect_uri, client_id, client_secret_hash)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
-	`, params.OwnerUserID, params.Name, params.Scope, params.RedirectURI, params.ClientID, params.ClientSecretHash))
+		INSERT INTO oauth_applications (owner_user_id, name, redirect_uri, client_id, client_secret_hash)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, owner_user_id, name, redirect_uri, client_id, created_at, updated_at
+	`, params.OwnerUserID, params.Name, params.RedirectURI, params.ClientID, params.ClientSecretHash))
 	if err != nil {
 		if isUniqueViolation(err) {
 			return models.OAuthApplication{}, ErrDuplicateOAuthClientID
@@ -377,7 +374,7 @@ func (s *Store) CreateOAuthApplication(ctx context.Context, params CreateOAuthAp
 
 func (s *Store) ListOAuthApplications(ctx context.Context, ownerUserID int64, limit, offset int) ([]models.OAuthApplication, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
+		SELECT id, owner_user_id, name, redirect_uri, client_id, created_at, updated_at
 		FROM oauth_applications
 		WHERE owner_user_id = $1
 		ORDER BY created_at DESC, id DESC
@@ -420,10 +417,6 @@ func (s *Store) UpdateOAuthApplication(ctx context.Context, id int64, ownerUserI
 	if params.Name != nil {
 		name = *params.Name
 	}
-	var scope any
-	if params.Scope != nil {
-		scope = *params.Scope
-	}
 	var redirectURI any
 	if params.RedirectURI != nil {
 		redirectURI = *params.RedirectURI
@@ -432,12 +425,11 @@ func (s *Store) UpdateOAuthApplication(ctx context.Context, id int64, ownerUserI
 	app, err := scanOAuthApplication(s.db.QueryRow(ctx, `
 		UPDATE oauth_applications
 		SET name = COALESCE($3, name),
-		    scope = COALESCE($4, scope),
-		    redirect_uri = COALESCE($5, redirect_uri),
+		    redirect_uri = COALESCE($4, redirect_uri),
 		    updated_at = NOW()
 		WHERE id = $1 AND owner_user_id = $2
-		RETURNING id, owner_user_id, name, scope, redirect_uri, client_id, created_at, updated_at
-	`, id, ownerUserID, name, scope, redirectURI))
+		RETURNING id, owner_user_id, name, redirect_uri, client_id, created_at, updated_at
+	`, id, ownerUserID, name, redirectURI))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.OAuthApplication{}, ErrOAuthApplicationNotFound
@@ -464,13 +456,12 @@ func (s *Store) DeleteOAuthApplication(ctx context.Context, id int64, ownerUserI
 func (s *Store) FindOAuthClientByClientID(ctx context.Context, clientID string) (oauthClientCredentials, error) {
 	var client oauthClientCredentials
 	err := s.db.QueryRow(ctx, `
-		SELECT id, owner_user_id, scope, client_id, client_secret_hash
+		SELECT id, owner_user_id, client_id, client_secret_hash
 		FROM oauth_applications
 		WHERE client_id = $1
 	`, clientID).Scan(
 		&client.ID,
 		&client.OwnerUserID,
-		&client.Scope,
 		&client.ClientID,
 		&client.ClientSecretHash,
 	)
@@ -513,7 +504,6 @@ func scanOAuthApplication(row pgx.Row) (models.OAuthApplication, error) {
 		&app.ID,
 		&app.OwnerID,
 		&app.Name,
-		&app.Scope,
 		&app.RedirectURI,
 		&app.ClientID,
 		&app.CreatedAt,

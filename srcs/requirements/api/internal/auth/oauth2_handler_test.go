@@ -55,7 +55,7 @@ func TestOAuthTokenClientCredentialsGrantReturnsBearerTokenFromForm(t *testing.T
 	store := newMemoryUserStore()
 	tokens := newTestTokenManager(t)
 	handler := NewHandler(store, tokens)
-	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies", "hypertube-api", "replace-with-secret")
+	createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 
 	form := validOAuthClientCredentialsForm()
 	form.Set("client_id", " hypertube-api ")
@@ -81,15 +81,13 @@ func TestOAuthTokenClientCredentialsGrantReturnsBearerTokenFromForm(t *testing.T
 	if claims.UserID != 42 {
 		t.Fatalf("expected token user id 42, got %d", claims.UserID)
 	}
-	if response.Scope != "read:movies" {
-		t.Fatalf("expected application scope, got %q", response.Scope)
-	}
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "scope")
 }
 
 func TestOAuthTokenClientCredentialsGrantAcceptsJSON(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
+	createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 
 	body := `{"grant_type":"client_credentials","client_id":"hypertube-api","client_secret":"replace-with-secret"}`
 	rec := postOAuthTokenJSON(t, handler, body)
@@ -101,14 +99,15 @@ func TestOAuthTokenClientCredentialsGrantAcceptsJSON(t *testing.T) {
 	if response.AccessToken == "" {
 		t.Fatal("expected access token")
 	}
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "scope")
 }
 
 func TestOAuthTokenClientCredentialsGrantAcceptsJSONWithoutGrantType(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies write:comments", "hypertube-api", "replace-with-secret")
+	createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 
-	body := `{"client_id":"hypertube-api","client_secret":"replace-with-secret","scope":"read:movies"}`
+	body := `{"client_id":"hypertube-api","client_secret":"replace-with-secret"}`
 	rec := postOAuthTokenJSON(t, handler, body)
 
 	if rec.Code != http.StatusOK {
@@ -118,15 +117,13 @@ func TestOAuthTokenClientCredentialsGrantAcceptsJSONWithoutGrantType(t *testing.
 	if response.AccessToken == "" {
 		t.Fatal("expected access token")
 	}
-	if response.Scope != "read:movies" {
-		t.Fatalf("expected requested scope, got %q", response.Scope)
-	}
+	assertJSONFieldsAbsent(t, rec.Body.Bytes(), "scope")
 }
 
 func TestOAuthTokenDoesNotInferClientCredentialsWhenPasswordFieldsArePresent(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, newTestTokenManager(t))
-	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies", "hypertube-api", "replace-with-secret")
+	createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 
 	form := url.Values{}
 	form.Set("client_id", "hypertube-api")
@@ -144,44 +141,52 @@ func TestOAuthTokenDoesNotInferClientCredentialsWhenPasswordFieldsArePresent(t *
 	}
 }
 
-func TestOAuthTokenClientCredentialsGrantScopeRules(t *testing.T) {
-	store := newMemoryUserStore()
-	handler := NewHandler(store, newTestTokenManager(t))
-	createStoredOAuthApplication(t, store, 42, "API Client", "read:movies write:comments", "hypertube-api", "replace-with-secret")
-
-	form := validOAuthClientCredentialsForm()
-	rec := postOAuthTokenForm(t, handler, form)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+func TestOAuthTokenClientCredentialsGrantRejectsScope(t *testing.T) {
+	tests := []struct {
+		name string
+		call func(*testing.T, *Handler) *httptest.ResponseRecorder
+	}{
+		{
+			name: "form scope",
+			call: func(t *testing.T, handler *Handler) *httptest.ResponseRecorder {
+				form := validOAuthClientCredentialsForm()
+				form.Set("scope", "read:movies")
+				return postOAuthTokenForm(t, handler, form)
+			},
+		},
+		{
+			name: "form empty scope",
+			call: func(t *testing.T, handler *Handler) *httptest.ResponseRecorder {
+				form := validOAuthClientCredentialsForm()
+				form.Set("scope", "")
+				return postOAuthTokenForm(t, handler, form)
+			},
+		},
+		{
+			name: "json scope",
+			call: func(t *testing.T, handler *Handler) *httptest.ResponseRecorder {
+				body := `{"grant_type":"client_credentials","client_id":"hypertube-api","client_secret":"replace-with-secret","scope":"read:movies"}`
+				return postOAuthTokenJSON(t, handler, body)
+			},
+		},
 	}
-	response := decodeOAuthTokenResponse(t, rec)
-	if response.Scope != "read:movies write:comments" {
-		t.Fatalf("expected application scope, got %q", response.Scope)
-	}
 
-	form = validOAuthClientCredentialsForm()
-	form.Set("scope", "write:comments   read:movies")
-	rec = postOAuthTokenForm(t, handler, form)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newMemoryUserStore()
+			handler := NewHandler(store, newTestTokenManager(t))
+			createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
-	}
-	response = decodeOAuthTokenResponse(t, rec)
-	if response.Scope != "write:comments read:movies" {
-		t.Fatalf("expected normalized requested scope, got %q", response.Scope)
-	}
+			rec := tt.call(t, handler)
 
-	form = validOAuthClientCredentialsForm()
-	form.Set("scope", "admin")
-	rec = postOAuthTokenForm(t, handler, form)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
-	}
-	errorResponse := decodeOAuthTokenError(t, rec)
-	if errorResponse.Error != "invalid_scope" {
-		t.Fatalf("expected invalid_scope, got %q", errorResponse.Error)
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+			errorResponse := decodeOAuthTokenError(t, rec)
+			if errorResponse.Error != "invalid_request" {
+				t.Fatalf("expected invalid_request, got %q", errorResponse.Error)
+			}
+		})
 	}
 }
 
@@ -238,7 +243,7 @@ func TestOAuthTokenClientCredentialsGrantRejectsInvalidRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := newMemoryUserStore()
 			handler := NewHandler(store, newTestTokenManager(t))
-			createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
+			createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 			form := validOAuthClientCredentialsForm()
 			tt.mutateForm(form)
 
@@ -272,7 +277,7 @@ func TestOAuthTokenClientCredentialsGrantRejectsNilStore(t *testing.T) {
 func TestOAuthTokenClientCredentialsGrantRejectsNilTokenManager(t *testing.T) {
 	store := newMemoryUserStore()
 	handler := NewHandler(store, nil)
-	createStoredOAuthApplication(t, store, 42, "API Client", "", "hypertube-api", "replace-with-secret")
+	createStoredOAuthApplication(t, store, 42, "API Client", "hypertube-api", "replace-with-secret")
 
 	rec := postOAuthTokenForm(t, handler, validOAuthClientCredentialsForm())
 
@@ -391,7 +396,7 @@ func decodeOAuthTokenResponse(t *testing.T, rec *httptest.ResponseRecorder) oaut
 	t.Helper()
 
 	var response oauthTokenResponse
-	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	return response
@@ -401,7 +406,7 @@ func decodeOAuthTokenError(t *testing.T, rec *httptest.ResponseRecorder) oauthEr
 	t.Helper()
 
 	var response oauthErrorResponse
-	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	return response

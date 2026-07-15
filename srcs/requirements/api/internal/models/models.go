@@ -103,7 +103,6 @@ type OAuthApplication struct {
 	ID          int64     `json:"id"`
 	OwnerID     int64     `json:"owner_id" db:"owner_user_id"`
 	Name        string    `json:"name"`
-	Scope       string    `json:"scope"`
 	RedirectURI string    `json:"redirect_uri" db:"redirect_uri"`
 	ClientID    string    `json:"client_id" db:"client_id"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
