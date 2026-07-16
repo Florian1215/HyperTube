@@ -218,10 +218,10 @@ POST   /auth/password-reset/set-new-password
 GET    /auth/42/login        GET /auth/42/callback
 GET    /auth/github/login    GET /auth/github/callback
 GET    /auth/gitlab/login    GET /auth/gitlab/callback
-POST   /api/v1/oauth/token
-POST   /api/v1/oauth/applications   GET /api/v1/oauth/applications
-PATCH  /api/v1/oauth/applications/{id}
-DELETE /api/v1/oauth/applications/{id}
+POST   /oauth/token
+POST   /oauth/applications   GET /oauth/applications
+PATCH  /oauth/applications/{id}
+DELETE /oauth/applications/{id}
 
 GET    /movies                       # default/curated list (public)
 GET    /movies/featured              # public
