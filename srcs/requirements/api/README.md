@@ -227,7 +227,7 @@ browser OAuth callbacks. It is valid for 7 days and contains
 access token. Login responses include `Cache-Control: no-store` and
 `Pragma: no-cache`.
 
-Registration and `POST /api/v1/oauth/token` do not return a HyperTube refresh token.
+Registration and `POST /oauth/token` do not return a HyperTube refresh token.
 
 #### Error responses
 
@@ -754,15 +754,6 @@ These routes require:
 Authorization: Bearer <access_token>
 ```
 
-Versioned routes:
-
-```text
-POST   /api/v1/oauth/applications
-GET    /api/v1/oauth/applications
-PATCH  /api/v1/oauth/applications/{id}
-DELETE /api/v1/oauth/applications/{id}
-```
-
 #### Create application
 
 ```http
@@ -900,7 +891,7 @@ their normal expiry, currently 15 minutes.
 | 404 | `NOT_FOUND` | Application ID is invalid, missing, or not owned by the authenticated user. |
 | 500 | `INTERNAL_ERROR` | Application storage or credential generation failed. |
 
-### POST /api/v1/oauth/token
+### POST /oauth/token
 
 OAuth2-compatible token endpoint for registered application
 `client_credentials` grants. It returns a JWT bearer access token for API routes.
