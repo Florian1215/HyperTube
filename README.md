@@ -18,20 +18,24 @@ HyperTube is a 42 school project: a movie discovery and streaming platform that 
 
 <table>
   <tr>
-    <td><img src="./.img/searching_grid.png" alt="Search results in grid view" /></td>
-    <td><img src="./.img/searching_list.png" alt="Search results in list view" /></td>
-  </tr>
-  <tr>
-    <td><img src="./.img/filter_genre.png" alt="Genre filter" /></td>
-    <td><img src="./.img/select_genre.png" alt="Genre selection" /></td>
-  </tr>
-  <tr>
-    <td><img src="./.img/comment_history.png" alt="Comments and history" /></td>
-    <td><img src="./.img/profil.png" alt="User profile" /></td>
+    <td><img src="./.img/home-1.png" alt="Home page" /></td>
+    <td><img src="./.img/home-2.png" alt="Home page" /></td>
   </tr>
   <tr>
     <td><img src="./.img/section.png" alt="Home section" /></td>
     <td><img src="./.img/film.png" alt="Movie page" /></td>
+  </tr>
+  <tr>
+    <td><img src="./.img/searching_grid.png" alt="Search results in grid view" /></td>
+    <td><img src="./.img/searching_list.png" alt="Search results in list view" /></td>
+  </tr>
+  <tr>
+    <td><img src="./.img/select_genre.png" alt="Genre selection" /></td>
+    <td><img src="./.img/filter_genre.png" alt="Genre filter" /></td>
+  </tr>
+  <tr>
+    <td><img src="./.img/profil.png" alt="User profile" /></td>
+    <td><img src="./.img/comment_history.png" alt="Comments and history" /></td>
   </tr>
 </table>
 
