@@ -26,12 +26,19 @@ type StreamHandler struct {
 	store           torrentStore
 }
 
+func getTranscodeURL() string {
+	if u := os.Getenv("TRANSCODE_URL"); u != "" {
+		return u
+	}
+	return "http://localhost:8081"
+}
+
 func NewStreamHandler(store torrentStore) *StreamHandler {
 	torrentBasePath := "/data/torrents"
 	return &StreamHandler{
 		videoBasePath:   "/data/videos",
 		torrentBasePath: torrentBasePath,
-		transcodeURL:    "http://localhost:8794",
+		transcodeURL:    getTranscodeURL(),
 		downloader:      downloader.New(torrentBasePath),
 		store:           store,
 	}
