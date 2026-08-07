@@ -210,8 +210,8 @@ func ConvertPipeHLS(reader io.ReadSeeker, outputDir string, originalLang string)
 	switch videoCodec {
 	case "h264":
 		args = buildH264Args("pipe:0", outputDir, audioMap)
-	// case "hevc":
-	// 	args = buildHEVCArgs("pipe:0", outputDir, audioMap)
+	case "hevc":
+		args = buildHEVCArgs("pipe:0", outputDir, audioMap)
 	default:
 		args = defaultTranscodeArgs("pipe:0", outputDir, audioMap)
 
