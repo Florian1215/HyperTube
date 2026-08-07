@@ -31,7 +31,7 @@ func NewStreamHandler(store torrentStore) *StreamHandler {
 	return &StreamHandler{
 		videoBasePath:   "/data/videos",
 		torrentBasePath: torrentBasePath,
-		transcodeURL:    "http://vpn:8081",
+		transcodeURL:    "http://localhost:8794",
 		downloader:      downloader.New(torrentBasePath),
 		store:           store,
 	}
