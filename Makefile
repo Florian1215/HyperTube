@@ -20,6 +20,10 @@ $(NAME)		:
 			mkdir -p $(DATA_DIR)
 			$(COMPOSE) $(FLAGS) up --build $(SERVICE)
 
+.PHONY: transcode
+transcode:
+			cd $(SRCS_D)/requirements/torrent-transcode && go build -o torrent-stream . && ./torrent-stream
+
 CMDS		:=	up build down ps ls images events top
 .PHONY: $(CMDS)
 $(CMDS)		:
