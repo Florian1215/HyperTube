@@ -22,7 +22,10 @@ $(NAME)		:
 
 .PHONY: transcode
 transcode:
-			cd $(SRCS_D)/requirements/torrent-transcode && go build -o torrent-stream . && ./torrent-stream
+			cd $(SRCS_D)/requirements/torrent-transcode && \
+            set -a && source srcs/.env && set +a && \
+            go build -o torrent-stream . && \
+            ./torrent-stream
 
 CMDS		:=	up build down ps ls images events top
 .PHONY: $(CMDS)
