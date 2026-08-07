@@ -1,9 +1,7 @@
 ####################################################### VARIABLE #######################################################
 NAME		:=	hypertube
 SRCS_D		:=	srcs
-ENV_EXEMPLE	:=	.env.exemple
 DATA_DIR	:=	$(SRCS_D)/data
-ENV_FILE	:=	$(SRCS_D)/.env
 COMPOSE_F	:=	$(SRCS_D)/docker-compose.yml
 SERVICE		?=	#Leave blank
 
@@ -39,10 +37,6 @@ logs		:	build
 exec		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
-.PHONY: env
-env			:
-			./launch.d/01generatePasswordsAndKeys.sh
-
 .PHONY: clean
 clean		:
 			$(COMPOSE) $(FLAGS) down --rmi local --remove-orphans
@@ -50,13 +44,11 @@ clean		:
 .PHONY: vclean
 vclean		:
 			$(COMPOSE) $(FLAGS) down -v --remove-orphans
-			rm -rf $(ENV_FILE)
 			rm -rf $(DATA_DIR)
 
 PHONY: fclean
 fclean		:
 			$(COMPOSE) $(FLAGS) down -v --rmi all --remove-orphans
-			rm -rf $(ENV_FILE)
 			rm -rf $(DATA_DIR)
 
 .PHONY: image-ls image-rm
@@ -94,4 +86,4 @@ sre			:	clean all
 vre			:	vclean all
 
 .PHONY: re
-re			:	fclean env all
+re			:	fclean all
