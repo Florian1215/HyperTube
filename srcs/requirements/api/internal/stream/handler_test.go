@@ -117,7 +117,7 @@ func TestInitStream_CallsTranscodeServiceWhenFolderMissing(t *testing.T) {
 // 	})
 
 // 	// Pre-create the folder, simulating a stream that was already initialised.
-// 	if err := os.MkdirAll(dir+"/videos/abc123", 0755); err != nil {
+// 	if err := os.MkdirAll(dir+"/videos/abc123", 0777); err != nil {
 // 		t.Fatalf("setup: could not create folder: %v", err)
 // 	}
 

@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -26,12 +27,19 @@ type StreamHandler struct {
 	store           torrentStore
 }
 
+func getTranscodeURL() string {
+	if u := os.Getenv("TRANSCODE_URL"); u != "" {
+		return u
+	}
+	return "http://localhost:8081"
+}
+
 func NewStreamHandler(store torrentStore) *StreamHandler {
 	torrentBasePath := "/data/torrents"
 	return &StreamHandler{
 		videoBasePath:   "/data/videos",
 		torrentBasePath: torrentBasePath,
-		transcodeURL:    "http://vpn:8081",
+		transcodeURL:    getTranscodeURL(),
 		downloader:      downloader.New(torrentBasePath),
 		store:           store,
 	}
@@ -74,12 +82,18 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 
 	// Init the download (peer-to-peer, behind the VPN)
 	respDownload, err := http.Post(s.transcodeURL+"/download/"+id, "application/json", nil)
-	if err != nil || respDownload.StatusCode != http.StatusOK {
+	if err != nil {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("download service error for %s: %v", id, err)
 		return
 	}
 	defer respDownload.Body.Close()
+	if respDownload.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(respDownload.Body, 1024))
+		http.Error(w, "failed to start stream", http.StatusInternalServerError)
+		log.Printf("download service non-OK for %s: status=%d body=%q", id, respDownload.StatusCode, string(body))
+		return
+	}
 
 	// Init transcoding — delegate to the torrent-transcode service and wait for an OK;
 	transcodeURL := s.transcodeURL + "/transcode/" + id
@@ -87,12 +101,18 @@ func (s *StreamHandler) InitStream(w http.ResponseWriter, r *http.Request) {
 		transcodeURL += "?lang=" + url.QueryEscape(torrent.OriginalLanguage)
 	}
 	respTranscode, err := http.Post(transcodeURL, "application/json", nil)
-	if err != nil || respTranscode.StatusCode != http.StatusOK {
+	if err != nil {
 		http.Error(w, "failed to start stream", http.StatusInternalServerError)
 		log.Printf("transcode service error for %s: %v", id, err)
 		return
 	}
 	defer respTranscode.Body.Close()
+	if respTranscode.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(respTranscode.Body, 1024))
+		http.Error(w, "failed to start stream", http.StatusInternalServerError)
+		log.Printf("transcode service non-OK for %s: status=%d body=%q", id, respTranscode.StatusCode, string(body))
+		return
+	}
 
 	if err := s.store.SetTorrentStatus(r.Context(), id, "in_progress"); err != nil {
 		log.Printf("%s: failed to set torrent status to in_progress: %v", id, err)

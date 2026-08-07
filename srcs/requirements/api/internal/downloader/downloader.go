@@ -39,7 +39,7 @@ func (d *Downloader) DownloadTorrentFile(id, torrentURL string) (string, error) 
 	}
 
 	destDir := filepath.Join(d.TorrentDir, id)
-	if err := os.MkdirAll(destDir, 0755); err != nil {
+	if err := os.MkdirAll(destDir, 0777); err != nil {
 		return "", fmt.Errorf("create torrent dir: %w", err)
 	}
 

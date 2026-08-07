@@ -24,6 +24,14 @@ const nextConfig: NextConfig = {
             }
         ],
     },
+    async rewrites() {
+    return [
+        {
+            source: "/api/:path*",
+            destination: `http://api:8794/api/:path*`,
+        },
+    ];
+},
 };
 
 const withNextIntl = createNextIntlPlugin();

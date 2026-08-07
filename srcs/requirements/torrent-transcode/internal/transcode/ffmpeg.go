@@ -174,9 +174,8 @@ func defaultTranscodeArgs(input, outputDir, audioMap string) []string {
 	args := []string{
 		"-i", input,
 		"-map", "0:v:0",
-		"-c:v", "libx264",
-		"-preset", "veryfast",
-		"-crf", "23",
+		"-c:v", "h264_videotoolbox",
+		"-b:v", "5M",
 	}
 	args = append(args, audioArgs(audioMap)...)
 	return append(args,

@@ -23,8 +23,8 @@ type TorrentTranscodeHandler struct {
 
 func NewTorrentTranscodeHandler(torrentClient *torrent.Client, store *Store, mu *sync.Mutex, streams *map[string]io.ReadSeekCloser) *TorrentTranscodeHandler {
 	return &TorrentTranscodeHandler{
-		videoBasePath:   "/data/videos",
-		torrentBasePath: "/data/torrents",
+		videoBasePath:   "../../data/videos",
+		torrentBasePath: "../../data/torrents",
 		torrentClient:   torrentClient,
 		store:           store,
 		streams:         streams,
@@ -85,7 +85,7 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 	}
 	log.Printf("%s: torrent file pipe ready for transcoding", id)
 
-	if err := os.MkdirAll(videoPath, 0755); err != nil {
+	if err := os.MkdirAll(videoPath, 0777); err != nil {
 		http.Error(w, "failed to create stream directory", http.StatusInternalServerError)
 		log.Printf("failed to create stream directory: %v", err)
 		return
