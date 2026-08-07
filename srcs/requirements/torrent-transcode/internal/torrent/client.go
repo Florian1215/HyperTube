@@ -21,7 +21,7 @@ type Client struct {
 }
 
 func NewClient(mu *sync.Mutex, streams *map[string]io.ReadSeekCloser) (*Client, error) {
-	torrentDir := "/data/torrents"
+	torrentDir := "../../data/torrents"
 	cl, err := torrentlib.NewClient(nil)
 	if err != nil {
 		return nil, fmt.Errorf("torrent client: %w", err)
