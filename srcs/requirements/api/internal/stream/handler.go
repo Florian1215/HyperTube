@@ -36,7 +36,7 @@ func getTranscodeURL() string {
 
 func NewStreamHandler(store torrentStore) *StreamHandler {
 	torrentBasePath := "/data/torrents"
-	fmt.Printf("%s\n", getTranscodeURL())
+	log.Printf("%s\n", getTranscodeURL())
 	return &StreamHandler{
 		videoBasePath:   "/data/videos",
 		torrentBasePath: torrentBasePath,
