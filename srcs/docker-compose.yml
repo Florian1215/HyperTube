@@ -29,7 +29,7 @@ services:
       - backend
       - frontend_net
     ports:
-      - "8080:8794"
+      - "8080:${PORT}"
     depends_on:
       postgres:
         condition: service_healthy
