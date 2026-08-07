@@ -23,8 +23,8 @@ type TorrentTranscodeHandler struct {
 
 func NewTorrentTranscodeHandler(torrentClient *torrent.Client, store *Store, mu *sync.Mutex, streams *map[string]io.ReadSeekCloser) *TorrentTranscodeHandler {
 	return &TorrentTranscodeHandler{
-		videoBasePath:   "/data/videos",
-		torrentBasePath: "/data/torrents",
+		videoBasePath:   "../../data/videos",
+		torrentBasePath: "../../data/torrents",
 		torrentClient:   torrentClient,
 		store:           store,
 		streams:         streams,

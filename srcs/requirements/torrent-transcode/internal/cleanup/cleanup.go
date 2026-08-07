@@ -48,8 +48,8 @@ func NewCleaner(store Store, dropper TorrentDropper, retention, interval time.Du
 		dropper:         dropper,
 		retention:       retention,
 		interval:        interval,
-		videoBasePath:   "/data/videos",
-		torrentBasePath: "/data/torrents",
+		videoBasePath:   "../../data/videos",
+		torrentBasePath: "../../data/torrents",
 	}
 }
 
