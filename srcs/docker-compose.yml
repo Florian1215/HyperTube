@@ -9,8 +9,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./requirements/db:/docker-entrypoint-initdb.d
-    networks:
-      - backend
     ports:
       - "5432:5432"
     healthcheck:
@@ -26,7 +24,6 @@ services:
     volumes:
       - ./data:/data
     networks:
-      - backend
       - frontend_net
     ports:
       - "8080:8794"
@@ -51,8 +48,6 @@ services:
       - api
 
 networks:
-  backend:
-    internal: true
   frontend_net:
 
 volumes:
