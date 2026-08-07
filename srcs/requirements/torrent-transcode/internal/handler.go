@@ -85,7 +85,7 @@ func (s *TorrentTranscodeHandler) InitTranscode(w http.ResponseWriter, r *http.R
 	}
 	log.Printf("%s: torrent file pipe ready for transcoding", id)
 
-	if err := os.MkdirAll(videoPath, 0755); err != nil {
+	if err := os.MkdirAll(videoPath, 0777); err != nil {
 		http.Error(w, "failed to create stream directory", http.StatusInternalServerError)
 		log.Printf("failed to create stream directory: %v", err)
 		return

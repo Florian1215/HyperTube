@@ -59,7 +59,7 @@ func TestConvertPipeHLS_AV1ToH264(t *testing.T) {
 	if err := os.RemoveAll(out); err != nil {
 		t.Fatalf("clean output dir: %v", err)
 	}
-	if err := os.MkdirAll(out, 0755); err != nil {
+	if err := os.MkdirAll(out, 0777); err != nil {
 		t.Fatalf("create output dir: %v", err)
 	}
 	if err := ConvertPipeHLS(f, out, "en"); err != nil {
