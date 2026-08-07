@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
             }
         ],
     },
-
+    env: {
+        API_PORT: process.env.API_PORT,
+    },
     async rewrites() {
     return [
         {
