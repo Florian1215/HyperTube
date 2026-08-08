@@ -1,7 +1,16 @@
-FROM node:22-alpine AS builder
+##### Base build
+FROM node:22-alpine AS base
+
 WORKDIR /app
+
 COPY package*.json ./
+
 RUN npm ci
+
+
+##### Development build
+FROM base AS development
+
 COPY . .
 
 ARG NEXT_PUBLIC_TMDB_API_KEY
@@ -14,14 +23,47 @@ ENV NEXT_PUBLIC_OPENSUBTITLES_API_KEY=$NEXT_PUBLIC_OPENSUBTITLES_API_KEY
 ENV NEXT_PUBLIC_OPENSUBTITLES_USERNAME=$NEXT_PUBLIC_OPENSUBTITLES_USERNAME
 ENV NEXT_PUBLIC_OPENSUBTITLES_PASSWORD=$NEXT_PUBLIC_OPENSUBTITLES_PASSWORD
 
+ENV NODE_ENV=development
+
+EXPOSE 4200
+
+CMD ["npm", "run", "dev"]
+
+
+##### Production build
+FROM base AS production-build
+
+COPY . .
+
+ARG NEXT_PUBLIC_TMDB_API_KEY
+ARG NEXT_PUBLIC_OPENSUBTITLES_API_KEY
+ARG NEXT_PUBLIC_OPENSUBTITLES_USERNAME
+ARG NEXT_PUBLIC_OPENSUBTITLES_PASSWORD
+
+ENV NEXT_PUBLIC_TMDB_API_KEY=$NEXT_PUBLIC_TMDB_API_KEY
+ENV NEXT_PUBLIC_OPENSUBTITLES_API_KEY=$NEXT_PUBLIC_OPENSUBTITLES_API_KEY
+ENV NEXT_PUBLIC_OPENSUBTITLES_USERNAME=$NEXT_PUBLIC_OPENSUBTITLES_USERNAME
+ENV NEXT_PUBLIC_OPENSUBTITLES_PASSWORD=$NEXT_PUBLIC_OPENSUBTITLES_PASSWORD
+
+ENV NODE_ENV=production
+
 RUN npm run build
 
-FROM node:22-alpine
+
+##### Production runtime
+FROM node:22-alpine AS production
+
 WORKDIR /app
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/next.config.ts ./
+
+ENV NODE_ENV=production
+
+COPY --from=production-build /app/.next ./.next
+COPY --from=production-build /app/public ./public
+COPY --from=production-build /app/package*.json ./
+COPY --from=production-build /app/next.config.ts ./
+
 RUN npm ci --omit=dev
+
 EXPOSE 4200
+
 CMD ["npm", "start"]
