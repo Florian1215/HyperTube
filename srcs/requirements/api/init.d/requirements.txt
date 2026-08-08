@@ -1,0 +1,7 @@
+Django==6.1
+django-filter==26.1
+djangorestframework==3.18.0
+djangorestframework-simplejwt==5.5.1
+psycopg2-binary==2.9.12
+requests==2.34.2
+xmltodict==1.0.4
