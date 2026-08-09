@@ -209,9 +209,9 @@ func newRouter(
 		r.With(requireAuth).Patch("/users/new-password", usersHandler.SetPassword)
 		r.With(requireAuth).Patch("/users/{id}", usersHandler.UpdateUser)
 
-		r.With(requireAuth).Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
-		r.With(requireAuth).Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
-		r.With(requireAuth).Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
+		r.Get("/stream/{id}", streamHandler.InitStream)           // start torrent and prepapre for trancoding and streaming
+		r.Get("/stream/{id}/index", streamHandler.GetIndex)       // serve the HLS index
+		r.Get("/stream/{id}/{segment}", streamHandler.GetSegment) // serve the HLS segments
 	})
 
 	// Backward-compatible callback path for the original environment template.
