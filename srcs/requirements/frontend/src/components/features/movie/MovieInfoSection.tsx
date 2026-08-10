@@ -1,10 +1,10 @@
-import {iMovieDetails} from "@/types/movie";
+import {iMovieDetails, iPeople} from "@/types/movie";
 import React from "react";
 import {useTranslations} from "next-intl";
 import LoadingText from "@/components/LoadingText";
 import GenreTags from "@/components/features/genre/GenreTags";
 import Label from "@/components/ui/Label";
-import Join from "@/components/Join";
+import {Link} from "@/i18n/navigation";
 
 export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
     const t = useTranslations("movie");
@@ -34,7 +34,7 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
             <GenreTags genreIds={movie.genres}/>
         </InfoMovie>
 
-        <InfoPeoplesMovie name={t("directors")} items={[movie.director]}/>
+        <InfoPeoplesMovie name={t("directors")} items={movie.directors}/>
 
         <InfoPeoplesMovie name={t("stars")} items={movie.cast}/>
 
@@ -56,8 +56,13 @@ function InfoMovie({children, name}: {children: React.ReactNode, name: string}) 
     </div>);
 }
 
-function InfoPeoplesMovie({name, items}: {name: string, items: string[]}) {
+function InfoPeoplesMovie({name, items}: {name: string, items: iPeople[]}) {
     return (<InfoMovie name={name}>
-        <Join items={items}/>
+        <p className="inline">
+            {items.map((i, index) => (<span key={index}>
+                <Link className="custom-underline" href={`/people/${i.id}`}>{i.name}</Link>
+                {index < items.length - 1 && " ,   "}
+            </span>))}
+        </p>
     </InfoMovie>);
 }

@@ -17,8 +17,14 @@ export interface iMovieDetails extends iMovie {
     tmdb_id: string
     runtime_minutes: number
     summary: string
-    director: string
-    cast: string[]
+    directors: iPeople[]
+    cast: iPeople[]
+}
+
+export interface iPeople {
+    id: string
+    name: string
+    picture?: string
 }
 
 export interface iTorrent {
