@@ -32,7 +32,6 @@ export function AuthProvider({children}: {children: ReactNode}) {
                 // eslint-disable-next-line react-hooks/set-state-in-effect
                 setUser(parsed);
             } catch {
-                console.warn("Invalid user in localStorage:", userData);
                 localStorage.removeItem("user");
             }
         }

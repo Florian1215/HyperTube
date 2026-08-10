@@ -1,16 +1,10 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
-import {tOauthService} from "@/types/user";
-import {OAuthIcon} from "@/components/Icons";
-import {usePathname} from "@/i18n/navigation";
 import useApiMutation from "@/hooks/useApiMutation";
 import {tResponse} from "@/types/api";
-import useAuth from "@/contexts/AuthContext";
 import Button from "@/components/ui/Button/Button";
-import {handleOauth} from "@/services/auth.service";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
-import useResponsiveSize from "@/hooks/useResponsiveSize";
 
 export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "redirect_uri";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password" | "application";
@@ -23,7 +17,6 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
     const [focusedIndex, setFocusedIndex] = useState((formType === "update" || formType === "auth")? -1 : 0);
     const {execute} = useApiMutation(setErrors, setFocusedIndex, formType, fields);
     const fieldRefs = useRef<HTMLInputElement[]>([]);
-    const showOAuth = formType === "signin" || formType === "register";
 
     useEffect(() => {
         if (focusedIndex >= 0)
@@ -144,22 +137,6 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
         {handleForgotPassword && <div className={"relative mb-4" + (errors["password-signin"] ? " pt-3" : "")}>
             <TextButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</TextButton>
         </div>}
-        <div className="flex gap-2">
-            <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
-            {showOAuth && <OauthServices oauth="42" title={t("oAuth")} />}
-            {showOAuth && <OauthServices oauth="github" title={t("oAuth")} />}
-            {showOAuth && <OauthServices oauth="gitlab" title={t("oAuth")} />}
-        </div>
+        <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
     </form>)
-}
-
-function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
-    const {callbackUrl} = useAuth();
-    const pathname = usePathname();
-    const size = useResponsiveSize();
-    const iconSize = size === "xs" ? 23 : 30;
-
-    return (<button type="button" title={title + " " + oauth} onClick={() => handleOauth(oauth, callbackUrl || pathname)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
-        <OAuthIcon oauth={oauth} size={iconSize}/>
-    </button>)
 }

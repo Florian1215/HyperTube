@@ -9,12 +9,11 @@ import UserProfile, {tTab} from "@/components/features/user/UserProfile";
 import AuthProfileTab from "@/components/features/auth/AuthProfileTab";
 import AvatarProfileTab from "@/components/features/user/AvatarProfileTab";
 import ProfileTab from "@/components/features/user/UserProfileTab";
-import APITab from "@/components/features/auth/APITab";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
-    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}, {name: "api", comp: APITab}];
+    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}];
 
     useEffect(() => {
         if (!loading && !user)
