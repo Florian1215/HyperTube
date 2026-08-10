@@ -34,13 +34,15 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
             <GenreTags genreIds={movie.genres}/>
         </InfoMovie>
 
-        <InfoPeoplesMovie name={t("directors")} items={movie.directors}/>
+        {movie.directors.length > 0 && <InfoPeoplesMovie name={t("directors")} items={movie.directors}/>}
+        {movie.cast.length > 0 && <InfoPeoplesMovie name={t("stars")} items={movie.cast}/>}
 
-        <InfoPeoplesMovie name={t("stars")} items={movie.cast}/>
-
-        <InfoMovie name={t("synopsis")}>
-            <p>{movie.summary}</p>
-        </InfoMovie>
+        {
+            movie.summary.length > 0 &&
+            <InfoMovie name={t("synopsis")}>
+                <p>{movie.summary}</p>
+            </InfoMovie>
+        }
     </div>);
 }
 
