@@ -13,7 +13,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
     const handleRightArrow = () => {
         const index = currentIndex + 1;
 
-        if (index < totalPage)
+        if (index <= totalPage)
             onClick(index);
     }
 
@@ -38,7 +38,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
                         Array.from({length: totalPage}, (_, i) => <PageButton key={i} index={i + 1} currentIndex={currentIndex} onClick={onClick}/>)
                 }
 
-                <IconButton disabled={currentIndex + 1 === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
+                <IconButton disabled={currentIndex === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
                     {(color: string) => <RightIcon color={color}/>}
                 </IconButton>
         </div>}
