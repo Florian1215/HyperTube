@@ -30,7 +30,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
     const [downloadDuration, setDownloadDuration] = useState(0);
-    const [fullDuration, setFullDuration] = useState(movie.runtime_minutes * 60);
+    const [fullDuration, setFullDuration] = useState(movie.runtime * 60);
     const [durationString, setDurationString] = useState("");
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);

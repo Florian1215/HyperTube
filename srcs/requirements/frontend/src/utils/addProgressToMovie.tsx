@@ -4,7 +4,7 @@ import {iCommentDetails} from "@/types/comment";
     export default function addProgressToMovie(history?: iMovie[], items?: iMovie[] | iCommentDetails[] | iMovieDetails) {
     if (!history || !items || ("length" in items && items.length <= 0))
         return items;
-    else if ("tmdb_id" in items) {
+    else if ("title" in items) {
         const historyMovie = history.find(m => m.id === items.id);
         if (historyMovie) {
             items.progress = historyMovie.progress;
@@ -21,7 +21,7 @@ import {iCommentDetails} from "@/types/comment";
             }
             return comment;
         })
-    } else if ("imdb_id" in items[0]) {
+    } else if ("original_title" in items[0]) {
         const movies = items as iMovie[];
         return movies.map((movie) => {
             const historyMovie = history.find(m => m.id === movie.id);

@@ -14,8 +14,8 @@ export interface iMovie {
 }
 
 export interface iMovieDetails extends iMovie {
-    tmdb_id: string
-    runtime_minutes: number
+    original_title: string
+    runtime: number
     summary: string
     directors: iPeople[]
     cast: iPeople[]

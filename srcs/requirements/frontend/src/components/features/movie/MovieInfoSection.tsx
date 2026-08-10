@@ -13,8 +13,8 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
         if (!movie)
             return "0h";
 
-        const hours = Math.floor(movie.runtime_minutes / 60);
-        const minutes = movie.runtime_minutes % 60;
+        const hours = Math.floor(movie.runtime / 60);
+        const minutes = movie.runtime % 60;
         return (`${hours}h${minutes > 10 ? "" : "0"}${minutes}`);
     }
 
