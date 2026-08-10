@@ -9,6 +9,7 @@ RUN apt-get install -y postgresql-client
 
 COPY init.d /init.d
 
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r /init.d/requirements.txt
 RUN chmod u+x /init.d/entrypoint.sh
 
