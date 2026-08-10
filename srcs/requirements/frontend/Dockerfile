@@ -5,13 +5,13 @@ WORKDIR /app
 
 COPY package*.json ./
 
+RUN npm install
+
 RUN npm ci
 
 
 ##### Development build
 FROM base AS development
-
-COPY . .
 
 ARG NEXT_PUBLIC_TMDB_API_KEY
 ARG NEXT_PUBLIC_OPENSUBTITLES_API_KEY
