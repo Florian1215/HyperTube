@@ -1,63 +1,50 @@
 from rest_framework import serializers
-from movies.models import Movie, Genre
+
+from config import settings
 
 
-class GenreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Genre
-        fields = [
-            "id",
-            "name"
-        ]
+class MovieSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    year = serializers.SerializerMethodField()
+    poster_url = serializers.SerializerMethodField()
+    backdrop_url = serializers.SerializerMethodField()
+    genres = serializers.ListField(child=serializers.IntegerField(), source='genre_ids')
+    note = serializers.FloatField(source='vote_average')
+    vote_count = serializers.IntegerField()
+
+    @staticmethod
+    def get_year(obj):
+        return obj.get('release_date', '')[:4]
+
+    @staticmethod
+    def get_poster_url(obj):
+        path = obj.get('poster_path')
+        return f'{settings.TMDB_MEDIAS_URL}/w500{path}' if path else ''
+
+    @staticmethod
+    def get_backdrop_url(obj):
+        path = obj.get('backdrop_path')
+        return f'{settings.TMDB_MEDIAS_URL}/w1280{path}' if path else ''
 
 
-class MovieListSerializer(serializers.ModelSerializer):
-    genres = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+class MovieDetailSerializer(MovieSerializer):
+    genres = serializers.SerializerMethodField()
+    original_title = serializers.CharField()
+    runtime = serializers.IntegerField()
+    summary = serializers.CharField(source='overview')
+    status = serializers.CharField()
+    cast = serializers.SerializerMethodField()
+    directors = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Movie
-        fields = [
-            "imdb_id",
-            "title",
-            "year",
-            "poster_url",
-            "backdrop_url",
-            "genres",
-            "note"
-        ]
+    @staticmethod
+    def get_genres(obj):
+        return [g['id'] for g in obj['genres']]
 
+    @staticmethod
+    def get_cast(obj):
+        return [{'id': g['id'], 'name': g['original_name'], 'picture': g['profile_path']} for g in obj['credits']['cast']]
 
-class MovieDetailSerializer(serializers.ModelSerializer):
-    genres = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-
-    class Meta:
-        model = Movie
-        fields = [
-            "imdb_id",
-            "tmdb_id",
-            "title",
-            "year",
-            "poster_url",
-            "backdrop_url",
-            "genres",
-            "note",
-            "runtime_minutes",
-            "summary",
-            "director",
-            "cast"
-        ]
-
-
-class MovieSearchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Movie
-
-        fields = [
-            "imdb_id",
-            "tmdb_id",
-            "title",
-            "year",
-            "poster_url",
-            "backdrop_url",
-            "note"
-        ]
+    @staticmethod
+    def get_directors(obj):
+        return [{'id': g['id'], 'name': g['original_name'], 'picture': g['profile_path']} for g in obj['credits']['crew'] if g['job'] == 'Director']

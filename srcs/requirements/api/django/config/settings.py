@@ -29,8 +29,12 @@ C411_BASE_URL = "https://c411.org/api"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ["DEBUG"]
 APPEND_SLASH = False
-
+PER_PAGE = 20
 ALLOWED_HOSTS = []
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+]
 
 AUTH_USER_MODEL = "users.User"
 
@@ -43,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "django_filters",
+    'django_filters',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'movies',
@@ -53,6 +58,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -153,9 +159,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS":
-        "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 12,
+    "DEFAULT_PAGINATION_CLASS": "config.pagination.CustomPagination",
 }
 
 
