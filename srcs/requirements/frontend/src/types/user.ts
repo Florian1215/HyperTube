@@ -14,6 +14,14 @@ export interface iUserToken {
     expires_in: number
 }
 
+export type tUserColor =
+    | "yellow"
+    | "pink"
+    | "green"
+    | "purple"
+    | "blue"
+    | "red"
+
 export interface iUser {
     id: number
     username: string
@@ -21,7 +29,7 @@ export interface iUser {
     last_name: string
     email: string
     oauth_method: tOauthService
-    color: string
+    color: tUserColor
     profile_picture: null | string
     created_at: number
 }
