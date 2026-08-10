@@ -178,7 +178,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
             const progress = Math.floor(video.currentTime);
             if (isLiveRef && video.currentTime + min15 > fullDuration) {
                 updateMovieProgress(movie.id, progress, 100, true).then((data) => {
-                    syncMovieProgress(queryClient, user.id, movie, data.data);
+                    syncMovieProgress(queryClient, user.id, movie, data);
                     setComplete.current = true;
                 });
             } else {
@@ -186,7 +186,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
                 if (Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
                     updateMovieProgress(movie.id, progress, pourcent, false).then((data) => {
-                        syncMovieProgress(queryClient, user.id, movie, data.data);
+                        syncMovieProgress(queryClient, user.id, movie, data);
                         lastSent.current = second;
                     });
                 }

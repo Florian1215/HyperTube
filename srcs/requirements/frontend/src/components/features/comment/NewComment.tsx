@@ -36,8 +36,8 @@ export default function NewComment({user, movie}: {user: iUser, movie: iMovie}) 
 
         makePostRequest().then((data) => {
             if (data) {
-                data.data.user = user;
-                const newComment = data.data as iCommentDetails;
+                data.user = user;
+                const newComment = data as iCommentDetails;
                 addCommentCache(queryClient, newComment, movie, newComment.user.id);
             }
             reset();

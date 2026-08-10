@@ -1,7 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import useApiMutation from "@/hooks/useApiMutation";
-import {tResponse} from "@/types/api";
 import Button from "@/components/ui/Button/Button";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
@@ -9,7 +8,7 @@ import Input from "@/components/ui/Input";
 export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "redirect_uri";
 type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password" | "application";
 
-export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<tResponse<T>>, handleRequest: (data: tResponse<T>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
+export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);

@@ -1,12 +1,14 @@
-export interface iSubtitle {
-    id: string
-    attributes: {
-        subtitle_id: string
-        language: string
-        files: {
-            file_id: number,
-        }[]
-    }
+export interface iSubtitles {
+    data: {
+        id: string
+        attributes: {
+            subtitle_id: string
+            language: string
+            files: {
+                file_id: number,
+            }[]
+        }
+    }[]
 }
 
 export interface iLoginOpenSubtitles {

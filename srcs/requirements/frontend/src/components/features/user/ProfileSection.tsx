@@ -1,7 +1,6 @@
 import {useTranslations} from "next-intl";
 import useNotification from "@/contexts/NotificationContext";
 import {iUser, iUserToken} from "@/types/user";
-import {tResponse} from "@/types/api";
 import {patchUser} from "@/services/users.service";
 import Form from "@/components/ui/Form";
 
@@ -10,10 +9,10 @@ export default function ProfileSection({user, updateUser}: {user: iUser, updateU
     const t = useTranslations("profile.fields");
     const tSuccess = useTranslations("notifications.success");
 
-    const handleUpdateUser = (data: tResponse<iUserToken | iUser>) => {
-        if ("username" in data.data) {
+    const handleUpdateUser = (data: iUserToken | iUser) => {
+        if ("username" in data) {
             if (updateUser)
-                updateUser(data.data);
+                updateUser(data);
             addNotification(tSuccess("infoChanged"), "success");
         }
     };

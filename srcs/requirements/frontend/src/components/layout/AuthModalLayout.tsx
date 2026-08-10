@@ -5,7 +5,6 @@ import {useTranslations} from "next-intl";
 import useModal, {ModalState} from "@/contexts/ModalContext";
 import useNotification from "@/contexts/NotificationContext";
 import useAuth from "@/contexts/AuthContext";
-import {tResponse} from "@/types/api";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Form from "@/components/ui/Form";
 import {postLogin, postRegister} from "@/services/auth.service";
@@ -22,9 +21,9 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
     const {login, callbackUrl, setCallbackUrl} = useAuth();
     const tSuccess = useTranslations("notifications.success");
 
-    const handleLoginRegister = (data: tResponse<iUserToken | iUser>) => {
-        if ("access_token" in data.data) {
-            login(data.data.user, data.data.access_token, data.data.refresh_token);
+    const handleLoginRegister = (data: iUserToken | iUser) => {
+        if ("access_token" in data) {
+            login(data.user, data.access_token, data.refresh_token);
             closeModal();
             if (callbackUrl) {
                 router.push(callbackUrl);

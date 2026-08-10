@@ -1,6 +1,5 @@
 import {ApiError} from "@/services/ApiError";
-import {iDownloadSubtitle, iLoginOpenSubtitles, iSubtitle} from "@/types/subtitle";
-import {tResponse} from "@/types/api";
+import {iDownloadSubtitle, iLoginOpenSubtitles, iSubtitles} from "@/types/subtitle";
 
 async function fetchOpenSubtitles<T>(endpoint: string, body?: BodyInit, bearerToken?: string): Promise<T> {
     const response = await fetch(
@@ -30,7 +29,7 @@ async function fetchOpenSubtitles<T>(endpoint: string, body?: BodyInit, bearerTo
 }
 
 export function fetchSubtitles(imdbId: string, language: string) {
-    return fetchOpenSubtitles<tResponse<iSubtitle[]>>("subtitles?" + new URLSearchParams({imdb_id: imdbId, languages: language, ai_translated: "exclude"}));
+    return fetchOpenSubtitles<iSubtitles>("subtitles?" + new URLSearchParams({imdb_id: imdbId, languages: language, ai_translated: "exclude"}));
 }
 
 export function loginOpenSubtitles() {

@@ -2,11 +2,11 @@ import {iMovie, iMovieDetails, iProgress, iTorrent} from "@/types/movie";
 import {useDebounce} from "use-debounce";
 import useApiQuery, {updateTotal} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
-import {tListResponse, tResponse} from "@/types/api";
+import {tListResponse} from "@/types/api";
 import {QueryClient} from "@tanstack/react-query";
 
 function getMovie(movieId: string, locale: string) {
-    return apiClient<tResponse<iMovieDetails>>(`movies/${movieId}/`, locale);
+    return apiClient<iMovieDetails>(`movies/${movieId}/`, locale);
 }
 
 export function useMovie(movieId: string, enabled = true) {
@@ -41,7 +41,7 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
 }
 
 export function updateMovieProgress(movieId: string, progress: number, pourcent: number, complete: boolean) {
-    return apiClient<tResponse<iProgress>>(`movies/${movieId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
+    return apiClient<iProgress>(`movies/${movieId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
 }
 
 export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress: iProgress) {

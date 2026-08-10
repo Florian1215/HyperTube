@@ -22,12 +22,12 @@ export default function MoviePage() {
     const {user} = useAuth();
     const {data, error} = useMovie(id);
     const {data: watchHistory} = useUserFilmHistory(user?.id);
-    const movie = addProgressToMovie(watchHistory?.results, data?.data) as iMovieDetails;
+    const movie = addProgressToMovie(watchHistory?.results, data) as iMovieDetails;
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const handleError = useHandleError();
     const [torrentId, setTorrentId] = useState<string | undefined>();
     const [startVideo, setStartVideo] = useState(false);
-    const {data: torrents} = useTorrents(data?.data?.id)
+    const {data: torrents} = useTorrents(data?.id)
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
 
@@ -74,7 +74,7 @@ export default function MoviePage() {
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
         <MovieHero movie={movie} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} torrents={torrents?.results} setTorrentId={setTorrentId} />
-        <MovieInfoSection movie={data?.data}/>
-        {data ? <CommentsSection movie={data.data}/> : <div/>}
+        <MovieInfoSection movie={data}/>
+        {data ? <CommentsSection movie={data}/> : <div/>}
     </div>);
 }

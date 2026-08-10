@@ -6,10 +6,6 @@ export type tListResponse<T> = {
     per_page: number
 };
 
-export type tResponse<T> = {
-    data: T;
-};
-
 export interface iApplication {
     id: number,
     name: string,

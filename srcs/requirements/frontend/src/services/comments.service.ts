@@ -1,6 +1,6 @@
 import useApiQuery, {addQuery, removeQuery, updateQuery} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
-import {tListResponse, tResponse} from "@/types/api";
+import {tListResponse} from "@/types/api";
 import {iComment, iCommentDetails} from "@/types/comment";
 import {QueryClient} from "@tanstack/react-query";
 import {iMovie} from "@/types/movie";
@@ -17,15 +17,15 @@ function getUserComments(userId: number, page: number, locale: string) {
 }
 
 export function postComment(locale: string, movieId: string, content: string) {
-    return apiClient<tResponse<iComment>>(`movies/${movieId}/comments/`, locale, {method: "POST", body: JSON.stringify({content})});
+    return apiClient<iComment>(`movies/${movieId}/comments/`, locale, {method: "POST", body: JSON.stringify({content})});
 }
 
 export function patchComment(locale: string, commentId: number, content: string) {
-    return apiClient<tResponse<iComment>>(`comments/${commentId}/`, locale, {method: "PATCH", body: JSON.stringify({content})});
+    return apiClient<iComment>(`comments/${commentId}/`, locale, {method: "PATCH", body: JSON.stringify({content})});
 }
 
 export function deleteComment(locale: string, commentId: number) {
-    return apiClient<tResponse<iComment>>(`comments/${commentId}/`, locale, {method: "DELETE"});
+    return apiClient<iComment>(`comments/${commentId}/`, locale, {method: "DELETE"});
 }
 
 export function useComments(movieId?: string, page?: number) {

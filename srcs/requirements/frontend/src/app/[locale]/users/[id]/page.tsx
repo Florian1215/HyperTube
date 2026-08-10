@@ -28,5 +28,5 @@ export default function Page() {
     if (errorNode || !data)
         return (errorNode);
 
-    return <UserProfile user={data.data} tabs={tabs} />;
+    return <UserProfile user={data} tabs={tabs} />;
 }
