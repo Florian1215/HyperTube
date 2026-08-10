@@ -92,7 +92,7 @@ export default function MoviesList({movieSets, sort, changeSort, genre} : {movie
             </thead>
             <tbody>
             {sortedMovies ?
-                sortedMovies.map((movie) => (<MovieCardList key={movie.imdb_id} movie={movie} setFilterGenre={setFilterGenre} user={user}/>)) :
+                sortedMovies.map((movie) => (<MovieCardList key={movie.id} movie={movie} setFilterGenre={setFilterGenre} user={user}/>)) :
                 [...Array(6)].map((_, i) => (<MovieCardList key={i} setFilterGenre={setFilterGenre}/>))
             }
             </tbody>

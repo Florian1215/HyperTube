@@ -42,7 +42,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     const [seekTime, setSeekTime] = useState(0);
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
-    const {data: getSubtitlesMovie} = useSubtitles(movie.imdb_id, selectedSubtitle);
+    const {data: getSubtitlesMovie} = useSubtitles(movie.id, selectedSubtitle);
     const {data: loginOpenSubtitles} = useLoginOpenSubtitles();
     const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0]?.attributes.files[0]?.file_id, loginOpenSubtitles?.token);
     const [subs, setSubs] = useState<iSub[]>([]);
@@ -177,7 +177,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
         if (!setComplete.current) {
             const progress = Math.floor(video.currentTime);
             if (isLiveRef && video.currentTime + min15 > fullDuration) {
-                updateMovieProgress(movie.imdb_id, progress, 100, true).then((data) => {
+                updateMovieProgress(movie.id, progress, 100, true).then((data) => {
                     syncMovieProgress(queryClient, user.id, movie, data.data);
                     setComplete.current = true;
                 });
@@ -185,7 +185,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
                 const second = Math.floor(video.currentTime % 60);
                 if (Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
-                    updateMovieProgress(movie.imdb_id, progress, pourcent, false).then((data) => {
+                    updateMovieProgress(movie.id, progress, pourcent, false).then((data) => {
                         syncMovieProgress(queryClient, user.id, movie, data.data);
                         lastSent.current = second;
                     });

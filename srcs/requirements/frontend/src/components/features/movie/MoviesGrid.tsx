@@ -15,7 +15,7 @@ export default function MoviesGrid({movieSets, setLimit, className} : {movieSets
 
     return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>
         {movieSets ?
-            (setLimit ? movieSets.slice(0, moviesCount) : movieSets).map((movie) => (<MovieCard key={movie.imdb_id} movie={movie} user={user}/>)) :
+            (setLimit ? movieSets.slice(0, moviesCount) : movieSets).map((movie, i) => (<MovieCard key={i} movie={movie} user={user}/>)) :
             [...Array(moviesCount)].map((_, i) => (<MovieCard key={i} user={user} />))
         }
     </div>);

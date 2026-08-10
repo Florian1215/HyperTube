@@ -17,7 +17,7 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
         </div>);
     }
 
-    return (<LinkLoginRequired href={"/movies/" + movie.imdb_id} className={containerClass + " " + className}>
+    return (<LinkLoginRequired href={"/movies/" + movie.id} className={containerClass + " " + className}>
         <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}

@@ -22,7 +22,7 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
             <div className="border overflow-hidden aspect-3/2 relative">
                 <div className="custom-noise"/>
                 {!isLoaded && (<div className="custom-loading"/>)}
-                {movie && <LinkLoginRequired href={"/movies/" + movie.imdb_id}>
+                {movie && <LinkLoginRequired href={"/movies/" + movie.id}>
                     <WatchProgress user={user} movie={movie} />
                     <Image
                         className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`}
@@ -34,7 +34,7 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
             </div>
         </td>
         <td className="sm:px-3">
-            {movie ? <LinkLoginRequired href={"/movies/" + movie.imdb_id} className="flex gap-1 sm:gap-2 w-full">
+            {movie ? <LinkLoginRequired href={"/movies/" + movie.id} className="flex gap-1 sm:gap-2 w-full">
                     <h1 className="max-w-9/10 custom-movie-title">{movie.title}</h1>
                     <span className="responsive-text-hairline">{movie.year}</span>
                 </LinkLoginRequired> :
@@ -55,7 +55,7 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
             </div>
         </td>
         <td className="text-right">
-            <Button className="px-3" onClick={() => movie && router.push("/movies/" + movie.imdb_id)}>{t("watch")}</Button>
+            <Button className="px-3" onClick={() => movie && router.push("/movies/" + movie.id)}>{t("watch")}</Button>
         </td>
     </tr>);
 }

@@ -1,5 +1,5 @@
 export interface iMovie {
-    imdb_id: string
+    id: string
     title: string
     year: string
     poster_url: string

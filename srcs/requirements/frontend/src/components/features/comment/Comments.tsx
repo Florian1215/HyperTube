@@ -35,7 +35,7 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
     const deleteDisplayComment = async (commentId: number, movieId?: string) => {
         deleteComment(locale, commentId).then(() => {
             if (currentUser)
-                removeCommentCache(queryClient, commentId, movieId ?? (currentMovie?.imdb_id ?? ""), currentUser.id);
+                removeCommentCache(queryClient, commentId, movieId ?? (currentMovie?.id ?? ""), currentUser.id);
         });
     };
 
@@ -47,7 +47,7 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
             {comments.map((comment, index) => {
                 const previousComment: iCommentDetails | null = (profilePage && index > 0) ? comments[index - 1] as iCommentDetails : null;
                 return (<Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment}
-                         deleteComment={deleteDisplayComment} previousCommentMovieId={previousComment?.movie.imdb_id}/>);
+                         deleteComment={deleteDisplayComment} previousCommentMovieId={previousComment?.movie.id}/>);
             })}
         </div>
     </Pagination>);

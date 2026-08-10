@@ -5,7 +5,7 @@ import {iCommentDetails} from "@/types/comment";
     if (!history || !items || ("length" in items && items.length <= 0))
         return items;
     else if ("tmdb_id" in items) {
-        const historyMovie = history.find(m => m.imdb_id === items.imdb_id);
+        const historyMovie = history.find(m => m.id === items.id);
         if (historyMovie) {
             items.progress = historyMovie.progress;
             items.complete = historyMovie.complete;
@@ -14,7 +14,7 @@ import {iCommentDetails} from "@/types/comment";
     } else if ("content" in items[0]) {
         const comments = items as iCommentDetails[];
         return comments.map((comment) => {
-            const historyMovie = history.find(m => m.imdb_id === comment.movie.imdb_id);
+            const historyMovie = history.find(m => m.id === comment.movie.id);
             if (historyMovie) {
                 comment.movie.progress = historyMovie.progress;
                 comment.movie.complete = historyMovie.complete;
@@ -24,7 +24,7 @@ import {iCommentDetails} from "@/types/comment";
     } else if ("imdb_id" in items[0]) {
         const movies = items as iMovie[];
         return movies.map((movie) => {
-            const historyMovie = history.find(m => m.imdb_id === movie.imdb_id);
+            const historyMovie = history.find(m => m.id === movie.id);
             if (historyMovie) {
                 movie.progress = historyMovie.progress;
                 movie.complete = historyMovie.complete;

@@ -31,7 +31,7 @@ export default function NewComment({user, movie}: {user: iUser, movie: iMovie}) 
 
     const handlePostComment = () => {
         const makePostRequest = async () => {
-            return await execute((locale) => postComment(locale, movie.imdb_id, comment.trim()));
+            return await execute((locale) => postComment(locale, movie.id, comment.trim()));
         };
 
         makePostRequest().then((data) => {

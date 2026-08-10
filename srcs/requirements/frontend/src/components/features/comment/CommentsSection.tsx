@@ -17,7 +17,7 @@ export default function CommentsSection({movie}: {movie: iMovie}) {
     const [index, setIndex] = useState(0);
     const [totalPage, setTotalPage] = useState(1);
     const t = useTranslations("comments");
-    const {data} = useComments(movie.imdb_id, index);
+    const {data} = useComments(movie.id, index);
 
     useEffect(() => {
         if (!data)
@@ -41,6 +41,6 @@ export default function CommentsSection({movie}: {movie: iMovie}) {
                 <TextButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</TextButton>
             }
         </div>
-        <Comments currentUser={user} comments={data?.data ?? []} index={index} setIndex={setIndex} totalPage={totalPage} currentMovie={movie}/>
+        <Comments currentUser={user} comments={data?.results ?? []} index={index} setIndex={setIndex} totalPage={totalPage} currentMovie={movie}/>
     </div>);
 }

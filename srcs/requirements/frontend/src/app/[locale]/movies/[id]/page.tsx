@@ -27,7 +27,7 @@ export default function MoviePage() {
     const handleError = useHandleError();
     const [torrentId, setTorrentId] = useState<string | undefined>();
     const [startVideo, setStartVideo] = useState(false);
-    const {data: torrents} = useTorrents(data?.data?.imdb_id)
+    const {data: torrents} = useTorrents(data?.data?.id)
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
 

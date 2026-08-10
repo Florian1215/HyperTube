@@ -31,7 +31,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     return (<div className="w-full"
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
-        {"movie" in comment && previousCommentMovieId != comment.movie.imdb_id && <div className="flex justify-center mb-3">
+        {"movie" in comment && previousCommentMovieId != comment.movie.id && <div className="flex justify-center mb-3">
             <MovieCard user={currentUser} className="aspect-21/9" movie={comment.movie}/></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
@@ -49,7 +49,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                             </IconButton>
                             <IconButton onClick={() => {
                                 setEditMode(false);
-                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "movie" in comment ? comment.movie.imdb_id : undefined)});
+                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "movie" in comment ? comment.movie.id : undefined)});
                             }} className="uppercase font-condensed text-2xl" hoverColor="red">
                                 {(color: string) => <TrashIcon color={color}/>}
                             </IconButton>

@@ -33,7 +33,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
 
     const renderClickableLayer = !hasVideo && (
         onClick ? (<div className="size-full z-20 absolute custom-cursor-play" onClick={onClick} />) :
-            (movie && (<LinkLoginRequired href={`/movies/${movie.imdb_id}`} className="h-full w-full z-20 absolute"/>)
+            (movie && (<LinkLoginRequired href={`/movies/${movie.id}`} className="h-full w-full z-20 absolute"/>)
         )
     );
 
@@ -62,7 +62,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
         if (!movie || startVideo)
             return null;
 
-        return (<LinkLoginRequired href={`/movies/${movie.imdb_id}`} className="absolute z-40 max-w-2/3 bottom-1/20">
+        return (<LinkLoginRequired href={`/movies/${movie.id}`} className="absolute z-40 max-w-2/3 bottom-1/20">
             {onClick && !onSlide ?
                 (<SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick} >{t("watch")}</SecondaryButton>)
                 : (<h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
