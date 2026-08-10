@@ -2,16 +2,16 @@ import {ReactNode} from "react";
 import {LeftIcon, RightIcon} from "@/components/Icons";
 import IconButton from "@/components/ui/Button/IconButton";
 
-export default function Pagination({children, currenIndex, totalPage, onClick, variableMT=false} : {children: ReactNode, currenIndex: number, totalPage: number, onClick: (i: number) => void, variableMT?: boolean}) {
+export default function Pagination({children, currentIndex, totalPage, onClick, variableMT=false} : {children: ReactNode, currentIndex: number, totalPage: number, onClick: (i: number) => void, variableMT?: boolean}) {
     const handleLeftArrow = () => {
-        const index = currenIndex - 1;
+        const index = currentIndex - 1;
 
-        if (index >= 0)
+        if (index > 0)
             onClick(index);
     }
 
     const handleRightArrow = () => {
-        const index = currenIndex + 1;
+        const index = currentIndex + 1;
 
         if (index < totalPage)
             onClick(index);
@@ -21,19 +21,35 @@ export default function Pagination({children, currenIndex, totalPage, onClick, v
         {children}
         {totalPage > 1 &&
             <div className={"flex w-full gap-2 justify-center " + (variableMT ? "mt-2 md:mt-4 xl:mt-6" : "mt4")}>
-                <IconButton disabled={currenIndex === 0} className="mt-1" onClick={handleLeftArrow} color={"gray"}>
+                <IconButton disabled={currentIndex === 1} className="mt-1" onClick={handleLeftArrow} color={"gray"}>
                     {(color: string) => <LeftIcon color={color}/>}
                 </IconButton>
 
-                {Array.from({length: totalPage}, (_, i) => (
-                    <button key={i} className={"custom-condensed text-2xl leading-6 " + (i === currenIndex ? "text-black font-bold" : "text-gray hover:underline")} onClick={() => {onClick(i)}}>
-                        {i}
-                    </button>
-                ))}
+                {
+                    totalPage > 5 ?
+                        <>
+                            <PageButton index={1} currentIndex={currentIndex} onClick={onClick}/>
+                            {currentIndex !== 2 && <PageButton currentIndex={currentIndex} onClick={onClick}/>}
+                            {currentIndex !== 1 && currentIndex !== totalPage && <PageButton index={currentIndex} currentIndex={currentIndex} onClick={onClick}/>}
+                            {currentIndex !== totalPage - 1 && currentIndex > 2 && <PageButton currentIndex={currentIndex} onClick={onClick}/>}
+                            <PageButton index={totalPage} currentIndex={currentIndex} onClick={onClick}/>
+                        </>
+                        :
+                        Array.from({length: totalPage}, (_, i) => <PageButton key={i} index={i + 1} currentIndex={currentIndex} onClick={onClick}/>)
+                }
 
-                <IconButton disabled={currenIndex + 1 === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
+                <IconButton disabled={currentIndex + 1 === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
                     {(color: string) => <RightIcon color={color}/>}
                 </IconButton>
         </div>}
     </div>);
+}
+
+function PageButton({index, currentIndex, onClick}: {index?: number, currentIndex: number, onClick: (i: number) => void}) {
+    return (<button className={"custom-condensed text-2xl leading-6 " + (index === currentIndex ? "text-black font-bold" : "text-gray hover:underline")} onClick={() => {
+        if (index && index !== currentIndex)
+            onClick(index)
+    }}>
+        {index ?? "..."}
+    </button>);
 }

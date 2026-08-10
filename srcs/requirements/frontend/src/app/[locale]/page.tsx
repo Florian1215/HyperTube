@@ -25,20 +25,20 @@ export default function HomePage() {
 
     const {data: continueWatchingData} = useUserFilmHistory(user?.id);
     const {data: movies} = useMovies();
-    const popular = filterAlreadyWatch(continueWatchingData?.data, movies?.data);
+    const popular = filterAlreadyWatch(continueWatchingData?.results, movies?.results);
     const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
 
     const {data: featuredMovies} = useMovies("featured");
-    const featured = filterAlreadyWatch(continueWatchingData?.data, featuredMovies?.data);
+    const featured = filterAlreadyWatch(continueWatchingData?.results, featuredMovies?.results);
     const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
 
-    const mostRated = filterAlreadyWatch(continueWatchingData?.data, featuredMovies && movies ? [...featuredMovies.data, ...movies.data] : undefined).filter((m) => m.note > 7);
+    const mostRated = filterAlreadyWatch(continueWatchingData?.results, featuredMovies && movies ? [...featuredMovies.results, ...movies.results] : undefined).filter((m) => m.note > 7);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
-    const continueWatching = continueWatchingData ? continueWatchingData.data.filter((m) => !m.complete) : [];
+    const continueWatching = continueWatchingData ? continueWatchingData.results.filter((m) => !m.complete) : [];
 
     const {data: dirctedWatchMovies} = useMovies("directstream", undefined, !!user);
-    const filterDirectedWatchMovies = filterAlreadyWatch(continueWatchingData?.data, dirctedWatchMovies?.data);
+    const filterDirectedWatchMovies = filterAlreadyWatch(continueWatchingData?.results, dirctedWatchMovies?.results);
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />

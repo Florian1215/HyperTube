@@ -6,6 +6,8 @@ export interface iMovie {
     backdrop_url: string
     genres: number[]
     note: number
+    popularity: number
+    vote_count: number
     complete?: boolean
     progress?: number
     pourcent?: number

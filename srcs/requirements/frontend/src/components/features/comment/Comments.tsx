@@ -42,7 +42,7 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
     if (!comments || comments.length === 0)
         return (<SmallText>{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</SmallText>);
 
-    return (<Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex}>
+    return (<Pagination currentIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col gap-6">
             {comments.map((comment, index) => {
                 const previousComment: iCommentDetails | null = (profilePage && index > 0) ? comments[index - 1] as iCommentDetails : null;

@@ -15,33 +15,31 @@ export default function useApiQuery<T>(key: unknown[], fn: (locale: string, sign
     });
 }
 
-export function updateTotal(meta: tListResponse<unknown[]>["meta"], delta: number) {
-    if (!meta)
-        return {page: 0, per_page: 12, total: 1};
-    return {...meta, total: Math.max(0, meta.total + delta)};
+export function updateTotal(res: tListResponse<unknown>, delta: number) {
+    return {...res, count: Math.max(0, res.count + delta)};
 }
 
 export function addQuery<T>(queryClient: QueryClient, key: unknown[], newContent: T) {
-    const queries = queryClient.getQueriesData<tListResponse<unknown[]>>({queryKey: key});
+    const queries = queryClient.getQueriesData<tListResponse<unknown>>({queryKey: key});
     queries.forEach(([queryKey, current]) => {
         if (!current)
             return;
         queryClient.setQueryData(queryKey, {
             ...current,
-            data: [newContent, ...current.data],
-            meta: updateTotal(current.meta, 1),
+            data: [newContent, ...current.results],
+            meta: updateTotal(current, 1),
         });
     });
 }
 
 export function updateQuery<T extends iApplication | iComment>(queryClient: QueryClient, key: unknown[], newContent: T) {
-    const queries = queryClient.getQueriesData<tListResponse<T[]>>({queryKey: key});
+    const queries = queryClient.getQueriesData<tListResponse<T>>({queryKey: key});
     queries.forEach(([queryKey, current]) => {
         if (!current)
             return;
         queryClient.setQueryData(queryKey, {
             ...current,
-            data: current.data.map((v) => {
+            data: current.results.map((v) => {
                 if (v.id === newContent.id)
                     return newContent;
                 return v;
@@ -51,20 +49,20 @@ export function updateQuery<T extends iApplication | iComment>(queryClient: Quer
 }
 
 export function removeQuery(queryClient: QueryClient, key: unknown[], deleteObjId: number) {
-    const queries = queryClient.getQueriesData<tListResponse<unknown[]>>({queryKey: key});
+    const queries = queryClient.getQueriesData<tListResponse<unknown>>({queryKey: key});
     queries.forEach(([queryKey, current]) => {
         if (!current)
             return;
-        const nextData = current.data.filter((i) => {
+        const nextData = current.results.filter((i) => {
             const data = i as iApplication | iComment;
             return data.id !== deleteObjId
         })
-        if (nextData.length === current.data.length)
+        if (nextData.length === current.results.length)
             return;
         queryClient.setQueryData(queryKey, {
             ...current,
             data: nextData,
-            meta: updateTotal(current.meta, -1),
+            meta: updateTotal(current, -1),
         });
     });
 }

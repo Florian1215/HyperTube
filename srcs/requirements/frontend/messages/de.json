@@ -16,6 +16,7 @@
   "movies": {
     "searchPlaceholder": "Nach einem Film suchen...",
     "noResults": "Kein Film gefunden",
+    "emptyPage": "Nichts hier zu sehen.",
     "noResultsResetFilter": "Keine Ergebnisse. Filter zurücksetzen?",
     "sort": {
       "title": "Titel",

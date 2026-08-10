@@ -20,8 +20,8 @@ export default function CommentsProfileTab({user}: {user: iUser}) {
         if (!data)
             return;
         const dataWithUser: iCommentDetails[] = [];
-        data.data.map(comment => dataWithUser.push({...comment, user: user}))
-        addProgressToMovie(watchHistory?.data, dataWithUser)
+        data.results.map(comment => dataWithUser.push({...comment, user: user}))
+        addProgressToMovie(watchHistory?.results, dataWithUser)
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setComments(dataWithUser);
         setTotalPage(computeTotalPage(data));

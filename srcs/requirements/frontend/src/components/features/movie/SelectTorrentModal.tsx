@@ -74,7 +74,7 @@ export default function SelectTorrentModal() {
         </th>);
 
     return (<ModalLayout onCloseAction={closeModal} title={t("title")} addMaxWTitle={false}>
-        <Pagination currenIndex={index} totalPage={totalPage} onClick={setIndex}>
+        <Pagination currentIndex={index} totalPage={totalPage} onClick={setIndex}>
             <table className="w-full text-sm">
                 <thead>
                 <tr>

@@ -1,10 +1,9 @@
 export type tListResponse<T> = {
-    data: T;
-    meta?: {
-        page: number;
-        per_page: number;
-        total: number;
-    };
+    results: T[];
+    previous: string,
+    next: string,
+    count: number
+    per_page: number
 };
 
 export type tResponse<T> = {

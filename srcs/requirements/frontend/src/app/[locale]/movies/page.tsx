@@ -44,11 +44,11 @@ export default function Page() {
     const [searchValue, setSearchValue] = useState(query ?? "");
     const [viewType, setViewType] = useState<tViewType>("grid");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
-    const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(1);
     const {data: rawMovies} = useMovies(searchValue.trim(), index);
     const {user} = useAuth();
     const {data: watchHistory} = useUserFilmHistory(user?.id);
-    const movies = addProgressToMovie(watchHistory?.data, rawMovies?.data) as iMovie[] | undefined;
+    const movies = addProgressToMovie(watchHistory?.results, rawMovies?.results) as iMovie[] | undefined;
     const totalPage = computeTotalPage(rawMovies);
 
     useEffect(() => {
@@ -82,7 +82,7 @@ export default function Page() {
     return (<div className="flex flex-col gap-2 md:gap-4 mx-2 md:mx-4 xl:mx-6 pb-2 md:pb-4 xl:pb-6">
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />
         <Filter viewType={viewType} onClick={handleSetViewType}/>
-        <Pagination currenIndex={index} totalPage={totalPage} onClick={changeIndex} variableMT={true}>
+        <Pagination currentIndex={index} totalPage={totalPage} onClick={changeIndex} variableMT={true}>
             <Results movies={movies} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
         </Pagination>
     </div>);
@@ -117,6 +117,12 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
 
     if (movies && movies.length === 0)
         return (<SmallText>{t("noResults")}</SmallText>);
+
+    if (movies)
+        movies = movies.filter(m => m.poster_url.length > 0 && m.backdrop_url.length > 0 && m.vote_count > 0);
+
+    if (movies && movies.length === 0)
+        return (<SmallText>{t("emptyPage")}</SmallText>);
 
     if (viewType === "grid")
         return (<MoviesGrid movieSets={movies}/>);
