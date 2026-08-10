@@ -8,6 +8,9 @@ services:
       - "4200:4200"
     networks:
       - frontend_network
+    volumes:
+      - frontend-volume:/app
+      - /app/node_modules
     depends_on:
       - api
 
@@ -75,3 +78,10 @@ volumes:
       type: none
       o: bind
       device: "requirements/api/django"
+  frontend-volume:
+    name: frontend-volume
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "requirements/frontend"
