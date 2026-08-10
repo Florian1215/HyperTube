@@ -2,8 +2,8 @@
 *.env
 
 node_modules/
-frontend/.next/
-frontend/out/
+.next/
+out/
 
 srcs/data/*
 
