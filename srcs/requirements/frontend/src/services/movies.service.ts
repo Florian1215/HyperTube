@@ -6,7 +6,7 @@ import {tListResponse, tResponse} from "@/types/api";
 import {QueryClient} from "@tanstack/react-query";
 
 function getMovie(movieId: string, locale: string) {
-    return apiClient<tResponse<iMovieDetails>>(`/movies/${movieId}`, locale);
+    return apiClient<tResponse<iMovieDetails>>(`movies/${movieId}/`, locale);
 }
 
 export function useMovie(movieId: string, enabled = true) {
@@ -18,16 +18,16 @@ export function useMovie(movieId: string, enabled = true) {
 }
 
 function getMovies(locale: string, search_title?: string, page?: number, signal?: AbortSignal) {
-    let endpoint = "/movies";
+    let endpoint = "movies/";
     if (search_title === "directstream")
-        endpoint += "/directstream"
+        endpoint += "directstream/"
     else if (search_title === "featured")
-        endpoint += "/featured"
+        endpoint += "featured/"
     else if (search_title === "watched")
-        endpoint += "/watched"
+        endpoint += "watched/"
     else if (search_title)
-        endpoint += `/search?title=${search_title}&page=${page}`;
-    return apiClient<tListResponse<iMovie[]>>(endpoint, locale, {signal});
+        endpoint += `?search=${search_title}&page=${page}`;
+    return apiClient<tListResponse<iMovie>>(endpoint, locale, {signal});
 }
 
 export function useMovies(search_title?: string, page?: number, enabled = true) {
@@ -41,32 +41,32 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
 }
 
 export function updateMovieProgress(movieId: string, progress: number, pourcent: number, complete: boolean) {
-    return apiClient<tListResponse<iProgress>>(`/movies/${movieId}/progress`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
+    return apiClient<tResponse<iProgress>>(`movies/${movieId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
 }
 
 export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress: iProgress) {
     const updatedMovie = {...movie, ...progress};
-    const historyQueries = queryClient.getQueriesData<tListResponse<iMovie[]>>({queryKey: ["user-movie-history", userId]});
+    const historyQueries = queryClient.getQueriesData<tListResponse<iMovie>>({queryKey: ["user-movie-history", userId]});
     historyQueries.forEach(([queryKey, current]) => {
         if (!current)
             return;
-        const nextHistory = current.data.some((item) => item.imdb_id === movie.imdb_id)
-            ? current.data.map((item) => item.imdb_id === movie.imdb_id ? updatedMovie : item)
-            : [updatedMovie, ...current.data];
+        const nextHistory = current.results.some((item) => item.id === movie.id)
+            ? current.results.map((item) => item.id === movie.id ? updatedMovie : item)
+            : [updatedMovie, ...current.results];
         queryClient.setQueryData(queryKey, {
             ...current,
             data: nextHistory,
-            meta: updateTotal(current.meta, 1),
+            meta: updateTotal(current, 1),
         });
     });
 }
 
 export function startTorrentStreaming(torrentId: string) {
-    return apiClient<tListResponse<iTorrent[]>>(`/stream/${torrentId}`);
+    return apiClient<tListResponse<iTorrent>>(`stream/${torrentId}/`);
 }
 
 function getTorrents(locale: string, movieId?: string) {
-    return apiClient<tListResponse<iTorrent[]>>(`/movies/${movieId}/torrents`, locale);
+    return apiClient<tListResponse<iTorrent>>(`movies/${movieId}/torrents/`, locale);
 }
 
 export function useTorrents(movieId?: string) {
