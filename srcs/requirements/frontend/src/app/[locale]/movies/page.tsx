@@ -119,7 +119,7 @@ function Results({movies, viewType, sort, changeSort, genre}: {movies?: iMovie[]
         return (<SmallText>{t("noResults")}</SmallText>);
 
     if (movies)
-        movies = movies.filter(m => m.poster_url.length > 0 && m.backdrop_url.length > 0 && m.vote_count > 0);
+        movies = movies.filter(m => m.poster_url.length > 0 && m.backdrop_url.length > 0 && m.vote_count > 50);
 
     if (movies && movies.length === 0)
         return (<SmallText>{t("emptyPage")}</SmallText>);
