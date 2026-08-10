@@ -45,11 +45,11 @@ exec		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
 .PHONY: clean
-clean		:
+clean		: dusting
 			$(COMPOSE) $(FLAGS) down --rmi local --remove-orphans
 
 PHONY: fclean
-fclean		: dusting
+fclean		:
 			$(COMPOSE) $(FLAGS) down -v --rmi all --remove-orphans
 			rm -rf $(DATA_DIR)
 
@@ -63,8 +63,8 @@ dusting		:
 prune		:
 			docker system prune -af
 
-.PHONY: sre
-sre			:	clean all
-
 .PHONY: re
-re			:	fclean all
+re			:	clean all
+
+.PHONY: vre
+vre			:	fclean all
