@@ -51,17 +51,17 @@ export default function HomePage() {
                 <MoviesGrid movieSets={continueWatching.slice(0, 3)} setLimit={true}/>
             </Section>}
 
-            {(shuffledFeatured.length > 0) && <Section title={t("featured")} href="/movies?q=featured">
-                <MoviesGrid movieSets={shuffledFeatured} setLimit={true}/>
-            </Section>}
+            <Section title={t("featured")} href="/movies?q=featured">
+                <MoviesGrid movieSets={shuffledFeatured.length > 0 ? shuffledFeatured : undefined} setLimit={true}/>
+            </Section>
 
-            {(shuffledPopular.length > 0) && <Section title={t("popular")} href="/movies?q=popular">
-                <MoviesGrid movieSets={shuffledPopular} setLimit={true}/>
-            </Section>}
+            <Section title={t("popular")} href="/movies?q=popular">
+                <MoviesGrid movieSets={shuffledPopular.length > 0 ? shuffledPopular : undefined} setLimit={true}/>
+            </Section>
 
-            {(shuffledMostRated.length > 0) && <Section title={t("mostRated")} href="/movies?sort=most_rated">
-                <MoviesGrid movieSets={shuffledMostRated} setLimit={true}/>
-            </Section>}
+            <Section title={t("mostRated")} href="/movies?sort=most_rated">
+                <MoviesGrid movieSets={shuffledMostRated.length > 0 ? shuffledMostRated : undefined} setLimit={true}/>
+            </Section>
 
             {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
                 <MoviesGrid movieSets={filterDirectedWatchMovies} setLimit={true}/>
@@ -130,5 +130,5 @@ function filterAlreadyWatch(watchHistory?: iMovie[], movies?: iMovie[]) {
         return [];
     if (!watchHistory || !watchHistory.length)
         return movies;
-    return movies.filter(m => !watchHistory.find(mw => mw.imdb_id == m.imdb_id));
+    return movies.filter(m => !watchHistory.find(mw => mw.id == m.id));
 }
