@@ -6,7 +6,7 @@ import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
 
 export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "redirect_uri";
-type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password" | "application";
+type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
 
 export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
@@ -29,9 +29,8 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
     const newSetterError = (value: Record<string, string>) => {
         setErrors((prevErrors) => {
             const newErrors = {...prevErrors, ...value};
-            const field = formType === "application" ? "name" : "email";
-            if (prevErrors[getId(field)] === tError("atLeastOneField") && !value[getId(field)])
-                newErrors[getId(field)] = "";
+            if (prevErrors[getId("email")] === tError("atLeastOneField") && !value[getId("email")])
+                newErrors[getId("email")] = "";
             setDisableBtn(hasError(newErrors));
             return newErrors;
         });
@@ -87,7 +86,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
         if (disableBtn)
             return ;
         const requiredErrors: Record<string, string> = {};
-        const isAllFieldRequired = !(formType === "update" || (formType === "application" && extraParam != undefined));
+        const isAllFieldRequired = !(formType === "update");
 
         if (!isAllFieldRequired && fieldsValue.filter((v) => v.trim().length !== 0).length === 0) {
             newSetterErrorUtils(0, "atLeastOneField")

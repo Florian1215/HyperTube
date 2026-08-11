@@ -67,23 +67,6 @@
     },
     "remove": "Remove",
     "noMoviesYet": "You haven't seen any films yet.",
-    "application": {
-      "seeAPIDocumentation": "See API documentation",
-      "noApplicationsYet": "You haven't created any applications yet.",
-      "createApplication": "Create application",
-      "createModal": {
-        "title": "Create application",
-        "name": "Name of the application",
-        "redirect_uri": "Redirect URI",
-        "submit": "Create"
-      },
-      "editModal": {
-        "title": "Edit application",
-        "name": "Name of the application",
-        "redirect_uri": "Redirect URI",
-        "submit": "Save changes"
-      }
-    },
     "fields": {
       "submit": "Save changes",
       "email": "Email",
@@ -190,8 +173,6 @@
   "notifications": {
     "success": {
       "textCopied": "{label} copied to clipboard.",
-      "applicationCreated": "Application created. Copy the `client_secret` now. It won’t be shown again.",
-      "applicationEdited": "Application updated.",
       "passwordChanged": "Your password has been updated.",
       "newPasswordSet": "Your new password has been set, you can now sign in with your new password.",
       "emailResetPassword": "An email has been sent to reset your password.",
