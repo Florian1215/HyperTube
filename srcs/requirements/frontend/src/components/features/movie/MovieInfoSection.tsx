@@ -5,9 +5,11 @@ import LoadingText from "@/components/LoadingText";
 import GenreTags from "@/components/features/genre/GenreTags";
 import Label from "@/components/ui/Label";
 import {Link} from "@/i18n/navigation";
+import useModal from "@/contexts/ModalContext";
 
 export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
     const t = useTranslations("movie");
+    const {openModal} = useModal();
 
     const getLenght = () => {
         if (!movie)
@@ -20,6 +22,8 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
 
     if (!movie)
         return (<LoadingText center={true} />);
+
+    const directors = movie.crew.filter(p => p.job === "Director");
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
         <h1 className="flex gap-1 justify-center w-full">
@@ -34,8 +38,8 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
             <GenreTags genreIds={movie.genres}/>
         </InfoMovie>
 
-        {movie.directors.length > 0 && <InfoPeoplesMovie name={t("directors")} items={movie.directors}/>}
-        {movie.cast.length > 0 && <InfoPeoplesMovie name={t("stars")} items={movie.cast}/>}
+        <InfoPeoplesMovie name={t("directors")} items={directors}/>
+        <InfoPeoplesMovie name={t("stars")} items={movie.cast.slice(0, 5)} openModal={() => openModal({type: "credits", cast: movie.cast, crew: movie.crew})}/>
 
         {
             movie.summary.length > 0 &&
@@ -58,13 +62,16 @@ function InfoMovie({children, name}: {children: React.ReactNode, name: string}) 
     </div>);
 }
 
-function InfoPeoplesMovie({name, items}: {name: string, items: iPeople[]}) {
+function InfoPeoplesMovie({name, items, openModal}: {name: string, items: iPeople[], openModal?: () => void}) {
+    if (!items.length)
+        return null;
     return (<InfoMovie name={name}>
         <p className="inline">
             {items.map((i, index) => (<span key={index}>
                 <Link className="custom-underline" href={`/people/${i.id}`}>{i.name}</Link>
-                {index < items.length - 1 && " ,   "}
+                {(index < items.length - 1 || openModal) && " , "}
             </span>))}
+            {openModal && <button className="custom-underline" onClick={openModal}>...</button>}
         </p>
     </InfoMovie>);
 }

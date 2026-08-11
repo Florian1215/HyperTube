@@ -18,6 +18,7 @@ import ResetPasswordModal from "@/components/features/auth/ResetPasswordModal";
 import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
 import SelectTorrentModal from "@/components/features/movie/SelectTorrentModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import CreditsModal from "@/components/features/movie/CreditsModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
@@ -36,7 +37,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                 <AuthProvider>
                     <NotificationProvider>
                         <ModalProvider>
-                            <Page404ErrorHandler />
+                            <Page404ErrorHandler/>
                             <NotificationList/>
 
                             <SigninModal/>
@@ -45,7 +46,8 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <FilterGenreModal/>
                             <ResetPasswordModal/>
                             <DeleteConfirmationModal/>
-                            <SelectTorrentModal />
+                            <CreditsModal/>
+                            <SelectTorrentModal/>
 
                             <Navbar/>
 

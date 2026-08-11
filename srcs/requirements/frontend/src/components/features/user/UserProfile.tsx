@@ -9,7 +9,8 @@ import {usePathname, useRouter} from "@/i18n/navigation";
 
 export type tTab = {
     name: string
-    comp: ({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) => JSX.Element}[];
+    comp: ({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) => JSX.Element
+}[];
 
 export default function UserProfile({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
     const searchParams = useSearchParams();

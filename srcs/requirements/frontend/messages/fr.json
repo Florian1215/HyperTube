@@ -40,7 +40,13 @@
     "torrentError": "Erreur lors du téléchargement du film. Veuillez réessayer avec un torrent différent ou réessayer plus tard.",
     "chooseAnotherTorrent": "Choisir un autre torrent",
     "decreaseSubDelay": "Diminuer le délai des sous-titres",
-    "increaseSubDelay": "Augmenter le délai des sous-titres"
+    "increaseSubDelay": "Augmenter le délai des sous-titres",
+    "viewAll": "Voir tout",
+    "credits" : {
+        "title": "Crédits",
+        "cast": "Distribution",
+        "crew": "Équipe technique"
+    }
   },
   "comments": {
     "title": "Commentaires",

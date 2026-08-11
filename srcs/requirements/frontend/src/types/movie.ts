@@ -16,13 +16,15 @@ export interface iMovieDetails extends iMovie {
     original_title: string
     runtime: number
     summary: string
-    directors: iPeople[]
+    crew: iPeople[]
     cast: iPeople[]
 }
 
 export interface iPeople {
     id: string
     name: string
+    job?: string
+    character?: string
     picture?: string
 }
 

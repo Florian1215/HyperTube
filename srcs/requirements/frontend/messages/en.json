@@ -40,7 +40,13 @@
     "torrentError": "An error occurred while downloading the movie. Please try again with a different torrent or try again later.",
     "chooseAnotherTorrent": "Choose another torrent",
     "decreaseSubDelay": "Decrease subtitle delay",
-    "increaseSubDelay": "Increase subtitle delay"
+    "increaseSubDelay": "Increase subtitle delay",
+    "viewAll": "View all",
+    "credits" : {
+        "title": "Credits",
+        "cast": "Cast",
+        "crew": "Crew"
+    }
   },
   "comments": {
     "title": "Comments",
