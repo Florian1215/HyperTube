@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from config import settings
-from config.settings import TMDB_MEDIAS_URL
+from config.tmdb_media import tmdb_media
 
 
 class MovieSerializer(serializers.Serializer):
@@ -20,13 +19,11 @@ class MovieSerializer(serializers.Serializer):
 
     @staticmethod
     def get_poster_url(obj):
-        path = obj.get('poster_path')
-        return f'{settings.TMDB_MEDIAS_URL}/w500{path}' if path else ''
+        return tmdb_media(obj['poster_path'], 'w500')
 
     @staticmethod
     def get_backdrop_url(obj):
-        path = obj.get('backdrop_path')
-        return f'{settings.TMDB_MEDIAS_URL}/w1280{path}' if path else ''
+        return tmdb_media(obj['backdrop_path'], 'w1280')
 
 
 class MovieDetailSerializer(MovieSerializer):
@@ -44,8 +41,8 @@ class MovieDetailSerializer(MovieSerializer):
 
     @staticmethod
     def get_cast(obj):
-        return [{'id': g['id'], 'name': g['original_name'], 'picture': TMDB_MEDIAS_URL + g['profile_path'], 'character': g['character']} for g in obj['credits']['cast']]
+        return [{'id': g['id'], 'name': g['original_name'], 'picture': tmdb_media(g['profile_path']), 'character': g['character']} for g in obj['credits']['cast']]
 
     @staticmethod
     def get_crew(obj):
-        return [{'id': g['id'], 'name': g['original_name'], 'picture': TMDB_MEDIAS_URL + g['profile_path'], 'job': g['job']} for g in obj['credits']['crew']]
+        return [{'id': g['id'], 'name': g['original_name'], 'picture': tmdb_media(g['profile_path']), 'job': g['job']} for g in obj['credits']['crew']]
