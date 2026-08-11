@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from config import settings
+from config.settings import TMDB_MEDIAS_URL
 
 
 class MovieSerializer(serializers.Serializer):
@@ -35,7 +36,7 @@ class MovieDetailSerializer(MovieSerializer):
     summary = serializers.CharField(source='overview')
     status = serializers.CharField()
     cast = serializers.SerializerMethodField()
-    directors = serializers.SerializerMethodField()
+    crew = serializers.SerializerMethodField()
 
     @staticmethod
     def get_genres(obj):
@@ -43,8 +44,8 @@ class MovieDetailSerializer(MovieSerializer):
 
     @staticmethod
     def get_cast(obj):
-        return [{'id': g['id'], 'name': g['original_name'], 'picture': g['profile_path']} for g in obj['credits']['cast']]
+        return [{'id': g['id'], 'name': g['original_name'], 'picture': TMDB_MEDIAS_URL + g['profile_path'], 'character': g['character']} for g in obj['credits']['cast']]
 
     @staticmethod
-    def get_directors(obj):
-        return [{'id': g['id'], 'name': g['original_name'], 'picture': g['profile_path']} for g in obj['credits']['crew'] if g['job'] == 'Director']
+    def get_crew(obj):
+        return [{'id': g['id'], 'name': g['original_name'], 'picture': TMDB_MEDIAS_URL + g['profile_path'], 'job': g['job']} for g in obj['credits']['crew']]
