@@ -34,9 +34,12 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
             <p>{getLenght()}</p>
         </InfoMovie>
 
-        <InfoMovie name={t("genre")}>
-            <GenreTags genreIds={movie.genres}/>
-        </InfoMovie>
+        {
+            movie.genres.length > 0 &&
+            <InfoMovie name={t("genre")}>
+                <GenreTags genreIds={movie.genres}/>
+            </InfoMovie>
+        }
 
         <InfoPeoplesMovie name={t("directors")} items={directors}/>
         <InfoPeoplesMovie name={t("stars")} items={movie.cast.slice(0, 5)} openModal={() => openModal({type: "credits", cast: movie.cast, crew: movie.crew})}/>
