@@ -1,29 +1,41 @@
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import viewsets, generics, mixins
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny, SAFE_METHODS, \
+    BasePermission
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
 from comments.models import Comment
 from comments.serializers import CommentSerializer, CommentDetailSerializer
 from comments.permissions import IsOwner
+from movies.views import get_or_fetch_movie
 
 
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.select_related("user", "movie")
+class CommentAPIView(generics.RetrieveUpdateDestroyAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ["movie", "user"]
-    ordering_fields = ["updated_at"]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    ordering_fields = ['updated_at']
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwner]
+    serializer_class = CommentSerializer
+    queryset = Comment.objects.all()
 
-    def get_serializer_class(self):
-        if self.action == "retrieve":
-            return CommentDetailSerializer
-        return CommentSerializer
+
+class CommentMovieAPIView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = CommentSerializer
+    ordering_fields = ['updated_at']
+
+    def get_queryset(self):
+        movie = get_or_fetch_movie(self.kwargs['pk'], self.request)
+        return Comment.objects.filter(movie=movie)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        movie = get_or_fetch_movie(self.kwargs['pk'], self.request)
+        serializer.save(user=self.request.user, movie=movie)
 
-    def get_permissions(self):
-        if self.action in ["update", "partial_update", "destroy"]:
-            return [IsOwner()]
-        return super().get_permissions()
+
+class CommentUserAPIView(generics.ListAPIView):
+    permissions_classes = []
+    serializer_class = CommentDetailSerializer
+    ordering_fields = ['updated_at']
+
+    def get_queryset(self):
+        return Comment.objects.filter(user=self.request.user)

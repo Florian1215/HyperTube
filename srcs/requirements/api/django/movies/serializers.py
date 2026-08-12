@@ -4,6 +4,19 @@ from config.tmdb_media import tmdb_media
 from movies.models import Movie, Cast, Crew
 
 
+class SmallMovieSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='movie_id')
+
+    class Meta:
+        model = Movie
+        fields = [
+            'id',
+            'title',
+            'year',
+            'backdrop_url'
+        ]
+
+
 class MovieSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()
