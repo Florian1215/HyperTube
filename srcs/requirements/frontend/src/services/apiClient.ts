@@ -26,8 +26,12 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
 
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-        if (response.status === 401 && data.code === "token_not_valid") {
-            await refreshAccessToken(locale);
+        if (response.status === 401 && data.code === "token_not_valid" && endpoint !== 'auth/refresh/') {
+            try {
+                await refreshAccessToken(locale);
+            } catch {
+                throw new ApiError(response.status, data);
+            }
             return apiClient<T>(endpoint, locale, options);
         }
         throw new ApiError(response.status, data);
