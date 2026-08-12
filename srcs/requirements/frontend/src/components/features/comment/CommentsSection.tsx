@@ -14,7 +14,7 @@ import Comments from "@/components/features/comment/Comments";
 export default function CommentsSection({movie}: {movie: iMovie}) {
     const {user} = useAuth();
     const {openModal} = useModal();
-    const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(1);
     const [totalPage, setTotalPage] = useState(1);
     const t = useTranslations("comments");
     const {data} = useComments(movie.id, index);

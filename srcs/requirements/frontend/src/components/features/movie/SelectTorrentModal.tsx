@@ -17,7 +17,7 @@ export default function SelectTorrentModal() {
     const {activeModal, closeModal} = useModal();
     const t = useTranslations("modal.selectTorrent");
 
-    const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(1);
     const [sortKey, setSortKey] = useState<SortKey>("seeds");
     const [sortDir, setSortDir] = useState<SortDir>("desc");
 

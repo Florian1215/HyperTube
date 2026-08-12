@@ -8,7 +8,7 @@ import {iUser} from "@/types/user";
 import SmallText from "@/components/ui/SmallText";
 
 export default function MovieHistoryTab({user}: {user: iUser}) {
-    const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(1);
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
     const t = useTranslations("profile");
     const {data: watchMovies} = useUserFilmHistory(user.id);

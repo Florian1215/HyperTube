@@ -8,12 +8,12 @@ import {iMovie} from "@/types/movie";
 function getComments(movieId?: string, page?: number, locale?: string) {
     let endpoint = "comments/";
     if (movieId !== undefined && page !== undefined)
-        endpoint = `movies/${movieId}/comments/?page=${page}`;
+        endpoint = `movies/${movieId}/comments/?ordering=-updated_at&?page=${page}`;
     return apiClient<tListResponse<iComment>>(endpoint, locale);
 }
 
 function getUserComments(userId: number, page: number, locale: string) {
-    return apiClient<tListResponse<iCommentDetails>>(`users/${userId}/comments/?page=${page}`, locale);
+    return apiClient<tListResponse<iCommentDetails>>(`users/${userId}/comments/?ordering=-updated_at&page=${page}`, locale);
 }
 
 export function postComment(locale: string, movieId: string, content: string) {
@@ -43,19 +43,19 @@ export function useProfileComments(userId: number, page: number) {
 }
 
 export function addCommentCache(queryClient: QueryClient, newComment: iComment, movie: iMovie, userId: number) {
-    addQuery(queryClient, ["comments", movie.id, 0], newComment);
+    addQuery(queryClient, ["comments", movie.id, 1], newComment);
     const newDetailComment = structuredClone(newComment as iCommentDetails);
     newDetailComment.movie = movie;
-    addQuery(queryClient, ["user-comments", userId, 0], newDetailComment);
+    addQuery(queryClient, ["user-comments", userId, 1], newDetailComment);
 }
 
 export function updateCommentCache(queryClient: QueryClient, newComment: iCommentDetails, userId: number) {
-    updateQuery(queryClient, ["user-comments", userId], newComment);
+    updateQuery(queryClient, ["user-comments", userId, 1], newComment);
     const {movie, ...comment}: {movie: iMovie} & iComment = newComment;
-    updateQuery(queryClient, ["comments", movie.id], comment);
+    updateQuery(queryClient, ["comments", movie.id, 1], comment);
 }
 
 export function removeCommentCache(queryClient: QueryClient, commentId: number, movieId: string, userId: number) {
-    removeQuery(queryClient, ["comments", movieId], commentId);
-    removeQuery(queryClient, ["user-comments", userId], commentId);
+    removeQuery(queryClient, ["comments", movieId, ], commentId);
+    removeQuery(queryClient, ["user-comments", userId, 1], commentId);
 }

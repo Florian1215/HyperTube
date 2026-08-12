@@ -22,6 +22,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     const [editMode, setEditMode] = useState(false);
     const {openModal} = useModal();
     const t = useTranslations("comments");
+    const displayMovie = "movie" in comment;
 
     if (currentUser && currentUser.id === comment.user.id)
         user = currentUser;
@@ -31,9 +32,9 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     return (<div className="w-full"
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
-        {"movie" in comment && previousCommentMovieId != comment.movie.id && <div className="flex justify-center mb-3">
+        {displayMovie && previousCommentMovieId != comment.movie.id && <div className="flex justify-center mb-6">
             <MovieCard user={currentUser} className="aspect-21/9" movie={comment.movie}/></div>}
-        <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "")}>
+        <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "") + (displayMovie ? " px-4" : "")}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
                 <div className="flex justify-between w-full">
