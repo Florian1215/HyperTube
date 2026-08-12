@@ -20,7 +20,6 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if not self.color:
             self.color = random.choice([choice[0] for choice in self.ProfileColor.choices])
-
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from users.models import User
 from users.permissions import IsUserOwner
-from users.serializers import UserSerializer, RegisterSerializer, UserUpdateSerializer, UserMeSerializer
+from users.serializers import UserSerializer, RegisterSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -16,19 +16,12 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return RegisterSerializer
-
-        if self.action in ["update", "partial_update"]:
-            return UserUpdateSerializer
-
-        if self.action == "me":
-            return UserMeSerializer
         return UserSerializer
 
     def get_permissions(self):
         if self.action in ["update", "partial_update", "destroy"]:
             return [IsAuthenticated(), IsUserOwner()]
-
-        return [IsAuthenticated()]
+        return []
 
     @action(detail=False, methods=["get"], url_path="me")
     def me(self, request):
