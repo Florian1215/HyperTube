@@ -11,14 +11,15 @@ import AvatarProfileTab from "@/components/features/user/AvatarProfileTab";
 import ProfileTab from "@/components/features/user/UserProfileTab";
 
 export default function Page() {
-    const {user, updateUser} = useAuth();
+    const {user, loading, updateUser} = useAuth();
     const router = useRouter();
     const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}];
 
     useEffect(() => {
-        if (!user)
+        if (!user && !loading)
             router.push("/");
-    }, [user, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, loading]);
 
 
     if (!user)

@@ -9,6 +9,7 @@ import {tLocale} from "@/i18n/request";
 
 interface AuthContextType {
     user?: iUser;
+    loading?: boolean;
     login: (token: string, refresh: string) => void;
     logout: () => void;
     updateUser: (patch: Partial<iUser>) => void;
@@ -24,18 +25,25 @@ export function AuthProvider({children}: {children: ReactNode}) {
     const router = useRouter();
     const pathname = usePathname();
     const locale = useLocale() as tLocale;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const restoreSession = async () => {
             const access = localStorage.getItem("access");
 
-            if (!access)
+            if (!access) {
+                setLoading(false);
                 return;
+            }
 
             try {
                 const data = await getUser(locale, 'me')
                 setUser(data);
-            } catch {}
+            } catch {
+
+            } finally {
+                setLoading(false);
+            }
         };
 
         restoreSession().then(() => {});
@@ -67,7 +75,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
     };
 
     return (<AuthContext.Provider
-        value={{user, login, logout, updateUser, callbackUrl, setCallbackUrl}}>
+        value={{user, loading, login, logout, updateUser, callbackUrl, setCallbackUrl}}>
         {children}
     </AuthContext.Provider>);
 }

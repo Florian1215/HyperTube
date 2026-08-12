@@ -26,8 +26,8 @@ export function addQuery<T>(queryClient: QueryClient, key: unknown[], newContent
             return;
         queryClient.setQueryData(queryKey, {
             ...current,
-            data: [newContent, ...current.results],
-            meta: updateTotal(current, 1),
+            results: [newContent, ...current.results],
+            count: current.count + 1
         });
     });
 }
@@ -39,7 +39,7 @@ export function updateQuery<T extends iComment>(queryClient: QueryClient, key: u
             return;
         queryClient.setQueryData(queryKey, {
             ...current,
-            data: current.results.map((v) => {
+            results: current.results.map((v) => {
                 if (v.id === newContent.id)
                     return newContent;
                 return v;
@@ -61,8 +61,8 @@ export function removeQuery(queryClient: QueryClient, key: unknown[], deleteObjI
             return;
         queryClient.setQueryData(queryKey, {
             ...current,
-            data: nextData,
-            meta: updateTotal(current, -1),
+            results: nextData,
+            count: current.count - 1
         });
     });
 }

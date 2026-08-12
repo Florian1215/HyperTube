@@ -12,13 +12,16 @@ export function postRegister(locale: string, data: string[]) {
 let refreshPromise: Promise<void> | null = null;
 
 export function refreshAccessToken(locale: string) {
-    const refresh_token = localStorage.getItem("refresh");
+    const refreshToken = localStorage.getItem("refresh");
 
     if (refreshPromise)
         return refreshPromise;
 
-    if (refresh_token) {
-        refreshPromise = apiClient<iToken>("auth/refresh/", locale, {method: "POST", body: JSON.stringify({refresh: refresh_token})})
+    if (!refreshToken)
+        return Promise.reject(new Error("No refresh token"));
+
+    if (refreshToken) {
+        refreshPromise = apiClient<iToken>("auth/refresh/", locale, {method: "POST", body: JSON.stringify({refresh: refreshToken})})
             .then((res) => {
                 if (res)
                     localStorage.setItem("access", res.access);
