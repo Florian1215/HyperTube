@@ -141,7 +141,7 @@
     }
   },
   "validationErrors": {
-    "invalidLoginOrPassword": "Invalid username, or password",
+    "invalidCredentials": "Invalid username or password.",
     "usernameTooShort": "Username is too short.",
     "usernameTooLong": "Username is too long.",
     "usernameInvalid": "Username is invalid.",

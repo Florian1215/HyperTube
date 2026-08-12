@@ -2,19 +2,20 @@
 
 import {useLocale, useTranslations} from "next-intl";
 import {tLocale} from "@/i18n/request";
-import {ApiError} from "@/services/ApiError";
 import useNotification from "@/contexts/NotificationContext";
 import useModal from "@/contexts/ModalContext";
 import {fieldType} from "@/components/ui/Form";
 import useAuth from "@/contexts/AuthContext";
 import {usePathname} from "@/i18n/navigation";
+import {ApiError} from "@/services/apiClient";
 
 export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string, fields?: fieldType[]) {
     const {setCallbackUrl, logout} = useAuth();
-    const {openModal, closeModal} = useModal();
+    const {openModal} = useModal();
     const locale = useLocale() as tLocale;
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
+    const tValidationError = useTranslations("validationErrors");
     const pathname = usePathname();
 
     async function execute<T>(callback: (locale: string) => Promise<T>): Promise<T | null> {
@@ -22,27 +23,26 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
             return await callback(locale);
         } catch (error) {
             if (error instanceof ApiError) {
-                if (error.data.error.fields && setErrorsAction && formType && fields) {
-                    const newErrors: Record<string, string> = {};
-                    let setNewFocus = false;
+                const newErrors: Record<string, string> = {};
+                let setNewFocus = false;
 
+                if (formType && fields !== undefined) {
                     fields.forEach((field, idx)=> {
-                        if (error.data.error.fields && error.data.error.fields[field]) {
-                            newErrors[field + "-" + formType] = error.data.error.fields[field].message;
+                        if (error.data && error.data[field]) {
+                            newErrors[field + "-" + formType] = error.data[field][0];
                             if (!setNewFocus && setFocusedIndex) {
                                 setNewFocus = true;
                                 setFocusedIndex(idx);
                             }
                         }
                     });
+                }
+                if (setErrorsAction && Object.keys(newErrors).length > 0) {
                     setErrorsAction(newErrors);
                     return null;
-                } else if (error.data.error.code === "INVALID_RESET_TOKEN") {
-                    closeModal();
-                    addNotification(tError("invalidToken"), "error");
-                    return null;
-                } else if (error.status === 401 && setErrorsAction && setFocusedIndex && formType === "signin") {
-                    setErrorsAction({"login-signin": error.message});
+                }
+                else if (error.status === 401 && setErrorsAction && setFocusedIndex && formType === "signin") {
+                    setErrorsAction({"username-signin": tValidationError("invalidCredentials")});
                     setFocusedIndex(0);
                     return null;
                 } else if (error.status === 401) {
@@ -51,7 +51,7 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
                     logout();
                     return null;
                 } else
-                    addNotification(error.notificationMsg, "error");
+                    addNotification(error.message, "error");
             } else
                 addNotification(tError("network"), "error");
             return null;

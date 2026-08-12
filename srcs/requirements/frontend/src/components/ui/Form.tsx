@@ -35,7 +35,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
     };
 
     useEffect(() => {
-        if (formType === "signin" && errors[getId("username")] == tError("invalidUsernameOrPassword"))
+        if (formType === "signin" && errors[getId("username")] == tError("invalidCredentials"))
             newSetterErrorUtils("username");
 
         if (formType === "auth" && fieldsValue[0]) {

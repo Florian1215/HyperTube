@@ -4,7 +4,6 @@ import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import {startTorrentStreaming, useMovie, useTorrents} from "@/services/movies.service";
 import useHandleError from "@/hooks/useHandleError";
-import {ApiError} from "@/services/ApiError";
 import MovieHero from "@/components/features/movie/MovieHero";
 import MovieInfoSection from "@/components/features/movie/MovieInfoSection";
 import CommentsSection from "@/components/features/comment/CommentsSection";
@@ -15,6 +14,7 @@ import {useUserFilmHistory} from "@/services/users.service";
 import addProgressToMovie from "@/utils/addProgressToMovie";
 import useAuth from "@/contexts/AuthContext";
 import {iMovieDetails} from "@/types/movie";
+import {ApiError} from "@/services/apiClient";
 
 export default function MoviePage() {
     const params = useParams();
@@ -49,7 +49,7 @@ export default function MoviePage() {
                     });
                 } catch (error) {
                     if (error instanceof ApiError)
-                        addNotification(error.notificationMsg, "error");
+                        addNotification(error.message, "error");
                     else
                         addNotification(tError("unknown"), "error");
                     setTorrentId(undefined);

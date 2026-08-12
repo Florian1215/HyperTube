@@ -1,5 +1,4 @@
 import {refreshAccessToken} from "@/services/auth.service";
-import {ApiError} from "@/services/ApiError";
 
 type ApiOptions = RequestInit & {body?: unknown};
 export const API_URL = "http://localhost:8439/api/v1/";
@@ -34,4 +33,17 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
         throw new ApiError(response.status, data);
     } else
         return data;
+}
+
+export class ApiError extends Error {
+    status: number;
+    data?: Record<string, string>;
+
+    constructor(status: number, data?: Record<string, string>) {
+        super(`${status} - Error: ${data?.detail || data?.message || "Unknown error"}`);
+
+        this.name = "ApiError";
+        this.status = status;
+        this.data = data;
+    }
 }

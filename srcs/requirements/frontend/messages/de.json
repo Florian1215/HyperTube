@@ -145,7 +145,7 @@
     }
   },
   "validationErrors": {
-    "invalidLoginOrPassword": "E-Mail, Benutzername oder Passwort ist ungültig",
+    "invalidCredentials": "Ungültiger Benutzername oder Passwort.",
     "usernameTooShort": "Der Benutzername ist zu kurz.",
     "usernameTooLong": "Der Benutzername ist zu lang.",
     "usernameInvalid": "Benutzername ungültig.",

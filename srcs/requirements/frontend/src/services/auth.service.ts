@@ -6,7 +6,7 @@ export function postLogin(locale: string, data: string[]) {
 }
 
 export function postRegister(locale: string, data: string[]) {
-    return apiClient<iToken>("auth/register/", locale, {method: "POST", body: JSON.stringify({username: data[3].trim(), password: data[4]})});
+    return apiClient<iToken>("users/", locale, {method: "POST", body: JSON.stringify({username: data[0].trim(), password: data[1]})});
 }
 
 let refreshPromise: Promise<void> | null = null;

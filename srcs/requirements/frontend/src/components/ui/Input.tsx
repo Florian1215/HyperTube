@@ -11,7 +11,6 @@ export default function Input(
     const t = useTranslations("validationErrors");
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
-    const urlRegex = /^https?:\/\/[^\s]+$/;
 
     const handleTogglePasswordVisibility = () => setIsPasswordVisible(!isPasswordVisible);
 
@@ -47,7 +46,7 @@ export default function Input(
     return (<div className={"flex flex-col w-full h-16 relative " + className}>
         <input id={id} type={isPasswordVisible && isPassword ? "text" : type} placeholder=""
                value={value} onChange={handleFieldVerification} onKeyDown={onKeyDown} ref={ref}
-               className={"peer py-4 m-0 w-full h-8 bg-white  border-b focus:border-b-2 " + (requestErrorMessage ? "border-b-red text-red" : "text-black")}
+               className={"peer py-4 m-0 w-full h-8 bg-white border-b focus:border-b-2 " + (requestErrorMessage ? "border-b-red text-red" : "text-black")}
         />
         <label htmlFor={id}
                className={"pointer-events-none uppercase absolute text-xs font-light bottom-15\

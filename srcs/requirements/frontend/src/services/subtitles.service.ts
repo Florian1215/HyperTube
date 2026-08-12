@@ -1,5 +1,5 @@
-import {ApiError} from "@/services/ApiError";
 import {iDownloadSubtitle, iLoginOpenSubtitles, iSubtitles} from "@/types/subtitle";
+import {ApiError} from "@/services/apiClient";
 
 async function fetchOpenSubtitles<T>(endpoint: string, body?: BodyInit, bearerToken?: string): Promise<T> {
     const response = await fetch(

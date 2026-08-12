@@ -6,8 +6,8 @@ import MovieHistoryTab from "@/components/features/movie/MovieHistoryTab";
 import useHandleError from "@/hooks/useHandleError";
 import {useUser} from "@/services/users.service";
 import CommentsProfileTab from "@/components/features/comment/CommentsProfileTab";
-import {ApiError} from "@/services/ApiError";
 import {useParams} from "next/navigation";
+import {ApiError} from "@/services/apiClient";
 
 export default function Page() {
     const params = useParams();
