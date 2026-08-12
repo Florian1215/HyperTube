@@ -50,6 +50,7 @@ class CrewSerializer(serializers.ModelSerializer):
 
 
 class MovieDetailSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='movie_id')
     cast = CastSerializer(many=True, read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
     genres = serializers.SerializerMethodField()

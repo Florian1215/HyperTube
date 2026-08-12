@@ -32,6 +32,7 @@ class Genre(models.Model):
 
 
 class Movie(models.Model):
+    movie_id = models.IntegerField()
     title = models.CharField()
     original_title = models.CharField()
     year = models.CharField(max_length=4)
@@ -42,8 +43,17 @@ class Movie(models.Model):
     runtime = models.IntegerField()
     summary = models.CharField()
     status = models.CharField()
-    genres = models.ManyToManyField(Genre, related_name="movies", blank=True)
+    genres = models.ManyToManyField(Genre, related_name='movies', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    lang = models.CharField(max_length=2)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['movie_id', 'lang'],
+                name='unique_movie_language',
+            )
+        ]
 
     def __str__(self):
         return f'{self.title} - {self.year}'

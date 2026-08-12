@@ -3,12 +3,47 @@ from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.response import Response
 
-from config.errors import ERRORMSG_SEARCH_REQUIRED
+from config.errors import ERRORMSG_SEARCH_REQUIRED, MOVIE_NOT_FOUND
 from config.tmdb_media import tmdb_media
 from .models import Movie, Genre
 from .pagination import TMDBPagination
 from .serializers import MovieSerializer, MovieDetailSerializer
 from .services.tmdb import TMDBService
+
+
+def get_or_fetch_movie(pk, request):
+    language = get_language_from_request(request)
+
+    try:
+        return Movie.objects.get(movie_id=pk, lang=language)
+    except (Movie.DoesNotExist, ValueError):
+        try:
+            tmdb = TMDBService()
+            movie_data = tmdb.get_movie(pk, language)
+            movie = Movie.objects.create(
+                movie_id=movie_data['id'],
+                title=movie_data['title'],
+                year=movie_data['release_date'][:4],
+                poster_url=tmdb_media(movie_data['poster_path'], 'w500'),
+                backdrop_url=tmdb_media(movie_data['backdrop_path'], 'w1280'),
+                note=movie_data['vote_average'],
+                vote_count=movie_data['vote_count'],
+                original_title=movie_data['original_title'],
+                runtime=movie_data['runtime'],
+                summary=movie_data['overview'],
+                status=movie_data['status'],
+                lang=language,
+            )
+            for genre_data in movie_data['genres']:
+                genre, _ = Genre.objects.get_or_create(id=genre_data['id'], name=genre_data['name'])
+                movie.genres.add(genre)
+            for cast in movie_data['credits']['cast']:
+                movie.cast.create(cast_id=cast['id'], name=cast['name'], picture=tmdb_media(cast['profile_path'], 'w300'), character=cast['character'])
+            for crew in movie_data['credits']['crew']:
+                movie.crew.create(crew_id=crew['id'], name=crew['name'], picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
+            return movie
+        except Exception:
+            raise NotFound(MOVIE_NOT_FOUND)
 
 
 class MovieViewSet(viewsets.ViewSet):
@@ -34,40 +69,7 @@ class MovieViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     @staticmethod
-    def get_or_fetch_movie(pk, language):
-        try:
-            return Movie.objects.get(pk=pk)
-        except (Movie.DoesNotExist, ValueError):
-            try:
-                tmdb = TMDBService()
-                movie_data = tmdb.get_movie(pk, language)
-                movie = Movie.objects.create(
-                    id=movie_data['id'],
-                    title=movie_data['title'],
-                    year=movie_data['release_date'][:4],
-                    poster_url=tmdb_media(movie_data['poster_path'], 'w500'),
-                    backdrop_url=tmdb_media(movie_data['backdrop_path'], 'w1280'),
-                    note=movie_data['vote_average'],
-                    vote_count=movie_data['vote_count'],
-                    original_title=movie_data['original_title'],
-                    runtime=movie_data['runtime'],
-                    summary=movie_data['overview'],
-                    status=movie_data['status'],
-                )
-                for genre_data in movie_data['genres']:
-                    genre, _ = Genre.objects.get_or_create(id=genre_data['id'], name=genre_data['name'])
-                    movie.genres.add(genre)
-                for cast in movie_data['credits']['cast']:
-                    movie.cast.create(cast_id=cast['id'], name=cast['name'], picture=tmdb_media(cast['profile_path'], 'w300'), character=cast['character'])
-                for crew in movie_data['credits']['crew']:
-                    movie.crew.create(crew_id=crew['id'], name=crew['name'], picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
-                return movie
-            except Exception as e:
-                raise NotFound()
-
-    @staticmethod
     def retrieve(request, pk=None):
-        language = get_language_from_request(request)
-        movie = MovieViewSet.get_or_fetch_movie(pk, language)
+        movie = get_or_fetch_movie(pk, request)
         serializer = MovieDetailSerializer(movie)
         return Response(serializer.data)
