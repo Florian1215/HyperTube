@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from config.tmdb_media import tmdb_media
+from movies.models import Movie, Cast, Crew
 
 
 class MovieSerializer(serializers.Serializer):
@@ -26,23 +27,52 @@ class MovieSerializer(serializers.Serializer):
         return tmdb_media(obj['backdrop_path'], 'w1280')
 
 
-class MovieDetailSerializer(MovieSerializer):
+class CastSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cast
+        fields = [
+            'id',
+            'name',
+            'picture',
+            'character',
+        ]
+
+
+class CrewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Crew
+        fields = [
+            'id',
+            'name',
+            'picture',
+            'job',
+        ]
+
+
+class MovieDetailSerializer(serializers.ModelSerializer):
+    cast = CastSerializer(many=True, read_only=True)
+    crew = CrewSerializer(many=True, read_only=True)
     genres = serializers.SerializerMethodField()
-    original_title = serializers.CharField()
-    runtime = serializers.IntegerField()
-    summary = serializers.CharField(source='overview')
-    status = serializers.CharField()
-    cast = serializers.SerializerMethodField()
-    crew = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Movie
+        fields = [
+            'id',
+            'title',
+            'original_title',
+            'year',
+            'poster_url',
+            'backdrop_url',
+            'note',
+            'vote_count',
+            'runtime',
+            'summary',
+            'status',
+            'cast',
+            'crew',
+            'genres'
+        ]
 
     @staticmethod
     def get_genres(obj):
-        return [g['id'] for g in obj['genres']]
-
-    @staticmethod
-    def get_cast(obj):
-        return [{'id': g['id'], 'name': g['original_name'], 'picture': tmdb_media(g['profile_path']), 'character': g['character']} for g in obj['credits']['cast']]
-
-    @staticmethod
-    def get_crew(obj):
-        return [{'id': g['id'], 'name': g['original_name'], 'picture': tmdb_media(g['profile_path']), 'job': g['job']} for g in obj['credits']['crew']]
+        return [g.id for g in obj.genres.all()]
