@@ -28,8 +28,6 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
     const tProfile = useTranslations("profile");
     const locale = useLocale();
     const ActiveTab = tabs[activeTab].comp;
-    const showLastName = user.first_name.length > 1 && user.last_name.length > 1;
-    const name = showLastName ? `${user.first_name} ${user.last_name[0]}.` : user.username;
 
     const date = new Date(user.created_at);
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
@@ -47,8 +45,8 @@ export default function UserProfile({user, tabs, updateUserAction}: {user: iUser
         <div className="flex items-center gap-4 justify-center">
             <ProfilePicture user={user} size={1}/>
             <div className="flex flex-col items-start">
-                <h2>{name}</h2>
-                <p className="uppercase">{tProfile("memberSince", {date: memberSince}) + (showLastName ? ` · #${user.username}` : "")}</p>
+                <h2>{user.username}</h2>
+                <p className="uppercase">{tProfile("memberSince", {date: memberSince})}</p>
             </div>
         </div>
         <div className="flex h-12 sm:h-16 overflow-x-auto">

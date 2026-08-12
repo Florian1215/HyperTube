@@ -75,9 +75,6 @@
     "noMoviesYet": "Sie haben noch keine Filme gesehen.",
     "fields": {
       "submit": "Änderungen speichern",
-      "email": "E-Mail",
-      "first_name": "Vorname",
-      "last_name": "Nachname",
       "username": "Benutzername"
     }
   },
@@ -88,7 +85,7 @@
     "signin": {
       "title": "Anmelden",
       "titleLoginRequired": "Melden Sie sich an, um fortzufahren",
-      "login": "E-Mail oder Benutzername",
+      "username": "Benutzername",
       "password": "Passwort",
       "forgotPassword": "Passwort vergessen?",
       "submit": "Anmelden",
@@ -99,9 +96,6 @@
     "register": {
       "title": "Hypertube beitreten",
       "titleLoginRequired": "Erstellen Sie ein Konto, um fortzufahren",
-      "email": "E-Mail",
-      "first_name": "Vorname",
-      "last_name": "Nachname",
       "username": "Benutzername",
       "password": "Passwort",
       "submit": "Registrieren",
@@ -111,14 +105,7 @@
     },
     "forgotPassword": {
       "title": "Passwort zurücksetzen",
-      "email": "E-Mail",
       "submit": "Senden"
-    },
-    "resetPassword": {
-      "title": "Neues Passwort festlegen",
-      "new-password": "Neues Passwort",
-      "confirm-new-password": "Neues Passwort bestätigen",
-      "submit": "Ändern"
     },
     "changePassword": {
       "current-password": "Aktuelles Passwort",
@@ -159,7 +146,6 @@
   },
   "validationErrors": {
     "invalidLoginOrPassword": "E-Mail, Benutzername oder Passwort ist ungültig",
-    "emailInvalid": "Die E-Mail-Adresse ist ungültig.",
     "usernameTooShort": "Der Benutzername ist zu kurz.",
     "usernameTooLong": "Der Benutzername ist zu lang.",
     "usernameInvalid": "Benutzername ungültig.",
@@ -171,8 +157,6 @@
     "passwordTooLong": "Das Passwort ist zu lang.",
     "passwordSameAsOld": "Das neue Passwort darf nicht mit dem alten Passwort übereinstimmen.",
     "passwordsDontMatch": "Die Passwörter stimmen nicht überein.",
-    "redirectURIStartHTTP": "Die URI muss mit http:// oder https:// beginnen.",
-    "redirectURIInvalid": "Die URI muss eine gültige URL sein.",
     "requiredField": "Dieses Feld ist erforderlich.",
     "atLeastOneField": "Bitte füllen Sie mindestens eines der Felder aus."
   },
@@ -181,7 +165,6 @@
       "textCopied": "{label} in die Zwischenablage kopiert.",
       "passwordChanged": "Ihr Passwort wurde aktualisiert.",
       "newPasswordSet": "Ihr neues Passwort wurde festgelegt, Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
-      "emailResetPassword": "Eine E-Mail zum Zurücksetzen Ihres Passworts wurde gesendet.",
       "infoChanged": "Ihre Profilinformationen wurden aktualisiert.",
       "login": "Sie sind jetzt erfolgreich angemeldet.",
       "commentChange": "Ihr Kommentar wurde aktualisiert.",

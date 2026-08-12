@@ -66,25 +66,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
             return;
 
         if (Hls.isSupported()) {
-            const hls = new Hls({
-                startPosition: 0,
-                xhrSetup: (xhr) => {
-                    const token = localStorage.getItem("token");
-
-                    if (token)
-                        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-                },
-            });
-
-            const reload = async (currentTime?: number) => {
-                hls.loadSource(src);
-                hls.startLoad();
-                if (currentTime) {
-                    video.currentTime = currentTime;
-                    await video.play();
-                }
-            }
-
+            const hls = new Hls({startPosition: 0});
             hls.loadSource(src);
             hls.attachMedia(video);
             if (video && movie.progress)
@@ -98,20 +80,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
                 }
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
-                const status = data?.response?.code;
-
-                if (status === 401) {
-                    hls.stopLoad();
-                    try {
-                        await refreshAccessToken(locale);
-                        await reload();
-                    } catch {
-                        video.pause();
-                        openModal({type: "signin", noClose: true, reload: () => reload(video.currentTime)});
-                    } finally {
-
-                    }
-                } else if (data.fatal)
+                if (data.fatal)
                     setErrorAction(data.error.message)
             });
             return () => {hls.destroy();};

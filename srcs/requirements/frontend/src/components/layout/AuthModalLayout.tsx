@@ -1,5 +1,5 @@
 import React from "react";
-import {iUser, iUserToken} from "@/types/user";
+import {iToken, iUser} from "@/types/user";
 import {useRouter} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
 import useModal, {ModalState} from "@/contexts/ModalContext";
@@ -21,9 +21,9 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
     const {login, callbackUrl, setCallbackUrl} = useAuth();
     const tSuccess = useTranslations("notifications.success");
 
-    const handleLoginRegister = (data: iUserToken | iUser) => {
-        if ("access_token" in data) {
-            login(data.user, data.access_token, data.refresh_token);
+    const handleLoginRegister = (data: iToken | iUser) => {
+        if ("access" in data) {
+            login(data.access, data.refresh);
             closeModal();
             if (callbackUrl) {
                 router.push(callbackUrl);
@@ -42,7 +42,7 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
         }
     } : undefined} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>
         <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t} handleForgotPassword={handleForgotPassword}
-              fields={isReg ? ["email", "first_name", "last_name", "username", "password"] : ["login", "password"]} />
+              fields={isReg ? ["username", "password"] : ["username", "password"]} />
         <div className="flex gap-2 mt-2">
             <span className="text-sm">{t(isReg ? "haveAccount" : "noAccount")}</span>
             <TextButton onClick={() => {closeModal(); openModal({type: otherType, noClose: activeModal.noClose});}}>{t(otherType)}</TextButton>

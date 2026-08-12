@@ -5,8 +5,8 @@ import Button from "@/components/ui/Button/Button";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
 
-export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "redirect_uri";
-type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password";
+export type fieldType = "login" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
+type formType = "auth" | "update" |  "signin" | "register" | "set-new-password";
 
 export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
@@ -29,16 +29,14 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
     const newSetterError = (value: Record<string, string>) => {
         setErrors((prevErrors) => {
             const newErrors = {...prevErrors, ...value};
-            if (prevErrors[getId("email")] === tError("atLeastOneField") && !value[getId("email")])
-                newErrors[getId("email")] = "";
             setDisableBtn(hasError(newErrors));
             return newErrors;
         });
     };
 
     useEffect(() => {
-        if (formType === "signin" && errors[getId("login")] == tError("invalidLoginOrPassword"))
-            newSetterErrorUtils("login");
+        if (formType === "signin" && errors[getId("username")] == tError("invalidUsernameOrPassword"))
+            newSetterErrorUtils("username");
 
         if (formType === "auth" && fieldsValue[0]) {
             if (fieldsValue[0] == fieldsValue[1])
@@ -118,20 +116,12 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
 
     const RenderInput = (type: fieldType, idx: number, className?: string) =>
         <Input key={idx} id={getId(type)} type={type.includes("password") ? "password" : "text"} placeholder={t(type)}
-               value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className + ((type === "username" || (formType === "register" && type === "password")) ? " max-w-2/3" : "")}
+               value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className}
                requestErrorMessage={errors[getId(type)]} setErrorsMessage={newSetterError} ref={(el: HTMLInputElement) => {fieldRefs.current[idx] = el;}}
                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)} />;
 
     return (<form id={formType} className="w-full" onSubmit={(e) => {e.preventDefault(); onSubmit();}}>
-        {fields.map((field, idx) => {
-            if (field === "first_name") {
-                return (<div key="div" className="flex gap-2">
-                    {RenderInput(field, idx)}
-                    {RenderInput(fields[idx + 1], idx + 1)}
-                </div>);
-            } else if (field !== "last_name")
-                return RenderInput(field, idx);
-        })}
+        {fields.map((field, idx) => RenderInput(field, idx))}
         {handleForgotPassword && <div className={"relative mb-4" + (errors["password-signin"] ? " pt-3" : "")}>
             <TextButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</TextButton>
         </div>}

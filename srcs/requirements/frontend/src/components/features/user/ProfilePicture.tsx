@@ -11,7 +11,7 @@ export default function ProfilePicture({user, size = 0, color, className}: {user
     if (user.profile_picture)
         children = <Image className="w-full h-full object-cover" height={200} width={200} src={user.profile_picture} alt={t("profilePictureAlt")} />;
     else {
-        const initial = user.first_name[0] + user.last_name[0];
+        const initial = user.username.slice(0, 2);
 
         if (color === undefined)
             color = user.color;

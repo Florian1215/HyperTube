@@ -1,32 +1,27 @@
 import apiClient from "@/services/apiClient";
-import {iToken, iUserToken} from "@/types/user";
+import {iToken} from "@/types/user";
 
 export function postLogin(locale: string, data: string[]) {
-    return apiClient<iUserToken>("auth/login/", locale, {method: "POST", body: JSON.stringify({login: data[0].trim(), password: data[1]})});
+    return apiClient<iToken>("auth/login/", locale, {method: "POST", body: JSON.stringify({username: data[0].trim(), password: data[1]})});
 }
 
 export function postRegister(locale: string, data: string[]) {
-    return apiClient<iUserToken>("auth/register/", locale, {method: "POST", body: JSON.stringify({email: data[0].trim(), first_name: data[1].trim(), last_name: data[2].trim(), username: data[3].trim(), password: data[4]})});
-}
-
-export function postSetNewPassword(locale: string, data: string[], token?: string | number) {
-    return apiClient<iUserToken>("auth/password-reset/set-new-password/", locale, {method: "POST", body: JSON.stringify({token: token, password: data[0]})});
+    return apiClient<iToken>("auth/register/", locale, {method: "POST", body: JSON.stringify({username: data[3].trim(), password: data[4]})});
 }
 
 let refreshPromise: Promise<void> | null = null;
 
 export function refreshAccessToken(locale: string) {
-    const refresh_token = localStorage.getItem("refresh_token");
+    const refresh_token = localStorage.getItem("refresh");
 
     if (refreshPromise)
         return refreshPromise;
 
     if (refresh_token) {
-        refreshPromise = apiClient<iToken>("/auth/refresh-token", locale, {method: "POST", body: JSON.stringify({refresh_token: refresh_token})})
+        refreshPromise = apiClient<iToken>("auth/refresh/", locale, {method: "POST", body: JSON.stringify({refresh: refresh_token})})
             .then((res) => {
                 if (res)
-                    localStorage.setItem("token", res.access_token);
-                // localStorage.setItem("token", res.data.access_token);
+                    localStorage.setItem("access", res.access);
             }).finally(() => {
                 refreshPromise = null;
             });

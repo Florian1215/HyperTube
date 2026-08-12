@@ -11,8 +11,6 @@ export default function Input(
     const t = useTranslations("validationErrors");
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
-    const emailRegex = /^(?=.{1,64}@)(?!.*\.\.)([a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*)@(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
-    const nameRegex = /^\p{L}+(?:[ '-]\p{L}+)*$/u;
     const urlRegex = /^https?:\/\/[^\s]+$/;
 
     const handleTogglePasswordVisibility = () => setIsPasswordVisible(!isPasswordVisible);
@@ -24,16 +22,7 @@ export default function Input(
             let message = "";
 
             const tNewValue = newValue.trim();
-            if (id.includes("email")) {
-                if (tNewValue && !emailRegex.test(tNewValue))
-                    message = t("emailInvalid");
-            } else if (id.includes("last_name") || id.includes("first_name")) {
-                const field = id.includes("last_name") ? "firstname" : "lastname";
-                if (tNewValue.length > 30)
-                    message = t(field + "TooLong");
-                else if (tNewValue && !nameRegex.test(tNewValue))
-                    message = t(field + "Invalid");
-            } else if (id.includes("username")) {
+            if (id.includes("username")) {
                 if (tNewValue && tNewValue.length < 3)
                     message = t("usernameTooShort");
                 else if (tNewValue.length > 32)
@@ -45,11 +34,6 @@ export default function Input(
                     message = t("passwordTooShort");
                 else if (newValue.length > 72)
                     message = t("passwordTooLong");
-            } else if (id.includes("redirect_uri")) {
-                if (tNewValue && !tNewValue.startsWith("http://") && !tNewValue.startsWith("https://"))
-                    message = t("redirectURIStartHTTP");
-                else if (tNewValue && !urlRegex.test(tNewValue))
-                    message = t("redirectURIInvalid");
             }
             setErrorsMessage({[id]: message});
         }

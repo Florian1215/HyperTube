@@ -5,7 +5,7 @@ type ApiOptions = RequestInit & {body?: unknown};
 export const API_URL = "http://localhost:8439/api/v1/";
 
 export default async function apiClient<T>(endpoint: string, locale?: string, options?: ApiOptions): Promise<T> {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("access");
     if (!locale)
         locale = "en";
 
@@ -27,7 +27,7 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
 
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-        if (response.status === 401 && data.error.code === "TOKEN_EXPIRED") {
+        if (response.status === 401 && data.code === "token_not_valid") {
             await refreshAccessToken(locale);
             return apiClient<T>(endpoint, locale, options);
         }

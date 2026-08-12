@@ -75,9 +75,6 @@
     "noMoviesYet": "You haven't seen any films yet.",
     "fields": {
       "submit": "Save changes",
-      "email": "Email",
-      "first_name": "Firstname",
-      "last_name": "Lastname",
       "username": "Username"
     }
   },
@@ -88,7 +85,7 @@
     "signin": {
       "title": "Sign in",
       "titleLoginRequired": "Sign in to continue",
-      "login": "Email or username",
+      "usernmae": "Username",
       "password": "Password",
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",
@@ -99,26 +96,12 @@
     "register": {
       "title": "Join Hypertube",
       "titleLoginRequired": "Create an account to continue",
-      "email": "Email",
-      "first_name": "Firstname",
-      "last_name": "Lastname",
       "username": "Username",
       "password": "Password",
       "submit": "Sign up",
       "haveAccount": "Already have an account?",
       "signin": "Sign in",
       "oAuth": "Sign up with"
-    },
-    "forgotPassword": {
-      "title": "Reset password",
-      "email": "Email",
-      "submit": "Send"
-    },
-    "resetPassword": {
-      "title": "Set new password",
-      "new-password": "New password",
-      "confirm-new-password": "Confirm new password",
-      "submit": "Set a new password"
     },
     "changePassword": {
       "current-password": "Current password",
@@ -158,8 +141,7 @@
     }
   },
   "validationErrors": {
-    "invalidLoginOrPassword": "Invalid email, username, or password",
-    "emailInvalid": "Invalid email address.",
+    "invalidLoginOrPassword": "Invalid username, or password",
     "usernameTooShort": "Username is too short.",
     "usernameTooLong": "Username is too long.",
     "usernameInvalid": "Username is invalid.",
@@ -171,8 +153,6 @@
     "passwordTooLong": "Password is too long.",
     "passwordSameAsOld": "New password must be different from the current password.",
     "passwordsDontMatch": "Passwords do not match.",
-    "redirectURIStartHTTP": "URI must start with http:// or https:// and be a valid URL.",
-    "redirectURIInvalid": "URI must be a valid URL.",
     "requiredField": "This field is required.",
     "atLeastOneField": "At least one field must be filled."
   },
@@ -181,7 +161,6 @@
       "textCopied": "{label} copied to clipboard.",
       "passwordChanged": "Your password has been updated.",
       "newPasswordSet": "Your new password has been set, you can now sign in with your new password.",
-      "emailResetPassword": "An email has been sent to reset your password.",
       "infoChanged": "Your profile information has been updated.",
       "login": "You are now successfully signed in.",
       "commentChange": "Your comment has been updated.",
