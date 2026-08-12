@@ -45,11 +45,11 @@ exec		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE) $(DSHELL)
 
 .PHONY: clean
-clean		: dusting
+clean		:
 			$(COMPOSE) $(FLAGS) down --rmi local --remove-orphans
 
 PHONY: fclean
-fclean		:
+fclean		: dusting
 			$(COMPOSE) $(FLAGS) down -v --rmi all --remove-orphans
 			rm -rf $(DATA_DIR)
 
