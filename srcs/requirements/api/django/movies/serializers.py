@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from config.tmdb_media import tmdb_media
@@ -67,6 +68,7 @@ class MovieDetailSerializer(serializers.ModelSerializer):
     cast = CastSerializer(many=True, read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
     genres = serializers.SerializerMethodField()
+    backdrops_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Movie
@@ -77,11 +79,13 @@ class MovieDetailSerializer(serializers.ModelSerializer):
             'year',
             'poster_url',
             'backdrop_url',
+            'backdrops_url',
             'note',
             'vote_count',
             'runtime',
             'summary',
             'status',
+            'feature',
             'cast',
             'crew',
             'genres'
@@ -89,4 +93,22 @@ class MovieDetailSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_genres(obj):
-        return [g.id for g in obj.genres.all()]
+        return [g.genre_id for g in obj.genres.all()]
+
+    @staticmethod
+    def get_backdrops_url(obj):
+        return [g.url for g in obj.backdrops_url.all()]
+
+
+class MovieFeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = [
+            'backdrop_url',
+            'feature'
+        ]
+
+    def update(self, instance, validated_data):
+        if 'feature' in validated_data:
+            validated_data['feature_at'] = timezone.now()
+        return super().update(instance, validated_data)

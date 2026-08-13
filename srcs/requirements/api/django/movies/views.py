@@ -1,5 +1,5 @@
 from django.utils.translation import get_language_from_request
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.response import Response
 
@@ -7,7 +7,8 @@ from config.errors import ERRORMSG_SEARCH_REQUIRED, MOVIE_NOT_FOUND
 from config.tmdb_media import tmdb_media
 from .models import Movie, Genre
 from .pagination import TMDBPagination
-from .serializers import MovieSerializer, MovieDetailSerializer
+from .permissions import CanRecommendMovie
+from .serializers import MovieSerializer, MovieDetailSerializer, MovieFeatureSerializer
 from .services.tmdb import TMDBService
 
 
@@ -18,8 +19,8 @@ def get_or_fetch_movie(pk, request):
         return Movie.objects.get(movie_id=pk, lang=language)
     except (Movie.DoesNotExist, ValueError):
         try:
-            tmdb = TMDBService()
-            movie_data = tmdb.get_movie(pk, language)
+            tmdb = TMDBService(language)
+            movie_data = tmdb.get_movie(pk)
             movie = Movie.objects.create(
                 movie_id=movie_data['id'],
                 title=movie_data['title'],
@@ -35,12 +36,18 @@ def get_or_fetch_movie(pk, request):
                 lang=language,
             )
             for genre_data in movie_data['genres']:
-                genre, _ = Genre.objects.get_or_create(id=genre_data['id'], name=genre_data['name'])
+                genre, _ = Genre.objects.get_or_create(genre_id=genre_data['id'], name=genre_data['name'], lang=language)
                 movie.genres.add(genre)
             for cast in movie_data['credits']['cast']:
-                movie.cast.create(cast_id=cast['id'], name=cast['name'], picture=tmdb_media(cast['profile_path'], 'w300'), character=cast['character'])
+                movie.cast.create(cast_id=cast['id'], name=cast['name'],
+                                  picture=tmdb_media(cast['profile_path'], 'w300'), character=cast['character'])
             for crew in movie_data['credits']['crew']:
-                movie.crew.create(crew_id=crew['id'], name=crew['name'], picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
+                movie.crew.create(crew_id=crew['id'], name=crew['name'],
+                                  picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
+            image_data = tmdb.get_images_movie(pk)
+            for backdrop_data in image_data['backdrops'][:6]:
+                backdrop, _ = movie.backdrops_url.get_or_create(url=tmdb_media(backdrop_data['file_path'], 'w1280'), lang=language)
+                movie.backdrops_url.add(backdrop)
             return movie
         except Exception:
             raise NotFound(MOVIE_NOT_FOUND)
@@ -61,8 +68,8 @@ class MovieViewSet(viewsets.ViewSet):
             page = int(page)
         except ValueError:
             page = 1
-        tmdb = TMDBService()
-        data = tmdb.search_movies(query=query, lang=language, page=page)
+        tmdb = TMDBService(language)
+        data = tmdb.search_movies(query=query, page=page)
         paginator = self.pagination_class()
         movies = paginator.paginate_tmdb(request, data)
         serializer = MovieSerializer(movies, many=True)
@@ -73,3 +80,23 @@ class MovieViewSet(viewsets.ViewSet):
         movie = get_or_fetch_movie(pk, request)
         serializer = MovieDetailSerializer(movie)
         return Response(serializer.data)
+
+
+class MovieFeatureViewSet(generics.UpdateAPIView):
+    serializer_class = MovieFeatureSerializer
+    permissions_classes = [CanRecommendMovie]
+
+    def get_object(self):
+        lang = get_language_from_request(self.request)
+        try:
+            return Movie.objects.get(movie_id=self.kwargs['pk'], lang=lang)
+        except Movie.DoesNotExist:
+            raise NotFound(MOVIE_NOT_FOUND)
+
+
+class MoviesFeatureViewSet(generics.ListAPIView):
+    serializer_class = MovieDetailSerializer
+
+    def get_queryset(self):
+        lang = get_language_from_request(self.request)
+        return Movie.objects.filter(feature=True, lang=lang).order_by('-feature_at')

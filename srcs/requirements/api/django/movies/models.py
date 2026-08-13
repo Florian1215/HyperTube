@@ -25,10 +25,21 @@ class Crew(models.Model):
 
 
 class Genre(models.Model):
+    genre_id = models.IntegerField()
     name = models.CharField()
+    lang = models.CharField(max_length=2)
 
     def __str__(self):
         return self.name
+
+
+class BackdropUrl(models.Model):
+    url = models.URLField()
+    lang = models.CharField(max_length=2)
+    movie = models.ForeignKey('movies.Movie', on_delete=models.CASCADE, related_name='backdrops_url')
+
+    def __str__(self):
+        return self.url
 
 
 class Movie(models.Model):
@@ -46,8 +57,13 @@ class Movie(models.Model):
     genres = models.ManyToManyField(Genre, related_name='movies', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     lang = models.CharField(max_length=2)
+    feature = models.BooleanField(default=False)
+    feature_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        permissions = [
+            ("can_recommend_movie", "Can recommend movies"),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=['movie_id', 'lang'],
