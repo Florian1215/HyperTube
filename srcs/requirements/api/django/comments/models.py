@@ -12,7 +12,7 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        if self.pk:
+        if not self.edited and self.pk:
             old = Comment.objects.get(pk=self.pk)
             if old.content != self.content:
                 self.edited = True
