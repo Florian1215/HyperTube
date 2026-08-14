@@ -1,31 +1,27 @@
 from django.utils.translation import get_language_from_request
-from rest_framework import generics, viewsets
+from rest_framework import generics
 from rest_framework.exceptions import ValidationError, NotFound
 
-import test
-from config.errors import ERRORMSG_SEARCH_REQUIRED, MOVIE_NOT_FOUND
+from config.errors import ERRORMSG_SEARCH_REQUIRED, MOVIE_NOT_FOUND, PROGRESS_NOT_FOUND
+from users.models import UserHistory
+from .context import LangHistoryContext
 from .fetch import get_or_fetch_movie
 from .models import Movie
 from .pagination import TMDBPagination
 from .permissions import CanRecommendMovie
-from .serializers import MovieSerializer, MovieDetailSerializer, MovieFeatureSerializer
+from .serializers import MovieSerializer, MovieDetailSerializer, MovieFeatureSerializer, MovieProgressSerializer
 from .services.tmdb import TMDBService
 
 
-class MovieApiView(generics.RetrieveAPIView):
+class MovieApiView(LangHistoryContext, generics.RetrieveAPIView):
     serializer_class = MovieDetailSerializer
 
     def get_object(self):
-        movie = get_or_fetch_movie(self.kwargs['pk'], self.request)
+        movie = get_or_fetch_movie(self.kwargs['movie_id'], self.request)
         return movie
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['lang'] = get_language_from_request(self.request)
-        return context
 
-
-class MoviesListView(generics.ListAPIView):
+class MoviesListView(LangHistoryContext, generics.ListAPIView):
     serializer_class = MovieSerializer
     pagination_class = TMDBPagination
     filter_backends = []
@@ -53,13 +49,30 @@ class MovieFeatureApiView(generics.UpdateAPIView):
 
     def get_object(self):
         try:
-            return Movie.objects.get(movie=self.kwargs['pk'])
+            return Movie.objects.get(movie=self.kwargs['movie_id'])
         except Movie.DoesNotExist:
             raise NotFound(MOVIE_NOT_FOUND)
 
 
-class MoviesFeatureApiView(generics.ListAPIView):
+class MoviesFeatureApiView(LangHistoryContext, generics.ListAPIView):
     serializer_class = MovieDetailSerializer
 
     def get_queryset(self):
         return Movie.objects.filter(feature=True).order_by('-feature_at')
+
+
+class MovieProgressApiView(generics.ListAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
+    serializer_class = MovieProgressSerializer
+
+    def get_object(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            obj, _ = UserHistory.objects.get_or_create(user=self.request.user, movie_id=self.kwargs['movie_id'], complete=False)
+        else:
+            try:
+                obj = UserHistory.objects.get(user=self.request.user, movie_id=self.kwargs['movie_id'], complete=False)
+            except UserHistory.DoesNotExist:
+                raise NotFound(PROGRESS_NOT_FOUND)
+        return obj
+
+    def get_queryset(self):
+        return UserHistory.objects.filter(user=self.request.user, movie_id=self.kwargs['movie_id'])

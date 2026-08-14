@@ -1,30 +1,77 @@
 from django.utils import timezone
-from django.utils.translation import get_language_from_request
 from rest_framework import serializers
 
 from config.tmdb_media import tmdb_media
 from movies.fetch import get_or_fetch_movie_lang
 from movies.models import Movie, Cast, Crew
+from users.models import UserHistory
 
 
-class SmallMovieSerializer(serializers.ModelSerializer):
+class MovieTitleMixin(serializers.Serializer):
     title = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Movie
-        fields = [
-            'id',
-            'title',
-            'year',
-            'backdrop_url'
-        ]
+    summary = serializers.SerializerMethodField()
 
     def get_title(self, obj):
-        lang = get_language_from_request(self.context['request'])
-        return get_or_fetch_movie_lang(obj, lang).title
+        return get_or_fetch_movie_lang(obj, self.context['lang']).title
+
+    def get_summary(self, obj):
+        return get_or_fetch_movie_lang(obj, self.context['lang']).summary
 
 
-class MovieSerializer(serializers.Serializer):
+class MovieProgressMixin(serializers.Serializer):
+    progress = serializers.SerializerMethodField()
+    complete = serializers.SerializerMethodField()
+    pourcent = serializers.SerializerMethodField()
+    watched_at = serializers.SerializerMethodField()
+
+    def get_history(self, obj):
+        try:
+            if self.context['user_history']:
+                if type(obj) is dict:
+                    res = UserHistory.objects.filter(movie_id=obj['id'], user=self.context['user_history'])
+                else:
+                    res = obj.history.filter(user=self.context['user_history'])
+                return res.order_by('-updated_at').first()
+        except UserHistory.DoesNotExist:
+            pass
+        return None
+
+    def get_progress(self, obj):
+        h = self.get_history(obj)
+        return h.progress if h else 0
+
+    def get_complete(self, obj):
+        h = self.get_history(obj)
+        return h.complete if h else False
+
+    def get_pourcent(self, obj):
+        h = self.get_history(obj)
+        return h.pourcent if h else 0
+
+    def get_watched_at(self, obj):
+        h = self.get_history(obj)
+        return h.watched_at if h else None
+
+
+SMALL_MOVIE_FIELDS = [
+    'id',
+    'title',
+    'year',
+    'backdrop_url',
+    'progress',
+    'complete',
+    'pourcent',
+    'watched_at'
+]
+
+
+class SmallMovieSerializer(MovieTitleMixin, MovieProgressMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = SMALL_MOVIE_FIELDS
+
+
+class MovieSerializer(MovieProgressMixin, serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()
     year = serializers.SerializerMethodField()
@@ -70,13 +117,12 @@ class CrewSerializer(serializers.ModelSerializer):
         ]
 
 
-class MovieDetailSerializer(serializers.ModelSerializer):
+class MovieDetailSerializer(MovieTitleMixin, MovieProgressMixin, serializers.ModelSerializer):
     cast = CastSerializer(many=True, read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
     genres = serializers.SerializerMethodField()
     backdrops_url = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
-    summary = serializers.SerializerMethodField()
 
     class Meta:
         model = Movie
@@ -97,7 +143,11 @@ class MovieDetailSerializer(serializers.ModelSerializer):
             'feature',
             'cast',
             'crew',
-            'genres'
+            'genres',
+            'progress',
+            'complete',
+            'pourcent',
+            'watched_at'
         ]
 
     @staticmethod
@@ -107,12 +157,6 @@ class MovieDetailSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_backdrops_url(obj):
         return [g.url for g in obj.backdrops_url.all()]
-
-    def get_title(self, obj):
-        return obj.languages.get(lang=self.context['lang']).title
-
-    def get_summary(self, obj):
-        return obj.languages.get(lang=self.context['lang']).summary
 
 
 class MovieFeatureSerializer(serializers.ModelSerializer):
@@ -127,3 +171,40 @@ class MovieFeatureSerializer(serializers.ModelSerializer):
         if 'feature' in validated_data:
             validated_data['feature_at'] = timezone.now()
         return super().update(instance, validated_data)
+
+
+class MovieProgressSerializer(serializers.ModelSerializer):
+    progress = serializers.IntegerField(min_value=0)
+    pourcent = serializers.IntegerField(min_value=0, max_value=100)
+
+    class Meta:
+        model = UserHistory
+        fields = [
+            'progress',
+            'complete',
+            'pourcent',
+            'watched_at'
+        ]
+        read_only_fields = [
+            'watched_at'
+        ]
+
+    def update(self, instance, validated_data):
+        if validated_data.get('complete'):
+            validated_data['pourcent'] = 100
+            validated_data['watched_at'] = timezone.now()
+        return super().update(instance, validated_data)
+
+
+class MovieHistorySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='movie_id')
+    title = serializers.SerializerMethodField()
+    year = serializers.CharField(source='movie.year')
+    backdrop_url = serializers.CharField(source='movie.backdrop_url')
+
+    class Meta:
+        model = UserHistory
+        fields = SMALL_MOVIE_FIELDS
+
+    def get_title(self, obj):
+        return get_or_fetch_movie_lang(obj.movie, self.context['lang']).title

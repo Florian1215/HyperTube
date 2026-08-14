@@ -7,11 +7,11 @@ from movies.models import MovieLanguage, Movie, Genre
 from movies.services.tmdb import TMDBService
 
 
-def get_or_fetch_movie_lang(movie, lang, movie_data):
+def get_or_fetch_movie_lang(movie, lang, movie_data=None):
     try:
         movie_lang = movie.languages.get(lang=lang)
     except MovieLanguage.DoesNotExist:
-        if 'title' not in movie_data:
+        if movie_data and 'title' not in movie_data:
             tmdb = TMDBService(lang)
             movie_data = tmdb.get_movie(movie.id, False)
         movie_lang = movie.languages.create(title=movie_data['title'], summary=movie_data['overview'], lang=lang)
