@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.errors import USERNAME_CONTAINS, USER_ALREADY_TAKEN
-from users.models import User
+from users.models import User, UserHistory
 
 
 class UserSerializer(serializers.ModelSerializer):

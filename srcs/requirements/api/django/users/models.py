@@ -24,3 +24,17 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class UserHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='history')
+    movie = models.ForeignKey('movies.Movie', on_delete=models.CASCADE, related_name='history')
+    progress = models.IntegerField(default=0)
+    complete = models.BooleanField(default=False)
+    pourcent = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    watched_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user} - {self.movie}[{self.pourcent}%]'
