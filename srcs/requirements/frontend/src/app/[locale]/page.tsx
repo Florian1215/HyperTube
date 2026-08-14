@@ -14,7 +14,7 @@ import Section from "@/components/ui/Section";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
-import {useUserFilmHistory} from "@/services/users.service";
+import {useUserHistory} from "@/services/users.service";
 
 export default function HomePage() {
     const {user} = useAuth();
@@ -23,22 +23,22 @@ export default function HomePage() {
     const genreCount = {xs: 3, md: 4, lg: 6, xl: 8}[size];
     const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
 
-    const {data: continueWatchingData} = useUserFilmHistory(user?.id);
+    const {data: continueWatchingData} = useUserHistory(user?.id);
     const {data: movies} = useMovies();
-    const popular = filterAlreadyWatch(continueWatchingData?.results, movies?.results);
+    const popular = filterAlreadyWatch(movies?.results);
     const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
 
     const {data: featuredMovies} = useMovies("featured");
-    const featured = filterAlreadyWatch(continueWatchingData?.results, featuredMovies?.results);
+    const featured = filterAlreadyWatch(featuredMovies?.results);
     const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
 
-    const mostRated = filterAlreadyWatch(continueWatchingData?.results, featuredMovies && movies ? [...featuredMovies.results, ...movies.results] : undefined).filter((m) => m.note > 7);
+    const mostRated = filterAlreadyWatch(featuredMovies && movies ? [...featuredMovies.results, ...movies.results] : undefined).filter((m) => m.note > 7);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
     const continueWatching = continueWatchingData ? continueWatchingData.results.filter((m) => !m.complete) : [];
 
     const {data: dirctedWatchMovies} = useMovies("directstream", undefined, !!user);
-    const filterDirectedWatchMovies = filterAlreadyWatch(continueWatchingData?.results, dirctedWatchMovies?.results);
+    const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
@@ -125,10 +125,8 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
     </div>);
 }
 
-function filterAlreadyWatch(watchHistory?: iMovie[], movies?: iMovie[]) {
+function filterAlreadyWatch(movies?: iMovie[]) {
     if (!movies)
         return [];
-    if (!watchHistory || !watchHistory.length)
-        return movies;
-    return movies.filter(m => !watchHistory.find(mw => mw.id == m.id));
+    return movies.filter(m => m.complete);
 }

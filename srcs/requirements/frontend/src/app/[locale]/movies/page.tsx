@@ -14,9 +14,6 @@ import CloseButton from "@/components/ui/Button/CloseButton";
 import MoviesGrid from "@/components/features/movie/MoviesGrid";
 import MoviesList from "@/components/features/movie/MoviesList";
 import SmallText from "@/components/ui/SmallText";
-import {useUserFilmHistory} from "@/services/users.service";
-import useAuth from "@/contexts/AuthContext";
-import addProgressToMovie from "@/utils/addProgressToMovie";
 import IconButton from "@/components/ui/Button/IconButton";
 import {usePathname, useRouter} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
@@ -45,11 +42,8 @@ export default function Page() {
     const [viewType, setViewType] = useState<tViewType>("grid");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [index, setIndex] = useState(1);
-    const {data: rawMovies} = useMovies(searchValue.trim(), index);
-    const {user} = useAuth();
-    const {data: watchHistory} = useUserFilmHistory(user?.id);
-    const movies = addProgressToMovie(watchHistory?.results, rawMovies?.results) as iMovie[] | undefined;
-    const totalPage = computeTotalPage(rawMovies);
+    const {data: movies} = useMovies(searchValue.trim(), index);
+    const totalPage = computeTotalPage(movies);
 
     useEffect(() => {
         const savedViewType = localStorage.getItem("searchViewType") as tViewType;
@@ -66,7 +60,7 @@ export default function Page() {
             params.delete("q");
         router.push(`${pathname}?${params.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [rawMovies]);
+    }, [movies]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e?.target.value.toLowerCase() ?? "";
@@ -83,7 +77,7 @@ export default function Page() {
         <SearchBar searchValue={searchValue} onChange={handleSearchChange} />
         <Filter viewType={viewType} onClick={handleSetViewType}/>
         <Pagination currentIndex={index} totalPage={totalPage} onClick={changeIndex} variableMT={true}>
-            <Results movies={movies} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+            <Results movies={movies?.results ?? []} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
         </Pagination>
     </div>);
 }

@@ -10,10 +10,7 @@ import CommentsSection from "@/components/features/comment/CommentsSection";
 import getBestTorrent from "@/utils/getBestTorrent";
 import useNotification from "@/contexts/NotificationContext";
 import {useTranslations} from "next-intl";
-import {useUserFilmHistory} from "@/services/users.service";
-import addProgressToMovie from "@/utils/addProgressToMovie";
 import useAuth from "@/contexts/AuthContext";
-import {iMovieDetails} from "@/types/movie";
 import {ApiError} from "@/services/apiClient";
 import useModal from "@/contexts/ModalContext";
 
@@ -21,14 +18,12 @@ export default function MoviePage() {
     const params = useParams();
     const id = params.id as string;
     const {user} = useAuth();
-    const {data, error} = useMovie(id);
-    const {data: watchHistory} = useUserFilmHistory(user?.id);
-    const movie = addProgressToMovie(watchHistory?.results, data) as iMovieDetails;
+    const {data: movie, error} = useMovie(id);
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const handleError = useHandleError();
     const [torrentId, setTorrentId] = useState<string | undefined>();
     const [startVideo, setStartVideo] = useState(false);
-    const {data: torrents} = useTorrents(data?.id)
+    const {data: torrents} = useTorrents(movie?.id)
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
     const {openModal} = useModal();
@@ -78,7 +73,7 @@ export default function MoviePage() {
         <MovieHero movie={movie} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} torrents={torrents?.results} setTorrentId={setTorrentId} watchBtn={true}
                    featureBtn={(movie && user && user.featured) ? () => openModal({type: "set-feature", movie: movie}) : undefined}
         />
-        <MovieInfoSection movie={data}/>
-        {data ? <CommentsSection movie={data}/> : <div/>}
+        <MovieInfoSection movie={movie}/>
+        {movie ? <CommentsSection movie={movie}/> : <div/>}
     </div>);
 }

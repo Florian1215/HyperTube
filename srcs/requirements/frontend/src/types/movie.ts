@@ -8,9 +8,9 @@ export interface iMovie {
     note: number
     vote_count: number
     release_date: string
-    complete?: boolean
-    progress?: number
-    pourcent?: number
+    complete: boolean
+    progress: number
+    pourcent: number
 }
 
 export interface iMovieDetails extends iMovie {
@@ -46,4 +46,5 @@ export interface iProgress {
     progress: number
     complete: boolean
     pourcent: number
+    watched_at: string
 }

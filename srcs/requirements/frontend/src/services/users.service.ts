@@ -8,8 +8,8 @@ export function getUser(locale: string, userId: string) {
     return apiClient<iUser>(`users/${userId}/`, locale);
 }
 
-function getUserFilmHistory(locale: string, userId?: number) {
-    return apiClient<tListResponse<iMovie>>(`users/${userId}/movie-history/`, locale);
+function getUserHistory(locale: string, userId?: number) {
+    return apiClient<tListResponse<iMovie>>(`users/${userId}/history/`, locale);
 }
 
 export function patchUser(locale: string, data: string[], userId?: number | string) {
@@ -39,10 +39,10 @@ export function useUser(userId: string, enabled: boolean=true) {
     );
 }
 
-export function useUserFilmHistory(userId?: number) {
+export function useUserHistory(userId?: number) {
     return useApiQuery(
         ["user-movie-history", userId],
-        (locale: string) => getUserFilmHistory(locale, userId),
+        (locale: string) => getUserHistory(locale, userId),
         !!userId
     );
 }
