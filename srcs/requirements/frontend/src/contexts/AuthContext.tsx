@@ -51,10 +51,9 @@ export function AuthProvider({children}: {children: ReactNode}) {
     }, []);
 
     const login = async (access: string, refresh: string) => {
-        const data = await getUser(locale, 'me')
-
         localStorage.setItem("access", access);
         localStorage.setItem("refresh", refresh);
+        const data = await getUser(locale, 'me')
         setUser(data);
     };
 
@@ -62,7 +61,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         setUser(undefined);
-        if (pathname !== "/" && pathname !== "/movies")
+        if (pathname === "/users")
             router.push("/");
     };
 
