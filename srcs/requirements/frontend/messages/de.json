@@ -30,6 +30,8 @@
   },
   "movie": {
     "watch": "Ansehen",
+    "release": "Veröffentlichung",
+    "status": "Status",
     "length": "Dauer",
     "genre": "Genre",
     "directors": "Regisseure",

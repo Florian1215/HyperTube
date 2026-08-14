@@ -1,6 +1,6 @@
 import {iMovieDetails, iPeople} from "@/types/movie";
 import React from "react";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import LoadingText from "@/components/LoadingText";
 import GenreTags from "@/components/features/genre/GenreTags";
 import Label from "@/components/ui/Label";
@@ -10,6 +10,7 @@ import useModal from "@/contexts/ModalContext";
 export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
     const t = useTranslations("movie");
     const {openModal} = useModal();
+    const locale = useLocale();
 
     const getLenght = () => {
         if (!movie)
@@ -24,15 +25,39 @@ export default function MovieInfoSection({movie} : {movie?: iMovieDetails}) {
         return (<LoadingText center={true} />);
 
     const directors = movie.crew.filter(p => p.job === "Director");
+    const today = new Date();
+    const releaseDate = new Date(movie.release_date);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
         <h1 className="flex gap-1 justify-center w-full">
             <span className="max-w-8/10 custom-movie-title">{movie.title}</span>
             <span className="responsive-text-hairline">{movie.year}</span>
         </h1>
-        <InfoMovie name={t("length")}>
-            <p>{getLenght()}</p>
-        </InfoMovie>
+
+        {
+            releaseDate > today &&
+            <InfoMovie name={t("release")}>
+                <p>{releaseDate.toLocaleDateString(locale, {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                })}</p>
+            </InfoMovie>
+        }
+
+        {
+            movie.status !== "Released" &&
+            <InfoMovie name={t("status")}>
+                <p>{movie.status}</p>
+            </InfoMovie>
+        }
+
+        {
+            movie.runtime > 0 &&
+            <InfoMovie name={t("length")}>
+                <p>{getLenght()}</p>
+            </InfoMovie>
+        }
 
         {
             movie.genres.length > 0 &&

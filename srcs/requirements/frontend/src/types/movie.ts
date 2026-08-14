@@ -7,6 +7,7 @@ export interface iMovie {
     genres: number[]
     note: number
     vote_count: number
+    release_date: string
     complete?: boolean
     progress?: number
     pourcent?: number
@@ -20,6 +21,7 @@ export interface iMovieDetails extends iMovie {
     cast: iPeople[]
     backdrops_url: string[]
     featured: boolean
+    status: string
 }
 
 export interface iPeople {

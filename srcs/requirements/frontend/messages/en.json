@@ -30,6 +30,8 @@
   },
   "movie": {
     "watch": "Watch",
+    "release": "Release",
+    "status": "Status",
     "length": "Length",
     "genre": "Genre",
     "directors": "Directors",
@@ -93,7 +95,7 @@
     "signin": {
       "title": "Sign in",
       "titleLoginRequired": "Sign in to continue",
-      "usernmae": "Username",
+      "username": "Username",
       "password": "Password",
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",

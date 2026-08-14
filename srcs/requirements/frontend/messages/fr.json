@@ -30,6 +30,8 @@
   },
   "movie": {
     "watch": "Regarder",
+    "release": "Sortie",
+    "status": "Statut",
     "length": "Durée",
     "genre": "Genre",
     "directors": "Réalisateurs",
