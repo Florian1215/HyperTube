@@ -4,6 +4,6 @@ from comments.views import CommentAPIView, CommentMovieAPIView, CommentUserAPIVi
 
 urlpatterns = [
     path("comments/", CommentAPIView.as_view(), name="user"),
-    path("users/<int:pk>/comments/", CommentUserAPIView.as_view(), name="user-comments"),
-    path("movies/<int:pk>/comments/", CommentMovieAPIView.as_view(), name="movie-comments")
+    path("users/<int:user_id>/comments/", CommentUserAPIView.as_view(), name="user-comments"),
+    path("movies/<int:movie_id>/comments/", CommentMovieAPIView.as_view(), name="movie-comments")
 ]

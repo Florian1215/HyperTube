@@ -24,11 +24,11 @@ class CommentMovieAPIView(generics.ListCreateAPIView):
     ordering_fields = ['updated_at']
 
     def get_queryset(self):
-        movie = get_or_fetch_movie(self.kwargs['pk'], self.request)
+        movie = get_or_fetch_movie(self.kwargs['movie_id'], self.request)
         return Comment.objects.filter(movie=movie)
 
     def perform_create(self, serializer):
-        movie = get_or_fetch_movie(self.kwargs['pk'], self.request)
+        movie = get_or_fetch_movie(self.kwargs['movie_id'], self.request)
         serializer.save(user=self.request.user, movie=movie)
 
 
