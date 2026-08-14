@@ -2,9 +2,9 @@ import {useTranslations} from "next-intl";
 import {iMovie} from "@/types/movie";
 import {iUser} from "@/types/user";
 import {useState} from "react";
-import LinkLoginRequired from "@/components/ui/LinkLoginRequired";
 import Image from "next/image";
 import WatchProgress from "@/components/WatchProgress";
+import {Link} from "@/i18n/navigation";
 
 export default function MovieCard({movie, user, className, showTitle = true} : {movie?: iMovie, user?: iUser, className?: string, showTitle?: boolean}) {
     const t = useTranslations("movie");
@@ -17,7 +17,7 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
         </div>);
     }
 
-    return (<LinkLoginRequired href={"/movies/" + movie.id} className={containerClass + " " + className}>
+    return (<Link href={"/movies/" + movie.id} className={containerClass + " " + className}>
         <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
@@ -33,5 +33,5 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
                     <span className="responsive-text-hairline xl:text-xl text-xl">{movie.year}</span>
                 </h3>}
         </div>
-    </LinkLoginRequired>);
+    </Link>);
 }

@@ -1,7 +1,6 @@
-import {useRouter} from "@/i18n/navigation";
+import {Link, useRouter} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
 import {Dispatch, SetStateAction, useState} from "react";
-import LinkLoginRequired from "@/components/ui/LinkLoginRequired";
 import LoadingText from "@/components/LoadingText";
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
@@ -22,7 +21,7 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
             <div className="border overflow-hidden aspect-3/2 relative">
                 <div className="custom-noise"/>
                 {!isLoaded && (<div className="custom-loading"/>)}
-                {movie && <LinkLoginRequired href={"/movies/" + movie.id}>
+                {movie && <Link href={"/movies/" + movie.id}>
                     <WatchProgress user={user} movie={movie} />
                     <Image
                         className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`}
@@ -30,14 +29,14 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
                         loading="eager" onLoad={() => setIsLoaded(true)}
                     />
                     {movie.complete && <div className="custom-complete-movie"/>}
-                </LinkLoginRequired>}
+                </Link>}
             </div>
         </td>
         <td className="sm:px-3">
-            {movie ? <LinkLoginRequired href={"/movies/" + movie.id} className="flex gap-1 sm:gap-2 w-full">
+            {movie ? <Link href={"/movies/" + movie.id} className="flex gap-1 sm:gap-2 w-full">
                     <h1 className="max-w-9/10 custom-movie-title">{movie.title}</h1>
                     <span className="responsive-text-hairline">{movie.year}</span>
-                </LinkLoginRequired> :
+                </Link> :
                 <LoadingText/>}
         </td>
         <td/>
