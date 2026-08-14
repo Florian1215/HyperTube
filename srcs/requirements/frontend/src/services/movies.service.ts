@@ -6,7 +6,7 @@ import {tListResponse} from "@/types/api";
 import {QueryClient} from "@tanstack/react-query";
 
 function getMovie(movieId: string, locale: string) {
-    return apiClient<iMovieDetails>(`movies/${movieId}/`, locale);
+    return apiClient<iMovieDetails>(`movie/${movieId}/`, locale);
 }
 
 export function useMovie(movieId: string, enabled = true) {
