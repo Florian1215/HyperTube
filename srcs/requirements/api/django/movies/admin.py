@@ -1,17 +1,17 @@
 from django.contrib import admin
-from movies.models import Movie, Genre, Cast, Crew
+from movies.models import Movie, Genre, Cast, Crew, MovieLanguage
 
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
     list_display = (
-        'title',
+        'original_title',
         'year',
         'note'
     )
 
     search_fields = (
-        'title',
+        'original_title',
     )
 
 
@@ -29,8 +29,5 @@ class MovieAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(Genre)
-class MovieAdmin(admin.ModelAdmin):
-    search_fields = (
-        'name',
-    )
+admin.register(MovieLanguage)
+admin.register(Genre)

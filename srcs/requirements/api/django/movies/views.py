@@ -1,102 +1,65 @@
 from django.utils.translation import get_language_from_request
-from rest_framework import viewsets, generics
+from rest_framework import generics, viewsets
 from rest_framework.exceptions import ValidationError, NotFound
-from rest_framework.response import Response
 
+import test
 from config.errors import ERRORMSG_SEARCH_REQUIRED, MOVIE_NOT_FOUND
-from config.tmdb_media import tmdb_media
-from .models import Movie, Genre
+from .fetch import get_or_fetch_movie
+from .models import Movie
 from .pagination import TMDBPagination
 from .permissions import CanRecommendMovie
 from .serializers import MovieSerializer, MovieDetailSerializer, MovieFeatureSerializer
 from .services.tmdb import TMDBService
 
 
-def get_or_fetch_movie(pk, request):
-    language = get_language_from_request(request)
+class MovieApiView(generics.RetrieveAPIView):
+    serializer_class = MovieDetailSerializer
 
-    try:
-        return Movie.objects.get(movie_id=pk, lang=language)
-    except (Movie.DoesNotExist, ValueError):
-        try:
-            tmdb = TMDBService(language)
-            movie_data = tmdb.get_movie(pk)
-            movie = Movie.objects.create(
-                movie_id=movie_data['id'],
-                title=movie_data['title'],
-                year=movie_data['release_date'][:4],
-                poster_url=tmdb_media(movie_data['poster_path'], 'w500'),
-                backdrop_url=tmdb_media(movie_data['backdrop_path'], 'w1280'),
-                note=movie_data['vote_average'],
-                vote_count=movie_data['vote_count'],
-                original_title=movie_data['original_title'],
-                runtime=movie_data['runtime'],
-                summary=movie_data['overview'],
-                status=movie_data['status'],
-                lang=language,
-            )
-            for genre_data in movie_data['genres']:
-                genre, _ = Genre.objects.get_or_create(genre_id=genre_data['id'], name=genre_data['name'], lang=language)
-                movie.genres.add(genre)
-            for cast in movie_data['credits']['cast']:
-                movie.cast.create(cast_id=cast['id'], name=cast['name'],
-                                  picture=tmdb_media(cast['profile_path'], 'w300'), character=cast['character'])
-            for crew in movie_data['credits']['crew']:
-                movie.crew.create(crew_id=crew['id'], name=crew['name'],
-                                  picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
-            image_data = tmdb.get_images_movie(pk)
-            for backdrop_data in image_data['backdrops'][:6]:
-                backdrop, _ = movie.backdrops_url.get_or_create(url=tmdb_media(backdrop_data['file_path'], 'w1280'), lang=language)
-                movie.backdrops_url.add(backdrop)
-            return movie
-        except Exception:
-            raise NotFound(MOVIE_NOT_FOUND)
+    def get_object(self):
+        movie = get_or_fetch_movie(self.kwargs['pk'], self.request)
+        return movie
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['lang'] = get_language_from_request(self.request)
+        return context
 
 
-class MovieViewSet(viewsets.ViewSet):
-    authentication_classes = []
+class MoviesListView(generics.ListAPIView):
+    serializer_class = MovieSerializer
     pagination_class = TMDBPagination
+    filter_backends = []
 
-    def list(self, request):
-        query = request.query_params.get('search')
-        language = get_language_from_request(request)
+    def get_queryset(self):
+        query = self.request.query_params.get('search')
+        language = get_language_from_request(self.request)
 
         if not query:
             raise ValidationError(ERRORMSG_SEARCH_REQUIRED)
-        page = request.query_params.get('page', 1)
+        page = self.request.query_params.get('page', 1)
         try:
             page = int(page)
         except ValueError:
             page = 1
         tmdb = TMDBService(language)
-        data = tmdb.search_movies(query=query, page=page)
-        paginator = self.pagination_class()
-        movies = paginator.paginate_tmdb(request, data)
-        serializer = MovieSerializer(movies, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-    @staticmethod
-    def retrieve(request, pk=None):
-        movie = get_or_fetch_movie(pk, request)
-        serializer = MovieDetailSerializer(movie)
-        return Response(serializer.data)
+        response = tmdb.search_movies(query=query, page=page)
+        self.tmdb_request = response
+        return response['results']
 
 
-class MovieFeatureViewSet(generics.UpdateAPIView):
+class MovieFeatureApiView(generics.UpdateAPIView):
     serializer_class = MovieFeatureSerializer
     permissions_classes = [CanRecommendMovie]
 
     def get_object(self):
-        lang = get_language_from_request(self.request)
         try:
-            return Movie.objects.get(movie_id=self.kwargs['pk'], lang=lang)
+            return Movie.objects.get(movie=self.kwargs['pk'])
         except Movie.DoesNotExist:
             raise NotFound(MOVIE_NOT_FOUND)
 
 
-class MoviesFeatureViewSet(generics.ListAPIView):
+class MoviesFeatureApiView(generics.ListAPIView):
     serializer_class = MovieDetailSerializer
 
     def get_queryset(self):
-        lang = get_language_from_request(self.request)
-        return Movie.objects.filter(feature=True, lang=lang).order_by('-feature_at')
+        return Movie.objects.filter(feature=True).order_by('-feature_at')

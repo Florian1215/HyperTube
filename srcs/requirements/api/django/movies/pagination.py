@@ -7,13 +7,14 @@ from config.settings import PER_PAGE
 class TMDBPagination(PageNumberPagination):
     page_query_param = 'page'
 
-    def paginate_tmdb(self, request, tmdb_data):
+    def paginate_queryset(self, queryset, request, view=None):
         self.request = request
-        self.page = tmdb_data['page']
-        self.total_count = tmdb_data['total_results']
-        self.total_pages = tmdb_data['total_pages']
-        self.results = tmdb_data['results']
+        req = view.tmdb_request
 
+        self.page = req['page']
+        self.total_pages = req['total_pages']
+        self.total_count = req['total_results']
+        self.results = req['results']
         return self.results
 
     def get_paginated_response(self, data):

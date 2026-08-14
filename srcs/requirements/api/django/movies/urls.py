@@ -1,11 +1,9 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from movies.views import MovieViewSet, MovieFeatureViewSet, MoviesFeatureViewSet
+from django.urls import path
+from movies.views import MoviesListView, MovieApiView, MovieFeatureApiView, MoviesFeatureApiView
 
-router = DefaultRouter()
-router.register('movies', MovieViewSet, basename='movies')
 urlpatterns = [
-    path('movies/featured/', MoviesFeatureViewSet.as_view(), name='movies-feature'),
-    path('movies/<int:pk>/feature/', MovieFeatureViewSet.as_view(), name='movie-feature'),
-    path('', include(router.urls))
+    path('movies/featured/', MovieFeatureApiView.as_view(), name='movies-feature'),
+    path('movies/<int:pk>/feature/', MoviesFeatureApiView.as_view(), name='movie-feature'),
+    path('movies/', MoviesListView.as_view(), name='movies-search'),
+    path('movie/<int:pk>/', MovieApiView.as_view(), name='movie-detail'),
 ]

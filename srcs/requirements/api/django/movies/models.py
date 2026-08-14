@@ -26,16 +26,13 @@ class Crew(models.Model):
 
 class Genre(models.Model):
     genre_id = models.IntegerField()
-    name = models.CharField()
-    lang = models.CharField(max_length=2)
 
     def __str__(self):
-        return self.name
+        return f'Genre: {self.genre_id}'
 
 
 class BackdropUrl(models.Model):
     url = models.URLField()
-    lang = models.CharField(max_length=2)
     movie = models.ForeignKey('movies.Movie', on_delete=models.CASCADE, related_name='backdrops_url')
 
     def __str__(self):
@@ -43,8 +40,6 @@ class BackdropUrl(models.Model):
 
 
 class Movie(models.Model):
-    movie_id = models.IntegerField()
-    title = models.CharField()
     original_title = models.CharField()
     year = models.CharField(max_length=4)
     poster_url = models.URLField()
@@ -52,11 +47,10 @@ class Movie(models.Model):
     note = models.FloatField()
     vote_count = models.IntegerField()
     runtime = models.IntegerField()
-    summary = models.CharField()
     status = models.CharField()
+    release_date = models.CharField()
     genres = models.ManyToManyField(Genre, related_name='movies', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    lang = models.CharField(max_length=2)
     feature = models.BooleanField(default=False)
     feature_at = models.DateTimeField(null=True, blank=True)
 
@@ -64,12 +58,24 @@ class Movie(models.Model):
         permissions = [
             ("can_recommend_movie", "Can recommend movies"),
         ]
+
+    def __str__(self):
+        return f'{self.original_title} - {self.year}'
+
+
+class MovieLanguage(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='languages')
+    title = models.CharField()
+    summary = models.CharField()
+    lang = models.CharField(max_length=2)
+
+    class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['movie_id', 'lang'],
+                fields=['movie', 'lang'],
                 name='unique_movie_language',
             )
         ]
 
     def __str__(self):
-        return f'{self.title} - {self.year}'
+        return f'{self.title} - {self.lang}'

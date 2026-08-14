@@ -1,12 +1,14 @@
 from django.utils import timezone
+from django.utils.translation import get_language_from_request
 from rest_framework import serializers
 
 from config.tmdb_media import tmdb_media
+from movies.fetch import get_or_fetch_movie_lang
 from movies.models import Movie, Cast, Crew
 
 
 class SmallMovieSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='movie_id')
+    title = serializers.SerializerMethodField()
 
     class Meta:
         model = Movie
@@ -17,6 +19,10 @@ class SmallMovieSerializer(serializers.ModelSerializer):
             'backdrop_url'
         ]
 
+    def get_title(self, obj):
+        lang = get_language_from_request(self.context['request'])
+        return get_or_fetch_movie_lang(obj, lang).title
+
 
 class MovieSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -26,6 +32,7 @@ class MovieSerializer(serializers.Serializer):
     backdrop_url = serializers.SerializerMethodField()
     genres = serializers.ListField(child=serializers.IntegerField(), source='genre_ids')
     note = serializers.FloatField(source='vote_average')
+    release_date = serializers.CharField()
     vote_count = serializers.IntegerField()
 
     @staticmethod
@@ -64,11 +71,12 @@ class CrewSerializer(serializers.ModelSerializer):
 
 
 class MovieDetailSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='movie_id')
     cast = CastSerializer(many=True, read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
     genres = serializers.SerializerMethodField()
     backdrops_url = serializers.SerializerMethodField()
+    title = serializers.SerializerMethodField()
+    summary = serializers.SerializerMethodField()
 
     class Meta:
         model = Movie
@@ -85,6 +93,7 @@ class MovieDetailSerializer(serializers.ModelSerializer):
             'runtime',
             'summary',
             'status',
+            'release_date',
             'feature',
             'cast',
             'crew',
@@ -98,6 +107,12 @@ class MovieDetailSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_backdrops_url(obj):
         return [g.url for g in obj.backdrops_url.all()]
+
+    def get_title(self, obj):
+        return obj.languages.get(lang=self.context['lang']).title
+
+    def get_summary(self, obj):
+        return obj.languages.get(lang=self.context['lang']).summary
 
 
 class MovieFeatureSerializer(serializers.ModelSerializer):

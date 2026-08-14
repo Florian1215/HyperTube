@@ -36,11 +36,12 @@ class TMDBService:
         response.raise_for_status()
         return response.json()
 
-    def get_movie(self, tmdb_id):
+    def get_movie(self, tmdb_id, get_credits=True):
         params = {
-            'language': self.lang4,
-            'append_to_response': 'credits'
+            'language': self.lang4
         }
+        if get_credits:
+            params['append_to_response'] = 'credits'
 
         response = requests.get(
             f'{settings.TMDB_BASE_URL}/movie/{tmdb_id}',
