@@ -26,7 +26,7 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
 
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-        if (response.status === 401 && data.code === "token_not_valid" && endpoint !== 'auth/refresh/') {
+        if (data?.code === "token_not_valid" && endpoint !== 'auth/refresh/') {
             try {
                 await refreshAccessToken(locale);
             } catch {
@@ -44,7 +44,14 @@ export class ApiError extends Error {
     data?: Record<string, string>;
 
     constructor(status: number, data?: Record<string, string>) {
-        super(`${status} - Error: ${data?.detail || data?.message || "Unknown error"}`);
+        let unknownErrorMessage = "Unknown error";
+        if (status === 401)
+            unknownErrorMessage = "Unauthorized";
+        else if (status === 403)
+            unknownErrorMessage = "Forbidden";
+        else if (status === 404)
+            unknownErrorMessage = "Not found";
+        super(`${status} - Error: ${data?.detail || data?.message || unknownErrorMessage}`);
 
         this.name = "ApiError";
         this.status = status;
