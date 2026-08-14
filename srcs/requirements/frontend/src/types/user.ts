@@ -20,4 +20,5 @@ export interface iUser {
     color: tUserColor
     profile_picture: null | string
     created_at: number
+    featured?: boolean
 }

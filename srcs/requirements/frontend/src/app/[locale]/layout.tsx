@@ -18,6 +18,7 @@ import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
 import SelectTorrentModal from "@/components/features/movie/SelectTorrentModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import CreditsModal from "@/components/features/movie/CreditsModal";
+import SetFeatureModal from "@/components/features/movie/SetFeatureModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
@@ -44,6 +45,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <GenreModal/>
                             <FilterGenreModal/>
                             <DeleteConfirmationModal/>
+                            <SetFeatureModal/>
                             <CreditsModal/>
                             <SelectTorrentModal/>
 

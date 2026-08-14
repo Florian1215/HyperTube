@@ -42,10 +42,18 @@
     "decreaseSubDelay": "Decrease subtitle delay",
     "increaseSubDelay": "Increase subtitle delay",
     "viewAll": "View all",
+    "setFeature": "Feature this movie",
     "credits" : {
         "title": "Credits",
         "cast": "Cast",
         "crew": "Crew"
+    },
+    "feature": {
+      "title": "Recommended this movie",
+      "save": "Save",
+      "requestError": "Request error: {error}",
+      "chooseBackdrop": "Choose a backdrop",
+      "feature": "Feature"
     }
   },
   "comments": {

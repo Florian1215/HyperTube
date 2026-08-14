@@ -44,6 +44,10 @@ export function updateMovieProgress(movieId: string, progress: number, pourcent:
     return apiClient<iProgress>(`movies/${movieId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
 }
 
+export function updateMovieFeature(local: string, movieId: string, feature: boolean, backdrop_url: string) {
+    return apiClient<iProgress>(`movies/${movieId}/feature/`, local, {method: "PATCH", body: JSON.stringify({feature, backdrop_url})});
+}
+
 export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress: iProgress) {
     const updatedMovie = {...movie, ...progress};
     const historyQueries = queryClient.getQueriesData<tListResponse<iMovie>>({queryKey: ["user-movie-history", userId]});

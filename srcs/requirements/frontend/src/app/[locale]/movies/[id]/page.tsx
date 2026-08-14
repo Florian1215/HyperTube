@@ -15,6 +15,7 @@ import addProgressToMovie from "@/utils/addProgressToMovie";
 import useAuth from "@/contexts/AuthContext";
 import {iMovieDetails} from "@/types/movie";
 import {ApiError} from "@/services/apiClient";
+import useModal from "@/contexts/ModalContext";
 
 export default function MoviePage() {
     const params = useParams();
@@ -30,6 +31,7 @@ export default function MoviePage() {
     const {data: torrents} = useTorrents(data?.id)
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
+    const {openModal} = useModal();
 
     useEffect(() => {
         if (error) {
@@ -73,7 +75,9 @@ export default function MoviePage() {
     }
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MovieHero movie={movie} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} torrents={torrents?.results} setTorrentId={setTorrentId} watchBtn={true}/>
+        <MovieHero movie={movie} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} torrents={torrents?.results} setTorrentId={setTorrentId} watchBtn={true}
+                   featureBtn={(movie && user && user.featured) ? () => openModal({type: "set-feature", movie: movie}) : undefined}
+        />
         <MovieInfoSection movie={data}/>
         {data ? <CommentsSection movie={data}/> : <div/>}
     </div>);

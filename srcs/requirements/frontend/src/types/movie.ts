@@ -18,6 +18,8 @@ export interface iMovieDetails extends iMovie {
     summary: string
     crew: iPeople[]
     cast: iPeople[]
+    backdrops_url: string[]
+    featured: boolean
 }
 
 export interface iPeople {

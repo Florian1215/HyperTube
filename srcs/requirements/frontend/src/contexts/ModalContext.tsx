@@ -2,9 +2,9 @@
 
 import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
-import {iPeople, iTorrent} from "@/types/movie";
+import {iMovieDetails, iPeople, iTorrent} from "@/types/movie";
 
-type ModalType = "signin" | "register" | "genre" | "filter-genre" | "set-new-password" | "delete-confirmation" | "select-torrent" | "credits" | null;
+type ModalType = "signin" | "register" | "genre" | "filter-genre" | "set-new-password" | "delete-confirmation" | "select-torrent" | "credits" | "set-feature" | null;
 
 export interface ModalState {
     type: ModalType;
@@ -22,6 +22,7 @@ export interface ModalState {
     pageIndex?: number
     cast?: iPeople[]
     crew?: iPeople[]
+    movie?: iMovieDetails
 }
 
 interface ModalContextType {

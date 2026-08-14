@@ -42,10 +42,18 @@
     "decreaseSubDelay": "Untertitelverzögerung verringern",
     "increaseSubDelay": "Untertitelverzögerung erhöhen",
     "viewAll": "Alle anzeigen",
+    "setFeature": "Feature this movie",
     "credits" : {
         "title": "Credits",
         "cast": "Besetzung",
         "crew": "Crew"
+    },
+    "feature": {
+      "title": "Empfohlen von diesem Film",
+      "save": "Speichern",
+      "requestError": "Fehler bei der Anfrage: {error}",
+      "chooseBackdrop": "Wählen Sie ein Hintergrundbild",
+      "feature": "Empfehlen"
     }
   },
   "comments": {

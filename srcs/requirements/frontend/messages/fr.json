@@ -42,10 +42,18 @@
     "decreaseSubDelay": "Diminuer le délai des sous-titres",
     "increaseSubDelay": "Augmenter le délai des sous-titres",
     "viewAll": "Voir tout",
+    "setFeature": "Mettre en avant ce film",
     "credits" : {
         "title": "Crédits",
         "cast": "Distribution",
         "crew": "Équipe technique"
+    },
+    "feature": {
+      "title": "Recommandé ce film",
+      "save": "Enregistrer",
+      "requestError": "Erreur lors de la requete: {error}",
+      "chooseBackdrop": "Choisir un arrière-plan",
+      "feature": "Mettre en avant"
     }
   },
   "comments": {

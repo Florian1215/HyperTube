@@ -11,7 +11,7 @@ import SmallText from "@/components/ui/SmallText";
 import useModal from "@/contexts/ModalContext";
 import Button from "@/components/ui/Button/Button";
 
-export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo, torrents, setTorrentId, watchBtn=false}: {movie?: iMovie | iMovieDetails; onClick?: () => void; onSlide?: (side: number) => void; torrentId?: string; startVideo?: boolean, torrents?: iTorrent[], setTorrentId?: (selectTorrentId: string) => void, watchBtn?: boolean}) {
+export default function MovieHero({movie, onClick, onSlide, torrentId, startVideo, torrents, setTorrentId, watchBtn=false, featureBtn}: {movie?: iMovie | iMovieDetails; onClick?: () => void; onSlide?: (side: number) => void; torrentId?: string; startVideo?: boolean, torrents?: iTorrent[], setTorrentId?: (selectTorrentId: string) => void, watchBtn?: boolean, featureBtn?: () => void}) {
     const t = useTranslations("movie");
     const {user} = useAuth();
     const [isLoaded, setIsLoaded] = useState(false);
@@ -64,7 +64,12 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
 
         return (<LinkLoginRequired href={`/movies/${movie.id}`} className="absolute z-40 max-w-2/3 bottom-1/20">
             {watchBtn ?
-                (<SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick} >{t("watch")}</SecondaryButton>)
+                (
+                    <div>
+                        <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t("watch")}</SecondaryButton>
+                        {featureBtn && torrentId && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
+                    </div>
+                )
                 : (<h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}
                     <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">
                         {movie.year}
