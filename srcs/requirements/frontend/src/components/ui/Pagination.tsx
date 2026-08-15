@@ -31,7 +31,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
                             <PageButton index={1} currentIndex={currentIndex} onClick={onClick}/>
                             {currentIndex !== 2 && <PageButton currentIndex={currentIndex} onClick={onClick}/>}
                             {currentIndex !== 1 && currentIndex !== totalPage && <PageButton index={currentIndex} currentIndex={currentIndex} onClick={onClick}/>}
-                            {currentIndex !== totalPage - 1 && currentIndex > 2 && <PageButton currentIndex={currentIndex} onClick={onClick}/>}
+                            {currentIndex < totalPage - 1 && currentIndex >= 2 && <PageButton currentIndex={currentIndex} onClick={onClick}/>}
                             <PageButton index={totalPage} currentIndex={currentIndex} onClick={onClick}/>
                         </>
                         :
