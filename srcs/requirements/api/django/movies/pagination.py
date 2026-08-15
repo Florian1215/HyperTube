@@ -13,7 +13,10 @@ class TMDBPagination(PageNumberPagination):
 
         self.page = req['page']
         self.total_pages = req['total_pages']
-        self.total_count = req['total_results']
+        if req['total_results'] > 200:
+            self.total_count = 200
+        else:
+            self.total_count = req['total_results']
         self.results = req['results']
         return self.results
 
