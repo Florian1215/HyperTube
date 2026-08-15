@@ -1,8 +1,8 @@
 from django.utils.translation import get_language_from_request
 from rest_framework import generics
-from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.exceptions import NotFound
 
-from config.errors import ERRORMSG_SEARCH_REQUIRED, MOVIE_NOT_FOUND, PROGRESS_NOT_FOUND
+from config.errors import MOVIE_NOT_FOUND, PROGRESS_NOT_FOUND
 from users.models import UserHistory
 from .context import LangHistoryContext
 from .fetch import get_or_fetch_movie
@@ -31,11 +31,11 @@ class MoviesListView(LangHistoryContext, generics.ListAPIView):
         self.tmdb_request = None
 
     def get_queryset(self):
-        query = self.request.query_params.get('search')
+        if '/top-rated/' in self.request.path:
+            query = 'top_rated'
+        else:
+            query = self.request.query_params.get('search', 'popular')
         language = get_language_from_request(self.request)
-
-        if not query:
-            raise ValidationError(ERRORMSG_SEARCH_REQUIRED)
         page = self.request.query_params.get('page', 1)
         try:
             page = int(page)
@@ -44,7 +44,14 @@ class MoviesListView(LangHistoryContext, generics.ListAPIView):
         tmdb = TMDBService(language)
         response = tmdb.search_movies(query=query, page=page)
         self.tmdb_request = response
-        return response['results']
+        res = []
+        for movie in response['results']:
+            try:
+                movie['backdrop_path'] = Movie.objects.get(id=movie['id']).backdrop_url
+            except Movie.DoesNotExist:
+                pass
+            res.append(movie)
+        return res
 
 
 class MovieFeatureApiView(generics.UpdateAPIView):
@@ -53,7 +60,7 @@ class MovieFeatureApiView(generics.UpdateAPIView):
 
     def get_object(self):
         try:
-            return Movie.objects.get(movie=self.kwargs['movie_id'])
+            return Movie.objects.get(id=self.kwargs['movie_id'])
         except Movie.DoesNotExist:
             raise NotFound(MOVIE_NOT_FOUND)
 

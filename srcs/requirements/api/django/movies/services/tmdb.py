@@ -23,13 +23,20 @@ class TMDBService:
 
     def search_movies(self, query, page=1):
         params = {
-            'query': query,
-            'language': self.lang2,
+            'language': self.lang4,
             'page': page,
         }
 
+        if query == 'popular':
+            endpoint = 'movie/popular'
+        elif query == 'top_rated':
+            endpoint = 'movie/top_rated'
+        else:
+            params['query'] = query
+            endpoint = 'search/movie'
+
         response = requests.get(
-            f'{settings.TMDB_BASE_URL}/search/movie',
+            f'{settings.TMDB_BASE_URL}/{endpoint}',
             headers=self.headers,
             params=params,
         )

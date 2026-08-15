@@ -3,6 +3,7 @@ from movies.views import MoviesListView, MovieApiView, MovieFeatureApiView, Movi
 
 urlpatterns = [
     path('movies/', MoviesListView.as_view(), name='movies-search'),
+    path('movies/top-rated/', MoviesListView.as_view(), name='movies-top-rated'),
     path('movies/featured/', MoviesFeatureApiView.as_view(), name='movies-feature'),
     path('movies/<int:movie_id>/feature/', MovieFeatureApiView.as_view(), name='movie-feature'),
     path('movies/<int:movie_id>/', MovieApiView.as_view(), name='movie-detail'),
