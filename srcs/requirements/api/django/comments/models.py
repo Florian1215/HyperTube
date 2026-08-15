@@ -4,8 +4,8 @@ from users.models import User
 
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     edited = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -19,4 +19,4 @@ class Comment(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.username} - {self.movie.original_title}"
+        return f'{self.user.username} - {self.movie.original_title}'

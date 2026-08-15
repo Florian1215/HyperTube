@@ -56,7 +56,7 @@ class Movie(models.Model):
 
     class Meta:
         permissions = [
-            ("can_recommend_movie", "Can recommend movies"),
+            ('can_recommend_movie', 'Can recommend movies'),
         ]
 
     def __str__(self):
