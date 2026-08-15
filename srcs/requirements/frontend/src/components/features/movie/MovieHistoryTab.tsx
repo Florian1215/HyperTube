@@ -17,6 +17,6 @@ export default function MovieHistoryTab({user}: {user: iUser}) {
     if (!watchMovies || watchMovies.results.length === 0)
         return (<SmallText>{t("noMoviesYet")}</SmallText>);
     return (<Pagination currentIndex={index} onClick={changeIndex} totalPage={totalPage} variableMT={true}>
-        <MoviesGrid movieSets={watchMovies.results}/>
+        <MoviesGrid movieSets={watchMovies.results} showDate={true}/>
     </Pagination>);
 }

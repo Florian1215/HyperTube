@@ -11,6 +11,7 @@ export interface iMovie {
     complete: boolean
     progress: number
     pourcent: number
+    watched_at: string
 }
 
 export interface iMovieDetails extends iMovie {

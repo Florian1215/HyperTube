@@ -1,4 +1,4 @@
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {iMovie} from "@/types/movie";
 import {iUser} from "@/types/user";
 import React, {useState} from "react";
@@ -6,12 +6,14 @@ import Image from "next/image";
 import WatchProgress from "@/components/WatchProgress";
 import {Link} from "@/i18n/navigation";
 import RightClickMovie from "@/components/features/movie/RightClickMovie";
+import {EyeIcon} from "@/components/Icons";
 
-export default function MovieCard({movie, user, className, showTitle = true} : {movie?: iMovie, user?: iUser, className?: string, showTitle?: boolean}) {
+export default function MovieCard({movie, user, className, showTitle=true, showDate=false} : {movie?: iMovie, user?: iUser, className?: string, showTitle?: boolean, showDate?: boolean}) {
     const t = useTranslations("movie");
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [isLoaded, setIsLoaded] = useState(false);
     const [contextMenu, setContextMenu] = useState<iAxe>();
+    const locale = useLocale();
 
     const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
@@ -28,9 +30,9 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
         </div>);
     }
 
-    return (<Link href={"/movies/" + movie.id} className={containerClass + " " + className} onContextMenu={handleContextMenu}>
+    return (<Link href={"/movies/" + movie.id} className={containerClass + " group " + className} onContextMenu={handleContextMenu}>
         {user && movie && movie.progress > 0 && !movie.complete && <RightClickMovie user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
-        <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+        <Image className={`size-full object-cover transition-transform duration-200 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
         />
@@ -45,5 +47,13 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
                     <span className="responsive-text-hairline xl:text-xl text-xl">{movie.year}</span>
                 </h3>}
         </div>
+        {showDate && movie.watched_at && <div className="hidden group-hover:flex absolute items-center top-1 right-2 z-10 gap-2">
+            <EyeIcon size={20} color="white"/>
+            <p
+            className="text-white text-sm font-bold">{new Date(movie.watched_at).toLocaleDateString(locale, {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        })}</p></div>}
     </Link>);
 }
