@@ -21,7 +21,7 @@ export interface iMovieDetails extends iMovie {
     crew: iPeople[]
     cast: iPeople[]
     backdrops_url: string[]
-    featured: boolean
+    feature: boolean
     status: string
 }
 

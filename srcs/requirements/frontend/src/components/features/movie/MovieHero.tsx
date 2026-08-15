@@ -67,7 +67,7 @@ export default function MovieHero({movie, onClick, onSlide, torrentId, startVide
                 (
                     <div>
                         <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t("watch")}</SecondaryButton>
-                        {featureBtn && torrentId && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
+                        {featureBtn && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
                     </div>
                 )
                 : (<h1 className="relative hover:underline decoration-3 underline-offset-3">{movie.title}

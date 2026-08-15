@@ -46,7 +46,7 @@
     "viewAll": "Alle anzeigen",
     "clearProgression": "Fortschritt löschen",
     "setAsWatched": "Als gesehen markieren",
-    "setFeature": "Feature this movie",
+    "setFeature": "Als empfohlen markieren",
     "credits" : {
         "title": "Credits",
         "cast": "Besetzung",
@@ -57,7 +57,7 @@
       "save": "Speichern",
       "requestError": "Fehler bei der Anfrage: {error}",
       "chooseBackdrop": "Wählen Sie ein Hintergrundbild",
-      "feature": "Empfehlen"
+      "feature": "Zeigen Sie diesen Film in den empfohlenen Filmen auf der Startseite an"
     }
   },
   "comments": {

@@ -12,6 +12,8 @@ import Toggle from "@/components/ui/Toggle";
 import useNotification from "@/contexts/NotificationContext";
 import {ApiError} from "@/services/apiClient";
 import {tLocale} from "@/i18n/request";
+import {addQuery, removeQuery, updateMovie, updateQuery} from "@/hooks/useApiQuery";
+import {useQueryClient} from "@tanstack/react-query";
 
 export default function SetFeatureModal() {
     const {activeModal, closeModal} = useModal();
@@ -20,13 +22,23 @@ export default function SetFeatureModal() {
     const [feature, setFeature] = useState(true);
     const {addNotification} = useNotification();
     const locale = useLocale() as tLocale;
+    const queryClient = useQueryClient();
+    const [disableBtn, setDisableBtn] = useState(true);
 
     const saveChange = async () => {
-        const m = activeModal.movie;
+        const m = structuredClone(activeModal.movie);
         if (m) {
             try {
-                await updateMovieFeature(locale, m.id, feature, m.backdrops_url[backdropSelected]);
-                //todo updaye cach
+                const res = await updateMovieFeature(locale, m.id, feature, m.backdrops_url[backdropSelected]);
+                if (m.backdrop_url != res.backdrop_url) {
+                    m.backdrop_url = res.backdrop_url;
+                    updateQuery(queryClient, ["movies"], m);
+                    updateMovie(queryClient, m);
+                }
+                if (feature)
+                    addQuery(queryClient, ["movies", "featured", 1], m);
+                else
+                    removeQuery(queryClient, ["movies", "featured"], m.id);
                 closeModal();
             } catch (e) {
                 addNotification(t("requestError", {error: e instanceof ApiError ? e.message : String(e)}), "error");
@@ -35,10 +47,19 @@ export default function SetFeatureModal() {
     }
 
     useEffect(() => {
-        if (activeModal.movie)
+        if (activeModal.movie) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setBackdropSelected(activeModal.movie.backdrops_url.findIndex(s => s === activeModal.movie?.backdrop_url))
+            setFeature(activeModal.movie.feature);
+        }
     }, [activeModal])
+
+    useEffect(() => {
+        const m = activeModal.movie;
+        if (m)
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setDisableBtn(m.feature === feature && m.backdrops_url[backdropSelected] === m.backdrop_url);
+    }, [activeModal, backdropSelected, feature])
 
     if (activeModal.type !== "set-feature" || activeModal.movie === undefined)
         return null;
@@ -62,7 +83,7 @@ export default function SetFeatureModal() {
                 <p className="font-normal text-lg">{t("feature")}</p>
                 <Toggle val={feature} setter={setFeature}/>
             </div>
-            <Button onClick={saveChange}>
+            <Button onClick={saveChange} disabled={disableBtn}>
                 {t("save")}
             </Button>
         </div>

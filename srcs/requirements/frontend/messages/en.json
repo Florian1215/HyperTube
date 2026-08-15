@@ -57,7 +57,7 @@
       "save": "Save",
       "requestError": "Request error: {error}",
       "chooseBackdrop": "Choose a backdrop",
-      "feature": "Feature"
+      "feature": "Display this movie in the featured movies on the homepage"
     }
   },
   "comments": {

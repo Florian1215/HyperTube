@@ -53,11 +53,11 @@
         "crew": "Équipe technique"
     },
     "feature": {
-      "title": "Mettre en avant ce film",
+      "title": "Mise en avant du film",
       "save": "Enregistrer",
       "requestError": "Erreur lors de la requete: {error}",
       "chooseBackdrop": "Choisir un arrière-plan",
-      "feature": "Mettre en avant"
+      "feature": "Afficher ce film dans les films mis en avant sur la page d'accueil"
     }
   },
   "comments": {
