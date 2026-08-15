@@ -50,7 +50,7 @@ def get_or_fetch_movie(pk, request):
                 movie.crew.create(crew_id=crew['id'], name=crew['name'],
                                   picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
             image_data = tmdb.get_images_movie(pk)
-            for backdrop_data in image_data['backdrops'][:6]:
+            for backdrop_data in image_data['backdrops'][:9]:
                 backdrop, _ = movie.backdrops_url.get_or_create(url=tmdb_media(backdrop_data['file_path'], 'w1280'))
                 movie.backdrops_url.add(backdrop)
         except Exception as e:
