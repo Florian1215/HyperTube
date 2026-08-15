@@ -1,15 +1,26 @@
 import {useTranslations} from "next-intl";
 import {iMovie} from "@/types/movie";
 import {iUser} from "@/types/user";
-import {useState} from "react";
+import React, {useState} from "react";
 import Image from "next/image";
 import WatchProgress from "@/components/WatchProgress";
 import {Link} from "@/i18n/navigation";
+import RightClickMovie from "@/components/features/movie/RightClickMovie";
 
 export default function MovieCard({movie, user, className, showTitle = true} : {movie?: iMovie, user?: iUser, className?: string, showTitle?: boolean}) {
     const t = useTranslations("movie");
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [isLoaded, setIsLoaded] = useState(false);
+    const [contextMenu, setContextMenu] = useState<iAxe>();
+
+    const handleContextMenu = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+        });
+    };
 
     if (!movie) {
         return (<div className={containerClass}>
@@ -17,7 +28,8 @@ export default function MovieCard({movie, user, className, showTitle = true} : {
         </div>);
     }
 
-    return (<Link href={"/movies/" + movie.id} className={containerClass + " " + className}>
+    return (<Link href={"/movies/" + movie.id} className={containerClass + " " + className} onContextMenu={handleContextMenu}>
+        {user && movie && movie.progress > 0 && !movie.complete && <RightClickMovie user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
         <Image className={`size-full object-cover transition-transform duration-200 group-hover:scale-103 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}

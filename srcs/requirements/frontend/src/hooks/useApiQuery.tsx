@@ -15,10 +15,6 @@ export default function useApiQuery<T>(key: unknown[], fn: (locale: string, sign
     });
 }
 
-export function updateTotal(res: tListResponse<unknown>, delta: number) {
-    return {...res, count: Math.max(0, res.count + delta)};
-}
-
 export function addQuery<T>(queryClient: QueryClient, key: unknown[], newContent: T) {
     const queries = queryClient.getQueriesData<tListResponse<unknown>>({queryKey: key});
     queries.forEach(([queryKey, current]) => {

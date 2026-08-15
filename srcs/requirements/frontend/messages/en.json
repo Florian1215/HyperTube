@@ -44,6 +44,8 @@
     "decreaseSubDelay": "Decrease subtitle delay",
     "increaseSubDelay": "Increase subtitle delay",
     "viewAll": "View all",
+    "clearProgression": "Clear progression",
+    "setAsWatched": "Mark as watched",
     "setFeature": "Feature this movie",
     "credits" : {
         "title": "Credits",
@@ -187,7 +189,8 @@
       "invalidQueryParameter": "Invalid query parameter.",
       "notFound": "Page {path} not found.",
       "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later.",
-      "subtitleNotFound": "No subtitles available in this language."
+      "subtitleNotFound": "No subtitles available in this language.",
+      "failedChangeProgression": "Failed to update progression: {error}"
     }
   }
 }

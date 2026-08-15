@@ -1,6 +1,6 @@
 import {iMovie, iMovieDetails, iProgress, iTorrent} from "@/types/movie";
 import {useDebounce} from "use-debounce";
-import useApiQuery, {updateTotal} from "@/hooks/useApiQuery";
+import useApiQuery from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse} from "@/types/api";
 import {QueryClient} from "@tanstack/react-query";
@@ -44,23 +44,40 @@ export function updateMovieProgress(movieId: string, progress: number, pourcent:
     return apiClient<iProgress>(`movies/${movieId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify({progress, pourcent, complete})});
 }
 
+export function deleteMovieProgress(movieId: string) {
+    return apiClient<iProgress>(`movies/${movieId}/progress/`, undefined, {method: "DELETE"});
+}
+
 export function updateMovieFeature(local: string, movieId: string, feature: boolean, backdrop_url: string) {
     return apiClient<iProgress>(`movies/${movieId}/feature/`, local, {method: "PATCH", body: JSON.stringify({feature, backdrop_url})});
 }
 
-export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress: iProgress) {
+export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress?: iProgress) {
     const updatedMovie = {...movie, ...progress};
     const historyQueries = queryClient.getQueriesData<tListResponse<iMovie>>({queryKey: ["user-movie-history", userId]});
     historyQueries.forEach(([queryKey, current]) => {
         if (!current)
             return;
-        const nextHistory = current.results.some((item) => item.id === movie.id)
-            ? current.results.map((item) => item.id === movie.id ? updatedMovie : item)
-            : [updatedMovie, ...current.results];
+        const findProgress = current.results.some((item) => item.id === movie.id);
+        let nextCount = current.count;
+        let nextHistory: iMovie[];
+
+        if (!progress) {
+            const index = current.results.findIndex(item => item.id === movie.id);
+            nextHistory = current.results.filter((_, i) => i !== index);
+            nextCount -= 1;
+        }
+        else if (findProgress) {
+            nextCount += 1;
+            nextHistory = current.results.map((item) => item.id === movie.id ? updatedMovie : item);
+        }
+        else
+            nextHistory = [updatedMovie, ...current.results];
+
         queryClient.setQueryData(queryKey, {
             ...current,
-            data: nextHistory,
-            meta: updateTotal(current, 1),
+            results: nextHistory,
+            count: nextCount,
         });
     });
 }

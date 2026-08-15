@@ -1,6 +1,6 @@
 import {Link, useRouter} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
-import {Dispatch, SetStateAction, useState} from "react";
+import React, {Dispatch, SetStateAction, useState} from "react";
 import LoadingText from "@/components/LoadingText";
 import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
@@ -10,14 +10,26 @@ import GenreTags from "@/components/features/genre/GenreTags";
 import Image from "next/image";
 import {iUser} from "@/types/user";
 import WatchProgress from "@/components/WatchProgress";
+import RightClickMovie from "@/components/features/movie/RightClickMovie";
 
 export default function MovieCardList({movie, user, setFilterGenre} : {movie?: iMovie, user?: iUser, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
     const t = useTranslations("movie");
     const [isLoaded, setIsLoaded] = useState(false);
+    const [contextMenu, setContextMenu] = useState<iAxe>();
 
-    return (<tr className="border-b">
+    const handleContextMenu = (e: React.MouseEvent<HTMLTableRowElement>) => {
+        e.preventDefault();
+
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+        });
+    };
+
+    return (<tr className="border-b" onContextMenu={handleContextMenu}>
         <td className="p-2 xl:p-4">
+            {user && movie && movie.progress > 0 && !movie.complete && <RightClickMovie user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
             <div className="border overflow-hidden aspect-3/2 relative">
                 <div className="custom-noise"/>
                 {!isLoaded && (<div className="custom-loading"/>)}

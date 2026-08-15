@@ -51,9 +51,12 @@ export default function HomePage() {
                 <MoviesGrid movieSets={continueWatching.slice(0, 3)} setLimit={true}/>
             </Section>}
 
-            <Section title={t("featured")} href="/movies?q=featured">
-                <MoviesGrid movieSets={shuffledFeatured.length > 0 ? shuffledFeatured : undefined} setLimit={true}/>
-            </Section>
+            {
+                (shuffledFeatured === undefined || shuffledFeatured.length > 0) &&
+                <Section title={t("featured")} href="/movies?q=featured">
+                    <MoviesGrid movieSets={shuffledFeatured ?? undefined} setLimit={true}/>
+                </Section>
+            }
 
             <Section title={t("popular")} href="/movies?q=popular">
                 <MoviesGrid movieSets={shuffledPopular.length > 0 ? shuffledPopular : undefined} setLimit={true}/>

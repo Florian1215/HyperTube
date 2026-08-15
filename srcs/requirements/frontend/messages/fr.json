@@ -44,6 +44,8 @@
     "decreaseSubDelay": "Diminuer le délai des sous-titres",
     "increaseSubDelay": "Augmenter le délai des sous-titres",
     "viewAll": "Voir tout",
+    "clearProgression": "Effacer la progression",
+    "setAsWatched": "Marquer comme vu",
     "setFeature": "Mettre en avant ce film",
     "credits" : {
         "title": "Crédits",
@@ -51,7 +53,7 @@
         "crew": "Équipe technique"
     },
     "feature": {
-      "title": "Recommandé ce film",
+      "title": "Mettre en avant ce film",
       "save": "Enregistrer",
       "requestError": "Erreur lors de la requete: {error}",
       "chooseBackdrop": "Choisir un arrière-plan",
@@ -191,7 +193,8 @@
       "invalidQueryParameter": "Paramètre de requête invalide.",
       "notFound": "Page {path} non trouvée.",
       "torrentNotFound": "Torrent introuvable. Ce film peut ne pas être encore disponible en streaming. Veuillez réessayer plus tard.",
-      "subtitleNotFound": "Aucun sous-titre disponible dans cette langue."
+      "subtitleNotFound": "Aucun sous-titre disponible dans cette langue.",
+      "failedChangeProgression": "Impossible de mettre à jour la progression: {error}"
     }
   }
 }
