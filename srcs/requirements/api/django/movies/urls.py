@@ -3,8 +3,8 @@ from movies.views import MoviesListView, MovieApiView, MovieFeatureApiView, Movi
 
 urlpatterns = [
     path('movies/', MoviesListView.as_view(), name='movies-search'),
-    path('movies/featured/', MovieFeatureApiView.as_view(), name='movies-feature'),
-    path('movie/<int:movie_id>/feature/', MoviesFeatureApiView.as_view(), name='movie-feature'),
-    path('movie/<int:movie_id>/', MovieApiView.as_view(), name='movie-detail'),
-    path('movie/<int:movie_id>/progress/', MovieProgressApiView.as_view(), name='movie-progress'),
+    path('movies/featured/', MoviesFeatureApiView.as_view(), name='movies-feature'),
+    path('movies/<int:movie_id>/feature/', MovieFeatureApiView.as_view(), name='movie-feature'),
+    path('movies/<int:movie_id>/', MovieApiView.as_view(), name='movie-detail'),
+    path('movies/<int:movie_id>/progress/', MovieProgressApiView.as_view(), name='movie-progress'),
 ]
