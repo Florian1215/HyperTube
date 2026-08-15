@@ -34,7 +34,7 @@ export function useMovies(search_title?: string, page?: number, enabled = true) 
     const [debouncedQuery] = useDebounce(search_title ?? "", 200);
 
     return useApiQuery(
-        ["movies", debouncedQuery, page ?? 0],
+        ["movies", debouncedQuery, page ?? 1],
         (locale, signal) => getMovies(locale, debouncedQuery, page, signal),
         enabled
     );
@@ -49,10 +49,12 @@ export function deleteMovieProgress(movieId: string) {
 }
 
 export function updateMovieFeature(local: string, movieId: string, feature: boolean, backdrop_url: string) {
-    return apiClient<iProgress>(`movies/${movieId}/feature/`, local, {method: "PATCH", body: JSON.stringify({feature, backdrop_url})});
+    return apiClient<iMovie>(`movies/${movieId}/feature/`, local, {method: "PATCH", body: JSON.stringify({feature, backdrop_url})});
 }
 
 export function syncMovieProgress(queryClient: QueryClient, userId: number, movie: iMovieDetails, progress?: iProgress) {
+    updateQuery(queryClient, ["movies"], {...movie, ...progress});
+    updateMovie(queryClient, {...movie, ...progress});
     const updatedMovie = {...movie, ...progress};
     const historyQueries = queryClient.getQueriesData<tListResponse<iMovie>>({queryKey: ["user-movie-history", userId]});
     historyQueries.forEach(([queryKey, current]) => {

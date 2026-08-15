@@ -1,7 +1,7 @@
 import {QueryClient, useQuery} from "@tanstack/react-query";
 import {useLocale} from "next-intl";
 import {tListResponse} from "@/types/api";
-import {iComment} from "@/types/comment";
+import {iMovieDetails} from "@/types/movie";
 
 export default function useApiQuery<T>(key: unknown[], fn: (locale: string, signal?: AbortSignal) => Promise<T>, enabled = true) {
     const locale = useLocale();
@@ -28,7 +28,7 @@ export function addQuery<T>(queryClient: QueryClient, key: unknown[], newContent
     });
 }
 
-export function updateQuery<T extends iComment>(queryClient: QueryClient, key: unknown[], newContent: T) {
+export function updateQuery<T extends { id: string | number }>(queryClient: QueryClient, key: unknown[], newContent: T) {
     const queries = queryClient.getQueriesData<tListResponse<T>>({queryKey: key});
     queries.forEach(([queryKey, current]) => {
         if (!current)
@@ -44,13 +44,22 @@ export function updateQuery<T extends iComment>(queryClient: QueryClient, key: u
     });
 }
 
-export function removeQuery(queryClient: QueryClient, key: unknown[], deleteObjId: number) {
+export function updateMovie(queryClient: QueryClient, newContent: iMovieDetails) {
+    const queries = queryClient.getQueriesData({queryKey: ["movie"]});
+    queries.forEach(([queryKey, current]) => {
+        if (!current)
+            return;
+        queryClient.setQueryData(queryKey, newContent);
+    });
+}
+
+export function removeQuery(queryClient: QueryClient, key: unknown[], deleteObjId: number | string) {
     const queries = queryClient.getQueriesData<tListResponse<unknown>>({queryKey: key});
     queries.forEach(([queryKey, current]) => {
         if (!current)
             return;
         const nextData = current.results.filter((i) => {
-            const data = i as iComment;
+            const data = i as {id: string};
             return data.id !== deleteObjId
         })
         if (nextData.length === current.results.length)
