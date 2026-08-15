@@ -45,12 +45,12 @@ export default function SetFeatureModal() {
 
     const displayBackdrop = activeModal.movie.backdrops_url.length > 1;
     return (<ModalLayout title={t("title")} onCloseAction={closeModal}>
-        <div className={"space-y-6 text-center " + (displayBackdrop ? "sm:w-4xl" : "w-full")}>
+        <div className={"space-y-6 text-center " + (displayBackdrop ? "w-full md:w-2xl lg:w-4xl" : "w-full")}>
             {
                 displayBackdrop &&
-                <div>
-                    <h3 className="text-left">{t("chooseBackdrop")}</h3>
-                    <div className="overflow-y-scroll max-h-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 size-full gap-2">
+                <div className="w-full text-left space-y-1">
+                    <p className="font-normal text-lg">{t("chooseBackdrop")}</p>
+                    <div className="overflow-y-auto max-h-80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 size-full gap-2">
                         {activeModal.movie.backdrops_url.map((url, index) => {
                             if (activeModal.movie)
                                 return (<MovieHero key={index} movie={activeModal.movie} backdrop_url={url} setIdx={() => setBackdropSelected(index)} selected={backdropSelected === index}/>);
@@ -58,8 +58,8 @@ export default function SetFeatureModal() {
                     </div>
                 </div>
             }
-            <div className="flex gap-6 items-center">
-                <h3>{t("feature")}</h3>
+            <div className="w-full text-left">
+                <p className="font-normal text-lg">{t("feature")}</p>
                 <Toggle val={feature} setter={setFeature}/>
             </div>
             <Button onClick={saveChange}>
