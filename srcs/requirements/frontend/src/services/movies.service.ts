@@ -1,6 +1,6 @@
 import {iMovie, iMovieDetails, iProgress, iTorrent} from "@/types/movie";
 import {useDebounce} from "use-debounce";
-import useApiQuery from "@/hooks/useApiQuery";
+import useApiQuery, {updateMovie, updateQuery} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse} from "@/types/api";
 import {QueryClient} from "@tanstack/react-query";
@@ -23,8 +23,8 @@ function getMovies(locale: string, search_title?: string, page?: number, signal?
         endpoint += "directstream/"
     else if (search_title === "featured")
         endpoint += "featured/"
-    else if (search_title === "watched")
-        endpoint += "watched/"
+    else if (search_title === "top-rated")
+        endpoint += "top-rated/"
     else if (search_title)
         endpoint += `?search=${search_title}&page=${page}`;
     return apiClient<tListResponse<iMovie>>(endpoint, locale, {signal});

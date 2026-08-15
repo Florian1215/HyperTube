@@ -32,7 +32,8 @@ export default function HomePage() {
     const featured = filterAlreadyWatch(featuredMovies?.results);
     const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
 
-    const mostRated = filterAlreadyWatch(featuredMovies && movies ? [...featuredMovies.results, ...movies.results] : undefined).filter((m) => m.note > 7);
+    const {data: mostRatedMovies} = useMovies("top-rated");
+    const mostRated = filterAlreadyWatch(mostRatedMovies?.results);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
     const continueWatching = continueWatchingData ? continueWatchingData.results.filter((m) => !m.complete) : [];
@@ -62,7 +63,7 @@ export default function HomePage() {
                 <MoviesGrid movieSets={shuffledPopular.length > 0 ? shuffledPopular : undefined} setLimit={true}/>
             </Section>
 
-            <Section title={t("mostRated")} href="/movies?sort=most_rated">
+            <Section title={t("mostRated")} href="/movies?q=top-rated">
                 <MoviesGrid movieSets={shuffledMostRated.length > 0 ? shuffledMostRated : undefined} setLimit={true}/>
             </Section>
 
@@ -131,5 +132,5 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
 function filterAlreadyWatch(movies?: iMovie[]) {
     if (!movies)
         return [];
-    return movies.filter(m => m.complete);
+    return movies.filter(m => !m.complete);
 }
