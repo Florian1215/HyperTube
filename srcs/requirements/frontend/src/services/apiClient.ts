@@ -51,7 +51,7 @@ export class ApiError extends Error {
             unknownErrorMessage = "Forbidden";
         else if (status === 404)
             unknownErrorMessage = "Not found";
-        super(`${status} - Error: ${data?.detail || data?.message || unknownErrorMessage}`);
+        super(`[${status}] ${data?.detail || data?.message || unknownErrorMessage}`);
 
         this.name = "ApiError";
         this.status = status;
