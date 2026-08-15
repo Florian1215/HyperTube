@@ -61,7 +61,7 @@
     .custom-cursor-play:hover { cursor: var(--cursor-play); }
 
     .custom-noise, .custom-noise-bg {
-        @apply size-full absolute inset-0 pointer-events-none opacity-50 bg-repeat mix-blend-overlay contrast-150 brightness-125;
+        @apply size-full absolute inset-0 pointer-events-none opacity-40 bg-repeat mix-blend-overlay contrast-150 brightness-125;
         /*noinspection ALL*/
         background-image: url("/noise.png");
     }
