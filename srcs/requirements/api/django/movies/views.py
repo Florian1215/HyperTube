@@ -26,6 +26,10 @@ class MoviesListView(LangHistoryContext, generics.ListAPIView):
     pagination_class = TMDBPagination
     filter_backends = []
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tmdb_request = None
+
     def get_queryset(self):
         query = self.request.query_params.get('search')
         language = get_language_from_request(self.request)
