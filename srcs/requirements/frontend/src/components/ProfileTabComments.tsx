@@ -2,10 +2,10 @@ import {useState} from "react";
 import {iUser} from "@/types/user";
 import {useProfileComments} from "@/services/comments.service";
 import computeTotalPage from "@/utils/computeTotalPage";
-import Comments from "@/components/features/comment/Comments";
+import Comments from "@/components/Comments";
 import useAuth from "@/contexts/AuthContext";
 
-export default function CommentsProfileTab({user}: {user: iUser}) {
+export default function ProfileTabComments({user}: {user: iUser}) {
     const [index, setIndex] = useState(1);
     const {data: comments} = useProfileComments(user.id, index);
     const {user: currentUser} = useAuth();

@@ -5,14 +5,14 @@ import React, {useEffect, useRef, useState} from "react";
 import useModal from "@/contexts/ModalContext";
 import {useTranslations} from "next-intl";
 import {iComment, iCommentDetails} from "@/types/comment";
-import MovieCard from "@/components/features/movie/MovieCard";
 import {Link} from "@/i18n/navigation";
-import ProfilePicture from "@/components/features/user/ProfilePicture";
 import {EditIcon, TrashIcon} from "@/components/Icons";
 import TextButton from "@/components/ui/Button/TextButton";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import Button from "@/components/ui/Button/Button";
 import IconButton from "@/components/ui/Button/IconButton";
+import MovieCard from "@/components/MovieCard";
+import ProfilePicture from "@/components/ProfilePicture";
 
 dayjs.extend(relativeTime);
 

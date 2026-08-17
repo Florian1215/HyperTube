@@ -9,7 +9,7 @@ import {tLocale} from "@/i18n/request";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Button from "@/components/ui/Button/Button";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
-import GenreTag from "@/components/features/genre/GenreTag";
+import GenreTag from "@/components/GenreTag";
 
 export default function FilterGenreModal() {
     const {activeModal, closeModal} = useModal();

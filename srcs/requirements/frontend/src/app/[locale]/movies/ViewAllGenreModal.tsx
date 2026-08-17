@@ -3,9 +3,9 @@
 import useModal from "@/contexts/ModalContext";
 import {useTranslations} from "next-intl";
 import ModalLayout from "@/components/layout/ModalLayout";
-import GenreTags from "@/components/features/genre/GenreTags";
+import GenreTags from "@/components/GenreTags";
 
-export default function GenreModal() {
+export default function ViewAllGenreModal() {
     const {activeModal, closeModal} = useModal();
     const t = useTranslations("modal.genre");
 

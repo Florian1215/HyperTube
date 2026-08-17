@@ -16,7 +16,6 @@ export type tUserColor =
 export interface iUser {
     id: number
     username: string
-    oauth_method: tOauthService
     color: tUserColor
     profile_picture: null | string
     created_at: number

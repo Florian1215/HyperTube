@@ -6,7 +6,7 @@ import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/request";
 import {iGenre} from "@/types/genre";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
-import GenreTag from "@/components/features/genre/GenreTag";
+import GenreTag from "@/components/GenreTag";
 
 export default function GenreTags({genreIds, genreCount, className="", limit, setFilterGenreAction}: {genreIds?: number[], genreCount?: number, className?: string, limit?: number, setFilterGenreAction?: Dispatch<SetStateAction<iGenre[]>>}) {
     let addLimit = false;

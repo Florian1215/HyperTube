@@ -1,7 +1,7 @@
 import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {iMovie} from "@/types/movie";
-import MovieCard from "@/components/features/movie/MovieCard";
+import MovieCard from "@/components/MovieCard";
 
 export default function MoviesGrid({movieSets, setLimit, className, showDate=false} : {movieSets?: iMovie[], setLimit?: boolean, className?: string, showDate?: boolean}) {
     const {user} = useAuth();

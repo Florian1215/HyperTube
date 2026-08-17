@@ -2,7 +2,7 @@ import useNotification from "@/contexts/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import {deleteComment, patchComment} from "@/services/comments.service";
 import Pagination from "@/components/ui/Pagination";
-import Comment from "@/components/features/comment/Comment";
+import Comment from "@/components/Comment";
 import {iUser} from "@/types/user";
 import {iComment, iCommentDetails} from "@/types/comment";
 import dayjs from "dayjs";

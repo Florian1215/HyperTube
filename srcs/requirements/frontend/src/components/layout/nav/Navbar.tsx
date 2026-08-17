@@ -4,7 +4,7 @@ import React from "react";
 import {ExitDoorIcon, HypertubResponsiveLogo, LanguageIcon, RegisterIcon, SearchIcon, UserIcon} from "@/components/Icons";
 import {usePathname} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
-import ProfilePicture from "@/components/features/user/ProfilePicture";
+import ProfilePicture from "@/components/ProfilePicture";
 import useAuth from "@/contexts/AuthContext";
 import useModal from "@/contexts/ModalContext";
 import NavItem from "@/components/layout/nav/NavItem";

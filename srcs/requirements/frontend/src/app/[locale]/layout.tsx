@@ -10,15 +10,15 @@ import {AuthProvider} from "@/contexts/AuthContext";
 import {NotificationProvider} from "@/contexts/NotificationContext";
 import {ModalProvider} from "@/contexts/ModalContext";
 import NotificationList from "@/components/ui/Notification/NotificationList";
-import SigninModal from "@/components/features/auth/SigninModal";
-import RegisterModal from "@/components/features/auth/RegisterModal";
-import GenreModal from "@/components/features/genre/GenreModal";
-import FilterGenreModal from "@/components/features/genre/FilterGenreModal";
 import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
-import SelectTorrentModal from "@/components/features/movie/SelectTorrentModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
-import CreditsModal from "@/components/features/movie/CreditsModal";
-import SetFeatureModal from "@/components/features/movie/SetFeatureModal";
+import SigninModal from "@/components/layout/SigninModal";
+import RegisterModal from "@/components/layout/RegisterModal";
+import ViewAllGenreModal from "@/app/[locale]/movies/ViewAllGenreModal";
+import FilterGenreModal from "@/app/[locale]/movies/FilterGenreModal";
+import CreditsMovieModal from "@/app/[locale]/movies/[id]/CreditsMovieModal";
+import SetFeatureModal from "@/app/[locale]/movies/[id]/SetFeatureModal";
+import SelectTorrentModal from "@/app/[locale]/movies/[id]/SelectTorrentModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
@@ -42,11 +42,11 @@ export default async function RootLayout({children}: {children: React.ReactNode}
 
                             <SigninModal/>
                             <RegisterModal/>
-                            <GenreModal/>
+                            <ViewAllGenreModal/>
                             <FilterGenreModal/>
                             <DeleteConfirmationModal/>
                             <SetFeatureModal/>
-                            <CreditsModal/>
+                            <CreditsMovieModal/>
                             <SelectTorrentModal/>
 
                             <Navbar/>

@@ -11,12 +11,12 @@ import {useMovies} from "@/services/movies.service";
 import computeTotalPage from "@/utils/computeTotalPage";
 import Pagination from "@/components/ui/Pagination";
 import CloseButton from "@/components/ui/Button/CloseButton";
-import MoviesGrid from "@/components/features/movie/MoviesGrid";
-import MoviesList from "@/components/features/movie/MoviesList";
+import MoviesGrid from "@/components/MoviesGrid";
 import SmallText from "@/components/ui/SmallText";
 import IconButton from "@/components/ui/Button/IconButton";
 import {usePathname, useRouter} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
+import MoviesList from "@/app/[locale]/movies/MoviesList";
 
 type tViewType = | "grid" | "list";
 

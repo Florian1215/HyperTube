@@ -10,7 +10,7 @@ import Image from "next/image";
 import SmallText from "@/components/ui/SmallText";
 
 
-export default function CreditsModal() {
+export default function CreditsMovieModal() {
     const {activeModal, closeModal} = useModal();
     const t = useTranslations("movie.credits");
     const [activeTab, setActiveTab] = useState<number>(0);

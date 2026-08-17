@@ -9,7 +9,7 @@ import {iUser} from "@/types/user";
 import {EyeIcon, TrashIcon} from "@/components/Icons";
 
 
-export default function RightClickMovie({user, movie, contextMenu, setContextMenu}: {user: iUser, movie: iMovie, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void}) {
+export default function MovieRightClick({user, movie, contextMenu, setContextMenu}: {user: iUser, movie: iMovie, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void}) {
     const {addNotification} = useNotification();
     const t = useTranslations("movie");
     const tError = useTranslations("notifications.error");

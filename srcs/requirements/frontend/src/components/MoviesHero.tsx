@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {iMovie} from "@/types/movie";
-import MovieHero from "@/components/features/movie/MovieHero";
+import MovieHero from "@/components/MovieHero";
 
 export default function MoviesHero({movies}: {movies: iMovie[]}) {
     const [index, setIndex] = useState(0);

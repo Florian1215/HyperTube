@@ -6,11 +6,19 @@ import {iMovie} from "@/types/movie";
 import {iGenre} from "@/types/genre";
 import {StarIcon} from "@/components/Icons";
 import Button from "@/components/ui/Button/Button";
-import GenreTags from "@/components/features/genre/GenreTags";
 import Image from "next/image";
 import {iUser} from "@/types/user";
-import WatchProgress from "@/components/WatchProgress";
-import RightClickMovie from "@/components/features/movie/RightClickMovie";
+import MovieWatchProgress from "@/components/MovieWatchProgress";
+import GenreTags from "@/components/GenreTags";
+
+function RightClickMovie(props: {
+    user: iUser,
+    movie: iMovie,
+    contextMenu: iAxe | undefined,
+    setContextMenu: (value: (((prevState: (iAxe | undefined)) => (iAxe | undefined)) | iAxe | undefined)) => void
+}) {
+    return null;
+}
 
 export default function MovieCardList({movie, user, setFilterGenre} : {movie?: iMovie, user?: iUser, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
@@ -34,7 +42,7 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
                 <div className="custom-noise"/>
                 {!isLoaded && (<div className="custom-loading"/>)}
                 {movie && <Link href={"/movies/" + movie.id}>
-                    <WatchProgress user={user} movie={movie} />
+                    <MovieWatchProgress user={user} movie={movie} />
                     <Image
                         className={`size-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`}
                         width={600} height={400} src={movie.backdrop_url} alt={t("posterAlt", {title: movie.title})}

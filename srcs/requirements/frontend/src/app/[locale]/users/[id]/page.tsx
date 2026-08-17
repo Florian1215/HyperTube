@@ -1,19 +1,19 @@
 "use client";
 
 import React, {useEffect, useState} from "react";
-import UserProfile, {tTab} from "@/components/features/user/UserProfile";
-import MovieHistoryTab from "@/components/features/movie/MovieHistoryTab";
+import ProfileUser, {tTab} from "@/components/ProfileUser";
+import ProfileTabMovieHistory from "@/components/ProfileTabMovieHistory";
 import useHandleError from "@/hooks/useHandleError";
 import {useUser} from "@/services/users.service";
-import CommentsProfileTab from "@/components/features/comment/CommentsProfileTab";
 import {useParams} from "next/navigation";
 import {ApiError} from "@/services/apiClient";
+import ProfileTabComments from "@/components/ProfileTabComments";
 
 export default function Page() {
     const params = useParams();
     const userId = params.id as string;
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
-    const tabs: tTab = [{name: "history", comp: MovieHistoryTab}, {name: "comments", comp: CommentsProfileTab}];
+    const tabs: tTab = [{name: "history", comp: ProfileTabMovieHistory}, {name: "comments", comp: ProfileTabComments}];
     const handleError = useHandleError();
     const {data, error} = useUser(userId);
 
@@ -28,5 +28,5 @@ export default function Page() {
     if (errorNode || !data)
         return (errorNode);
 
-    return <UserProfile user={data} tabs={tabs} />;
+    return <ProfileUser user={data} tabs={tabs} />;
 }

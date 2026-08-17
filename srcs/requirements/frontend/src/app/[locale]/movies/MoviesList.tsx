@@ -5,11 +5,11 @@ import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {useTranslations} from "next-intl";
 import {iSort, tSort} from "@/app/[locale]/movies/page";
 import CloseButton from "@/components/ui/Button/CloseButton";
-import MovieCardList from "@/components/features/movie/MovieCardList";
 import {SortIcon} from "@/components/Icons";
 import {iMovie} from "@/types/movie";
 import TextButton from "@/components/ui/Button/TextButton";
 import useAuth from "@/contexts/AuthContext";
+import MovieCardList from "@/app/[locale]/movies/MovieCardList";
 
 export default function MoviesList({movieSets, sort, changeSort, genre} : {movieSets?: iMovie[], sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
     const {openModal} = useModal();

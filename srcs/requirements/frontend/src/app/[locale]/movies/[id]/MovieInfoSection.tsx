@@ -2,7 +2,7 @@ import {iMovieDetails, iPeople} from "@/types/movie";
 import React from "react";
 import {useLocale, useTranslations} from "next-intl";
 import LoadingText from "@/components/LoadingText";
-import GenreTags from "@/components/features/genre/GenreTags";
+import GenreTags from "@/components/GenreTags";
 import Label from "@/components/ui/Label";
 import {Link} from "@/i18n/navigation";
 import useModal from "@/contexts/ModalContext";

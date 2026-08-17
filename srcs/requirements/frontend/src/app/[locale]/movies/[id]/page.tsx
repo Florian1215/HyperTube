@@ -4,15 +4,15 @@ import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
 import {startTorrentStreaming, useMovie, useTorrents} from "@/services/movies.service";
 import useHandleError from "@/hooks/useHandleError";
-import MovieHero from "@/components/features/movie/MovieHero";
-import MovieInfoSection from "@/components/features/movie/MovieInfoSection";
-import CommentsSection from "@/components/features/comment/CommentsSection";
+import MovieHero from "@/components/MovieHero";
 import getBestTorrent from "@/utils/getBestTorrent";
 import useNotification from "@/contexts/NotificationContext";
 import {useTranslations} from "next-intl";
 import useAuth from "@/contexts/AuthContext";
 import {ApiError} from "@/services/apiClient";
 import useModal from "@/contexts/ModalContext";
+import MovieInfoSection from "@/app/[locale]/movies/[id]/MovieInfoSection";
+import CommentsSection from "@/app/[locale]/movies/[id]/CommentsSection";
 
 export default function MoviePage() {
     const params = useParams();

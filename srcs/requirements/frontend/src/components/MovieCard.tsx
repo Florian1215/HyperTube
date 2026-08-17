@@ -3,10 +3,10 @@ import {iMovie} from "@/types/movie";
 import {iUser} from "@/types/user";
 import React, {useState} from "react";
 import Image from "next/image";
-import WatchProgress from "@/components/WatchProgress";
+import MovieWatchProgress from "@/components/MovieWatchProgress";
 import {Link} from "@/i18n/navigation";
-import RightClickMovie from "@/components/features/movie/RightClickMovie";
 import {EyeIcon} from "@/components/Icons";
+import MovieRightClick from "@/components/MovieRightClick";
 
 export default function MovieCard({movie, user, className, showTitle=true, showDate=false} : {movie?: iMovie, user?: iUser, className?: string, showTitle?: boolean, showDate?: boolean}) {
     const t = useTranslations("movie");
@@ -31,12 +31,12 @@ export default function MovieCard({movie, user, className, showTitle=true, showD
     }
 
     return (<Link href={"/movies/" + movie.id} className={containerClass + " group " + className} onContextMenu={handleContextMenu}>
-        {user && movie && movie.progress > 0 && !movie.complete && <RightClickMovie user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
+        {user && movie && movie.progress > 0 && !movie.complete && <MovieRightClick user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
         <Image className={`size-full object-cover transition-transform duration-200 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                width={1000} height={1000} src={movie.backdrop_url.replace("/w500/", "/w1280/")} alt={t("posterAlt", {title: movie.title})} loading="eager"
                onLoad={() => setIsLoaded(true)}
         />
-        <WatchProgress user={user} movie={movie} />
+        <MovieWatchProgress user={user} movie={movie} />
         {!isLoaded && <div className="absolute inset-0 size-full"><div className="custom-loading"/></div>}
         <div className="absolute inset-0 p-4 flex items-end">
             <div className="custom-noise" />
