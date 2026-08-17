@@ -1,3 +1,6 @@
+import re
+from datetime import datetime
+
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -92,7 +95,7 @@ class MovieSerializer(MovieProgressMixin, serializers.Serializer):
 
     @staticmethod
     def get_backdrop_url(obj):
-        return tmdb_media(obj['backdrop_path'], 'w1280')
+        return tmdb_media(obj['backdrop_path'], 'original')
 
 
 class CastSerializer(serializers.ModelSerializer):
@@ -208,3 +211,36 @@ class MovieHistorySerializer(serializers.ModelSerializer):
 
     def get_title(self, obj):
         return get_or_fetch_movie_lang(obj.movie, self.context['lang']).title
+
+
+class MovieTorrentSerializer(serializers.Serializer):
+    id = serializers.CharField(source='guid')
+    title = serializers.CharField()
+    url = serializers.URLField(source='enclosure.@url')
+    size = serializers.SerializerMethodField()
+    seeders = serializers.IntegerField()
+    peers = serializers.IntegerField()
+    quality = serializers.SerializerMethodField()
+    language = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_quality(obj):
+        res = re.findall('2160p|1080p|720p|480p', obj['title'])
+        return res[0] if res else None
+
+    @staticmethod
+    def get_language(obj):
+        res = re.findall('MULTI|VFF|VF2|VF|VO|VOSTFR|FRENCH', obj['title'])
+        return res[0] if res else None
+
+    @staticmethod
+    def get_size(obj):
+        try:
+            return int(obj['size']) / 1073741824
+        except ValueError:
+            return 0
+
+    @staticmethod
+    def get_created_at(obj):
+        return datetime.strptime(obj['pubDate'], '%a, %d %b %Y %H:%M:%S %z')

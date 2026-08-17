@@ -14,6 +14,7 @@ TMDB_API_KEY = environ['TMDB_API_KEY']
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 TMDB_MEDIAS_URL = 'https://image.tmdb.org/t/p'
 C411_BASE_URL = 'https://c411.org/api'
+C411_API_KEY = environ['C411_API_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']

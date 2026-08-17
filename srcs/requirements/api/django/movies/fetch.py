@@ -32,7 +32,7 @@ def get_or_fetch_movie(pk, request):
                 id=movie_data['id'],
                 year=movie_data['release_date'][:4],
                 poster_url=tmdb_media(movie_data['poster_path'], 'w500'),
-                backdrop_url=tmdb_media(movie_data['backdrop_path'], 'w1280'),
+                backdrop_url=tmdb_media(movie_data['backdrop_path'], 'original'),
                 note=movie_data['vote_average'],
                 vote_count=movie_data['vote_count'],
                 original_title=movie_data['original_title'],
@@ -51,7 +51,7 @@ def get_or_fetch_movie(pk, request):
                                   picture=tmdb_media(crew['profile_path'], 'w300'), job=crew['job'])
             image_data = tmdb.get_images_movie(pk)
             for backdrop_data in image_data['backdrops'][:9]:
-                backdrop, _ = movie.backdrops_url.get_or_create(url=tmdb_media(backdrop_data['file_path'], 'w1280'))
+                backdrop, _ = movie.backdrops_url.get_or_create(url=tmdb_media(backdrop_data['file_path'], 'original'))
                 movie.backdrops_url.add(backdrop)
         except Exception as e:
             print(e, flush=True)

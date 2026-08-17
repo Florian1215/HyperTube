@@ -147,7 +147,6 @@
       "title": "Torrent auswählen",
       "gb": "GB",
       "columns": {
-        "source": "Quelle",
         "quality": "Qualität",
         "size": "Größe",
         "language": "Sprache",

@@ -36,11 +36,13 @@ export interface iPeople {
 export interface iTorrent {
     id: string
     title: string
-    source: string
+    url: string
     quality: string
     size: number
     language: string
-    seeds: string
+    seeds: number
+    peers: number
+    created_at: string
 }
 
 export interface iProgress {

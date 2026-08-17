@@ -49,8 +49,7 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     }
 
     const ranked = torrents.map((torrent) => {
-        const seeds = parseInt(torrent.seeds, 10);
-        const seedScore = Math.log10(seeds + 1) * 30;
+        const seedScore = Math.log10(torrent.seeds + 1) * 30;
 
         const score =
             (qualityScore[torrent.quality] || 0) +

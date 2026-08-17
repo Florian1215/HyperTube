@@ -143,7 +143,6 @@
       "title": "Select a torrent",
       "gb": "GB",
       "columns": {
-        "source": "Source",
         "quality": "Quality",
         "size": "Size",
         "language": "Language",

@@ -9,7 +9,9 @@ from .fetch import get_or_fetch_movie
 from .models import Movie
 from .pagination import TMDBPagination
 from .permissions import CanRecommendMovie
-from .serializers import MovieSerializer, MovieDetailSerializer, MovieFeatureSerializer, MovieProgressSerializer
+from .serializers import MovieSerializer, MovieDetailSerializer, MovieFeatureSerializer, MovieProgressSerializer, \
+    MovieTorrentSerializer
+from .services.c411 import C411Client
 from .services.tmdb import TMDBService
 
 
@@ -87,3 +89,15 @@ class MovieProgressApiView(generics.ListAPIView, generics.UpdateAPIView, generic
 
     def get_queryset(self):
         return UserHistory.objects.filter(user=self.request.user, movie_id=self.kwargs['movie_id'])
+
+
+class MovieTorrentsApiView(generics.ListAPIView):
+    serializer_class = MovieTorrentSerializer
+    filter_backends = []
+
+    def get_queryset(self):
+        try:
+            c411 = C411Client()
+            return c411.search_movies(tmdbId=self.kwargs['movie_id'])
+        except Exception:
+            raise NotFound(MOVIE_NOT_FOUND)
