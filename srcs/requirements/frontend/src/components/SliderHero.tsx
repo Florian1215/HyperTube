@@ -1,9 +1,9 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {iMovie, iMovieDetails} from "@/types/movie";
+import {iMovie} from "@/types/movie";
 import MovieHero from "@/components/MovieHero";
 import {Link} from "@/i18n/navigation";
 
-export default function MoviesHero({movies}: {movies: iMovie[]}) {
+export default function SliderHero({movies}: {movies: iMovie[]}) {
     const [index, setIndex] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 

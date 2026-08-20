@@ -1,7 +1,7 @@
 import {iMovie} from "@/types/movie";
 import useAuth from "@/contexts/AuthContext";
 import useModal from "@/contexts/ModalContext";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import {addCommentCache, postComment, useComments} from "@/services/comments.service";
 import computeTotalPage from "@/utils/computeTotalPage";

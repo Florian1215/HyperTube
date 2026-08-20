@@ -7,6 +7,7 @@ import {useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
 import {EyeIcon, TrashIcon} from "@/components/Icons";
+import {iAxe} from "@/types/utils";
 
 
 export default function MovieRightClick({user, movie, contextMenu, setContextMenu}: {user: iUser, movie: iMovie, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void}) {

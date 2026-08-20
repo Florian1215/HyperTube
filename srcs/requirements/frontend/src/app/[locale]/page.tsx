@@ -8,7 +8,7 @@ import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {useMovies} from "@/services/movies.service";
-import MoviesHero from "@/components/MoviesHero";
+import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
 import Section from "@/components/ui/Section";
 import MoviesGrid from "@/components/MoviesGrid";
@@ -43,7 +43,7 @@ export default function HomePage() {
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        <MoviesHero movies={(shuffledFeatured).slice(0, 5)}/>
+        <SliderHero movies={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >

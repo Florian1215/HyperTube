@@ -1,7 +1,6 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import {tOauthService} from "@/types/user";
 
 export function CrossIcon({color="black", size=30, className=""}) {
     const fullColor = `var(--color-${color})`;
@@ -249,31 +248,6 @@ export function TrashIcon({color="red", size=20}) {
         <path fill={fullColor} d="M92.82,384c-6.92-2.18-12.43-7.22-13.39-14.71l-15.8-239.54h256l-17.28,241.06c-1.47,7.36-6.61,11.03-13.41,13.19H92.82ZM160.68,167.5c-5.38-5.38-14.87-3.04-17.77,3.82l-.71,156.82c2.41,13.03,19.04,12.92,21.74,0l-.59-156.19c-.89-1.29-1.62-3.39-2.68-4.45ZM229.54,164.52c-4.01.16-8.59,3.45-9.71,7.36l-.51,156.25c1.96,13.36,20.26,12.83,21.71-.75l-.51-154.74c-1.49-4.8-5.87-8.33-10.98-8.12Z"/>
         <path fill={fullColor} d="M247.02,0c2.48.69,8.23,5.37,8.23,7.88v28.88h-127.25V7.88c0-2.5,5.75-7.19,8.23-7.88h110.78Z"/>
         <path fill={fullColor} d="M345.08,108H38.18v-26.62c0-11.62,13-22.83,24.34-22.86l256.77-.05c11.93-.61,25.79,10.7,25.79,22.91v26.62Z"/>
-    </svg>);
-}
-
-export function OAuthIcon({oauth, color="white", size=30}: {oauth: tOauthService, color?: string, size?: number}) {
-    const fullColor = `var(--color-${color})`;
-
-    if (oauth === "42") {
-        return (<svg width={size} height={size} viewBox="0 0 67 43" fill="none" xmlns="http://www.w3.org/2000/svg" className="pt-0.5">
-            <path d="M37.0271 0H24.6828L0 22.1433V31.1061H24.6828V42.1777H37.0271V22.1433H12.3385L37.0271 0Z" fill={fullColor}/>
-            <path d="M42.3171 11.0716L54.6556 0H42.3171V11.0716Z" fill={fullColor}/>
-            <path d="M66.9999 11.0716V0H54.6556V11.0716L42.3171 22.1433V33.2149H54.6556V22.1433L66.9999 11.0716Z" fill={fullColor}/>
-            <path d="M66.999 22.1435L54.655 33.2152H66.999V22.1435Z" fill={fullColor}/>
-        </svg>);
-    } else if (oauth === "gitlab") {
-        return (<svg width={size} height={size} className="tanuki-logo" viewBox="0 0 50 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path className="tanuki-shape tanuki" d="m49.014 19-.067-.18-6.784-17.696a1.792 1.792 0 0 0-3.389.182l-4.579 14.02H15.651l-4.58-14.02a1.795 1.795 0 0 0-3.388-.182l-6.78 17.7-.071.175A12.595 12.595 0 0 0 5.01 33.556l.026.02.057.044 10.32 7.734 5.12 3.87 3.11 2.351a2.102 2.102 0 0 0 2.535 0l3.11-2.352 5.12-3.869 10.394-7.779.029-.022a12.595 12.595 0 0 0 4.182-14.554Z" fill={fullColor}/>
-            <path className="tanuki-shape right-cheek" d="m49.014 19-.067-.18a22.88 22.88 0 0 0-9.12 4.103L24.931 34.187l9.485 7.167 10.393-7.779.03-.022a12.595 12.595 0 0 0 4.175-14.554Z" fill="var(--color-white-loading)"/>
-            <path className="tanuki-shape chin" d="m15.414 41.354 5.12 3.87 3.11 2.351a2.102 2.102 0 0 0 2.535 0l3.11-2.352 5.12-3.869-9.484-7.167-9.51 7.167Z" fill="var(--color-gray-loading)"/>
-            <path className="tanuki-shape left-cheek" d="M10.019 22.923a22.86 22.86 0 0 0-9.117-4.1L.832 19A12.595 12.595 0 0 0 5.01 33.556l.026.02.057.044 10.32 7.734 9.491-7.167L10.02 22.923Z" fill="var(--color-white-loading)"/>
-        </svg>);
-    }
-    return (<svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd"
-              d="M16 0C7.16 0 0 7.16 0 16C0 23.08 4.58 29.06 10.94 31.18C11.74 31.32 12.04 30.84 12.04 30.42C12.04 30.04 12.02 28.78 12.02 27.44C8 28.18 6.96 26.46 6.64 25.56C6.46 25.1 5.68 23.68 5 23.3C4.44 23 3.64 22.26 4.98 22.24C6.24 22.22 7.14 23.4 7.44 23.88C8.88 26.3 11.18 25.62 12.1 25.2C12.24 24.16 12.66 23.46 13.12 23.06C9.56 22.66 5.84 21.28 5.84 15.16C5.84 13.42 6.46 11.98 7.48 10.86C7.32 10.46 6.76 8.82 7.64 6.62C7.64 6.62 8.98 6.2 12.04 8.26C13.32 7.9 14.68 7.72 16.04 7.72C17.4 7.72 18.76 7.9 20.04 8.26C23.1 6.18 24.44 6.62 24.44 6.62C25.32 8.82 24.76 10.46 24.6 10.86C25.62 11.98 26.24 13.4 26.24 15.16C26.24 21.3 22.5 22.66 18.94 23.06C19.52 23.56 20.02 24.52 20.02 26.02C20.02 28.16 20 29.88 20 30.42C20 30.84 20.3 31.34 21.1 31.18C27.42 29.06 32 23.06 32 16C32 7.16 24.84 0 16 0V0Z"
-              fill={fullColor}/>
     </svg>);
 }
 

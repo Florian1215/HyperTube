@@ -10,15 +10,9 @@ import Image from "next/image";
 import {iUser} from "@/types/user";
 import MovieWatchProgress from "@/components/MovieWatchProgress";
 import GenreTags from "@/components/GenreTags";
+import MovieRightClick from "@/components/MovieRightClick";
+import {iAxe} from "@/types/utils";
 
-function RightClickMovie(props: {
-    user: iUser,
-    movie: iMovie,
-    contextMenu: iAxe | undefined,
-    setContextMenu: (value: (((prevState: (iAxe | undefined)) => (iAxe | undefined)) | iAxe | undefined)) => void
-}) {
-    return null;
-}
 
 export default function MovieCardList({movie, user, setFilterGenre} : {movie?: iMovie, user?: iUser, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
     const router = useRouter();
@@ -37,7 +31,7 @@ export default function MovieCardList({movie, user, setFilterGenre} : {movie?: i
 
     return (<tr className="border-b" onContextMenu={handleContextMenu}>
         <td className="p-2 xl:p-4">
-            {user && movie && movie.progress > 0 && !movie.complete && <RightClickMovie user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
+            {user && movie && movie.progress > 0 && !movie.complete && <MovieRightClick user={user} movie={movie} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
             <div className="border overflow-hidden aspect-3/2 relative">
                 <div className="custom-noise"/>
                 {!isLoaded && (<div className="custom-loading"/>)}

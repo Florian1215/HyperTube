@@ -1,4 +1,4 @@
-interface iAxe {
+export interface iAxe {
     x: number
     y: number
 }

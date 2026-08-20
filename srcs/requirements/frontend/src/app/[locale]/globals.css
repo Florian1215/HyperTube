@@ -103,7 +103,6 @@
     .scrollbar-hide {-ms-overflow-style: none; scrollbar-width: none;}
     .scrollbar-hide::-webkit-scrollbar {display: none;}
 
-    .custom-shadow-animation-l, .custom-shadow-animation-s { transition: all 0.2s ease; }
+    .custom-shadow-animation-s { transition: all 0.2s ease; }
     .custom-shadow-animation-s:hover { box-shadow: 3px 3px 0 var(--color-black); transform: translate(-3px, -3px); }
-    .custom-shadow-animation-l:hover { box-shadow: 8px 7px 0 var(--color-black); transform: translate(-8px, -7px); }
 }

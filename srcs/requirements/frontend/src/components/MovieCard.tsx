@@ -7,6 +7,7 @@ import MovieWatchProgress from "@/components/MovieWatchProgress";
 import {Link} from "@/i18n/navigation";
 import {EyeIcon} from "@/components/Icons";
 import MovieRightClick from "@/components/MovieRightClick";
+import {iAxe} from "@/types/utils";
 
 export default function MovieCard({movie, user, className, showTitle=true, showDate=false} : {movie?: iMovie, user?: iUser, className?: string, showTitle?: boolean, showDate?: boolean}) {
     const t = useTranslations("movie");
