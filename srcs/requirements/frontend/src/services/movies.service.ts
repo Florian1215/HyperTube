@@ -84,8 +84,8 @@ export function syncMovieProgress(queryClient: QueryClient, userId: number, movi
     });
 }
 
-export function startTorrentStreaming(torrentId: string) {
-    return apiClient<tListResponse<iTorrent>>(`stream/${torrentId}/`);
+export function torrentStreaming(torrentId: string, method: "POST" | "DELETE") {
+    return apiClient<tListResponse<iTorrent>>(`torrents/${torrentId}/`, undefined, {method: method});
 }
 
 function getTorrents(locale: string, movieId?: string) {

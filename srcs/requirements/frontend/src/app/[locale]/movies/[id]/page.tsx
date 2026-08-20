@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {startTorrentStreaming, useMovie, useTorrents} from "@/services/movies.service";
+import {torrentStreaming, useMovie, useTorrents} from "@/services/movies.service";
 import useHandleError from "@/hooks/useHandleError";
 import MovieHero from "@/components/MovieHero";
 import getBestTorrent from "@/utils/getBestTorrent";
@@ -41,7 +41,7 @@ export default function MoviePage() {
         const startDownloading = async () => {
             if (torrentId) {
                 try {
-                    await startTorrentStreaming(torrentId).then(() => {
+                    await torrentStreaming(torrentId, "POST").then(() => {
                         setStartVideo(true);
                     });
                 } catch (error) {
