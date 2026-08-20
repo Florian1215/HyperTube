@@ -9,10 +9,14 @@ import getBestTorrent from "@/utils/getBestTorrent";
 import useNotification from "@/contexts/NotificationContext";
 import {useTranslations} from "next-intl";
 import useAuth from "@/contexts/AuthContext";
-import {ApiError} from "@/services/apiClient";
+import {API_URL, ApiError} from "@/services/apiClient";
 import useModal from "@/contexts/ModalContext";
 import MovieInfoSection from "@/app/[locale]/movies/[id]/MovieInfoSection";
 import CommentsSection from "@/app/[locale]/movies/[id]/CommentsSection";
+import Button from "@/components/ui/Button/Button";
+import VideoPlayer from "@/components/ui/VideoPlayer";
+import SmallText from "@/components/ui/SmallText";
+import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 
 export default function MoviePage() {
     const params = useParams();
@@ -25,8 +29,11 @@ export default function MoviePage() {
     const [startVideo, setStartVideo] = useState(false);
     const {data: torrents} = useTorrents(movie?.id)
     const {addNotification} = useNotification();
+    const [errorStr, setError] = useState<undefined | string>();
     const tError = useTranslations("notifications.error");
     const {openModal} = useModal();
+    const t = useTranslations("movie");
+    const featureBtn= (movie && user && user.featured) ? () => openModal({type: "set-feature", movie: movie}) : undefined;
 
     useEffect(() => {
         if (error) {
@@ -69,10 +76,58 @@ export default function MoviePage() {
             addNotification(tError("torrentNotFound"), "error");
     }
 
+    const stopDownloading = async () => {
+        if (torrentId) {
+            try {
+                await torrentStreaming(torrentId, "DELETE").then(() => {
+                    setStartVideo(false);
+                });
+            } catch (error) {
+                if (error instanceof ApiError)
+                    addNotification(error.message, "error");
+                else
+                    addNotification(tError("unknown"), "error");
+                setTorrentId(undefined);
+            }
+        }
+    }
+
+    const handleRightClick = (e?: React.MouseEvent<HTMLDivElement>) => {
+        e?.preventDefault();
+        openModal({type: "select-torrent", torrents: torrents?.results, setTorrentId: setTorrentId});
+    };
+
+    const onClick = torrents ? handleTorrent : undefined;
+
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MovieHero movie={movie} onClick={torrents ? handleTorrent : undefined} torrentId={torrentId} startVideo={startVideo} torrents={torrents?.results} setTorrentId={setTorrentId} watchBtn={true}
-                   featureBtn={(movie && user && user.featured) ? () => openModal({type: "set-feature", movie: movie}) : undefined}
-        />
+        <MovieHero movie={movie} childrenAction={() =>
+            <>
+                <div className="size-full z-20 absolute custom-cursor-play" onClick={onClick}/>
+                {movie && startVideo && !errorStr && (<VideoPlayer movie={movie} user={user} src={`${API_URL}stream/${torrentId}/index`} setErrorAction={setError} tAction={t}/>)}
+            </>
+        } actionButton={() =>
+            <div>
+                <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t("watch")}</SecondaryButton>
+                {featureBtn && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
+            </div>
+        }>
+
+            {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">
+                <div
+                    className="max-w-4/5 sm:max-w-130 bg-white border p-4 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
+                    <p className="text-sm sm:text-xl font-semibold text-red">{t("torrentError")}</p>
+                    <SmallText>{errorStr}</SmallText>
+                    <Button onClick={handleRightClick}>{t("chooseAnotherTorrent")}</Button>
+                </div>
+            </div>}
+
+            {torrentId && !errorStr && <div className="custom-loading-dark opacity-80" />}
+
+            {torrentId && !startVideo && <div className="absolute mx-auto w-full text-center bottom-1/20 max-w-70">
+                <SmallText className="my-2 xl:my-4 text-white">{t("movieDownloading")}</SmallText>
+            </div>}
+        </MovieHero>
+        {startVideo && <div className="px-4 sm:px-6 w-full" ><Button onClick={stopDownloading}>STOP</Button></div>}
         <MovieInfoSection movie={movie}/>
         {movie ? <CommentsSection movie={movie}/> : <div/>}
     </div>);

@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {iMovie} from "@/types/movie";
+import {iMovie, iMovieDetails} from "@/types/movie";
 import MovieHero from "@/components/MovieHero";
+import {Link} from "@/i18n/navigation";
 
 export default function MoviesHero({movies}: {movies: iMovie[]}) {
     const [index, setIndex] = useState(0);
@@ -15,7 +16,7 @@ export default function MoviesHero({movies}: {movies: iMovie[]}) {
         }, 6000);
     }, [movies.length]);
 
-    const slide = (side: number) => {
+    const onSlide = (side: number) => {
         if (side > 0)
             setIndex((prev) => (prev + 1) % movies.length);
         else
@@ -34,7 +35,11 @@ export default function MoviesHero({movies}: {movies: iMovie[]}) {
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
             {movies.length > 0 ?
-                movies.map((movie, index) => (<MovieHero key={index} movie={movie} onSlide={slide} />)) :
+                movies.map((movie, index) => (<MovieHero key={index} movie={movie}>
+                    <Link href={`/movies/${movie.id}`} className="h-full w-full z-20 absolute"/>
+                    <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)
+                    <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)
+                </MovieHero>)) :
                 <MovieHero movie={undefined} />
             }
         </div>

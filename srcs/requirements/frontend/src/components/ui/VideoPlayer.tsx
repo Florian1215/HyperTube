@@ -21,7 +21,7 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({movie, src, user, setErrorAction, tAction}: {movie: iMovieDetails, src: string, user: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
+export default function VideoPlayer({movie, src, user, setErrorAction, tAction}: {movie: iMovieDetails, src: string, user?: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -139,7 +139,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
         if (!isSeeking)
             setSeekTime(video.currentTime);
 
-        if (!setComplete.current) {
+        if (user && !setComplete.current) {
             const progress = Math.floor(video.currentTime);
             if (isLiveRef && video.currentTime + min15 > fullDuration) {
                 updateMovieProgress(movie.id, progress, 100, true).then((data) => {
@@ -381,7 +381,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
 
                 <div className="w-full h-4 bg-black-hover border-t-black">
                     <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / fullDuration) * 100}%`}}>
-                        <div className={`pointer-events-none h-full bg-${user.color}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
+                        <div className={`pointer-events-none h-full bg-${user?.color ?? "purple"}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
                     </div>
                 </div>
             </div>
