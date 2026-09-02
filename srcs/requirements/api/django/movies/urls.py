@@ -1,11 +1,12 @@
 from django.urls import path
 from movies.views import MoviesListView, MovieApiView, MovieFeatureApiView, MoviesFeatureApiView, MovieProgressApiView, \
-    MovieTorrentsApiView
+    MovieTorrentsApiView, MoviesDirectStreamApiView
 
 urlpatterns = [
     path('movies/', MoviesListView.as_view(), name='movies-search'),
     path('movies/top-rated/', MoviesListView.as_view(), name='movies-top-rated'),
     path('movies/featured/', MoviesFeatureApiView.as_view(), name='movies-feature'),
+    path('movies/directstream/', MoviesDirectStreamApiView.as_view(), name='movies-directstream'),
     path('movies/<int:movie_id>/feature/', MovieFeatureApiView.as_view(), name='movie-feature'),
     path('movies/<int:movie_id>/', MovieApiView.as_view(), name='movie-detail'),
     path('movies/<int:movie_id>/progress/', MovieProgressApiView.as_view(), name='movie-progress'),
