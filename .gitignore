@@ -1,6 +1,7 @@
 .env
 *.env
 
+medias/torrents/*
 node_modules/
 .next/
 out/

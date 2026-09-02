@@ -8,6 +8,7 @@ from rest_framework import status
 
 from config import settings
 from config.errors import TORRENT_NOT_FOUND
+from config.settings import TORRENT_DIR
 from torrents.models import Torrent
 from torrents.tasks import download_and_transcode
 
@@ -45,9 +46,8 @@ class TorrentHLSApiView(APIView):
     @staticmethod
     def get(request, torrent_id, filename):
         print('GET HLS', torrent_id, filename, flush=True)
-        base_dir = Path(settings.MEDIA_ROOT) / 'torrents' / torrent_id / 'transcoded'
-        file_path = (base_dir / filename).resolve()
-        if base_dir.resolve() not in file_path.parents:
+        file_path = (TORRENT_DIR / filename).resolve()
+        if TORRENT_DIR.resolve() not in file_path.parents:
             raise Http404()
         if not file_path.is_file():
             raise Http404()

@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 from config.errors import FILE_NOT_FOUND
+from config.settings import TORRENT_DIR
 from torrents.models import Torrent
 
 
@@ -23,10 +24,8 @@ def is_cancel_requested(torrent_id):
 @shared_task
 def download_and_transcode(torrent_id):
     torrent = Torrent.objects.get(id=torrent_id)
-    # base_dir = Path(settings.BASE_DIR).resolve().parent.parent / 'medias' / str(torrent.id)
-    base_dir = Path(settings.MEDIA_ROOT) / 'torrents' / str(torrent.id)
-    download_dir = base_dir / 'download'
-    transcoded_dir = base_dir / 'transcoded'
+    download_dir = TORRENT_DIR / 'download'
+    transcoded_dir = TORRENT_DIR / 'transcoded'
 
     print('AAAAAAA', flush=True)
 
@@ -39,7 +38,7 @@ def download_and_transcode(torrent_id):
             # -----------------------------
             torrent.status = 'downloading'
             torrent.save(update_fields=['status'])
-            torrent_path = base_dir / 'source.torrent'
+            torrent_path = TORRENT_DIR / 'source.torrent'
             response = requests.get(torrent.url, timeout=30)
             response.raise_for_status()
             print('TORRENT PATH', torrent_path, flush=True)
@@ -135,7 +134,7 @@ def download_and_transcode(torrent_id):
     except TorrentCancelled:
         torrent.status = 'cancelled'
         torrent.save(update_fields=['status'])
-        shutil.rmtree(base_dir, ignore_errors=True)
+        shutil.rmtree(TORRENT_DIR, ignore_errors=True)
     except Exception as exc:
         torrent.status = 'error'
         torrent.error = str(exc)
