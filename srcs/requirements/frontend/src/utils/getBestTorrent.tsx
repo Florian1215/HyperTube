@@ -4,6 +4,10 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     if (!torrents || !torrents.length)
         return null;
 
+    const find = torrents.find(t => t.status === "done" || t.status === "downloading");
+    if (find)
+        return find;
+
     const qualityScore: Record<string, number> = {
         "2160p": 100,
         "1080p": 70,
@@ -23,13 +27,10 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
         switch (quality) {
             case "2160p":
                 return { min: 8, ideal: 20, max: 80 };
-
             case "1080p":
                 return { min: 4, ideal: 12, max: 35 };
-
             case "720p":
                 return { min: 2, ideal: 5, max: 15 };
-
             default:
                 return { min: 1, ideal: 3, max: 10 };
         }
@@ -57,13 +58,8 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
             seedScore +
             sizeScore(torrent.size, torrent.quality);
 
-        return {
-            torrent,
-            score,
-        };
+        return {torrent, score};
     });
-
     ranked.sort((a, b) => b.score - a.score);
-
     return ranked[0].torrent;
 }

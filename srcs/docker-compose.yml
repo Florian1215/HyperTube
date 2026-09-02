@@ -21,6 +21,8 @@ services:
     depends_on:
       api-db:
         condition: service_healthy
+      redis:
+        condition: service_started
     restart: on-failure
     volumes:
       - api-volume:/code
@@ -35,11 +37,43 @@ services:
       SECRET_KEY: ${DJANGO_SECRET_KEY}
       TMDB_API_KEY: ${TMDB_API_KEY}
       C411_API_KEY: ${C411_API_KEY}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     ports:
       - "8439:8000"
     networks:
       - backend_network
       - frontend_network
+      - api_network
+
+  celery:
+    build:
+      context: "requirements/api"
+      target: development
+    depends_on:
+      api-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
+    volumes:
+      - api-volume:/code
+    environment:
+      TZ: Europe/Paris
+      DEBUG: "True"
+      MIGRATION: "false"
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      SECRET_KEY: ${DJANGO_SECRET_KEY}
+      TMDB_API_KEY: ${TMDB_API_KEY}
+      C411_API_KEY: ${C411_API_KEY}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    command: celery -A config worker -l INFO
+    networks:
+      - backend_network
       - api_network
 
   api-db:
@@ -61,6 +95,13 @@ services:
       interval: 3s
       timeout: 3s
       retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+    networks:
+      - backend_network
 
 networks:
   api_network:

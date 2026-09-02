@@ -9,7 +9,7 @@ import Button from "@/components/ui/Button/Button";
 import Pagination from "@/components/ui/Pagination";
 import {SortIcon} from "@/components/Icons";
 
-type SortKey = "quality" | "size" | "language" | "seeds";
+type SortKey = "status" | "quality" | "size" | "language" | "seeds";
 type SortDir = "asc" | "desc";
 
 export default function SelectTorrentModal() {
@@ -78,6 +78,7 @@ export default function SelectTorrentModal() {
             <table className="w-full text-sm">
                 <thead>
                 <tr>
+                    {renderHeader("status", t("columns.status"))}
                     {renderHeader("quality", t("columns.quality"))}
                     {renderHeader("size", t("columns.size"))}
                     {renderHeader("language", t("columns.language"))}
@@ -100,6 +101,7 @@ function TorrentRow({torrent, setTorrentId, closeModal, t}: {torrent: iTorrent; 
     const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-nowrap";
 
     return (<tr className="border-t">
+        <td className={className + " text-center"}>{torrent.status}</td>
         <td className={className + " text-center"}>{torrent.quality}</td>
         <td className={className + " text-right"}>{`${Math.round(torrent.size)} ${t("gb")}`}</td>
         <td className={className + " text-right"}>{torrent.language}</td>

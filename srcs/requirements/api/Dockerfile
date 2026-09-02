@@ -6,6 +6,7 @@ EXPOSE 8000
 RUN apt-get update -y
 RUN apt-get upgrade -y
 RUN apt-get install -y postgresql-client
+RUN apt-get install -y --no-install-recommends ffmpeg
 
 COPY init.d /init.d
 

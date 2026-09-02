@@ -8,13 +8,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
-
+MEDIA_ROOT = BASE_DIR / 'media'
 SECRET_KEY = environ['SECRET_KEY']
 TMDB_API_KEY = environ['TMDB_API_KEY']
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 TMDB_MEDIAS_URL = 'https://image.tmdb.org/t/p'
 C411_BASE_URL = 'https://c411.org/api'
 C411_API_KEY = environ['C411_API_KEY']
+CELERY_BROKER_URL = environ['CELERY_BROKER_URL']
+CELERY_RESULT_BACKEND = environ['CELERY_RESULT_BACKEND']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']
@@ -41,10 +43,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'celery',
+    'redis',
     'movies',
     'series',
     'users',
-    'comments'
+    'comments',
+    'torrents'
 ]
 
 MIDDLEWARE = [

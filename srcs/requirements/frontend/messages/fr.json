@@ -147,6 +147,7 @@
       "title": "Sélectionner un torrent",
       "gb": "Go",
       "columns": {
+        "status": "État",
         "quality": "Qualité",
         "size": "Taille",
         "language": "Langue",

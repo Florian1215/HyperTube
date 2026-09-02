@@ -37,6 +37,7 @@ export interface iTorrent {
     id: string
     title: string
     url: string
+    status: "not-downloaded" | "downloading" | "transcoding" | "completed" | "error" | "cancelled"
     quality: string
     size: number
     language: string
