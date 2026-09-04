@@ -101,18 +101,20 @@ export default function MoviePage() {
     const onClick = torrents ? handleTorrent : undefined;
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
-        <MovieHero movie={movie} childrenAction={() =>
-            <>
-                <div className="size-full z-20 absolute custom-cursor-play" onClick={onClick}/>
-                {movie && startVideo && !errorStr && (<VideoPlayer movie={movie} user={user} src={`${API_URL}stream/${torrentId}/index`} setErrorAction={setError} tAction={t}/>)}
-            </>
-        } actionButton={() =>
-            <div>
+        <MovieHero movie={movie} childrenAction={() => {
+            if (errorStr || !movie)
+                return undefined;
+            if (startVideo)
+                return <VideoPlayer movie={movie} user={user} src={`${API_URL}stream/${torrentId}/stream.m3u8`} setErrorAction={setError} tAction={t} stopDownloadingAction={stopDownloading}/>;
+            return <div className="size-full z-20 absolute custom-cursor-play" onClick={onClick}/>;}
+        } actionButton={() => {
+            if (startVideo)
+                return undefined;
+            return (<div className="z-10">
                 <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t("watch")}</SecondaryButton>
                 {featureBtn && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
-            </div>
+            </div>);}
         }>
-
             {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">
                 <div
                     className="max-w-4/5 sm:max-w-130 bg-white border p-3 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">

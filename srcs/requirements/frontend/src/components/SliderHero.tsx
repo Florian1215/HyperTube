@@ -35,8 +35,14 @@ export default function SliderHero({movies}: {movies: iMovie[]}) {
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
             {movies.length > 0 ?
-                movies.map((movie, index) => (<MovieHero key={index} movie={movie}>
-                    <Link href={`/movies/${movie.id}`} className="h-full w-full z-20 absolute"/>
+                movies.map((movie, index) => (<MovieHero key={index} movie={movie} actionButton={
+                    () => <Link href={`/movies/${movie.id}`}>
+                            <h1 className="relative hover:underline decoration-3 underline-offset-3">
+                                {movie.title}
+                                <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
+                            </h1>
+                        </Link>}>
+                    <Link href={`/movies/${movie.id}`} className="size-full z-20 absolute"/>
                     <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)
                     <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)
                 </MovieHero>)) :
