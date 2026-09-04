@@ -4,7 +4,7 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     if (!torrents || !torrents.length)
         return null;
 
-    const find = torrents.find(t => t.status === "done" || t.status === "downloading");
+    const find = torrents.find(t => t.status === "completed" || t.status === "downloading");
     if (find)
         return find;
 
