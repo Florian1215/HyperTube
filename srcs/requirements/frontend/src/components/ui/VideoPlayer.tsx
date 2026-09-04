@@ -136,7 +136,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
 
         if (user && !setComplete.current) {
             const progress = Math.floor(video.currentTime);
-            if (isLiveRef && video.currentTime + min15 > fullDuration) {
+            if (!isLiveRef.current && video.currentTime + min15 > fullDuration) {
                 updateMovieProgress(movie.id, progress, 100, true).then((data) => {
                     syncMovieProgress(queryClient, user.id, movie, data);
                     setComplete.current = true;
