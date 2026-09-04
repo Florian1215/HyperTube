@@ -44,6 +44,7 @@ class Movie(models.Model):
     year = models.CharField(max_length=4)
     poster_url = models.URLField()
     backdrop_url = models.URLField()
+    original_language = models.CharField(max_length=2)
     note = models.FloatField()
     vote_count = models.IntegerField()
     runtime = models.IntegerField()

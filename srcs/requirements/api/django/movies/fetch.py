@@ -33,6 +33,7 @@ def get_or_fetch_movie(pk, request):
                 year=movie_data['release_date'][:4],
                 poster_url=tmdb_media(movie_data['poster_path'], 'w500'),
                 backdrop_url=tmdb_media(movie_data['backdrop_path'], 'original'),
+                original_language=movie_data['original_language'],
                 note=movie_data['vote_average'],
                 vote_count=movie_data['vote_count'],
                 original_title=movie_data['original_title'],
