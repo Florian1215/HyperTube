@@ -26,6 +26,7 @@ services:
     restart: on-failure
     volumes:
       - api-volume:/code
+      - stream-volume:/stream
     environment:
       TZ: Europe/Paris
       DEBUG: "True" # True or False
@@ -39,6 +40,7 @@ services:
       C411_API_KEY: ${C411_API_KEY}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      TRANSCODE_PORT: ${TRANSCODE_PORT}
     ports:
       - "8439:8000"
     networks:
@@ -58,6 +60,7 @@ services:
     restart: on-failure
     volumes:
       - api-volume:/code
+      - stream-volume:/stream
     environment:
       TZ: Europe/Paris
       DEBUG: "True"
@@ -71,6 +74,7 @@ services:
       C411_API_KEY: ${C411_API_KEY}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      TRANSCODE_PORT: ${TRANSCODE_PORT}
     command: celery -A config worker -l INFO
     networks:
       - backend_network
@@ -111,7 +115,14 @@ networks:
 
 volumes:
   api-db-volume:
-    name: "api-db-volume"
+    name: api-db-volume
+  stream-volume:
+    name: stream-volume
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "../medias"
   api-volume:
     name: api-volume
     driver: local

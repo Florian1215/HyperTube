@@ -1,7 +1,8 @@
 ####################################################### VARIABLE #######################################################
 NAME		:=	hypertube
 SRCS_D		:=	srcs
-DATA_DIR	:=	data
+TRANSCODE_D	:=	$(SRCS_D)/requirements/transcode/
+DATA_DIR	:=	medias
 COMPOSE_F	:=	$(SRCS_D)/docker-compose.yml
 SERVICE		?=	#Leave blank
 
@@ -18,14 +19,14 @@ all			:	$(NAME)
 
 $(NAME)		:
 			mkdir -p $(DATA_DIR)
+			mkdir -p $(DATA_DIR)/torrents
+			mkdir -p $(DATA_DIR)/streams
 			$(COMPOSE) $(FLAGS) up --build $(SERVICE)
 
 .PHONY: transcode
 transcode:
-			cd $(SRCS_D)/requirements/torrent-transcode && \
-            set -a && source srcs/.env && set +a && \
-            go build -o torrent-stream . && \
-            ./torrent-stream
+			cp srcs/.env $(TRANSCODE_D)
+			cd $(TRANSCODE_D) && source .venv/bin/activate && flask --app app run
 
 CMDS		:=	up build down ps ls images top
 .PHONY: $(CMDS)

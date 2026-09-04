@@ -4,7 +4,8 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-TORRENT_DIR = BASE_DIR.parent.parent.parent.parent / 'medias' / 'torrents' / str(torrent.id)
+DATA_DIR = Path('/stream/').resolve()
+TORRENT_DIR = DATA_DIR / 'streams'
 
 
 # Quick-start development settings - unsuitable for production
@@ -16,8 +17,9 @@ TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 TMDB_MEDIAS_URL = 'https://image.tmdb.org/t/p'
 C411_BASE_URL = 'https://c411.org/api'
 C411_API_KEY = environ['C411_API_KEY']
-CELERY_BROKER_URL = environ['CELERY_BROKER_URL']
-CELERY_RESULT_BACKEND = environ['CELERY_RESULT_BACKEND']
+CELERY_BROKER_URL = environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
+TRANSCODE_PORT = environ.get('TRANSCODE_PORT', 5024)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']
