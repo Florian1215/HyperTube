@@ -81,6 +81,7 @@ export default function MoviePage() {
             try {
                 await torrentStreaming(torrentId, "DELETE").then(() => {
                     setStartVideo(false);
+                    setTorrentId(undefined);
                 });
             } catch (error) {
                 if (error instanceof ApiError)
@@ -114,9 +115,6 @@ export default function MoviePage() {
 
             {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">
                 <div
-                    className="max-w-4/5 sm:max-w-130 bg-white border p-4 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
-                    <p className="text-sm sm:text-xl font-semibold text-red">{t("torrentError")}</p>
-                    <SmallText>{errorStr}</SmallText>
                     className="max-w-4/5 sm:max-w-130 bg-white border p-3 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
                     <p className="text-sm sm:text-xl font-medium text-red">{t("torrentError")}</p>
                     <SmallText className="mb-4 sm:mb-6">{errorStr}</SmallText>

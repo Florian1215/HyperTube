@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
+import {CrossIcon, FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
@@ -21,7 +21,7 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({movie, src, user, setErrorAction, tAction}: {movie: iMovieDetails, src: string, user?: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
+export default function VideoPlayer({movie, src, user, setErrorAction, tAction, stopDownloadingAction}: {movie: iMovieDetails, src: string, user?: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string, stopDownloadingAction: () => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -49,7 +49,9 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     const lastSent = useRef(0);
     const setComplete = useRef(false);
     const min15 = 15 * 60;
+    const min5 = 5 * 60;
     const isLiveRef = useRef(true);
+    const [isLive, setIsLive] = useState(true);
     const delaySubtitle = useRef(0);
     const {addNotification} = useNotification();
     const tError = useTranslations("notifications.error");
@@ -70,8 +72,9 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
-                if (!data.details.live) {
+                if (!data.details.live && isLiveRef.current) {
                     isLiveRef.current = false;
+                    setIsLive(false);
                     setFullDuration(data.details.totalduration);
                 }
             });
@@ -361,7 +364,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
-
+            {isLive && seekTime < min5 && <IconButton color="white" className="size-10 absolute inset-1 sm:inset-3 pointer-events-auto" onClick={stopDownloadingAction}>{(color: string) => <CrossIcon color={color}/>}</IconButton>}
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
