@@ -5,12 +5,9 @@ import {CrossIcon, FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/componen
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
-import {useDownloadSubtitle, useLoginOpenSubtitles, useSubtitles} from "@/hooks/useSubtitles";
-import {useTranslations} from "next-intl";
 import loadSRT from "@/utils/loadSRT";
 import {syncMovieProgress, updateMovieProgress} from "@/services/movies.service";
 import {iMovieDetails} from "@/types/movie";
-import useNotification from "@/contexts/NotificationContext";
 import IconButton from "@/components/ui/Button/IconButton";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
@@ -40,9 +37,6 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
     const [seekTime, setSeekTime] = useState(0);
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
-    const {data: getSubtitlesMovie} = useSubtitles(movie.id, selectedSubtitle);
-    const {data: loginOpenSubtitles} = useLoginOpenSubtitles();
-    const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0]?.attributes.files[0]?.file_id, loginOpenSubtitles?.token);
     const [subs, setSubs] = useState<iSub[]>([]);
     const [currentText, setCurrentText] = useState("");
     const playStateBeforeSeeking = useRef(false);
@@ -53,8 +47,6 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
     const isLiveRef = useRef(true);
     const [isLive, setIsLive] = useState(true);
     const delaySubtitle = useRef(0);
-    const {addNotification} = useNotification();
-    const tError = useTranslations("notifications.error");
     const queryClient = useQueryClient();
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
@@ -80,7 +72,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
                 if (data.fatal)
-                    setErrorAction(data.error.message)
+                    setErrorAction(data.error.message);
             });
             return () => {hls.destroy();};
         }
@@ -234,20 +226,6 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
 
     /* ------------------------------------------------- SUBTITLES -------------------------------------------------- */
     useEffect(() => {
-        if (downloadSubtitle)
-            loadSRT(downloadSubtitle.link).then(setSubs);
-    }, [downloadSubtitle]);
-
-    useEffect(() => {
-        if (getSubtitlesMovie && (getSubtitlesMovie.data.length === 0 || getSubtitlesMovie.data[0].attributes.files.length === 0)) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setSelectedSubtitle(undefined);
-            addNotification(tError("subtitleNotFound"), "error");
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getSubtitlesMovie]);
-
-    useEffect(() => {
         delaySubtitle.current = 0;
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentText("");
@@ -368,13 +346,13 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
-                        <IconButton color={"white"} className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</IconButton>
+                        <IconButton color="white" className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</IconButton>
                         <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
                     </div>
 
                     <div className="flex gap-2 sm:gap-4 items-center">
                         {selectedSubtitle && <IconButton color="white" title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}>{(color: string) => <SubDelayIcon direction={"left"} color={color}/>}</IconButton>}
-                        {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-loading" : "border-white hover:bg-black-hover")}>CC</button>}
+                        {<button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-loading" : "border-white hover:bg-black-hover")}>CC</button>}
                         {selectedSubtitle && <IconButton color="white" title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}>{(color: string) => <SubDelayIcon direction={"right"} color={color}/>}</IconButton>}
                         {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
