@@ -143,7 +143,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
                 });
             } else {
                 const second = Math.floor(video.currentTime % 60);
-                if (Math.abs(second - lastSent.current) >= 15) {
+                if (second > min5 && Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
                     updateMovieProgress(movie.id, progress, pourcent, false).then((data) => {
                         syncMovieProgress(queryClient, user.id, movie, data);
