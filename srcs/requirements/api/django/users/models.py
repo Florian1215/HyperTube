@@ -5,21 +5,28 @@ from django.db import models
 
 
 class User(AbstractUser):
-    class ProfileColor(models.TextChoices):
-        YELLOW = 'yellow', 'Yellow'
-        PINK = 'pink', 'Pink'
-        GREEN = 'green', 'Green'
-        PURPLE = 'purple', 'Purple'
-        BLUE = 'blue', 'Blue'
-        RED = 'red', 'Red'
+    COLOR_CHOICES = [
+        ('yellow', 'Yellow'),
+        ('pink', 'Pink'),
+        ('green', 'Green'),
+        ('purple', 'Purple'),
+        ('blue', 'Blue'),
+        ('red', 'Red')
+    ]
 
-    color = models.CharField(max_length=10, choices=ProfileColor.choices, blank=True)
+    PREFERRED_LANGUAGE_CHOICES = [
+        ('vo', 'Original version'),
+        ('vf', 'French version')
+    ]
+
+    color = models.CharField(max_length=10, choices=COLOR_CHOICES, blank=True)
     profile_picture = models.URLField(null=True, blank=True)
+    preferred_language = models.CharField(max_length=2, choices=PREFERRED_LANGUAGE_CHOICES, default='vo')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.color:
-            self.color = random.choice([choice[0] for choice in self.ProfileColor.choices])
+            self.color = random.choice([choice[0] for choice in self.COLOR_CHOICES])
         super().save(*args, **kwargs)
 
     def __str__(self):
