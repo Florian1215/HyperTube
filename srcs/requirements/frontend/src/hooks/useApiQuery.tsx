@@ -1,7 +1,7 @@
 import {QueryClient, useQuery} from "@tanstack/react-query";
 import {useLocale} from "next-intl";
 import {tListResponse} from "@/types/api";
-import {iMovieDetails} from "@/types/movie";
+import {iMediaDetails} from "@/types/media";
 
 export default function useApiQuery<T>(key: unknown[], fn: (locale: string, signal?: AbortSignal) => Promise<T>, enabled = true) {
     const locale = useLocale();
@@ -44,8 +44,8 @@ export function updateQuery<T extends { id: string | number }>(queryClient: Quer
     });
 }
 
-export function updateMovie(queryClient: QueryClient, newContent: iMovieDetails) {
-    const queries = queryClient.getQueriesData({queryKey: ["movie"]});
+export function updateMedia(queryClient: QueryClient, newContent: iMediaDetails) {
+    const queries = queryClient.getQueriesData({queryKey: ["media"]});
     queries.forEach(([queryKey, current]) => {
         if (!current)
             return;

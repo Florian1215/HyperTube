@@ -15,7 +15,7 @@ export default function GenreTag({children, closeModal, setFilterGenre, selected
                 return prev.filter(g => g !== children);
             });
         else
-            router.push(`/movies?genre=${children.id}`);
+            router.push(`/search?type=movies&genre=${children.id}`);
         if (closeModal)
             closeModal();
     }

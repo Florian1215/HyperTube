@@ -1,18 +1,18 @@
 services:
-  frontend:
-    build:
-      context: "requirements/frontend"
-      target: development
-    restart: unless-stopped
-    ports:
-      - "4200:4200"
-    networks:
-      - frontend_network
-    volumes:
-      - frontend-volume:/app
-      - /app/node_modules
-    depends_on:
-      - api
+#  frontend:
+#    build:
+#      context: "requirements/frontend"
+#      target: development
+#    restart: unless-stopped
+#    ports:
+#      - "4200:4200"
+#    networks:
+#      - frontend_network
+#    volumes:
+#      - frontend-volume:/app
+#      - /app/node_modules
+#    depends_on:
+#      - api
 
   api:
     build:

@@ -7,11 +7,11 @@ import {useTranslations} from "next-intl";
 import {iComment, iCommentDetails} from "@/types/comment";
 import {Link} from "@/i18n/navigation";
 import {EditIcon, TrashIcon} from "@/components/Icons";
-import TextButton from "@/components/ui/Button/TextButton";
+import ExpandableText from "@/components/ui/ExpandableText";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import Button from "@/components/ui/Button/Button";
 import IconButton from "@/components/ui/Button/IconButton";
-import MovieCard from "@/components/MovieCard";
+import MediaCard from "@/components/MediaCard";
 import ProfilePicture from "@/components/ProfilePicture";
 
 dayjs.extend(relativeTime);
@@ -22,7 +22,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     const [editMode, setEditMode] = useState(false);
     const {openModal} = useModal();
     const t = useTranslations("comments");
-    const displayMovie = "movie" in comment;
+    const displayMovie = "media" in comment;
 
     if (currentUser && currentUser.id === comment.user.id)
         user = currentUser;
@@ -32,8 +32,8 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
     return (<div className="w-full"
             onMouseEnter={() => setShowSettingBtn(true)}
             onMouseLeave={() => setShowSettingBtn(false)}>
-        {displayMovie && previousCommentMovieId != comment.movie.id && <div className="flex justify-center mb-6">
-            <MovieCard user={currentUser} className="aspect-21/9" movie={comment.movie}/></div>}
+        {displayMovie && previousCommentMovieId != comment.media.id && <div className="flex justify-center mb-6">
+            <MediaCard user={currentUser} className="aspect-21/9" media={comment.media}/></div>}
         <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "") + (displayMovie ? " px-4" : "")}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
@@ -50,7 +50,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                             </IconButton>
                             <IconButton onClick={() => {
                                 setEditMode(false);
-                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "movie" in comment ? comment.movie.id : undefined)});
+                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "media" in comment ? comment.media.id : undefined)});
                             }} className="uppercase font-condensed text-2xl" hoverColor="red">
                                 {(color: string) => <TrashIcon color={color}/>}
                             </IconButton>
@@ -60,38 +60,11 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                 <div className="leading-tight sm:leading-normal">
                     {editMode && updateComment ?
                         <CommentTextEdit comment={comment} setEditMode={setEditMode} updateComment={updateComment}/>
-                        : <CommentText comment={comment}/>
+                        : <ExpandableText className="whitespace-pre-line">{comment.content}</ExpandableText>
                     }
                 </div>
             </div>
         </div>
-    </div>);
-}
-
-function CommentText({comment}: {comment: iComment}) {
-    const [isCommentExpend, setIsExpendComment] = useState(false);
-    const [isClamped, setIsClamped] = useState(false);
-    const textRef = useRef<HTMLParagraphElement>(null);
-    const t = useTranslations("comments");
-
-    useEffect(() => {
-        const el = textRef.current;
-        if (!el) return;
-        const checkClamp = () => {
-            setIsClamped(el.scrollHeight > el.clientHeight);
-        };
-        checkClamp();
-        window.addEventListener("resize", checkClamp);
-
-        return () => window.removeEventListener("resize", checkClamp);
-    }, [comment]);
-
-    return (<div>
-        <p ref={textRef} className={"whitespace-pre-line " + (isCommentExpend ? "" : "line-clamp-3")}>
-            {comment.content}
-        </p>
-        {isClamped && (<TextButton onClick={() => setIsExpendComment(!isCommentExpend)}>
-            {isCommentExpend ? t("collapse") : t("readMore")}</TextButton>)}
     </div>);
 }
 

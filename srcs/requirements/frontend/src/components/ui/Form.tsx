@@ -4,11 +4,12 @@ import useApiMutation from "@/hooks/useApiMutation";
 import Button from "@/components/ui/Button/Button";
 import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
+import {fieldType, tT} from "@/types/utils";
 
-export type fieldType = "login" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password";
+
 type formType = "auth" | "update" |  "signin" | "register" | "set-new-password";
 
-export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
+export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: tT, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);

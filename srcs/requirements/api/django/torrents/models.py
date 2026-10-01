@@ -1,11 +1,11 @@
 from django.db import models
 
-from movies.models import Movie
+from medias.models import Media
 
 
 class Torrent(models.Model):
     id = models.CharField(primary_key=True)
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='torrents')
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='torrents')
     title = models.CharField()
     url = models.URLField()
     size = models.IntegerField()
@@ -36,7 +36,7 @@ class Torrent(models.Model):
         return f'{self.id} - {self.title}'
 
 
-class DownloadMovie(models.Model):
+class DownloadMedia(models.Model):
     id = models.CharField(primary_key=True)
     torrent = models.ForeignKey(Torrent, on_delete=models.CASCADE, related_name='downloaded')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -11,14 +11,15 @@ import {patchUser, postNewPassword} from "@/services/users.service";
 import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
-import ProfileUser, {tTab} from "@/components/ProfileUser";
-import ProfileTabMovieHistory from "@/components/ProfileTabMovieHistory";
+import ProfileUser from "@/components/ProfileUser";
+import ProfileTabMediaHistory from "@/components/ProfileTabMediaHistory";
 import ProfileTabComments from "@/components/ProfileTabComments";
+import {tTab} from "@/types/utils";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
-    const tabs: tTab = [{name: "profile", comp: ProfileTab}, {name: "auth", comp: AuthProfileTab}, {name: "history", comp: ProfileTabMovieHistory}, {name: "comments", comp: ProfileTabComments}];
+    const tabs: tTab = [{name: "profile", comp: ProfileTab}, {name: "auth", comp: AuthProfileTab}, {name: "history", comp: ProfileTabMediaHistory}, {name: "comments", comp: ProfileTabComments}];
 
     useEffect(() => {
         if (!user && !loading)

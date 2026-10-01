@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from config.errors import USERNAME_CONTAINS, USER_ALREADY_TAKEN
-from users.models import User, UserHistory
+from users.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,7 +40,7 @@ class UserMeSerializer(serializers.ModelSerializer):
 
     def get_featured(self, _):
         try:
-            return self.context['request'].user.has_perm('movies.can_recommend_movie')
+            return self.context['request'].user.has_perm('medias.can_recommend_media')
         except Exception:
             return False
 

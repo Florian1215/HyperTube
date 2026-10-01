@@ -6,8 +6,8 @@ from rest_framework.filters import OrderingFilter
 from comments.models import Comment
 from comments.serializers import CommentSerializer, CommentDetailSerializer
 from comments.permissions import IsOwner
-from movies.context import LangHistoryContext
-from movies.views import get_or_fetch_movie
+from medias.context import LangHistoryContext
+from medias.fetch import get_or_fetch_media
 
 
 class CommentAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -18,18 +18,18 @@ class CommentAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
 
 
-class CommentMovieAPIView(generics.ListCreateAPIView):
+class CommentMediaAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = CommentSerializer
     ordering_fields = ['updated_at']
 
     def get_queryset(self):
-        movie = get_or_fetch_movie(self.kwargs['movie_id'], self.request)
-        return Comment.objects.filter(movie=movie)
+        media = get_or_fetch_media(self.request, **self.kwargs)
+        return Comment.objects.filter(media=media)
 
     def perform_create(self, serializer):
-        movie = get_or_fetch_movie(self.kwargs['movie_id'], self.request)
-        serializer.save(user=self.request.user, movie=movie)
+        media = get_or_fetch_media(self.request, **self.kwargs)
+        serializer.save(user=self.request.user, media=media)
 
 
 class CommentUserAPIView(LangHistoryContext, generics.ListAPIView):

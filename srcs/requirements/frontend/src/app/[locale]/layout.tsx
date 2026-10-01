@@ -1,4 +1,4 @@
-import Navbar from "@/components/layout/nav/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import "./fonts.css";
 import "./globals.css";
 import React from "react";
@@ -14,11 +14,11 @@ import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import SigninModal from "@/components/layout/SigninModal";
 import RegisterModal from "@/components/layout/RegisterModal";
-import ViewAllGenreModal from "@/app/[locale]/movies/ViewAllGenreModal";
-import FilterGenreModal from "@/app/[locale]/movies/FilterGenreModal";
-import CreditsMovieModal from "@/app/[locale]/movies/[id]/CreditsMovieModal";
-import SetFeatureModal from "@/app/[locale]/movies/[id]/SetFeatureModal";
-import SelectTorrentModal from "@/app/[locale]/movies/[id]/SelectTorrentModal";
+import CreditsMediaModal from "@/app/[locale]/[type]/[id]/CreditsMediaModal";
+import SetFeatureModal from "@/app/[locale]/[type]/[id]/SetFeatureModal";
+import SelectTorrentModal from "@/app/[locale]/[type]/[id]/SelectTorrentModal";
+import ViewAllGenreModal from "@/app/[locale]/search/ViewAllGenreModal";
+import FilterGenreModal from "@/app/[locale]/search/FilterGenreModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
@@ -46,7 +46,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <FilterGenreModal/>
                             <DeleteConfirmationModal/>
                             <SetFeatureModal/>
-                            <CreditsMovieModal/>
+                            <CreditsMediaModal/>
                             <SelectTorrentModal/>
 
                             <Navbar/>

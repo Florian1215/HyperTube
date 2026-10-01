@@ -1,16 +1,14 @@
 "use client";
 
-import React, {JSX, useState} from "react";
+import React, {useState} from "react";
 import ProfilePicture from "@/components/ProfilePicture";
 import {iUser} from "@/types/user";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {usePathname, useRouter} from "@/i18n/navigation";
+import {tTab} from "@/types/utils";
+import Tabs from "@/components/ui/Tabs";
 
-export type tTab = {
-    name: string
-    comp: ({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) => JSX.Element
-}[];
 
 export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
     const searchParams = useSearchParams();
@@ -49,14 +47,7 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
                 <p className="uppercase">{tProfile("memberSince", {date: memberSince})}</p>
             </div>
         </div>
-        <div className="flex h-12 sm:h-16 overflow-x-auto">
-            <div className="border-b border-r w-12" />
-            {tabs.map((tab, index) => (<button
-                key={index}
-                className={"custom-condensed text-2xl sm:text-3xl md:text-4xl tracking-wide sm:tracking-normal border-t border-r px-3 sm:px-12 xl:px-16 border-b text-nowrap" + (activeTab === index ? " border-b-white" : "")}
-                onClick={() => switchTab(index)}>{t(tab.name)}</button>))}
-            <div className="border-b w-full" />
-        </div>
+        <Tabs tabs={tabs.map((tab) => t(tab.name))} activeTab={activeTab} onChange={switchTab}/>
         <ActiveTab user={user} updateUser={updateUserAction}/>
         <div />
     </div>);

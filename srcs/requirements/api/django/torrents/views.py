@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from django.http import FileResponse, Http404
 from rest_framework.exceptions import NotFound
 from rest_framework.views import APIView
@@ -8,7 +6,6 @@ from rest_framework import status
 
 from config import settings
 from config.errors import TORRENT_NOT_FOUND
-from config.settings import TORRENT_DIR
 from torrents.models import Torrent
 from torrents.tasks import download_and_transcode
 
@@ -24,7 +21,7 @@ class TorrentsApiView(APIView):
         torrent = self.get_object()
         preferred_language = request.data.get('lang', 'vo')
         if preferred_language == 'vo':
-            lang = torrent.movie.original_language
+            lang = torrent.media.original_language
         else:
             lang = 'fr'
         print('STATUS:', torrent.id, torrent.status, lang, flush=True)

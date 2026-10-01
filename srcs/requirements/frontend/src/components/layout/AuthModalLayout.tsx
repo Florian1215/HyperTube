@@ -9,10 +9,11 @@ import ModalLayout from "@/components/layout/ModalLayout";
 import Form from "@/components/ui/Form";
 import {postLogin, postRegister} from "@/services/auth.service";
 import TextButton from "@/components/ui/Button/TextButton";
+import {tT} from "@/types/utils";
 
 type AuthModalType = "signin" | "register";
 
-export default function AuthModalLayout({type, t, handleForgotPassword, activeModal}: {type: AuthModalType, t: (key: string) => string, handleForgotPassword?: () => void, activeModal: ModalState}) {
+export default function AuthModalLayout({type, t, handleForgotPassword, activeModal}: {type: AuthModalType, t: tT, handleForgotPassword?: () => void, activeModal: ModalState}) {
     const {openModal, closeModal} = useModal();
     const isReg = type === "register";
     const otherType: AuthModalType = isReg ? "signin" : "register";

@@ -1,9 +1,10 @@
 from django.urls import path
 
-from comments.views import CommentAPIView, CommentMovieAPIView, CommentUserAPIView
+from comments.views import CommentAPIView, CommentMediaAPIView, CommentUserAPIView
+from medias.urls import get_media_path
 
 urlpatterns = [
     path('comments/', CommentAPIView.as_view(), name='user'),
     path('users/<int:user_id>/comments/', CommentUserAPIView.as_view(), name='user-comments'),
-    path('movies/<int:movie_id>/comments/', CommentMovieAPIView.as_view(), name='movie-comments')
+    get_media_path(CommentMediaAPIView, '/comments', name='media-comments', media_id=True)
 ]

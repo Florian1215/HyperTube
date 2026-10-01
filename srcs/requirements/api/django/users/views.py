@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from movies.context import LangHistoryContext
-from movies.serializers import MovieHistorySerializer
+from medias.context import LangHistoryContext
+from medias.serializers import MediaHistorySerializer
 from users.models import User, UserHistory
 from users.permissions import IsUserOwner
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer
@@ -35,7 +35,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
     queryset = UserHistory.objects.all()
-    serializer_class = MovieHistorySerializer
+    serializer_class = MediaHistorySerializer
 
     def filter_queryset(self, queryset):
         return queryset.filter(user=self.kwargs['user_id']).order_by('-updated_at')

@@ -2,7 +2,7 @@
 
 import React, {createContext, useContext, useState, ReactNode} from "react";
 
-export type tNotificationType = | "success" | "error" | "info" | "warning";
+type tNotificationType = | "success" | "error" | "info" | "warning";
 
 export interface tNotification {
     id: string;

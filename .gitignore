@@ -1,12 +1,10 @@
 .env
 *.env
 
-medias
+/medias
 node_modules/
 .next/
 out/
-
-srcs/data/*
 
 .idea/
 .DS_Store

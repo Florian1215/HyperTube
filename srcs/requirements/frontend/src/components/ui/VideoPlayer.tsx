@@ -6,11 +6,13 @@ import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
 import loadSRT from "@/utils/loadSRT";
-import {syncMovieProgress, updateMovieProgress} from "@/services/movies.service";
+import {syncMediaProgress, updateMediaProgress} from "@/services/medias.service";
 import {iMovieDetails} from "@/types/movie";
 import IconButton from "@/components/ui/Button/IconButton";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
+import {tT} from "@/types/utils";
+import formatTime from "@/utils/formatTime";
 
 interface iSub{
     start: number
@@ -18,14 +20,14 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({movie, src, user, setErrorAction, tAction, stopDownloadingAction}: {movie: iMovieDetails, src: string, user?: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string, stopDownloadingAction: () => void}) {
+export default function VideoPlayer({media, src, user, setErrorAction, tAction, stopDownloadingAction}: {media: iMovieDetails, src: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, stopDownloadingAction: () => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
     const [downloadDuration, setDownloadDuration] = useState(0);
-    const [fullDuration, setFullDuration] = useState(movie.runtime * 60);
+    const [fullDuration, setFullDuration] = useState(media.runtime * 60);
     const [durationString, setDurationString] = useState("");
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);
@@ -59,8 +61,8 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
             const hls = new Hls({startPosition: 0});
             hls.loadSource(src);
             hls.attachMedia(video);
-            if (video && movie.progress)
-                video.currentTime = movie.progress;
+            if (video && media.progress)
+                video.currentTime = media.progress;
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
@@ -137,16 +139,16 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
         if (user && !setComplete.current) {
             const progress = Math.floor(video.currentTime);
             if (!isLiveRef.current && video.currentTime + min15 > fullDuration) {
-                updateMovieProgress(movie.id, progress, 100, true).then((data) => {
-                    syncMovieProgress(queryClient, user.id, movie, data);
+                updateMediaProgress(media.id, media.type, progress, 100, true).then((data) => {
+                    syncMediaProgress(queryClient, user.id, media, data);
                     setComplete.current = true;
                 });
             } else {
                 const second = Math.floor(video.currentTime % 60);
                 if (second > min5 && Math.abs(second - lastSent.current) >= 15) {
                     const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
-                    updateMovieProgress(movie.id, progress, pourcent, false).then((data) => {
-                        syncMovieProgress(queryClient, user.id, movie, data);
+                    updateMediaProgress(media.id, media.type, progress, pourcent, false).then((data) => {
+                        syncMediaProgress(queryClient, user.id, media, data);
                         lastSent.current = second;
                     });
                 }
@@ -368,20 +370,4 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction, 
             </div>
         </div>
     </div>);
-}
-
-function formatTime(time: number) {
-    if (!time || isNaN(time))
-        return "0h0m";
-
-    const hours = Math.floor(time / 3600);
-    const minutes = Math.floor((time % 3600) / 60);
-    const seconds = Math.floor(time % 60);
-
-    let result = `${minutes}m`;
-    if (hours > 0)
-        result = `${hours}h${result}`;
-    if (seconds > 0)
-        result += seconds.toString().padStart(2, "0");
-    return result;
 }

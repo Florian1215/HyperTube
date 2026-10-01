@@ -1,9 +1,11 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {iMovie} from "@/types/movie";
-import MovieHero from "@/components/MovieHero";
+import MediaHero from "@/components/MediaHero";
 import {Link} from "@/i18n/navigation";
+import {iMedia} from "@/types/media";
+import formatURL from "@/utils/formatURL";
+import {TitleMedia} from "@/components/Title";
 
-export default function SliderHero({movies}: {movies: iMovie[]}) {
+export default function SliderHero({medias}: {medias: iMedia[]}) {
     const [index, setIndex] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
@@ -12,41 +14,38 @@ export default function SliderHero({movies}: {movies: iMovie[]}) {
             clearInterval(intervalRef.current);
 
         intervalRef.current = setInterval(() => {
-            setIndex((prev) => (prev + 1) % movies.length);
+            setIndex((prev) => (prev + 1) % medias.length);
         }, 6000);
-    }, [movies.length]);
+    }, [medias.length]);
 
     const onSlide = (side: number) => {
         if (side > 0)
-            setIndex((prev) => (prev + 1) % movies.length);
+            setIndex((prev) => (prev + 1) % medias.length);
         else
-            setIndex((prev) => (prev - 1 + movies.length) % movies.length);
+            setIndex((prev) => (prev - 1 + medias.length) % medias.length);
         startInterval();
     };
 
     useEffect(() => {
-        if (!movies.length)
+        if (!medias.length)
             return;
         startInterval();
         return () => clearInterval(intervalRef.current);
-    }, [movies.length, startInterval]);
+    }, [medias.length, startInterval]);
 
     return (<div className="overflow-hidden w-full">
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
-            {movies.length > 0 ?
-                movies.map((movie, index) => (<MovieHero key={index} movie={movie} actionButton={
-                    () => <Link href={`/movies/${movie.id}`}>
-                            <h1 className="relative hover:underline decoration-3 underline-offset-3">
-                                {movie.title}
-                                <span className="absolute -right-8 sm:-right-13 xl:-right-18 responsive-text-hairline">{movie.year}</span>
-                            </h1>
+            {medias.length > 0 ?
+                medias.map((media, index) => (<MediaHero key={index} media={media} actionButton={
+                    () => <Link href={formatURL(media)}>
+                            <TitleMedia media={media} clickable={true}/>
                         </Link>}>
-                    <Link href={`/movies/${movie.id}`} className="size-full z-20 absolute"/>
+                    <Link href={formatURL(media)} className="size-full z-20 absolute"/>
                     <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)
                     <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)
-                </MovieHero>)) :
-                <MovieHero movie={undefined} />
+                </MediaHero>)) :
+                <MediaHero media={undefined} />
             }
         </div>
     </div>);
