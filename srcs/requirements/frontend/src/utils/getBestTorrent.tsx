@@ -1,4 +1,4 @@
-import {iTorrent} from "@/types/movie";
+import {iTorrent} from "@/types/media";
 
 export default function getBestTorrent(torrents?: iTorrent[]) {
     if (!torrents || !torrents.length)

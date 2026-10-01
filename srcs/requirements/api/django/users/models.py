@@ -35,7 +35,8 @@ class User(AbstractUser):
 
 class UserHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='history')
-    movie = models.ForeignKey('movies.Movie', on_delete=models.CASCADE, related_name='history')
+    media = models.ForeignKey('medias.Media', on_delete=models.CASCADE, related_name='history')
+    episode = models.ForeignKey('series.Episode', on_delete=models.CASCADE, related_name='history', null=True, blank=True)
     progress = models.IntegerField(default=0)
     complete = models.BooleanField(default=False)
     pourcent = models.IntegerField(default=0)
@@ -44,4 +45,4 @@ class UserHistory(models.Model):
     watched_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f'{self.user} - {self.movie}[{self.pourcent}%]'
+        return f'{self.user} - {self.media}[{self.pourcent}%]'

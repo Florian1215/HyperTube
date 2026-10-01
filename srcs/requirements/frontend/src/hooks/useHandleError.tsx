@@ -16,7 +16,7 @@ export default function useHandleError() {
     const pathname = usePathname();
     const router = useRouter();
 
-    return useCallback((error: ApiError, translation: "Film" | "User") => {
+    return useCallback((error: ApiError, translation: "Film" | "Serie" | "User") => {
         if (error instanceof ApiError) {
             if (error.status === 401) {
                 setCallbackUrl(pathname);

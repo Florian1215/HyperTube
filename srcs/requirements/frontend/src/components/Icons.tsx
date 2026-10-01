@@ -27,6 +27,22 @@ export function LeftIcon({color="black", size=13}) {
     </svg>);
 }
 
+export function RightArrowIcon({color="black", size=13}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} viewBox="0 0 45 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill={fullColor} d="M43.5076 28.1185C45.2048 29.325 45.1868 31.8514 43.4725 33.0335L4.70302 59.7671C2.71286 61.1394 -2.73295e-06 59.7148 -2.62728e-06 57.2973L-2.54102e-07 3.00532C-1.47579e-07 0.56835 2.75182 -0.851789 4.73811 0.560122L43.5076 28.1185Z"/>
+    </svg>);
+}
+
+export function LeftArrowIcon({color="black", size=13}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} viewBox="0 0 45 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill={fullColor} d="M1.26197 32.1839C-0.435305 30.9775 -0.41727 28.4511 1.29706 27.269L40.0665 0.535405C42.0567 -0.836918 44.7695 0.587725 44.7695 3.00516L44.7695 57.2972C44.7695 59.7341 42.0177 61.1543 40.0314 59.7424L1.26197 32.1839Z"/>
+    </svg>);
+}
+
 export function UserIcon({selected, color="black", size=20}: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 

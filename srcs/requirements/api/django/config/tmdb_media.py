@@ -16,7 +16,7 @@ TMDBImageSize = Literal[
 ]
 
 
-def tmdb_media(path, size: TMDBImageSize):
+def format_tmdb_image(path, size: TMDBImageSize):
     if path is None:
         return ''
     return f'{TMDB_MEDIAS_URL}/{size}{path}'

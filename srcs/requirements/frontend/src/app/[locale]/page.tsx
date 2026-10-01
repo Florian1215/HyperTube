@@ -1,20 +1,20 @@
 "use client";
 
-import {iMovie} from "@/types/movie";
 import React, {useEffect, useMemo, useState} from "react";
 import {HypertubeLogo} from "@/components/Icons";
 import {useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
-import {useMovies} from "@/services/movies.service";
+import {useItems} from "@/services/medias.service";
 import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
 import Section from "@/components/ui/Section";
-import MoviesGrid from "@/components/MoviesGrid";
+import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
 import {useUserHistory} from "@/services/users.service";
+import {iMedia} from "@/types/media";
 
 export default function HomePage() {
     const {user} = useAuth();
@@ -24,51 +24,65 @@ export default function HomePage() {
     const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
 
     const {data: continueWatchingData} = useUserHistory(user?.id);
-    const {data: movies} = useMovies();
+    const {data: movies} = useItems("movies");
     const popular = filterAlreadyWatch(movies?.results);
     const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
 
-    const {data: featuredMovies} = useMovies("featured");
-    const featured = filterAlreadyWatch(featuredMovies?.results);
-    const shuffledFeatured = useMemo(() => shuffleArray(featured), [featured])
+    const {data: series} = useItems("series");
+    const popularSeries = filterAlreadyWatch(series?.results);
+    const shuffledPopularSeries = useMemo(() => shuffleArray(popularSeries), [popularSeries])
 
-    const {data: mostRatedMovies} = useMovies("top-rated");
+    const {data: featuredMovies} = useItems("movies", "featured");
+    const {data: featuredSeries} = useItems("series", "featured");
+    const shuffledFeatured = useMemo(() => {
+        const featured = [
+            ...filterAlreadyWatch(featuredMovies?.results),
+            ...filterAlreadyWatch(featuredSeries?.results),
+        ];
+        return shuffleArray(featured);
+    }, [featuredMovies?.results, featuredSeries?.results]);
+
+    const {data: mostRatedMovies} = useItems("movies", "top-rated");
     const mostRated = filterAlreadyWatch(mostRatedMovies?.results);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
     const continueWatching = continueWatchingData ? continueWatchingData.results.filter((m) => !m.complete) : [];
 
-    const {data: dirctedWatchMovies} = useMovies("directstream", undefined, !!user);
+    const {data: dirctedWatchMovies} = useItems("movies", "directstream", undefined, !!user);
     const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        <SliderHero movies={(shuffledFeatured).slice(0, 5)}/>
+        <SliderHero medias={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href="/users?tab=history">
-                <MoviesGrid movieSets={continueWatching.slice(0, 3)} setLimit={true}/>
+                <MediasGrid mediaSets={continueWatching.slice(0, 3)} setLimit={true}/>
             </Section>}
 
             {
                 (shuffledFeatured === undefined || shuffledFeatured.length > 0) &&
-                <Section title={t("featured")} href="/movies?q=featured">
-                    <MoviesGrid movieSets={shuffledFeatured ?? undefined} setLimit={true}/>
+                <Section title={t("featured")} href="/search?type=movies&q=featured">
+                    <MediasGrid mediaSets={shuffledFeatured ?? undefined} setLimit={true}/>
                 </Section>
             }
 
-            <Section title={t("popular")} href="/movies?q=popular">
-                <MoviesGrid movieSets={shuffledPopular.length > 0 ? shuffledPopular : undefined} setLimit={true}/>
+            <Section title={t("moviesPopular")} href="/search?type=movies&q=popular">
+                <MediasGrid mediaSets={shuffledPopular.length > 0 ? shuffledPopular : undefined} setLimit={true}/>
             </Section>
 
-            <Section title={t("mostRated")} href="/movies?q=top-rated">
-                <MoviesGrid movieSets={shuffledMostRated.length > 0 ? shuffledMostRated : undefined} setLimit={true}/>
+            <Section title={t("seriesPopular")} href="/search?type=series&q=popular">
+                <MediasGrid mediaSets={shuffledPopularSeries.length > 0 ? shuffledPopularSeries : undefined} setLimit={true}/>
             </Section>
 
-            {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/movies?q=directstream">
-                <MoviesGrid movieSets={filterDirectedWatchMovies} setLimit={true}/>
+            <Section title={t("mostRated")} href="/search?type=movies&q=top-rated">
+                <MediasGrid mediaSets={shuffledMostRated.length > 0 ? shuffledMostRated : undefined} setLimit={true}/>
+            </Section>
+
+            {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/search?type=movies&q=directstream">
+                <MediasGrid mediaSets={filterDirectedWatchMovies} setLimit={true}/>
             </Section>}
         </div>
 
@@ -129,7 +143,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
     </div>);
 }
 
-function filterAlreadyWatch(movies?: iMovie[]) {
+function filterAlreadyWatch(movies?: iMedia[]) {
     if (!movies)
         return [];
     return movies.filter(m => !m.complete);

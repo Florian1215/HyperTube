@@ -9,12 +9,20 @@
   "home": {
     "continueWatching": "Continuer à regarder",
     "featured": "À découvrir",
-    "popular": "Populaires",
+    "moviesPopular": "Films populaires",
+    "seriesPopular": "Séries populaires",
     "mostRated": "Les mieux notés",
     "directStream": "Streaming Direct"
   },
-  "movies": {
-    "searchPlaceholder": "Rechercher un film...",
+  "search": {
+    "moviesSearchPlaceholder": "Rechercher un film...",
+    "movies": "Films",
+    "seriesSearchPlaceholder": "Rechercher une série...",
+    "series": "Séries",
+    "peopleSearchPlaceholder": "Rechercher un acteur, un réalisateur...",
+    "people": "Acteurs / Réalisateurs",
+    "usersSearchPlaceholder": "Rechercher un utilisateur...",
+    "users": "Utilisateurs",
     "noResults": "Aucun film trouvé",
     "emptyPage": "Rien à afficher ici.",
     "noResultsResetFilter": "Aucun résultat. Réinitialiser les filtres ?",
@@ -28,29 +36,53 @@
       "more": "+ {count} de plus"
     }
   },
-  "movie": {
+  "media": {
     "watch": "Regarder",
     "release": "Sortie",
     "status": "Statut",
+    "statuses": {
+      "Rumored": "Rumeur",
+      "Planned": "Prévu",
+      "In Production": "En production",
+      "Post Production": "En post-production",
+      "Canceled": "Annulé"
+    },
+    "rating": "Note",
     "length": "Durée",
     "genre": "Genre",
     "directors": "Réalisateurs",
+    "creators": "Créateurs",
     "stars": "Acteurs",
     "synopsis": "Synopsis",
-    "posterAlt": "Affiche du film : {title}",
-    "movieDownloading": "Le téléchargement du film est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter...",
-    "torrentError": "Erreur lors de la lecture du film. Veuillez réessayer actualiser la page ou réessayer plus tard.",
+    "posterAlt": "Affiche du {title}",
+    "mediaDownloading": "Le téléchargement {type, select, series {de la série} other {du film}} est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter...",
+    "torrentError": "Erreur lors de la lecture {type, select, series {de la série} other {du film}}. Veuillez actualiser la page ou réessayer plus tard.",
     "reloadPlayer": "Cliquez ici pour recharger le lecteur",
     "decreaseSubDelay": "Diminuer le délai des sous-titres",
     "increaseSubDelay": "Augmenter le délai des sous-titres",
-    "viewAll": "Voir tout",
     "clearProgression": "Effacer la progression",
     "setAsWatched": "Marquer comme vu",
-    "setFeature": "Mettre en avant ce film",
-    "credits" : {
-        "title": "Crédits",
-        "cast": "Distribution",
-        "crew": "Équipe technique"
+    "setAsNotWatched": "Marquer comme non vu",
+    "setFeature": "Mettre en avant",
+    "moreInfo": "Plus d'infos",
+    "credits": {
+      "title": "Détails",
+      "cast": "Distribution",
+      "crew": "Équipe technique",
+      "info": "Informations"
+    },
+    "info": {
+      "originalTitle": "Titre original",
+      "originalLanguage": "Langue originale",
+      "release": "Sortie",
+      "start": "Début de diffusion",
+      "end": "Fin de diffusion",
+      "seasons": "Saisons",
+      "episodes": "Épisodes",
+      "countries": "Pays de production",
+      "companies": "Sociétés de production",
+      "budget": "Budget",
+      "revenue": "Recettes"
     },
     "feature": {
       "title": "Mise en avant du film",
@@ -60,12 +92,27 @@
       "feature": "Afficher ce film dans les films mis en avant sur la page d'accueil"
     }
   },
+  "serie": {
+    "seasons": "Saisons",
+    "seasonNumber": "Saison {number}",
+    "seasonEpisode": "Saison {season} · Épisode {episode}",
+    "altSeason": "Affiche de la saison {season} de {title}",
+    "altEpisode": "Affiche de l'épisode {episode} de la saison {season} de {title}",
+    "episodesCount": "{count, plural, =1 {# épisode} other {# épisodes}}",
+    "minutes": "{runtime} min",
+    "statuses": {
+      "Returning Series": "En cours",
+      "Planned": "Prévue",
+      "In Production": "En production",
+      "Ended": "Terminée",
+      "Canceled": "Annulée",
+      "Pilot": "Pilote"
+    }
+  },
   "comments": {
     "title": "Commentaires",
     "signInToComment": "Connectez-vous pour pouvoir poster un commentaire",
     "edited": "Édité",
-    "readMore": "Lire la suite",
-    "collapse": "Réduire",
     "saveChange": "Enregistrer les modifications",
     "cancel": "Annuler",
     "writeComment": "Écrire un commentaire...",
@@ -79,19 +126,19 @@
       "profile": "Profil",
       "auth": "Mot de passe",
       "history": "Historique",
-      "comments": "Commentaires",
-      "avatar": "Avatar",
-      "api": "API"
+      "comments": "Commentaires"
     },
     "remove": "Supprimer",
-    "noMoviesYet": "Vous n'avez encore vu aucun film.",
+    "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
     "fields": {
       "submit": "Enregistrer les modifications",
       "username": "Nom d'utilisateur"
     }
   },
   "common": {
-    "profilePictureAlt": "Photo de profil"
+    "profilePictureAlt": "Photo de profil",
+    "seeMore": "Voir plus",
+    "seeLess": "Voir moins"
   },
   "auth": {
     "signin": {
@@ -102,8 +149,7 @@
       "forgotPassword": "Mot de passe oublié ?",
       "submit": "Se connecter",
       "noAccount": "Vous n'avez pas encore de compte ?",
-      "register": "Inscrivez-vous",
-      "oAuth": "Connectez-vous avec"
+      "register": "Inscrivez-vous"
     },
     "register": {
       "title": "Rejoindre Hypertube",
@@ -112,21 +158,13 @@
       "password": "Mot de passe",
       "submit": "S'inscrire",
       "haveAccount": "Vous avez déjà un compte ?",
-      "signin": "Connectez-vous",
-      "oAuth": "Inscrivez-vous avec"
-    },
-    "forgotPassword": {
-      "title": "Réinitialiser le mot de passe",
-      "submit": "Envoyer"
+      "signin": "Connectez-vous"
     },
     "changePassword": {
       "current-password": "Mot de passe actuel",
       "new-password": "Nouveau mot de passe",
       "confirm-new-password": "Confirmer le nouveau mot de passe",
       "submit": "Modifier"
-    },
-    "oauth": {
-      "loadingAuth": "Connexion en cours..."
     }
   },
   "modal": {
@@ -161,10 +199,6 @@
     "usernameTooShort": "Le nom d'utilisateur est trop court.",
     "usernameTooLong": "Le nom d'utilisateur est trop long.",
     "usernameInvalid": "Nom d’utilisateur invalide.",
-    "firstnameTooLong": "Le prénom est trop long.",
-    "firstnameInvalid": "Le prénom est invalide.",
-    "lastnameTooLong": "Le nom est trop long.",
-    "lastnameInvalid": "Le nom est invalide.",
     "passwordTooShort": "Le mot de passe est trop court.",
     "passwordTooLong": "Le mot de passe est trop long.",
     "passwordSameAsOld": "Le nouveau mot de passe doit être différent de l'ancien.",
@@ -176,7 +210,6 @@
     "success": {
       "textCopied": "{label} copié dans le presse-papiers.",
       "passwordChanged": "Votre mot de passe a bien été modifié.",
-      "newPasswordSet": "Votre nouveau mot de passe a été défini, vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
       "infoChanged": "Vos informations ont bien été mises à jour.",
       "login": "Vous êtes maintenant connecté avec succès.",
       "commentChange": "La modification de votre commentaire a bien été mise à jour.",
@@ -187,13 +220,10 @@
       "network": "Impossible de contacter le serveur. Vérifiez votre connexion internet.",
       "loginRequired": "Vous devez être connecté pour accéder à cette page.",
       "notFoundFilm": "Film introuvable",
+      "notFoundSerie": "Série introuvable",
       "notFoundUser": "Utilisateur introuvable",
-      "missingToken": "Token manquant.",
-      "invalidToken": "Token invalide ou expiré.",
-      "invalidQueryParameter": "Paramètre de requête invalide.",
       "notFound": "Page {path} non trouvée.",
       "torrentNotFound": "Torrent introuvable. Ce film peut ne pas être encore disponible en streaming. Veuillez réessayer plus tard.",
-      "subtitleNotFound": "Aucun sous-titre disponible dans cette langue.",
       "failedChangeProgression": "Impossible de mettre à jour la progression: {error}"
     }
   }

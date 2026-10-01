@@ -1,16 +1,13 @@
 "use client";
 
-import React, {JSX, useState} from "react";
+import React, {useState} from "react";
 import ProfilePicture from "@/components/ProfilePicture";
 import {iUser} from "@/types/user";
 import {useSearchParams} from "next/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {usePathname, useRouter} from "@/i18n/navigation";
+import {tTab} from "@/types/utils";
 
-export type tTab = {
-    name: string
-    comp: ({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) => JSX.Element
-}[];
 
 export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
     const searchParams = useSearchParams();

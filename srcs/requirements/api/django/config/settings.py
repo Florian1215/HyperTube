@@ -48,11 +48,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'celery',
     'redis',
-    'movies',
-    'series',
-    'users',
     'comments',
-    'torrents'
+    'medias',
+    'people',
+    'series',
+    'torrents',
+    'users'
 ]
 
 MIDDLEWARE = [

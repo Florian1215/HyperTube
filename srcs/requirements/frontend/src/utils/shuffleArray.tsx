@@ -1,6 +1,6 @@
-import {iMovie} from "@/types/movie";
+import {iMedia} from "@/types/media";
 
-export default function shuffleArray(array?: iMovie[]) {
+export default function shuffleArray(array?: iMedia[]) {
     if (!array)
         return []
 

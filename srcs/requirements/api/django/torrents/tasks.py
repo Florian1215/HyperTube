@@ -1,11 +1,10 @@
-import shutil
 import time
 
 import requests
 from celery import shared_task
 import libtorrent as lt
 
-from config.settings import TORRENT_DIR
+from config.settings import TORRENT_DIR, TRANSCODE_PORT
 from torrents.models import Torrent
 
 

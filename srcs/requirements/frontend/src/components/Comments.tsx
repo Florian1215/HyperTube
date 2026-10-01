@@ -9,9 +9,9 @@ import dayjs from "dayjs";
 import SmallText from "@/components/ui/SmallText";
 import {useQueryClient} from "@tanstack/react-query";
 import {removeCommentCache, updateCommentCache} from "@/services/comments.service";
-import {iMovie} from "@/types/movie";
+import {iMedia} from "@/types/media";
 
-export default function Comments({currentUser, comments, index, setIndex, totalPage, profilePage=false, currentMovie}: {currentUser?: iUser, comments: iComment[], index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean, currentMovie?: iMovie}) {
+export default function Comments({currentUser, comments, index, setIndex, totalPage, profilePage=false, currentMedia}: {currentUser?: iUser, comments: iComment[], index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean, currentMedia?: iMedia}) {
     const {addNotification} = useNotification();
     const locale = useLocale();
     const t = useTranslations("comments");
@@ -24,8 +24,8 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
         const newComment = structuredClone(comment) as iCommentDetails;
         newComment.content = newContent.replace("\n\n", "\n");
         newComment.edited = true;
-        if (currentMovie)
-            newComment.movie = currentMovie;
+        if (currentMedia)
+            newComment.media = currentMedia;
         patchComment(locale, newComment.id, newComment.content).then(() => {
             updateCommentCache(queryClient, newComment, newComment.user.id);
         });
@@ -35,7 +35,7 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
     const deleteDisplayComment = async (commentId: number, movieId?: string) => {
         deleteComment(locale, commentId).then(() => {
             if (currentUser)
-                removeCommentCache(queryClient, commentId, movieId ?? (currentMovie?.id ?? ""), currentUser.id);
+                removeCommentCache(queryClient, commentId, movieId ?? (currentMedia?.id ?? ""), currentUser.id);
         });
     };
 
@@ -47,7 +47,7 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
             {comments.map((comment, index) => {
                 const previousComment: iCommentDetails | null = (profilePage && index > 0) ? comments[index - 1] as iCommentDetails : null;
                 return (<Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment}
-                         deleteComment={deleteDisplayComment} previousCommentMovieId={previousComment?.movie.id}/>);
+                         deleteComment={deleteDisplayComment} previousCommentMovieId={previousComment?.media.id}/>);
             })}
         </div>
     </Pagination>);

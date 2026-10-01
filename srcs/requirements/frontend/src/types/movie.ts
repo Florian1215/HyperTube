@@ -1,54 +1,9 @@
-export interface iMovie {
-    id: string
-    title: string
-    year: string
-    poster_url: string
-    backdrop_url: string
-    genres: number[]
-    note: number
-    vote_count: number
-    release_date: string
-    complete: boolean
-    progress: number
-    pourcent: number
-    watched_at: string
-}
+import {iMedia, iMediaDetails} from "@/types/media";
+//
+// export interface iMovie extends iMedia {
+// }
 
-export interface iMovieDetails extends iMovie {
-    original_title: string
+export interface iMovieDetails extends iMedia, iMediaDetails {
     runtime: number
-    summary: string
-    crew: iPeople[]
-    cast: iPeople[]
-    backdrops_url: string[]
-    feature: boolean
-    status: string
-}
-
-export interface iPeople {
-    id: string
-    name: string
-    job?: string
-    character?: string
-    picture?: string
-}
-
-export interface iTorrent {
-    id: string
-    title: string
-    url: string
-    status: "not-downloaded" | "downloading" | "transcoding" | "completed" | "error" | "cancelled"
-    quality: string
-    size: number
-    language: string
-    seeds: number
-    peers: number
-    created_at: string
-}
-
-export interface iProgress {
-    progress: number
-    complete: boolean
-    pourcent: number
-    watched_at: string
+    status: "Rumored" | "Planned" | "In Production" | "Post Production" | "Released" | "Canceled"
 }

@@ -2,14 +2,26 @@ import {iUser} from "@/types/user";
 import useApiQuery from "@/hooks/useApiQuery";
 import {tListResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
-import {iMovie} from "@/types/movie";
+import {iMedia} from "@/types/media";
 
 export function getUser(locale: string, userId: string) {
     return apiClient<iUser>(`users/${userId}/`, locale);
 }
 
-function getUserHistory(locale: string, userId?: number) {
-    return apiClient<tListResponse<iMovie>>(`users/${userId}/history/`, locale);
+export function useUser(userId: string, enabled=true) {
+    return useApiQuery(
+        ["user", userId],
+        (locale: string) => getUser(locale, userId),
+        enabled
+    );
+}
+
+export function useUserHistory(userId?: number) {
+    return useApiQuery(
+        ["user-media-history", userId],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/history/`, locale),
+        !!userId
+    );
 }
 
 export function patchUser(locale: string, data: string[], userId?: number | string) {
@@ -29,20 +41,4 @@ export function patchUser(locale: string, data: string[], userId?: number | stri
 
 export function postNewPassword(locale: string, data: string[]) {
     return apiClient(`users/new-password/`, locale, {method: "PATCH", body: JSON.stringify({current_password: data[0], new_password: data[1], new_password_confirm: data[2]})});
-}
-
-export function useUser(userId: string, enabled: boolean=true) {
-    return useApiQuery(
-        ["user", userId],
-        (locale: string) => getUser(locale, userId),
-        enabled
-    );
-}
-
-export function useUserHistory(userId?: number) {
-    return useApiQuery(
-        ["user-movie-history", userId],
-        (locale: string) => getUserHistory(locale, userId),
-        !!userId
-    );
 }

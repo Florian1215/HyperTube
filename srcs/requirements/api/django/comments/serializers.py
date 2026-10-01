@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from comments.models import Comment
-from movies.serializers import SmallMovieSerializer
+from medias.serializers import SmallMediaSerializer
 from users.serializers import UserSerializer
 
 
@@ -36,7 +36,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class CommentDetailSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    movie = SmallMovieSerializer(read_only=True)
+    media = SmallMediaSerializer(read_only=True)
 
     class Meta:
         model = Comment
@@ -47,5 +47,5 @@ class CommentDetailSerializer(serializers.ModelSerializer):
             'content',
             'edited',
             'updated_at',
-            'movie'
+            'media'
         ]

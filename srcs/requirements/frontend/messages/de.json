@@ -9,12 +9,20 @@
   "home": {
     "continueWatching": "Weiter ansehen",
     "featured": "Empfohlen",
-    "popular": "Beliebt",
+    "moviesPopular": "Beliebte Filme",
+    "seriesPopular": "Beliebte Serien",
     "mostRated": "Am besten bewertet",
     "directStream": "Direkt-Streaming"
   },
-  "movies": {
-    "searchPlaceholder": "Nach einem Film suchen...",
+  "search": {
+    "moviesSearchPlaceholder": "Nach einem Film suchen...",
+    "movies": "Filme",
+    "seriesSearchPlaceholder": "Nach einer Serie suchen...",
+    "series": "Serien",
+    "peopleSearchPlaceholder": "Nach einem Schauspieler, Regisseur suchen...",
+    "people": "Schauspieler / Regisseure",
+    "usersSearchPlaceholder": "Nach einem Benutzer suchen...",
+    "users": "Benutzer",
     "noResults": "Kein Film gefunden",
     "emptyPage": "Nichts hier zu sehen.",
     "noResultsResetFilter": "Keine Ergebnisse. Filter zurücksetzen?",
@@ -28,29 +36,53 @@
       "more": "+ {count} mehr"
     }
   },
-  "movie": {
+  "media": {
     "watch": "Ansehen",
     "release": "Veröffentlichung",
     "status": "Status",
+    "statuses": {
+      "Rumored": "Gerücht",
+      "Planned": "Geplant",
+      "In Production": "In Produktion",
+      "Post Production": "In Postproduktion",
+      "Canceled": "Abgesagt"
+    },
+    "rating": "Bewertung",
     "length": "Dauer",
     "genre": "Genre",
     "directors": "Regisseure",
+    "creators": "Ersteller",
     "stars": "Schauspieler",
     "synopsis": "Zusammenfassung",
     "posterAlt": "Filmplakat: {title}",
-    "movieDownloading": "Der Film wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
-    "torrentError": "Beim Abspielen des Films ist ein Fehler aufgetreten. Bitte versuchen Sie, die Seite zu aktualisieren oder später erneut.",
+    "mediaDownloading": "{type, select, series {Die Serie} other {Der Film}} wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
+    "torrentError": "Beim Abspielen {type, select, series {der Serie} other {des Films}} ist ein Fehler aufgetreten. Bitte versuchen Sie, die Seite zu aktualisieren oder später erneut.",
     "reloadPlayer": "Klicken Sie hier, um den Player neu zu laden",
     "decreaseSubDelay": "Untertitelverzögerung verringern",
     "increaseSubDelay": "Untertitelverzögerung erhöhen",
-    "viewAll": "Alle anzeigen",
     "clearProgression": "Fortschritt löschen",
     "setAsWatched": "Als gesehen markieren",
+    "setAsNotWatched": "Als nicht gesehen markieren",
     "setFeature": "Als empfohlen markieren",
-    "credits" : {
-        "title": "Credits",
-        "cast": "Besetzung",
-        "crew": "Crew"
+    "moreInfo": "Mehr Infos",
+    "credits": {
+      "title": "Details",
+      "cast": "Besetzung",
+      "crew": "Crew",
+      "info": "Informationen"
+    },
+    "info": {
+      "originalTitle": "Originaltitel",
+      "originalLanguage": "Originalsprache",
+      "release": "Veröffentlichung",
+      "start": "Erste Ausstrahlung",
+      "end": "Letzte Ausstrahlung",
+      "seasons": "Staffeln",
+      "episodes": "Episoden",
+      "countries": "Produktionsländer",
+      "companies": "Produktionsfirmen",
+      "budget": "Budget",
+      "revenue": "Einnahmen"
     },
     "feature": {
       "title": "Empfohlen von diesem Film",
@@ -60,12 +92,27 @@
       "feature": "Zeigen Sie diesen Film in den empfohlenen Filmen auf der Startseite an"
     }
   },
+  "serie": {
+    "seasons": "Staffeln",
+    "seasonNumber": "Staffel {number}",
+    "seasonEpisode": "Staffel {season} · Episode {episode}",
+    "altSeason": "Poster der Staffel {season} von {title}",
+    "altEpisode": "Poster der Episode {episode} der Staffel {season} von {title}",
+    "episodesCount": "{count, plural, =1 {# Episode} other {# Episoden}}",
+    "minutes": "{runtime} Min.",
+    "statuses": {
+      "Returning Series": "Laufend",
+      "Planned": "Geplant",
+      "In Production": "In Produktion",
+      "Ended": "Beendet",
+      "Canceled": "Abgesetzt",
+      "Pilot": "Pilot"
+    }
+  },
   "comments": {
     "title": "Kommentare",
     "signInToComment": "Melden Sie sich an, um einen Kommentar zu schreiben",
     "edited": "Bearbeitet",
-    "readMore": "Mehr lesen",
-    "collapse": "Weniger anzeigen",
     "saveChange": "Änderungen speichern",
     "cancel": "Abbrechen",
     "writeComment": "Kommentar schreiben...",
@@ -79,19 +126,19 @@
       "profile": "Profil",
       "auth": "Passwort",
       "history": "Verlauf",
-      "comments": "Kommentare",
-      "avatar": "Avatar",
-      "api": "API"
+      "comments": "Kommentare"
     },
     "remove": "Entfernen",
-    "noMoviesYet": "Sie haben noch keine Filme gesehen.",
+    "noMediasYet": "Sie haben noch keinen Film und keine Serie gesehen.",
     "fields": {
       "submit": "Änderungen speichern",
       "username": "Benutzername"
     }
   },
   "common": {
-    "profilePictureAlt": "Profilbild"
+    "profilePictureAlt": "Profilbild",
+    "seeMore": "Mehr anzeigen",
+    "seeLess": "Weniger anzeigen"
   },
   "auth": {
     "signin": {
@@ -102,8 +149,7 @@
       "forgotPassword": "Passwort vergessen?",
       "submit": "Anmelden",
       "noAccount": "Noch kein Konto?",
-      "register": "Jetzt erstellen",
-      "oAuth": "Anmelden mit"
+      "register": "Jetzt erstellen"
     },
     "register": {
       "title": "Hypertube beitreten",
@@ -112,21 +158,13 @@
       "password": "Passwort",
       "submit": "Registrieren",
       "haveAccount": "Haben Sie bereits ein Konto?",
-      "signin": "Anmelden",
-      "oAuth": "Registrieren mit"
-    },
-    "forgotPassword": {
-      "title": "Passwort zurücksetzen",
-      "submit": "Senden"
+      "signin": "Anmelden"
     },
     "changePassword": {
       "current-password": "Aktuelles Passwort",
       "new-password": "Neues Passwort",
       "confirm-new-password": "Neues Passwort bestätigen",
       "submit": "Ändern"
-    },
-    "oauth": {
-      "loadingAuth": "Anmeldung läuft..."
     }
   },
   "modal": {
@@ -161,10 +199,6 @@
     "usernameTooShort": "Der Benutzername ist zu kurz.",
     "usernameTooLong": "Der Benutzername ist zu lang.",
     "usernameInvalid": "Benutzername ungültig.",
-    "firstnameTooLong": "Der Vorname ist zu lang.",
-    "firstnameInvalid": "Der Vorname ist ungültig.",
-    "lastnameTooLong": "Der Nachname ist zu lang.",
-    "lastnameInvalid": "Der Nachname ist ungültig.",
     "passwordTooShort": "Das Passwort ist zu kurz.",
     "passwordTooLong": "Das Passwort ist zu lang.",
     "passwordSameAsOld": "Das neue Passwort darf nicht mit dem alten Passwort übereinstimmen.",
@@ -176,7 +210,6 @@
     "success": {
       "textCopied": "{label} in die Zwischenablage kopiert.",
       "passwordChanged": "Ihr Passwort wurde aktualisiert.",
-      "newPasswordSet": "Ihr neues Passwort wurde festgelegt, Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
       "infoChanged": "Ihre Profilinformationen wurden aktualisiert.",
       "login": "Sie sind jetzt erfolgreich angemeldet.",
       "commentChange": "Ihr Kommentar wurde aktualisiert.",
@@ -187,13 +220,10 @@
       "network": "Der Server konnte nicht erreicht werden. Bitte überprüfen Sie Ihre Internetverbindung.",
       "loginRequired": "Sie müssen angemeldet sein, um fortzufahren.",
       "notFoundFilm": "Film nicht gefunden",
+      "notFoundSerie": "Serie nicht gefunden",
       "notFoundUser": "Benutzer nicht gefunden",
-      "missingToken": "Token fehlt.",
-      "invalidToken": "Token ungültig oder abgelaufen.",
-      "invalidQueryParameter": "Ungültiger Abfrageparameter.",
       "notFound": "Seite {path} nicht gefunden.",
       "torrentNotFound": "Torrent nicht gefunden. Dieser Film ist möglicherweise noch nicht zum Streaming verfügbar. Bitte versuchen Sie es später erneut.",
-      "subtitleNotFound": "Keine Untertitel in dieser Sprache verfügbar.",
       "failedChangeProgression": "Fehler beim Aktualisieren des Fortschritts: {error}"
     }
   }

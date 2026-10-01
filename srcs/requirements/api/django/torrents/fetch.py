@@ -8,12 +8,12 @@ from torrents.services.c411 import C411Client
 from torrents.models import Torrent
 
 
-def get_or_fetch_torrent(movie_id):
-    torrents = Torrent.objects.filter(movie_id=movie_id)
+def get_or_fetch_torrent(media_id, type):
+    torrents = Torrent.objects.filter(media_id=media_id)
     if not torrents.exists():
         try:
             c411 = C411Client()
-            torrents_data = c411.search_movies(movie_id)
+            torrents_data = c411.search_medias(type, media_id)
             torrents = []
 
             def get_language(obj):
@@ -43,7 +43,7 @@ def get_or_fetch_torrent(movie_id):
                         quality=get_quality(t),
                         language=get_language(t),
                         published_at=datetime.strptime(t['pubDate'], '%a, %d %b %Y %H:%M:%S %z'),
-                        movie_id=movie_id
+                        media_id=media_id
                     )
                 )
         except Exception as e:

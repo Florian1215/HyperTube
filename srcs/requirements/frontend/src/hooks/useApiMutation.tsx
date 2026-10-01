@@ -4,10 +4,10 @@ import {useLocale, useTranslations} from "next-intl";
 import {tLocale} from "@/i18n/request";
 import useNotification from "@/contexts/NotificationContext";
 import useModal from "@/contexts/ModalContext";
-import {fieldType} from "@/components/ui/Form";
 import useAuth from "@/contexts/AuthContext";
 import {usePathname} from "@/i18n/navigation";
 import {ApiError} from "@/services/apiClient";
+import {fieldType} from "@/types/utils";
 
 export default function useApiMutation(setErrorsAction?: (errors: Record<string, string>) => void, setFocusedIndex?: (idx: number) => void, formType?: string, fields?: fieldType[]) {
     const {setCallbackUrl, logout} = useAuth();

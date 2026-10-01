@@ -9,12 +9,20 @@
   "home": {
     "continueWatching": "Continue watching",
     "featured": "Featured",
-    "popular": "Popular",
+    "moviesPopular": "Popular movies",
+    "seriesPopular": "Popular series",
     "mostRated": "Most rated",
     "directStream": "Direct Streaming"
   },
-  "movies": {
-    "searchPlaceholder": "Search for a movie...",
+  "search": {
+    "moviesSearchPlaceholder": "Search for a movie...",
+    "movies": "Movies",
+    "seriesSearchPlaceholder": "Search for a series...",
+    "series": "Series",
+    "peopleSearchPlaceholder": "Search for an actor, a director...",
+    "people": "Actors / Directors",
+    "usersSearchPlaceholder": "Search for a user...",
+    "users": "Users",
     "noResults": "No movie found",
     "emptyPage": "Nothing to show here.",
     "noResultsResetFilter": "No results. Reset filters?",
@@ -28,29 +36,53 @@
       "more": "+ {count} more"
     }
   },
-  "movie": {
+  "media": {
     "watch": "Watch",
     "release": "Release",
     "status": "Status",
+    "statuses": {
+      "Rumored": "Rumored",
+      "Planned": "Planned",
+      "In Production": "In production",
+      "Post Production": "In post-production",
+      "Canceled": "Canceled"
+    },
+    "rating": "Rating",
     "length": "Length",
     "genre": "Genre",
     "directors": "Directors",
+    "creators": "Creators",
     "stars": "Stars",
     "synopsis": "Synopsis",
     "posterAlt": "Poster of movie: {title}",
-    "movieDownloading": "The movie is being downloaded. This may take up to 1 minute. Please wait...",
-    "torrentError": "An error occurred while trying to play the movie. Please try refreshing the page or try again later.",
+    "mediaDownloading": "The {type, select, series {series} other {movie}} is being downloaded. This may take up to 1 minute. Please wait...",
+    "torrentError": "An error occurred while trying to play the {type, select, series {series} other {movie}}. Please try refreshing the page or try again later.",
     "reloadPlayer": "Click Here to Reload Player",
     "decreaseSubDelay": "Decrease subtitle delay",
     "increaseSubDelay": "Increase subtitle delay",
-    "viewAll": "View all",
     "clearProgression": "Clear progression",
     "setAsWatched": "Mark as watched",
+    "setAsNotWatched": "Mark as not watched",
     "setFeature": "Feature this movie",
-    "credits" : {
-        "title": "Credits",
-        "cast": "Cast",
-        "crew": "Crew"
+    "moreInfo": "More info",
+    "credits": {
+      "title": "Details",
+      "cast": "Cast",
+      "crew": "Crew",
+      "info": "Information"
+    },
+    "info": {
+      "originalTitle": "Original title",
+      "originalLanguage": "Original language",
+      "release": "Release",
+      "start": "First aired",
+      "end": "Last aired",
+      "seasons": "Seasons",
+      "episodes": "Episodes",
+      "countries": "Production countries",
+      "companies": "Production companies",
+      "budget": "Budget",
+      "revenue": "Revenue"
     },
     "feature": {
       "title": "Recommended this movie",
@@ -60,12 +92,27 @@
       "feature": "Display this movie in the featured movies on the homepage"
     }
   },
+  "serie": {
+    "seasons": "Seasons",
+    "seasonNumber": "Season {number}",
+    "seasonEpisode": "Season {season} · Episode {episode}",
+    "altSeason": "Poster of season {season} of {title}",
+    "altEpisode": "Poster of episode {episode} of season {season} of {title}",
+    "episodesCount": "{count, plural, =1 {# episode} other {# episodes}}",
+    "minutes": "{runtime} min",
+    "statuses": {
+      "Returning Series": "Returning series",
+      "Planned": "Planned",
+      "In Production": "In production",
+      "Ended": "Ended",
+      "Canceled": "Canceled",
+      "Pilot": "Pilot"
+    }
+  },
   "comments": {
     "title": "Comments",
     "signInToComment": "Sign in to post a comment",
     "edited": "Edited",
-    "readMore": "Read more",
-    "collapse": "Collapse",
     "saveChange": "Save changes",
     "cancel": "Cancel",
     "writeComment": "Write a comment...",
@@ -79,19 +126,19 @@
       "profile": "Profile",
       "auth": "Password",
       "history": "History",
-      "comments": "Comments",
-      "avatar": "Avatar",
-      "api": "API"
+      "comments": "Comments"
     },
     "remove": "Remove",
-    "noMoviesYet": "You haven't seen any films yet.",
+    "noMediasYet": "You haven't watched any movie or series yet.",
     "fields": {
       "submit": "Save changes",
       "username": "Username"
     }
   },
   "common": {
-    "profilePictureAlt": "Profile picture"
+    "profilePictureAlt": "Profile picture",
+    "seeMore": "See more",
+    "seeLess": "See less"
   },
   "auth": {
     "signin": {
@@ -102,8 +149,7 @@
       "forgotPassword": "Forgot password?",
       "submit": "Sign in",
       "noAccount": "Don't have an account yet?",
-      "register": "Create one",
-      "oAuth": "Sign in with"
+      "register": "Create one"
     },
     "register": {
       "title": "Join Hypertube",
@@ -112,17 +158,13 @@
       "password": "Password",
       "submit": "Sign up",
       "haveAccount": "Already have an account?",
-      "signin": "Sign in",
-      "oAuth": "Sign up with"
+      "signin": "Sign in"
     },
     "changePassword": {
       "current-password": "Current password",
       "new-password": "New password",
       "confirm-new-password": "Confirm new password",
       "submit": "Change"
-    },
-    "oauth": {
-      "loadingAuth": "Signing in..."
     }
   },
   "modal": {
@@ -157,10 +199,6 @@
     "usernameTooShort": "Username is too short.",
     "usernameTooLong": "Username is too long.",
     "usernameInvalid": "Username is invalid.",
-    "firstnameTooLong": "Firstname is too long.",
-    "firstnameInvalid": "Firstname is invalid.",
-    "lastnameTooLong": "Lastname is too long.",
-    "lastnameInvalid": "Lastname is invalid.",
     "passwordTooShort": "Password is too short.",
     "passwordTooLong": "Password is too long.",
     "passwordSameAsOld": "New password must be different from the current password.",
@@ -172,7 +210,6 @@
     "success": {
       "textCopied": "{label} copied to clipboard.",
       "passwordChanged": "Your password has been updated.",
-      "newPasswordSet": "Your new password has been set, you can now sign in with your new password.",
       "infoChanged": "Your profile information has been updated.",
       "login": "You are now successfully signed in.",
       "commentChange": "Your comment has been updated.",
@@ -183,13 +220,10 @@
       "network": "Unable to contact the server. Please check your internet connection.",
       "loginRequired": "You must be signed in to access this page.",
       "notFoundFilm": "Film not found",
+      "notFoundSerie": "Serie not found",
       "notFoundUser": "User not found",
-      "missingToken": "Token is missing.",
-      "invalidToken": "Token is invalid or has expired.",
-      "invalidQueryParameter": "Invalid query parameter.",
       "notFound": "Page {path} not found.",
       "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later.",
-      "subtitleNotFound": "No subtitles available in this language.",
       "failedChangeProgression": "Failed to update progression: {error}"
     }
   }

@@ -53,8 +53,8 @@
 
 @layer components {
     .bg-gradient { @apply size-full absolute inset-0 bg-linear-to-t from-black via-transparent via-40% to-transparent opacity-90 pointer-events-none; }
-    .custom-movie-title { @apply truncate hover:underline decoration-2 underline-offset-3 }
-    .custom-complete-movie { @apply size-full absolute inset-0 bg-black/60; }
+    .custom-media-title { @apply truncate decoration-2 underline-offset-3 }
+    .custom-complete-media { @apply size-full absolute inset-0 bg-black/60; }
 
     .custom-cursor-left:hover { cursor: var(--cursor-left); }
     .custom-cursor-right:hover { cursor: var(--cursor-right); }
