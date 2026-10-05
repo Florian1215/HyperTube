@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from "react";
+import React, {useDeferredValue, useState} from "react";
 import ProfilePicture from "@/components/ProfilePicture";
 import {iUser} from "@/types/user";
 import {useSearchParams} from "next/navigation";
@@ -24,7 +24,8 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
     const t = useTranslations("profile.tabs");
     const tProfile = useTranslations("profile");
     const locale = useLocale();
-    const ActiveTab = tabs[activeTab].comp;
+    // the tab content is rendered with a low priority so that it does not freeze the tab bar scroll animation
+    const ActiveTab = tabs[useDeferredValue(activeTab)].comp;
 
     const date = new Date(user.created_at);
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
