@@ -12,7 +12,7 @@ export default function HorizontalScroll({children, className}: {children: React
         if (!row)
             return;
         const update = () => {
-            setCanScrollLeft(row.scrollLeft > 1);
+            setCanScrollLeft(row.scrollLeft > 0);
             setCanScrollRight(row.scrollLeft + row.clientWidth < row.scrollWidth - 1);
         };
         const observer = new ResizeObserver(update);
