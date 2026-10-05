@@ -114,7 +114,15 @@ class MediaTorrentsApiView(generics.ListAPIView):
     serializer_class = MediaTorrentSerializer
 
     def get_queryset(self):
-        return get_or_fetch_torrent(**self.kwargs)
+        episode = {}
+        if self.kwargs['type'] == 'series':
+            # the torrents of a series are the ones of an episode: ?season=<number>&episode=<number>
+            try:
+                episode['season_number'] = int(self.request.query_params['season'])
+                episode['episode_number'] = int(self.request.query_params['episode'])
+            except (KeyError, ValueError):
+                raise ValidationError()
+        return get_or_fetch_torrent(self.request, **self.kwargs, **episode)
 
 
 class MediasDirectStreamApiView(LangHistoryContext, generics.ListAPIView):

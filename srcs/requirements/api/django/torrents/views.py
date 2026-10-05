@@ -1,5 +1,5 @@
 from django.http import FileResponse, Http404
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,6 +7,7 @@ from rest_framework import status
 from config import settings
 from config.errors import TORRENT_NOT_FOUND
 from torrents.models import Torrent
+from torrents.parsing import match_episode
 from torrents.tasks import download_and_transcode
 
 
@@ -24,9 +25,21 @@ class TorrentsApiView(APIView):
             lang = torrent.media.original_language
         else:
             lang = 'fr'
+        season_number = episode_number = None
+        stream_id = torrent.id
+        if torrent.media.type == 'series':
+            # a series torrent can hold several episodes: the one to stream has to be given
+            try:
+                season_number = int(request.data['season_number'])
+                episode_number = int(request.data['episode_number'])
+            except (KeyError, TypeError, ValueError):
+                raise ValidationError()
+            if match_episode(torrent.title, season_number, episode_number) is None:
+                raise NotFound(TORRENT_NOT_FOUND)
+            stream_id = f'{torrent.id}-s{season_number}e{episode_number}'
         print('STATUS:', torrent.id, torrent.status, lang, flush=True)
-        download_and_transcode.delay(torrent.id, lang)
-        return Response({'id': torrent.id, 'status': torrent.status}, status=status.HTTP_201_CREATED)
+        download_and_transcode.delay(torrent.id, lang, season_number, episode_number, stream_id)
+        return Response({'id': torrent.id, 'status': torrent.status, 'stream_id': stream_id}, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
         print('DELETE TEST', flush=True)

@@ -204,6 +204,8 @@ class MediaHistorySerializer(serializers.ModelSerializer):
 
 
 class MediaTorrentSerializer(serializers.ModelSerializer):
+    seeds = serializers.IntegerField(source='seeders')
+
     class Meta:
         model = Torrent
         fields = [
@@ -212,7 +214,7 @@ class MediaTorrentSerializer(serializers.ModelSerializer):
             'status',
             'url',
             'size',
-            'seeders',
+            'seeds',
             'peers',
             'quality',
             'language',

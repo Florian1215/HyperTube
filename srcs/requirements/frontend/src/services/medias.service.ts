@@ -1,11 +1,11 @@
 import {iMediaDetails} from "@/types/media";
-import {iMedia, iProgress, iTorrent} from "@/types/media";
+import {iMedia, iProgress, iTorrent, iTorrentStream} from "@/types/media";
 import {useDebounce} from "use-debounce";
 import useApiQuery from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse} from "@/types/api";
 import {QueryClient} from "@tanstack/react-query";
-import {tMedia, tSearch} from "@/types/utils";
+import {iWatchEpisode, tMedia, tSearch} from "@/types/utils";
 import {iSerieDetails} from "@/types/serie";
 import {iMovieDetails} from "@/types/movie";
 
@@ -123,14 +123,18 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     });
 }
 
-export function torrentStreaming(torrentId: string, method: "POST" | "DELETE") {
-    return apiClient<tListResponse<iTorrent>>(`torrents/${torrentId}/`, undefined, {method: method});
+export function torrentStreaming(torrentId: string, method: "POST" | "DELETE", episode?: iWatchEpisode) {
+    const body = episode ? JSON.stringify({season_number: episode.season, episode_number: episode.episode}) : undefined;
+    return apiClient<iTorrentStream>(`torrents/${torrentId}/`, undefined, {method: method, body: body});
 }
 
-export function useTorrents(media?: iMedia) {
+// the torrents of a series are the ones of the given episode
+export function useTorrents(media?: iMedia, episode?: iWatchEpisode) {
+    const isSerie = media?.type === "series";
+    const query = isSerie && episode ? `?season=${episode.season}&episode=${episode.episode}` : "";
     return useApiQuery(
-        ["torrents", media?.id ?? ""],
-        (locale) => apiClient<tListResponse<iTorrent>>(`${media?.type}/${media?.id}/torrents/`, locale),
-        media !== undefined
+        ["torrents", media?.id ?? "", media?.type ?? "", query],
+        (locale) => apiClient<tListResponse<iTorrent>>(`${media?.type}/${media?.id}/torrents/${query}`, locale),
+        media !== undefined && (!isSerie || episode !== undefined)
     );
 }

@@ -36,6 +36,24 @@ class Torrent(models.Model):
         return f'{self.id} - {self.title}'
 
 
+class TorrentSearch(models.Model):
+    """ Remembers when the torrents of a season were last searched, to avoid querying the tracker on each request. """
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='torrent_searches')
+    season_number = models.IntegerField()
+    searched_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['media', 'season_number'],
+                name='unique_torrent_search',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.media.original_title} - S{self.season_number}'
+
+
 class DownloadMedia(models.Model):
     id = models.CharField(primary_key=True)
     torrent = models.ForeignKey(Torrent, on_delete=models.CASCADE, related_name='downloaded')

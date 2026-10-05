@@ -30,8 +30,8 @@ export default function MediaPage() {
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const handleError = useHandleError();
     const [torrentId, setTorrentId] = useState<string | undefined>();
+    const [streamId, setStreamId] = useState<string | undefined>();
     const [startVideo, setStartVideo] = useState(false);
-    const {data: torrents} = useTorrents(media)
     const {addNotification} = useNotification();
     const [errorStr, setError] = useState<undefined | string>();
     const tError = useTranslations("notifications.error");
@@ -45,6 +45,8 @@ export default function MediaPage() {
         episode: nextEpisode?.episode_number ?? 1,
         season: nextEpisode?.season_number ?? 1,
     };
+    const streamedEpisode = type === "series" ? watchedEpisode : undefined;
+    const {data: torrents} = useTorrents(media, streamedEpisode);
 
     useEffect(() => {
         if (error) {
@@ -59,7 +61,8 @@ export default function MediaPage() {
         const startDownloading = async () => {
             if (torrentId) {
                 try {
-                    await torrentStreaming(torrentId, "POST").then(() => {
+                    await torrentStreaming(torrentId, "POST", streamedEpisode).then((stream) => {
+                        setStreamId(stream.stream_id);
                         setStartVideo(true);
                     });
                 } catch (error) {
@@ -116,7 +119,7 @@ export default function MediaPage() {
             if (errorStr || !media)
                 return undefined;
             if (startVideo && "runtime" in media)
-                return <VideoPlayer media={media} user={user} src={`${API_URL}stream/${torrentId}/stream.m3u8`} setErrorAction={setError} tAction={t} stopDownloadingAction={stopDownloading}/>;
+                return <VideoPlayer media={media} user={user} src={`${API_URL}stream/${streamId}/stream.m3u8`} setErrorAction={setError} tAction={t} stopDownloadingAction={stopDownloading}/>;
             return <div className="size-full z-10 absolute custom-cursor-play" onClick={onClick}/>;}
         } actionButton={() => {
             if (startVideo)

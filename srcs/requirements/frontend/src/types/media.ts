@@ -54,6 +54,12 @@ export interface iTorrent {
     created_at: string
 }
 
+export interface iTorrentStream {
+    id: string
+    status: iTorrent["status"]
+    stream_id: string
+}
+
 export interface iProgress {
     // progress: number
     // progress: number
