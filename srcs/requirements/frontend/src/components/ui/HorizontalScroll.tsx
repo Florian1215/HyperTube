@@ -36,13 +36,8 @@ export default function HorizontalScroll({children, className}: {children: React
         {showArrows && <IconButton disabled={!canScrollLeft} onClick={() => scroll(-1)} color="black" disabledColor="gray">
             {(color: string) => <LeftArrowIcon color={color}/>}
         </IconButton>}
-        {/* the edge borders are drawn over the row: putting them on the row itself would shift its content while it scrolls */}
-        <div className="relative flex min-w-0 flex-1">
-            <div ref={rowRef} className={"flex min-w-0 flex-1 overflow-x-auto scrollbar-hide " + (className ?? "")}>
-                {children}
-            </div>
-            {canScrollLeft && <div className="absolute inset-y-0 left-0 border-l pointer-events-none"/>}
-            {canScrollRight && <div className="absolute inset-y-0 right-0 border-r pointer-events-none"/>}
+        <div ref={rowRef} className={"flex min-w-0 flex-1 overflow-x-auto scrollbar-hide " + (className ?? "") + (canScrollRight ? " border-r" : "") + (canScrollLeft ? " border-l" : "")}>
+            {children}
         </div>
         {showArrows && <IconButton disabled={!canScrollRight} onClick={() => scroll(1)} color="black" disabledColor="gray">
             {(color: string) => <RightArrowIcon color={color}/>}
