@@ -2,6 +2,7 @@ import {refreshAccessToken} from "@/services/auth.service";
 
 type ApiOptions = RequestInit & {body?: unknown};
 export const API_URL = "http://localhost:8439/api/v1/";
+export const SESSION_EXPIRED_EVENT = "session-expired";
 
 export default async function apiClient<T>(endpoint: string, locale?: string, options?: ApiOptions): Promise<T> {
     const token = localStorage.getItem("access");
@@ -29,8 +30,14 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
         if (data?.code === "token_not_valid" && endpoint !== 'auth/refresh/') {
             try {
                 await refreshAccessToken(locale);
-            } catch {
-                throw new ApiError(response.status, data);
+            } catch (error) {
+                if (!(error instanceof ApiError) && localStorage.getItem("refresh"))
+                    throw new ApiError(response.status, data);
+                const notify = localStorage.getItem("access") !== null;
+                localStorage.removeItem("access");
+                localStorage.removeItem("refresh");
+                if (notify)
+                    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
             }
             return apiClient<T>(endpoint, locale, options);
         }

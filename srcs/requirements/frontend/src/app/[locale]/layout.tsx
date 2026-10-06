@@ -11,6 +11,7 @@ import {NotificationProvider} from "@/contexts/NotificationContext";
 import {ModalProvider} from "@/contexts/ModalContext";
 import NotificationList from "@/components/ui/Notification/NotificationList";
 import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
+import SessionExpiredHandler from "@/contexts/SessionExpiredHandler";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import SigninModal from "@/components/layout/SigninModal";
 import RegisterModal from "@/components/layout/RegisterModal";
@@ -38,6 +39,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                     <NotificationProvider>
                         <ModalProvider>
                             <Page404ErrorHandler/>
+                            <SessionExpiredHandler/>
                             <NotificationList/>
 
                             <SigninModal/>

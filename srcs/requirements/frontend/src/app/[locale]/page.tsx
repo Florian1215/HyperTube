@@ -48,7 +48,7 @@ export default function HomePage() {
 
     const continueWatching = continueWatchingData ? continueWatchingData.results.filter((m) => !m.complete) : [];
 
-    const {data: dirctedWatchMovies} = useItems("movies", "directstream", undefined, !!user);
+    const {data: dirctedWatchMovies} = useItems("movies", "directstream");
     const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
 
     return (<div>
