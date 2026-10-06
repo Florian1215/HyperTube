@@ -210,7 +210,6 @@ class MediaTorrentSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'status',
-            'url',
             'size',
             'seeders',
             'peers',

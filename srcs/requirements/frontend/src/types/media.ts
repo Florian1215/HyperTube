@@ -44,7 +44,6 @@ export interface iPeople {
 export interface iTorrent {
     id: string
     title: string
-    url: string
     status: "not-downloaded" | "downloading" | "transcoding" | "completed" | "error"
     quality: string
     size: number

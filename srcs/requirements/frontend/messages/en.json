@@ -195,7 +195,8 @@
         "language": "Language",
         "seeds": "Seeds"
       },
-      "choose": "Select"
+      "choose": "Select",
+      "download": "Download the torrent"
     }
   },
   "validationErrors": {

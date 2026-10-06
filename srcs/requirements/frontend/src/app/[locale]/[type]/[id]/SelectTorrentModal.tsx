@@ -7,7 +7,9 @@ import {useTranslations} from "next-intl";
 import {iTorrent} from "@/types/media";
 import Button from "@/components/ui/Button/Button";
 import Pagination from "@/components/ui/Pagination";
-import {SortIcon} from "@/components/Icons";
+import {DownloadIcon, SortIcon} from "@/components/Icons";
+import IconButton from "@/components/ui/Button/IconButton";
+import {API_URL} from "@/services/apiClient";
 import {tT} from "@/types/utils";
 
 type SortKey = "title" | "status" | "quality" | "size" | "language" | "seeders";
@@ -104,17 +106,22 @@ function TorrentRow({torrent, setTorrentId, closeModal, t}: {torrent: iTorrent; 
 
     return (<tr className="border-t">
         <td className={className + " max-w-60 sm:max-w-96 truncate"} title={torrent.title}>{torrent.title}</td>
-        <td className={className + " text-center"}>{torrent.status}</td>
+        <td className={className}>{torrent.status}</td>
         <td className={className + " text-center"}>{torrent.quality}</td>
         <td className={className + " text-right"}>{`${Math.round(torrent.size)} ${t("gb")}`}</td>
         <td className={className + " text-right"}>{torrent.language}</td>
         <td className={className + " text-right"}>{torrent.seeders}</td>
         <td className={className}>
-            <Button onClick={() => {
-                    closeModal();
-                    if (setTorrentId)
-                        setTorrentId(torrent.id);
-                }}>{t("choose")}</Button>
+            <div className="flex items-center gap-2 sm:gap-3">
+                <Button onClick={() => {
+                        closeModal();
+                        if (setTorrentId)
+                            setTorrentId(torrent.id);
+                    }}>{t("choose")}</Button>
+                <IconButton title={t("download")} onClick={() => window.location.assign(`${API_URL}torrents/${torrent.id}/file/`)}>
+                    {(color: string) => <DownloadIcon color={color}/>}
+                </IconButton>
+            </div>
         </td>
     </tr>);
 }

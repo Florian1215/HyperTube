@@ -1,4 +1,6 @@
-from django.http import FileResponse, Http404
+import requests
+from django.http import FileResponse, Http404, HttpResponse
+from django.utils.http import content_disposition_header
 from django.utils import timezone
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.views import APIView
@@ -61,6 +63,21 @@ class TorrentsApiView(APIView):
         (settings.STREAM_DIR / stream_id / 'stream.m3u8').unlink(missing_ok=True)
         download_and_transcode.delay(torrent.id, lang, episode_number)
         return self.get_response(torrent, stream_id, 'downloading', status.HTTP_201_CREATED)
+
+
+class TorrentFileApiView(APIView):
+    @staticmethod
+    def get(request, torrent_id):
+        """The .torrent is downloaded through the API: its url holds the tracker API key."""
+        try:
+            torrent = Torrent.objects.get(id=torrent_id)
+            response = requests.get(torrent.url, timeout=30)
+            response.raise_for_status()
+        except (Torrent.DoesNotExist, requests.RequestException):
+            raise NotFound(TORRENT_NOT_FOUND)
+        return HttpResponse(response.content, content_type='application/x-bittorrent', headers={
+            'Content-Disposition': content_disposition_header(True, f'{torrent.title}.torrent'),
+        })
 
 
 class TorrentHLSApiView(APIView):
