@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 
+from django.db.models import Max
 from django.utils.translation import get_language_from_request
 from rest_framework import generics, viewsets
 from rest_framework.exceptions import NotFound, ValidationError
@@ -123,4 +124,5 @@ class MediasDirectStreamApiView(LangHistoryContext, generics.ListAPIView):
     serializer_class = SmallMediaSerializer
 
     def get_queryset(self):
-        return Media.objects.filter(torrents__downloaded__status='completed').distinct()  # .order_by('-created_at') todo
+        return Media.objects.filter(torrents__downloaded__status='completed').annotate(
+            last_watched_at=Max('torrents__downloaded__last_watched_at')).order_by('-last_watched_at')
