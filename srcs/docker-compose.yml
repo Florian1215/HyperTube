@@ -75,7 +75,7 @@ services:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
       TRANSCODE_PORT: ${TRANSCODE_PORT}
-    command: celery -A config worker -l INFO
+    command: celery -A config worker -B -s /tmp/celerybeat-schedule -l INFO
     networks:
       - backend_network
       - api_network
