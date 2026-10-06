@@ -48,7 +48,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
                 <p>{formattedReleaseDate}</p>
             </InfoMedia>
         }
-        <InfoMedia name={t("rating")}><div className="flex gap-2"><p>{media.rating.toFixed(1)}</p><StarIcon/></div></InfoMedia>
+        <InfoMedia name={t("rating")}><div className="flex gap-1 items-center"><p>{media.rating.toFixed(1)}</p><StarIcon/></div></InfoMedia>
         {status && <InfoMedia name={t("status")}><p>{status}</p></InfoMedia>}
         {
             "runtime" in media && media.runtime > 0 &&
