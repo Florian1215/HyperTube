@@ -13,7 +13,7 @@ export function useComments(mediaType: tMedia, mediaId?: string, page?: number) 
             let endpoint = `comments/${mediaType}/`;
 
             if (mediaId !== undefined && page !== undefined)
-                endpoint = `${mediaType}/${mediaId}/comments/?ordering=-updated_at&?page=${page}`;
+                endpoint = `${mediaType}/${mediaId}/comments/?ordering=-updated_at&page=${page}`;
             return apiClient<tListResponse<iComment>>(endpoint, locale);
         },
     );
@@ -39,7 +39,7 @@ export function deleteComment(locale: string, commentId: number) {
 }
 
 export function addCommentCache(queryClient: QueryClient, newComment: iComment, media: iMedia, userId: number) {
-    addQuery(queryClient, ["comments", media.id, 1], newComment);
+    addQuery(queryClient, ["comments", media.type, media.id, 1], newComment);
     const newDetailComment = structuredClone(newComment as iCommentDetails);
     newDetailComment.media = media;
     addQuery(queryClient, ["user-comments", userId, 1], newDetailComment);
@@ -47,11 +47,12 @@ export function addCommentCache(queryClient: QueryClient, newComment: iComment, 
 
 export function updateCommentCache(queryClient: QueryClient, newComment: iCommentDetails, userId: number) {
     updateQuery(queryClient, ["user-comments", userId, 1], newComment);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {media, ...comment}: {media: iMedia} & iComment = newComment;
-    updateQuery(queryClient, ["comments", media.id, 1], comment);
+    updateQuery(queryClient, ["comments"], comment);
 }
 
-export function removeCommentCache(queryClient: QueryClient, commentId: number, mediaId: string, userId: number) {
-    removeQuery(queryClient, ["comments", mediaId, ], commentId);
+export function removeCommentCache(queryClient: QueryClient, commentId: number, userId: number) {
+    removeQuery(queryClient, ["comments"], commentId);
     removeQuery(queryClient, ["user-comments", userId, 1], commentId);
 }

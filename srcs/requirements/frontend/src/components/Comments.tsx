@@ -32,10 +32,10 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
         addNotification(tSuccess("commentChange"), "success");
     }
 
-    const deleteDisplayComment = async (commentId: number, movieId?: string) => {
+    const deleteDisplayComment = async (commentId: number) => {
         deleteComment(locale, commentId).then(() => {
             if (currentUser)
-                removeCommentCache(queryClient, commentId, movieId ?? (currentMedia?.id ?? ""), currentUser.id);
+                removeCommentCache(queryClient, commentId, currentUser.id);
         });
     };
 
