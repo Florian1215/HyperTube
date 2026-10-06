@@ -25,6 +25,10 @@ def get_or_fetch_media_lang(media, lang, media_data=None):
     return media_lang
 
 
+def get_collection_id(media_data):
+    return (media_data.get('belongs_to_collection') or {}).get('id', 0)
+
+
 def create_media(type, media_data, image_data):
     kwarg = {
         'tmdb_id': media_data['id'],
@@ -45,6 +49,7 @@ def create_media(type, media_data, image_data):
     }
     if type == 'movies':
         kwarg['runtime'] = media_data['runtime']
+        kwarg['collection_id'] = get_collection_id(media_data)
     else:
         kwarg['in_production'] = media_data['in_production']
         kwarg['end_date'] = media_data.get('last_air_date')
@@ -83,11 +88,42 @@ def get_or_fetch_media(request, media_id, type: Literal['movies', 'series']):
             media_data = tmdb.get_media(type, media_id)
             image_data = tmdb.get_images_media(type, media_id)
             try:
-                # all or nothing: a half created media would be served as it is by the next requests
                 with transaction.atomic():
                     media = create_media(type, media_data, image_data)
             except IntegrityError:
-                # created by a concurrent request
                 media = Media.objects.get(tmdb_id=media_data['id'], type=type)
     get_or_fetch_media_lang(media, language, media_data)
     return media
+
+
+def get_media_collection(request, media):
+    res = {'id': None, 'name': None, 'parts': []}
+    if media.type != 'movies':
+        return res
+    with external_service('TMDB', MEDIA_NOT_FOUND.format(type='collection')):
+        tmdb = TMDBService(get_language_from_request(request))
+        if media.collection_id is None:
+            media.collection_id = get_collection_id(tmdb.get_media(media.type, media.tmdb_id, False))
+            media.save(update_fields=['collection_id'])
+        if not media.collection_id:
+            return res
+        collection = tmdb.get_collection(media.collection_id)
+        res['id'] = collection['id']
+        res['name'] = collection['name']
+        res['parts'] = sorted(collection['parts'], key=lambda part: part.get('release_date') or '9999')
+    set_custom_backdrops(res['parts'], media.type)
+    return res
+
+
+def fetch_search(type, query, lang, page):
+    with external_service('TMDB', MEDIA_NOT_FOUND.format(type=type)):
+        return TMDBService(lang).search_medias(type, query=query, page=page)
+
+
+def set_custom_backdrops(medias_data, type):
+    backdrops = dict(Media.objects.filter(type=type, tmdb_id__in=[m['id'] for m in medias_data])
+                     .values_list('tmdb_id', 'backdrop_url'))
+    for media_data in medias_data:
+        if backdrops.get(media_data['id']):
+            media_data['backdrop_url'] = backdrops[media_data['id']]
+    return medias_data

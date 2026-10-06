@@ -11,7 +11,7 @@ import Toggle from "@/components/ui/Toggle";
 import useNotification from "@/contexts/NotificationContext";
 import {ApiError} from "@/services/apiClient";
 import {tLocale} from "@/i18n/request";
-import {addQuery, removeQuery, updateMedia, updateQuery} from "@/hooks/useApiQuery";
+import {addQuery, removeQuery, updateMedia, updateMediaBackdrop} from "@/hooks/useApiQuery";
 import {useQueryClient} from "@tanstack/react-query";
 import {iMediaDetails} from "@/types/media";
 
@@ -32,7 +32,7 @@ export default function SetFeatureModal() {
                 const res = await updateMediaFeature(locale, m.type, m.id, feature, m.backdrops_url[backdropSelected]);
                 if (m.backdrop_url != res.backdrop_url) {
                     m.backdrop_url = res.backdrop_url;
-                    updateQuery(queryClient, ["medias"], m);
+                    updateMediaBackdrop(queryClient, m);
                     updateMedia(queryClient, m);
                 }
                 if (feature)

@@ -33,6 +33,16 @@ export interface iMediaDetails extends iMedia{
     feature: boolean
 }
 
+export interface iCollectionPart extends iMedia {
+    summary: string
+}
+
+export interface iCollection {
+    id: number | null
+    name: string | null
+    parts: iCollectionPart[]
+}
+
 export interface iPeople {
     id: string
     name: string

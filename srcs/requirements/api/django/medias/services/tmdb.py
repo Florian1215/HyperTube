@@ -122,3 +122,13 @@ class TMDBService:
         )
         response.raise_for_status()
         return response.json()
+
+    def get_collection(self, collection_id):
+        response = requests.get(
+            f'{settings.TMDB_BASE_URL}/collection/{collection_id}',
+            headers=self.headers,
+            params={'language': self.lang4},
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()

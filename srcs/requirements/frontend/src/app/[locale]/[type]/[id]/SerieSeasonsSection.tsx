@@ -98,7 +98,7 @@ function Episode({episode, serie, seasonNumber, user, altPoster, showDate, watch
 
     const isSelected = episode.episode_number === watchedEpisode.episode && seasonNumber === watchedEpisode.season;
     return (<tr>
-        <td className={"font-bold text-2xl font-wide text-right px-2" + (isSelected ? " border-l-5" : "")}>
+        <td className={"font-bold text-2xl font-wide text-right pr-1 pl-4" + (isSelected ? " border-l-5" : "")}>
             <span>{episode.episode_number}</span>
         </td>
         <td className="px-4 w-50 py-2 custom-cursor-play" onClick={() => handleClick(currentEpisode)}>

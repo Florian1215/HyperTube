@@ -63,13 +63,17 @@ class MediaSerializer(MediaProgressMixin, serializers.Serializer):
 
     @staticmethod
     def get_backdrop_url(obj):
-        return format_tmdb_image(obj['backdrop_path'], 'original')
+        return obj.get('backdrop_url') or format_tmdb_image(obj['backdrop_path'], 'original')
 
     @staticmethod
     def get_type(obj):
         if 'first_air_date' in obj:
             return 'series'
         return 'movies'
+
+
+class CollectionPartSerializer(MediaSerializer):
+    summary = serializers.CharField(source='overview')
 
 
 class CastSerializer(serializers.ModelSerializer):

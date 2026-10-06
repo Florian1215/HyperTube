@@ -21,6 +21,7 @@ import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import {iWatchEpisode, tMedia} from "@/types/utils";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import SerieSeasonsSection from "@/app/[locale]/[type]/[id]/SerieSeasonsSection";
+import MovieCollectionSection from "@/app/[locale]/[type]/[id]/MovieCollectionSection";
 import {useSeason} from "@/services/series.service";
 import {iMovieDetails} from "@/types/movie";
 
@@ -193,6 +194,7 @@ export default function MediaPage() {
         </MediaHero>
         <MediaInfoSection media={media}/>
         {media && media.type === "series" && "next_episode" in media && <SerieSeasonsSection serie={media} watchedEpisode={watchedEpisode} setWatchedEpisode={selectEpisode}/>}
+        {media && media.type === "movies" && <MovieCollectionSection key={media.id} media={media}/>}
         {media ? <CommentsSection media={media}/> : <div/>}
     </div>);
 }

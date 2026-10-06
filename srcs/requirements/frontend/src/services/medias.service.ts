@@ -1,4 +1,4 @@
-import {iMediaDetails} from "@/types/media";
+import {iMediaDetails, iCollection} from "@/types/media";
 import {iMedia, iProgress, iTorrent} from "@/types/media";
 import {useDebounce} from "use-debounce";
 import useApiQuery from "@/hooks/useApiQuery";
@@ -14,6 +14,14 @@ export function useMedia(mediaType: tMedia, mediaId: string, enabled = true) {
         ["media", mediaType, mediaId],
         (locale) => apiClient<iMovieDetails | iSerieDetails>(`${mediaType}/${mediaId}/`, locale),
         enabled,
+    );
+}
+
+export function useCollection(media?: iMedia) {
+    return useApiQuery(
+        ["collection", media?.id ?? ""],
+        (locale) => apiClient<iCollection>(`movies/${media?.id}/collection/`, locale),
+        media?.type === "movies",
     );
 }
 

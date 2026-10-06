@@ -91,7 +91,6 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
         torrent_path = download_dir / 'source.torrent'
         response = requests.get(torrent.url, timeout=30)
         response.raise_for_status()
-        print('TORRENT PATH', torrent_path, flush=True)
         torrent_path.write_bytes(response.content)
 
         # -----------------------------
@@ -119,13 +118,11 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
             params={'preferred_language': lang, 'torrent_id': stream_id},
             data=read_video(handle, info, video, download_dir / video[1], torrent, stream_id),
         )
-        print('RES', res.status_code, res.text, flush=True)
         res.raise_for_status()
         session.remove_torrent(handle)
         remove_source_video(torrent, stream_id, download_dir / video[1])
         set_status(torrent, stream_id, 'completed')
     except Exception as exc:
-        print("ERROR", exc, flush=True)
         set_status(torrent, stream_id, 'error', str(exc))
         raise
 

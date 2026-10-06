@@ -62,10 +62,11 @@ class Media(models.Model):
 
     budget = models.BigIntegerField(default=None, null=True)
     revenue = models.BigIntegerField(default=None, null=True)
-    production_countries = models.JSONField(default=list, blank=True)  # ISO 3166-1 codes
+    production_countries = models.JSONField(default=list, blank=True)
     production_companies = models.JSONField(default=list, blank=True)
 
     runtime = models.IntegerField(default=None, null=True)
+    collection_id = models.IntegerField(default=None, null=True)
 
     in_production = models.BooleanField(default=None, null=True)
     end_date = models.CharField(default=None, null=True)
@@ -103,4 +104,3 @@ class MediaLanguage(models.Model):
 
     def __str__(self):
         return f'{self.title} - {self.lang}'
-

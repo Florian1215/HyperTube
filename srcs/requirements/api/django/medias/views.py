@@ -2,18 +2,18 @@ from collections.abc import Mapping
 
 from django.db.models import Max
 from django.utils.translation import get_language_from_request
-from rest_framework import generics, viewsets
+from rest_framework import generics
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.response import Response
 
 from config.errors import MEDIA_NOT_FOUND, PROGRESS_NOT_FOUND
 from medias.context import LangHistoryContext
-from medias.fetch import get_or_fetch_media
+from medias.fetch import get_media_collection, get_or_fetch_media, fetch_search, set_custom_backdrops
 from medias.models import Media
 from medias.pagination import TMDBPagination
 from medias.permissions import CanRecommendMedia
 from medias.serializers import MediaDetailSerializer, MediaSerializer, MediaFeatureSerializer, MediaProgressSerializer, \
-    MediaTorrentSerializer, SmallMediaSerializer
-from medias.services.tmdb import TMDBService
+    MediaTorrentSerializer, SmallMediaSerializer, CollectionPartSerializer
 from series.fetch import get_or_fetch_season
 from series.models import Episode
 from torrents.fetch import get_or_fetch_torrent
@@ -38,7 +38,6 @@ class MediasListView(LangHistoryContext, generics.ListAPIView):
         self.tmdb_request = None
 
     def get_queryset(self):
-        print('TEST', self, self.kwargs, flush=True)
         if '/top-rated/' in self.request.path:
             query = 'top_rated'
         else:
@@ -49,17 +48,8 @@ class MediasListView(LangHistoryContext, generics.ListAPIView):
             page = int(page)
         except ValueError:
             page = 1
-        tmdb = TMDBService(language)
-        response = tmdb.search_medias(self.kwargs['type'], query=query, page=page)
-        self.tmdb_request = response
-        res = []
-        for media in response['results']:
-            try:
-                media['backdrop_path'] = Media.objects.get(id=media['id']).backdrop_url
-            except Media.DoesNotExist:
-                pass
-            res.append(media)
-        return res
+        self.tmdb_request = fetch_search(self.kwargs['type'], query, language, page)
+        return set_custom_backdrops(self.tmdb_request['results'], self.kwargs['type'])
 
 
 class MediaFeatureApiView(generics.UpdateAPIView):
@@ -118,6 +108,16 @@ class MediaTorrentsApiView(generics.ListAPIView):
         params = self.request.query_params
         return get_or_fetch_torrent(self.request, **self.kwargs, season_number=params.get('season_number'),
                                     episode_number=params.get('episode_number'))
+
+
+class MediaCollectionApiView(LangHistoryContext, generics.GenericAPIView):
+    serializer_class = CollectionPartSerializer
+
+    def get(self, request, *args, **kwargs):
+        media = get_or_fetch_media(request, **kwargs)
+        collection = get_media_collection(request, media)
+        collection['parts'] = self.get_serializer(collection['parts'], many=True).data
+        return Response(collection)
 
 
 class MediasDirectStreamApiView(LangHistoryContext, generics.ListAPIView):
