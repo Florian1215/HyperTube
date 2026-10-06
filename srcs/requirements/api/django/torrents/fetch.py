@@ -4,6 +4,7 @@ from datetime import date, datetime
 from rest_framework.exceptions import NotFound, ValidationError
 
 from config.errors import TORRENT_NOT_FOUND, MEDIA_NOT_FOUND
+from config.exceptions import external_service
 from medias.fetch import get_or_fetch_media
 from series.fetch import get_or_fetch_season
 from torrents.services.c411 import C411Client
@@ -61,9 +62,8 @@ def get_or_fetch_torrent(request, media_id, type, season_number=None, episode_nu
     else:
         season_number = None
     if not torrents.exists():
-        try:
-            c411 = C411Client()
-            torrents_data = c411.search_medias(type, media_id, season_number)
+        with external_service('C411', TORRENT_NOT_FOUND):
+            torrents_data = C411Client.search_medias(media_id, season_number)
             for t in torrents_data:
                 torrent_episode = None
                 if type == 'series':
@@ -86,10 +86,6 @@ def get_or_fetch_torrent(request, media_id, type, season_number=None, episode_nu
                         'episode_number': torrent_episode,
                     }
                 )
-        except Exception as e:
-            # todo refaire erreur en fonction de l'erreur
-            print('ERROR', e, flush=True)
-            raise NotFound(TORRENT_NOT_FOUND)
     if type == 'series':
         return [t for t in torrents if t.episode_number is None or t.episode_number == episode_number]
     return torrents

@@ -9,6 +9,7 @@ from rest_framework import status
 
 from config import settings
 from config.errors import TORRENT_NOT_FOUND
+from config.exceptions import external_service
 from torrents.models import DownloadMedia, Torrent
 from torrents.tasks import download_and_transcode
 
@@ -71,10 +72,11 @@ class TorrentFileApiView(APIView):
         """The .torrent is downloaded through the API: its url holds the tracker API key."""
         try:
             torrent = Torrent.objects.get(id=torrent_id)
+        except Torrent.DoesNotExist:
+            raise NotFound(TORRENT_NOT_FOUND)
+        with external_service('C411', TORRENT_NOT_FOUND):
             response = requests.get(torrent.url, timeout=30)
             response.raise_for_status()
-        except (Torrent.DoesNotExist, requests.RequestException):
-            raise NotFound(TORRENT_NOT_FOUND)
         return HttpResponse(response.content, content_type='application/x-bittorrent', headers={
             'Content-Disposition': content_disposition_header(True, f'{torrent.title}.torrent'),
         })

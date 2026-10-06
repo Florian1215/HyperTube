@@ -62,6 +62,7 @@ class TMDBService:
             f'{settings.TMDB_BASE_URL}/{endpoint}',
             headers=self.headers,
             params=params,
+            timeout=10,
         )
         response.raise_for_status()
         res = response.json()
@@ -82,6 +83,7 @@ class TMDBService:
             f'{settings.TMDB_BASE_URL}/{type}/{tmdb_id}',
             headers=self.headers,
             params=params,
+            timeout=10,
         )
         response.raise_for_status()
         res = response.json()
@@ -99,6 +101,7 @@ class TMDBService:
             f'{settings.TMDB_BASE_URL}/{type}/{tmdb_id}/images',
             headers=self.headers,
             params=params,
+            timeout=10,
         )
         response.raise_for_status()
         return response.json()
@@ -115,6 +118,7 @@ class TMDBService:
             f'{settings.TMDB_BASE_URL}/tv/{tmdb_id}/season/{season_number}',
             headers=self.headers,
             params=params,
+            timeout=10,
         )
         response.raise_for_status()
         return response.json()
