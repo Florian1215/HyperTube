@@ -39,6 +39,7 @@
   "media": {
     "watch": "Watch",
     "resume": "Resume",
+    "nextEpisode": "Next episode",
     "release": "Release",
     "status": "Status",
     "statuses": {

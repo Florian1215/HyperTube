@@ -115,6 +115,28 @@ export default function MediaPage() {
         setSelectedEpisode(episode);
     }
 
+    const getFollowingEpisode = (): iWatchEpisode | undefined => {
+        if (media?.type !== "series" || !season)
+            return undefined;
+        const next = season.episodes.filter((e) => e.episode_number > watchedEpisode.episode).sort((a, b) => a.episode_number - b.episode_number)[0];
+        if (next) {
+            if (next.release_date && next.release_date > new Date().toISOString().slice(0, 10))
+                return undefined;
+            return {runtime: next.complete ? 0 : next.progress, episode: next.episode_number, season: watchedEpisode.season};
+        }
+        if ("number_of_seasons" in media && watchedEpisode.season < media.number_of_seasons)
+            return {runtime: 0, episode: 1, season: watchedEpisode.season + 1};
+        return undefined;
+    }
+    const followingEpisode = getFollowingEpisode();
+
+    const showFollowingEpisode = () => {
+        if (followingEpisode)
+            selectEpisode(followingEpisode);
+        else
+            closePlayer();
+    }
+
     const handleTorrent = async () => {
         const selectedTorrent = getBestTorrent(torrents?.results);
         if (torrents && selectedTorrent)
@@ -141,7 +163,7 @@ export default function MediaPage() {
                 return <VideoPlayer key={streamPath} media={media} user={user} src={`${API_URL}${streamPath}`} runtime={runtime ?? 0}
                                     startAt={resumeAt}
                                     seasonNumber={isSerie ? watchedEpisode.season : undefined} episodeNumber={isSerie ? watchedEpisode.episode : undefined} episodeName={isSerie ? episodeDetails?.name : undefined}
-                                    setErrorAction={setError} tAction={t}/>;
+                                    setErrorAction={setError} tAction={t} nextEpisodeAction={followingEpisode ? showFollowingEpisode : undefined} endedAction={isSerie ? showFollowingEpisode : undefined}/>;
             }
             return <div className={"size-full z-10 absolute" + (onClick ? " custom-cursor-play" : "")} onClick={onClick}/>;}
         } actionButton={() => {

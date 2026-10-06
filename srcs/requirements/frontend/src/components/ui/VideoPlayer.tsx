@@ -21,7 +21,7 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT}) {
+export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction, nextEpisodeAction, endedAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, nextEpisodeAction?: () => void, endedAction?: () => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -47,12 +47,13 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const setComplete = useRef(false);
     const min15 = 15 * 60;
     const min5 = 5 * 60;
+    const min3 = 3 * 60;
     const isLiveRef = useRef(true);
     const delaySubtitle = useRef(0);
     const queryClient = useQueryClient();
     const resumed = useRef(false);
     const barDuration = Math.max(fullDuration, downloadDuration);
-    const completeBefore = episodeNumber === undefined ? min15 : fullDuration * 0.1;
+    const completeBefore = episodeNumber === undefined ? min15 : min3;
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -334,7 +335,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         </div>)}
 
         <video ref={videoRef} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
-            onClick={togglePlay} onTimeUpdate={handleTimeUpdate} controls={false}
+            onClick={togglePlay} onTimeUpdate={handleTimeUpdate} onEnded={endedAction} controls={false}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
@@ -344,6 +345,8 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             <div className="max-w-2/3 sm:max-w-1/2 mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
         </div>}
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
+            {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
+                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-loading">{tAction("nextEpisode")}</button>}
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
             {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
