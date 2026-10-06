@@ -71,9 +71,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
                 <ExpandableText showBtn={false}>{media.summary}</ExpandableText>
             </InfoMedia>
         }
-        <InfoMedia name="">
-            <TextButton onClick={() => openModal({type: "credits", cast: media.cast, crew: media.crew, media: media})}>{t("moreInfo")}</TextButton>
-        </InfoMedia>
+        <TextButton onClick={() => openModal({type: "credits", cast: media.cast, crew: media.crew, media: media})}>{t("moreInfo")}</TextButton>
     </div>);
 }
 
