@@ -1,6 +1,6 @@
 import random
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
 
 
@@ -28,6 +28,16 @@ class User(AbstractUser):
         if not self.color:
             self.color = random.choice([choice[0] for choice in self.COLOR_CHOICES])
         super().save(*args, **kwargs)
+
+    @property
+    def perm(self):
+        """'admin', or the permissions of the user ('app_label.codename') separated by a comma."""
+        if not self.is_active:
+            return ''
+        permissions = self.get_all_permissions()
+        if self.is_superuser or len(permissions) == Permission.objects.count():
+            return 'admin'
+        return ','.join(sorted(permissions))
 
     def __str__(self):
         return self.username

@@ -63,7 +63,7 @@ class MediasListView(LangHistoryContext, generics.ListAPIView):
 
 class MediaFeatureApiView(generics.UpdateAPIView):
     serializer_class = MediaFeatureSerializer
-    permissions_classes = [CanRecommendMedia]
+    permission_classes = [CanRecommendMedia]
 
     def get_object(self):
         return get_or_fetch_media(self.request, self.kwargs['media_id'], self.kwargs['type'])

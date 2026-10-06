@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserMeSerializer(serializers.ModelSerializer):
-    featured = serializers.SerializerMethodField()
+    perm = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
@@ -34,15 +34,9 @@ class UserMeSerializer(serializers.ModelSerializer):
             'username',
             'color',
             'profile_picture',
-            'featured',
+            'perm',
             'created_at'
         ]
-
-    def get_featured(self, _):
-        try:
-            return self.context['request'].user.has_perm('medias.can_recommend_media')
-        except Exception:
-            return False
 
 
 class RegisterSerializer(serializers.ModelSerializer):

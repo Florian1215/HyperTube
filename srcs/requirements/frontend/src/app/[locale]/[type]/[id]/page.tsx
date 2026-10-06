@@ -6,6 +6,7 @@ import {torrentStreaming, torrentStreamStatus, useMedia, useTorrents} from "@/se
 import useHandleError from "@/hooks/useHandleError";
 import MediaHero from "@/components/MediaHero";
 import getBestTorrent from "@/utils/getBestTorrent";
+import hasPerm from "@/utils/hasPerm";
 import useNotification from "@/contexts/NotificationContext";
 import {useTranslations} from "next-intl";
 import useAuth from "@/contexts/AuthContext";
@@ -39,7 +40,7 @@ export default function MediaPage() {
     const tError = useTranslations("notifications.error");
     const {openModal} = useModal();
     const t = useTranslations("media");
-    const featureBtn= (media && user && user.featured) ? () => openModal({type: "set-feature", media: media}) : undefined;
+    const featureBtn= (media && hasPerm(user, "medias.can_recommend_medias")) ? () => openModal({type: "set-feature", media: media}) : undefined;
     const [selectedEpisode, setSelectedEpisode] = useState<iWatchEpisode>();
     const nextEpisode = media && "next_episode" in media ? media.next_episode : undefined;
     const watchedEpisode: iWatchEpisode = selectedEpisode ?? {
