@@ -123,14 +123,31 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     });
 }
 
-export function torrentStreaming(torrentId: string, method: "POST" | "DELETE") {
-    return apiClient<tListResponse<iTorrent>>(`torrents/${torrentId}/`, undefined, {method: method});
+type tTorrentStream = {id: string, status: iTorrent["status"], stream: string};
+
+export function torrentStreaming(torrentId: string, episode_number?: number) {
+    return apiClient<tTorrentStream>(`torrents/${torrentId}/`, undefined, {method: "POST", body: JSON.stringify({episode_number})});
 }
 
-export function useTorrents(media?: iMedia) {
+export function torrentStreamStatus(torrentId: string, episode_number?: number) {
+    return apiClient<tTorrentStream>(`torrents/${torrentId}/` + (episode_number !== undefined ? `?episode_number=${episode_number}` : ""));
+}
+
+export function useTorrents(media?: iMedia, season_number?: number, episode_number?: number) {
+    const isSerie = media?.type === "series";
+
     return useApiQuery(
-        ["torrents", media?.id ?? ""],
-        (locale) => apiClient<tListResponse<iTorrent>>(`${media?.type}/${media?.id}/torrents/`, locale),
-        media !== undefined
+        ["torrents", media?.type ?? "", media?.id ?? "", isSerie ? season_number : undefined, isSerie ? episode_number : undefined],
+        (locale) => {
+            let endpoint = `${media?.type}/${media?.id}/torrents/`;
+
+            if (isSerie) {
+                endpoint += `?season_number=${season_number}`;
+                if (episode_number !== undefined)
+                    endpoint += `&episode_number=${episode_number}`;
+            }
+            return apiClient<tListResponse<iTorrent>>(endpoint, locale);
+        },
+        media !== undefined && (!isSerie || season_number !== undefined)
     );
 }

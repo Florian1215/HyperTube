@@ -1,11 +1,14 @@
 from datetime import timedelta
 from os import environ
+
+from celery.schedules import crontab
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path('/stream/').resolve()
-TORRENT_DIR = DATA_DIR / 'streams'
+TORRENT_DIR = DATA_DIR / 'torrents'
+STREAM_DIR = DATA_DIR / 'streams'
 
 
 # Quick-start development settings - unsuitable for production
@@ -19,7 +22,17 @@ C411_BASE_URL = 'https://c411.org/api'
 C411_API_KEY = environ['C411_API_KEY']
 CELERY_BROKER_URL = environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
+CELERY_BEAT_SCHEDULE = {
+    'delete-expired-downloads': {
+        'task': 'torrents.tasks.delete_expired_downloads',
+        'schedule': crontab(hour=4, minute=0),
+    },
+}
+
+DOWNLOAD_RETENTION = timedelta(days=30)
 TRANSCODE_PORT = environ.get('TRANSCODE_PORT', 5024)
+
+TRANSCODE_URL = f"http://{environ.get('TRANSCODE_HOST', 'host.docker.internal')}:{TRANSCODE_PORT}"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']

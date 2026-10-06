@@ -38,6 +38,7 @@
   },
   "media": {
     "watch": "Ansehen",
+    "resume": "Fortsetzen",
     "release": "Veröffentlichung",
     "status": "Status",
     "statuses": {
@@ -185,6 +186,7 @@
       "title": "Torrent auswählen",
       "gb": "GB",
       "columns": {
+        "title": "Titel",
         "status": "Status",
         "quality": "Qualität",
         "size": "Größe",

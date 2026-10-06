@@ -114,11 +114,13 @@ class MediaTorrentsApiView(generics.ListAPIView):
     serializer_class = MediaTorrentSerializer
 
     def get_queryset(self):
-        return get_or_fetch_torrent(**self.kwargs)
+        params = self.request.query_params
+        return get_or_fetch_torrent(self.request, **self.kwargs, season_number=params.get('season_number'),
+                                    episode_number=params.get('episode_number'))
 
 
 class MediasDirectStreamApiView(LangHistoryContext, generics.ListAPIView):
     serializer_class = SmallMediaSerializer
 
     def get_queryset(self):
-        return Media.objects.filter(torrents__downloaded__isnull=False).distinct()  # .order_by('-created_at') todo
+        return Media.objects.filter(torrents__downloaded__status='completed').distinct()  # .order_by('-created_at') todo

@@ -38,6 +38,7 @@
   },
   "media": {
     "watch": "Regarder",
+    "resume": "Reprendre",
     "release": "Sortie",
     "status": "Statut",
     "statuses": {
@@ -185,6 +186,7 @@
       "title": "Sélectionner un torrent",
       "gb": "Go",
       "columns": {
+        "title": "Titre",
         "status": "État",
         "quality": "Qualité",
         "size": "Taille",

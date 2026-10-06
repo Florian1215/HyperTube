@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {torrentStreaming, useMedia, useTorrents} from "@/services/medias.service";
+import {torrentStreaming, torrentStreamStatus, useMedia, useTorrents} from "@/services/medias.service";
 import useHandleError from "@/hooks/useHandleError";
 import MediaHero from "@/components/MediaHero";
 import getBestTorrent from "@/utils/getBestTorrent";
@@ -20,6 +20,8 @@ import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import {iWatchEpisode, tMedia} from "@/types/utils";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import SerieSeasonsSection from "@/app/[locale]/[type]/[id]/SerieSeasonsSection";
+import {useSeason} from "@/services/series.service";
+import {iMovieDetails} from "@/types/movie";
 
 export default function MediaPage() {
     const params = useParams();
@@ -31,7 +33,7 @@ export default function MediaPage() {
     const handleError = useHandleError();
     const [torrentId, setTorrentId] = useState<string | undefined>();
     const [startVideo, setStartVideo] = useState(false);
-    const {data: torrents} = useTorrents(media)
+    const [streamPath, setStreamPath] = useState<string | undefined>();
     const {addNotification} = useNotification();
     const [errorStr, setError] = useState<undefined | string>();
     const tError = useTranslations("notifications.error");
@@ -45,6 +47,9 @@ export default function MediaPage() {
         episode: nextEpisode?.episode_number ?? 1,
         season: nextEpisode?.season_number ?? 1,
     };
+    const {data: torrents, isLoading: torrentsLoading} = useTorrents(media, watchedEpisode.season, watchedEpisode.episode);
+    const {data: season} = useSeason(id, watchedEpisode.season, type === "series");
+    const episodeDetails = season?.episodes.find((e) => e.episode_number === watchedEpisode.episode);
 
     useEffect(() => {
         if (error) {
@@ -56,13 +61,25 @@ export default function MediaPage() {
     }, [error]);
 
     useEffect(() => {
+        let cancelled = false;
         const startDownloading = async () => {
             if (torrentId) {
                 try {
-                    await torrentStreaming(torrentId, "POST").then(() => {
-                        setStartVideo(true);
-                    });
+                    const episode = media?.type === "series" ? watchedEpisode.episode : undefined;
+                    let res = await torrentStreaming(torrentId, episode);
+                    while (!cancelled && !(await fetch(`${API_URL}${res.stream}`)).ok) {
+                        if (res.status === "error")
+                            throw new Error(res.status);
+                        await new Promise((resolve) => setTimeout(resolve, 2000));
+                        res = await torrentStreamStatus(torrentId, episode);
+                    }
+                    if (cancelled)
+                        return;
+                    setStreamPath(res.stream);
+                    setStartVideo(true);
                 } catch (error) {
+                    if (cancelled)
+                        return;
                     if (error instanceof ApiError)
                         addNotification(error.message, "error");
                     else
@@ -73,57 +90,66 @@ export default function MediaPage() {
         }
 
         startDownloading().then(() => {});
+        return () => {cancelled = true;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [torrentId]);
 
     if (errorNode)
         return (errorNode);
 
+    const closePlayer = () => {
+        setStartVideo(false);
+        setTorrentId(undefined);
+        setStreamPath(undefined);
+        setError(undefined);
+    }
+
+    const startTorrent = (selectTorrentId: string) => {
+        if (media?.type === "series")
+            setSelectedEpisode(watchedEpisode);
+        setTorrentId(selectTorrentId);
+    }
+
+    const selectEpisode = (episode: iWatchEpisode) => {
+        closePlayer();
+        setSelectedEpisode(episode);
+    }
+
     const handleTorrent = async () => {
         const selectedTorrent = getBestTorrent(torrents?.results);
         if (torrents && selectedTorrent)
-            setTorrentId(selectedTorrent.id);
+            startTorrent(selectedTorrent.id);
         else
             addNotification(tError("torrentNotFound"), "error");
     }
 
-    const stopDownloading = async () => {
-        if (torrentId) {
-            try {
-                await torrentStreaming(torrentId, "DELETE").then(() => {
-                    setStartVideo(false);
-                    setTorrentId(undefined);
-                });
-            } catch (error) {
-                if (error instanceof ApiError)
-                    addNotification(error.message, "error");
-                else
-                    addNotification(tError("unknown"), "error");
-                setTorrentId(undefined);
-            }
-        }
-    }
-
     const handleRightClick = (e?: React.MouseEvent<HTMLDivElement>) => {
         e?.preventDefault();
-        openModal({type: "select-torrent", torrents: torrents?.results, setTorrentId: setTorrentId});
+        openModal({type: "select-torrent", torrents: torrents?.results, setTorrentId: startTorrent});
     };
 
-    const onClick = torrents ? handleTorrent : undefined;
+    const onClick = !torrentsLoading && getBestTorrent(torrents?.results) ? handleTorrent : undefined;
+    const runtime = media?.type === "series" ? episodeDetails?.runtime : (media as iMovieDetails | undefined)?.runtime;
+    const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
 
     return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
         <MediaHero media={media} childrenAction={() => {
             if (errorStr || !media)
                 return undefined;
-            if (startVideo && "runtime" in media)
-                return <VideoPlayer media={media} user={user} src={`${API_URL}stream/${torrentId}/stream.m3u8`} setErrorAction={setError} tAction={t} stopDownloadingAction={stopDownloading}/>;
-            return <div className="size-full z-10 absolute custom-cursor-play" onClick={onClick}/>;}
+            if (startVideo && streamPath && runtime !== undefined) {
+                const isSerie = media.type === "series";
+                return <VideoPlayer key={streamPath} media={media} user={user} src={`${API_URL}${streamPath}`} runtime={runtime ?? 0}
+                                    startAt={resumeAt}
+                                    seasonNumber={isSerie ? watchedEpisode.season : undefined} episodeNumber={isSerie ? watchedEpisode.episode : undefined} episodeName={isSerie ? episodeDetails?.name : undefined}
+                                    setErrorAction={setError} tAction={t}/>;
+            }
+            return <div className={"size-full z-10 absolute" + (onClick ? " custom-cursor-play" : "")} onClick={onClick}/>;}
         } actionButton={() => {
-            if (startVideo)
+            if (startVideo || torrentId)
                 return undefined;
             return (<div className="relative z-30">
-                {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode} runtime={watchedEpisode.runtime}/>}
-                <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t("watch")}</SecondaryButton>
+                {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode}/>}
+                <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t(resumeAt > 0 ? "resume" : "watch")}</SecondaryButton>
                 {featureBtn && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
             </div>);}
         }>
@@ -132,7 +158,7 @@ export default function MediaPage() {
                     className="max-w-4/5 sm:max-w-130 bg-white border p-3 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
                     <p className="text-sm sm:text-xl font-medium text-red">{t("torrentError", {type})}</p>
                     <SmallText className="mb-4 sm:mb-6">{errorStr}</SmallText>
-                    <Button onClick={() => console.log("reload player")}>{t("reloadPlayer")}</Button>
+                    <Button onClick={() => setError(undefined)}>{t("reloadPlayer")}</Button>
                 </div>
             </div>}
 
@@ -142,9 +168,8 @@ export default function MediaPage() {
                 <SmallText className="my-2 xl:my-4 text-white">{t("mediaDownloading", {type})}</SmallText>
             </div>}
         </MediaHero>
-        {startVideo && <div className="px-4 sm:px-6 w-full" ><Button onClick={stopDownloading}>STOP</Button></div>}
         <MediaInfoSection media={media}/>
-        {media && media.type === "series" && "next_episode" in media && <SerieSeasonsSection serie={media} watchedEpisode={watchedEpisode} setWatchedEpisode={setSelectedEpisode}/>}
+        {media && media.type === "series" && "next_episode" in media && <SerieSeasonsSection serie={media} watchedEpisode={watchedEpisode} setWatchedEpisode={selectEpisode}/>}
         {media ? <CommentsSection media={media}/> : <div/>}
     </div>);
 }

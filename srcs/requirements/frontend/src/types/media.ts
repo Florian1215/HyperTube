@@ -45,11 +45,11 @@ export interface iTorrent {
     id: string
     title: string
     url: string
-    status: "not-downloaded" | "downloading" | "transcoding" | "completed" | "error" | "cancelled"
+    status: "not-downloaded" | "downloading" | "transcoding" | "completed" | "error"
     quality: string
     size: number
     language: string
-    seeds: number
+    seeders: number
     peers: number
     created_at: string
 }

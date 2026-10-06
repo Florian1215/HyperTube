@@ -38,6 +38,7 @@
   },
   "media": {
     "watch": "Watch",
+    "resume": "Resume",
     "release": "Release",
     "status": "Status",
     "statuses": {
@@ -185,6 +186,7 @@
       "title": "Select a torrent",
       "gb": "GB",
       "columns": {
+        "title": "Title",
         "status": "Status",
         "quality": "Quality",
         "size": "Size",

@@ -1,11 +1,14 @@
 import json
+import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from typing import BinaryIO, List
 import logging
 
 
 DEFAULT_AUDIO_MAP = '0:a:0'
+PROBE_SIZE = 10 * 1024 * 1024
 
 ISO639_1_TO_2 = {
     'en': ['eng'],
@@ -46,8 +49,18 @@ class FFProbeStream:
     title: str = ''
 
 
-def probe_streams_from_reader(reader: BinaryIO) -> List[FFProbeStream]:
-    data = reader.read(10 * 1024 * 1024)
+def read_head(reader: BinaryIO, size: int) -> bytes:
+    chunks = []
+    while size > 0:
+        chunk = reader.read(size)
+        if not chunk:
+            break
+        chunks.append(chunk)
+        size -= len(chunk)
+    return b''.join(chunks)
+
+
+def probe_streams(data: bytes) -> List[FFProbeStream]:
     process = subprocess.run([
         'ffprobe',
         '-v',
@@ -221,31 +234,39 @@ def default_transcode_args(input_path: str, playlist: str, audio_map: str) -> Li
 
 
 def convert_pipe_hls(reader: BinaryIO, playlist: str, original_lang: str = '') -> None:
+    """reader does not need to be seekable or complete: ffmpeg is fed as the data arrives."""
     video_codec = ''
     audio_map = DEFAULT_AUDIO_MAP
-    original_position = reader.tell()
 
+    head = read_head(reader, PROBE_SIZE)
     try:
-        reader.seek(0)
+        streams = probe_streams(head)
+        video_codec = video_codec_name(streams)
+        audio_map = audio_map_for_language(streams, original_lang)
+        logging.info('source video codec: %s, original language: %r, selected audio map: %s', video_codec, original_lang, audio_map)
+    except Exception as exc:
+        logging.warning('probe streams failed: %s', exc)
+
+    if video_codec == 'h264':
+        args = build_h264_args('pipe:0', playlist, audio_map)
+    elif video_codec == 'hevc':
+        args = build_hevc_args('pipe:0', playlist, audio_map)
+    else:
+        args = default_transcode_args('pipe:0', playlist, audio_map)
+    with tempfile.TemporaryFile() as stderr:
+        process = subprocess.Popen(['ffmpeg', *args], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=stderr)
         try:
-            streams = probe_streams_from_reader(reader)
-            video_codec = video_codec_name(streams)
-            audio_map = audio_map_for_language(streams, original_lang)
-            logging.info('source video codec: %s, original language: %r, selected audio map: %s', video_codec, original_lang, audio_map)
-        except Exception as exc:
-            logging.warning('probe streams failed: %s', exc)
-
-        reader.seek(0)
-        if video_codec == 'h264':
-            args = build_h264_args('pipe:0', playlist, audio_map)
-        elif video_codec == 'hevc':
-            args = build_hevc_args('pipe:0', playlist, audio_map)
-        else:
-            args = default_transcode_args('pipe:0', playlist, audio_map)
-        process = subprocess.run(['ffmpeg', *args], stdin=reader, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process.stdin.write(head)
+            shutil.copyfileobj(reader, process.stdin, 1024 * 1024)
+            process.stdin.close()
+        except BrokenPipeError:
+            # ffmpeg stopped before the end of the input, its error is raised below
+            pass
+        except BaseException:
+            process.kill()
+            raise
+        finally:
+            process.wait()
         if process.returncode != 0:
-            stderr = process.stderr.decode(errors='replace')
-            raise RuntimeError(f'ffmpeg: {process.returncode}\n{stderr}')
-
-    finally:
-        reader.seek(original_position)
+            stderr.seek(0)
+            raise RuntimeError(f'ffmpeg: {process.returncode}\n{stderr.read().decode(errors="replace")}')

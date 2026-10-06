@@ -1,33 +1,93 @@
+import re
+import shutil
 import time
 
 import requests
 from celery import shared_task
+from django.utils import timezone
 import libtorrent as lt
 
-from config.settings import TORRENT_DIR, TRANSCODE_PORT
-from torrents.models import Torrent
+from config.settings import DOWNLOAD_RETENTION, TORRENT_DIR, TRANSCODE_URL
+from torrents.models import DownloadMedia, Torrent
 
 
-class TorrentCancelled(Exception):
-    pass
+def set_status(torrent, stream_id, status, error=None):
+    Torrent.objects.filter(id=torrent.id).update(status=status, error=error)
+    DownloadMedia.objects.filter(id=stream_id).update(status=status, error=error)
 
 
-def is_cancel_requested(torrent_id):
-    return Torrent.objects.filter(id=torrent_id, status='cancelled').exists()
+IN_PROGRESS = ['downloading', 'transcoding']
+
+
+def remove_source_video(torrent, stream_id, video_path):
+    video_path.unlink(missing_ok=True)
+    if not torrent.downloaded.filter(status__in=IN_PROGRESS).exclude(id=stream_id).exists():
+        shutil.rmtree(TORRENT_DIR / torrent.id, ignore_errors=True)
+
+
+VIDEO_EXTENSIONS = ('.mkv', '.mp4', '.avi', '.mov', '.webm', '.m4v')
+
+
+def find_video_file(files, season_number=None, episode_number=None):
+    videos = [f for f in files if f[1].lower().endswith(VIDEO_EXTENSIONS)]
+    if episode_number is not None:
+        patterns = [
+            rf'S0*{season_number}(?:[ ._-]?E\d+)*[ ._-]?E0*{episode_number}(?!\d)',
+            rf'(?<!\d)0*{season_number}x0*{episode_number}(?!\d)',
+            rf'(?<![A-Za-z])(?:E|EP|Episode)[ ._]?0*{episode_number}(?!\d)',
+        ]
+        for pattern in patterns:
+            matches = [f for f in videos if re.search(pattern, f[1].rsplit('/', 1)[-1], re.IGNORECASE)]
+            if matches:
+                videos = matches
+                break
+        else:
+            videos = []
+    if not videos:
+        raise RuntimeError('File not found')
+    return max(videos, key=lambda f: f[2])
+
+
+def read_video(handle, info, video, path, torrent, stream_id):
+    index, _, size = video
+    offset = info.files().file_offset(index)
+    piece_length = info.piece_length()
+    position = 0
+    last_update = 0
+    while position < size:
+        if time.monotonic() - last_update > 2:
+            last_update = time.monotonic()
+            progress = handle.status().progress * 100
+            Torrent.objects.filter(id=torrent.id).update(progress=progress)
+            print(f'Torrent {torrent.id}: {progress:.1f}%', flush=True)
+        piece = (offset + position) // piece_length
+        end = min(size, (piece + 1) * piece_length - offset)
+        data = b''
+        if handle.have_piece(piece) and path.is_file():
+            with open(path, 'rb') as f:
+                f.seek(position)
+                data = f.read(end - position)
+        if len(data) < end - position:
+            time.sleep(1)
+            continue
+        yield data
+        position = end
+    Torrent.objects.filter(id=torrent.id).update(progress=100)
+    set_status(torrent, stream_id, 'transcoding')
 
 
 @shared_task
-def download_and_transcode(torrent_id, lang):
+def download_and_transcode(torrent_id, lang, episode_number=None):
     torrent = Torrent.objects.get(id=torrent_id)
+    stream_id = torrent.get_stream_id(episode_number)
     download_dir = TORRENT_DIR / torrent.id
     try:
-        # if torrent.status == 'not-downloaded' or True:
         download_dir.mkdir(parents=True, exist_ok=True)
+        Torrent.objects.filter(id=torrent.id).update(progress=0)
+        set_status(torrent, stream_id, 'downloading')
         # -----------------------------
         # 1. Télécharger le .torrent
         # -----------------------------
-        torrent.status = 'downloading'
-        torrent.save(update_fields=['status'])
         torrent_path = download_dir / 'source.torrent'
         response = requests.get(torrent.url, timeout=30)
         response.raise_for_status()
@@ -40,57 +100,39 @@ def download_and_transcode(torrent_id, lang):
         session = lt.session()
         session.listen_on(6881, 6891)
         info = lt.torrent_info(str(torrent_path))
+        storage = info.files()
+        files = [(i, storage.file_path(i), storage.file_size(i)) for i in range(storage.num_files())]
+        if torrent.is_season_pack:
+            video = find_video_file(files, torrent.season_number, episode_number)
+        else:
+            video = find_video_file(files)
         handle = session.add_torrent({'ti': info, 'save_path': str(download_dir)})
+        # only the video is downloaded, from its beginning, so it can be transcoded while it downloads
+        handle.prioritize_files([4 if i == video[0] else 0 for i, _, _ in files])
+        handle.set_flags(lt.torrent_flags.sequential_download)
 
         # -----------------------------
-        # 3. Télécharger
+        # 3. Télécharger et transcoder en parallèle
         # -----------------------------
-        while not handle.is_seed():
-            if is_cancel_requested(torrent.id):
-                handle.pause()
-                raise TorrentCancelled()
-            torrent_status = handle.status()
-            progress = torrent_status.progress * 100
-            torrent.progress = progress
-            torrent.save(update_fields=['progress'])
-            print(f'Torrent {torrent.id}: {progress:.1f}%')
-            time.sleep(2)
-
-        # -----------------------------
-        # 5. Trouver la vidéo
-        # -----------------------------
-        video_extensions = {'.mkv', '.mp4', '.avi', '.mov', '.webm', '.m4v'}
-        video_files = [
-            p
-            for p in download_dir.rglob('*')
-            if p.is_file() and p.suffix.lower() in video_extensions
-        ]
-        if not video_files:
-            raise RuntimeError('File not found')
-        input_file = video_files[0]
-        res = requests.post(f'http://localhost:{TRANSCODE_PORT}/transcode', json={
-            'lang': lang,
-            'input_file': str(input_file),
-            'torrent_id': torrent_id
-        })
-        print('RES', res.status_code, flush=True)
-        print('RES', res.json(), flush=True)
-        print('MAKE REQUEST input_file=', input_file, flush=True)
-        # if torrent.status == 'downloading' or True:
-        #     torrent.status = 'transcoding'
-        #     torrent.progress = 100
-        #     torrent.save(update_fields=['status', 'progress'])
-        #     transcode_video.apply_async(args=[playlist, download_dir, transcoded_dir], queue='video')
-        # torrent.status = 'done'
-        # torrent.output_file = str(playlist)
-        # torrent.save(update_fields=['status', 'output_file'])
-#     except TorrentCancelled:
-#         torrent.status = 'cancelled'
-#         torrent.save(update_fields=['status'])
-#         shutil.rmtree(base_dir, ignore_errors=True)
+        res = requests.post(
+            f'{TRANSCODE_URL}/transcode',
+            params={'preferred_language': lang, 'torrent_id': stream_id},
+            data=read_video(handle, info, video, download_dir / video[1], torrent, stream_id),
+        )
+        print('RES', res.status_code, res.text, flush=True)
+        res.raise_for_status()
+        session.remove_torrent(handle)
+        remove_source_video(torrent, stream_id, download_dir / video[1])
+        set_status(torrent, stream_id, 'completed')
     except Exception as exc:
         print("ERROR", exc, flush=True)
-#         torrent.status = 'error'
-#         torrent.error = str(exc)
-#         torrent.save(update_fields=['status', 'error'])
+        set_status(torrent, stream_id, 'error', str(exc))
         raise
+
+
+@shared_task
+def delete_expired_downloads():
+    expired = DownloadMedia.objects.filter(last_watched_at__lt=timezone.now() - DOWNLOAD_RETENTION)
+    for download_id in list(expired.values_list('id', flat=True)):
+        print(f'Download {download_id}: expired, deleted', flush=True)
+    expired.delete()

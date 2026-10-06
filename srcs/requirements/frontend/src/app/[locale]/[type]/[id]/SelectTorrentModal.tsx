@@ -10,7 +10,7 @@ import Pagination from "@/components/ui/Pagination";
 import {SortIcon} from "@/components/Icons";
 import {tT} from "@/types/utils";
 
-type SortKey = "status" | "quality" | "size" | "language" | "seeds";
+type SortKey = "title" | "status" | "quality" | "size" | "language" | "seeders";
 type SortDir = "asc" | "desc";
 
 export default function SelectTorrentModal() {
@@ -19,7 +19,7 @@ export default function SelectTorrentModal() {
     const t = useTranslations("modal.selectTorrent");
 
     const [index, setIndex] = useState(1);
-    const [sortKey, setSortKey] = useState<SortKey>("seeds");
+    const [sortKey, setSortKey] = useState<SortKey>("seeders");
     const [sortDir, setSortDir] = useState<SortDir>("desc");
 
     const torrents = useMemo(() => {
@@ -40,7 +40,7 @@ export default function SelectTorrentModal() {
             if (typeof valB === "string")
                 valB = valB.toLowerCase();
 
-            if (sortKey === "seeds") {
+            if (sortKey === "seeders") {
                 valA = Number(valA);
                 valB = Number(valB);
             }
@@ -79,11 +79,12 @@ export default function SelectTorrentModal() {
             <table className="w-full text-sm">
                 <thead>
                 <tr>
+                    {renderHeader("title", t("columns.title"))}
                     {renderHeader("status", t("columns.status"))}
                     {renderHeader("quality", t("columns.quality"))}
                     {renderHeader("size", t("columns.size"))}
                     {renderHeader("language", t("columns.language"))}
-                    {renderHeader("seeds", t("columns.seeds"))}
+                    {renderHeader("seeders", t("columns.seeds"))}
                     <th />
                 </tr>
                 </thead>
@@ -102,11 +103,12 @@ function TorrentRow({torrent, setTorrentId, closeModal, t}: {torrent: iTorrent; 
     const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-nowrap";
 
     return (<tr className="border-t">
+        <td className={className + " max-w-60 sm:max-w-96 truncate"} title={torrent.title}>{torrent.title}</td>
         <td className={className + " text-center"}>{torrent.status}</td>
         <td className={className + " text-center"}>{torrent.quality}</td>
         <td className={className + " text-right"}>{`${Math.round(torrent.size)} ${t("gb")}`}</td>
         <td className={className + " text-right"}>{torrent.language}</td>
-        <td className={className + " text-right"}>{torrent.seeds}</td>
+        <td className={className + " text-right"}>{torrent.seeders}</td>
         <td className={className}>
             <Button onClick={() => {
                     closeModal();

@@ -4,7 +4,7 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     if (!torrents || !torrents.length)
         return null;
 
-    const find = torrents.find(t => t.status === "completed" || t.status === "downloading");
+    const find = torrents.find(t => t.status === "completed" || t.status === "transcoding" || t.status === "downloading");
     if (find)
         return find;
 
@@ -50,7 +50,7 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     }
 
     const ranked = torrents.map((torrent) => {
-        const seedScore = Math.log10(torrent.seeds + 1) * 30;
+        const seedScore = Math.log10(torrent.seeders + 1) * 30;
 
         const score =
             (qualityScore[torrent.quality] || 0) +

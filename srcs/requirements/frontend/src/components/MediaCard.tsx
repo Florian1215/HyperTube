@@ -49,7 +49,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
             <div className={media.complete ? "custom-complete-media" : "bg-gradient"} />
             {showTitle &&
                 <div className="w-full z-10 text-white text-center">
-                    {episode && <EpisodeLabel season={episode.season_number} episode={episode.episode_number} runtime={media.complete ? 0 : media.progress}/>}
+                    {episode && <EpisodeLabel season={episode.season_number} episode={episode.episode_number}/>}
                     <TitleMedia media={media} tag="h3" clickable={true} className="pl-[8%] justify-center" expClassName="xl:text-xl text-xl"/>
                 </div>}
         </div>

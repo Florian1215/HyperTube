@@ -1,18 +1,19 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {CrossIcon, FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
+import {FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {tLocale} from "@/i18n/request";
 import Hls from "hls.js";
 import loadSRT from "@/utils/loadSRT";
 import {syncMediaProgress, updateMediaProgress} from "@/services/medias.service";
-import {iMovieDetails} from "@/types/movie";
+import {iMediaDetails} from "@/types/media";
 import IconButton from "@/components/ui/Button/IconButton";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
 import {tT} from "@/types/utils";
 import formatTime from "@/utils/formatTime";
+import EpisodeLabel from "@/components/EpisodeLabel";
 
 interface iSub{
     start: number
@@ -20,14 +21,14 @@ interface iSub{
     text: string
 }
 
-export default function VideoPlayer({media, src, user, setErrorAction, tAction, stopDownloadingAction}: {media: iMovieDetails, src: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, stopDownloadingAction: () => void}) {
+export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
     const [downloadDuration, setDownloadDuration] = useState(0);
-    const [fullDuration, setFullDuration] = useState(media.runtime * 60);
+    const [fullDuration, setFullDuration] = useState(runtime * 60);
     const [durationString, setDurationString] = useState("");
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);
@@ -47,9 +48,11 @@ export default function VideoPlayer({media, src, user, setErrorAction, tAction, 
     const min15 = 15 * 60;
     const min5 = 5 * 60;
     const isLiveRef = useRef(true);
-    const [isLive, setIsLive] = useState(true);
     const delaySubtitle = useRef(0);
     const queryClient = useQueryClient();
+    const resumed = useRef(false);
+    const barDuration = Math.max(fullDuration, downloadDuration);
+    const completeBefore = episodeNumber === undefined ? min15 : fullDuration * 0.1;
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -61,14 +64,16 @@ export default function VideoPlayer({media, src, user, setErrorAction, tAction, 
             const hls = new Hls({startPosition: 0});
             hls.loadSource(src);
             hls.attachMedia(video);
-            if (video && media.progress)
-                video.currentTime = media.progress;
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
+                if (!resumed.current) {
+                    resumed.current = true;
+                    if (startAt > 0 && startAt < data.details.totalduration)
+                        video.currentTime = startAt;
+                }
                 if (!data.details.live && isLiveRef.current) {
                     isLiveRef.current = false;
-                    setIsLive(false);
                     setFullDuration(data.details.totalduration);
                 }
             });
@@ -136,22 +141,19 @@ export default function VideoPlayer({media, src, user, setErrorAction, tAction, 
         if (!isSeeking)
             setSeekTime(video.currentTime);
 
-        if (user && !setComplete.current) {
+        if (user && !setComplete.current && fullDuration > 0) {
             const progress = Math.floor(video.currentTime);
-            if (!isLiveRef.current && video.currentTime + min15 > fullDuration) {
-                updateMediaProgress(media.id, media.type, progress, 100, true).then((data) => {
-                    syncMediaProgress(queryClient, user.id, media, data);
-                    setComplete.current = true;
-                });
-            } else {
-                const second = Math.floor(video.currentTime % 60);
-                if (second > min5 && Math.abs(second - lastSent.current) >= 15) {
-                    const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
-                    updateMediaProgress(media.id, media.type, progress, pourcent, false).then((data) => {
-                        syncMediaProgress(queryClient, user.id, media, data);
-                        lastSent.current = second;
-                    });
-                }
+            if (video.currentTime + completeBefore > fullDuration) {
+                setComplete.current = true;
+                updateMediaProgress(media.id, media.type, progress, 100, true, true, seasonNumber, episodeNumber).then((data) => {
+                    syncMediaProgress(queryClient, user.id, media, data, episodeNumber);
+                }).catch(() => {setComplete.current = false;});
+            } else if (progress > min5 && Math.abs(progress - lastSent.current) >= 15) {
+                lastSent.current = progress;
+                const pourcent = Math.min(100, Math.ceil((video.currentTime / fullDuration) * 100));
+                updateMediaProgress(media.id, media.type, progress, pourcent, false, true, seasonNumber, episodeNumber).then((data) => {
+                    syncMediaProgress(queryClient, user.id, media, data, episodeNumber);
+                }).catch(() => {});
             }
         }
     };
@@ -344,7 +346,10 @@ export default function VideoPlayer({media, src, user, setErrorAction, tAction, 
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
-            {isLive && seekTime < min5 && <IconButton color="white" className="size-10 absolute inset-1 sm:inset-3 pointer-events-auto" onClick={stopDownloadingAction}>{(color: string) => <CrossIcon color={color}/>}</IconButton>}
+            {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
+                {episodeName && <p className="font-semibold uppercase truncate sm:text-lg">{episodeName}</p>}
+                <EpisodeLabel season={seasonNumber} episode={episodeNumber}/>
+            </div>}
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
@@ -363,8 +368,8 @@ export default function VideoPlayer({media, src, user, setErrorAction, tAction, 
                 </div>
 
                 <div className="w-full h-4 bg-black-hover border-t-black">
-                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / fullDuration) * 100}%`}}>
-                        <div className={`pointer-events-none h-full bg-${user?.color ?? "purple"}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
+                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${barDuration ? (downloadDuration / barDuration) * 100 : 0}%`}}>
+                        <div className={`pointer-events-none h-full bg-${user?.color ?? "purple"}`} style={{width: `${downloadDuration ? (seekTime / downloadDuration) * 100 : 0}%`}} />
                     </div>
                 </div>
             </div>

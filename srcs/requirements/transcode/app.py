@@ -1,7 +1,4 @@
 from pathlib import Path
-import json
-import subprocess
-from threading import Thread
 
 from flask import Flask, request, jsonify
 
@@ -12,33 +9,24 @@ app = Flask(__name__)
 base_dir = Path(__file__).parent.parent.parent.parent / 'medias'
 
 
-def run_transcode(input_file: str, playlist: str, language: str):
-    try:
-        with open(input_file, 'rb') as f:
-            convert_pipe_hls(
-                reader=f,
-                playlist=playlist,
-                original_lang=language,
-            )
-    except Exception as e:
-        print(f"Transcode error : {e}")
-
-
 @app.post('/transcode')
 def transcode():
-    data = request.json
-    language = data['preferred_language']
-    input_file = base_dir / 'torrents' / data['input_file']
-    output_dir = base_dir / 'streams' / data['torrent_id']
+    language = request.args['preferred_language']
+    output_dir = base_dir / 'streams' / request.args['torrent_id']
     output_dir.mkdir(parents=True, exist_ok=True)
+    for old_file in [*output_dir.glob('*.m3u8'), *output_dir.glob('*.ts')]:
+        old_file.unlink()
     playlist = output_dir / 'stream.m3u8'
 
-    thread = Thread(
-        target=run_transcode,
-        args=(input_file, playlist, language),
-        daemon=True,
-    )
-    thread.start()
+    try:
+        convert_pipe_hls(
+            reader=request.stream,
+            playlist=str(playlist),
+            original_lang=language,
+        )
+    except Exception as e:
+        print(f"Transcode error : {e}", flush=True)
+        return jsonify({'status': 'error', 'error': str(e)}), 500
 
     return jsonify({
         'status': 'success',
