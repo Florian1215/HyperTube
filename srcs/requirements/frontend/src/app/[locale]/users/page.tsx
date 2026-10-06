@@ -5,9 +5,10 @@ import {useRouter} from "@/i18n/navigation";
 import useAuth from "@/contexts/AuthContext";
 import {iToken, iUser} from "@/types/user";
 import useNotification from "@/contexts/NotificationContext";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import Form from "@/components/ui/Form";
-import {patchUser, postNewPassword} from "@/services/users.service";
+import {deleteUser, patchUser, postNewPassword} from "@/services/users.service";
+import useModal from "@/contexts/ModalContext";
 import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
@@ -101,6 +102,19 @@ function AuthProfileTab() {
     const {addNotification} = useNotification();
     const t = useTranslations("auth.changePassword");
     const tSuccess = useTranslations("notifications.success");
+    const tProfile = useTranslations("profile");
+    const {user, logout} = useAuth();
+    const {openModal} = useModal();
+    const locale = useLocale();
+
+    const handleDeleteAccount = () => {
+        if (!user)
+            return;
+        openModal({type: "delete-confirmation", deleteObjId: user.id, deleteFunc: async (userId: number) => {
+            await deleteUser(locale, userId);
+            logout();
+        }});
+    };
 
     const handlePasswordChange = () => {
         addNotification(tSuccess("passwordChanged"), "success");
@@ -109,5 +123,6 @@ function AuthProfileTab() {
     return (<div className="max-w-9/10 sm:max-w-1/2 xl:max-w-2/6 w-full mx-auto flex flex-col items-start gap-4">
         <Form formType="auth" request={postNewPassword} handleRequest={handlePasswordChange} t={t}
               fields={["current-password", "new-password", "confirm-new-password"]} />
+        <TextButton className="text-red custom-underline-red" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
     </div>);
 }

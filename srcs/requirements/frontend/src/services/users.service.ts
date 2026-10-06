@@ -42,3 +42,7 @@ export function patchUser(locale: string, data: string[], userId?: number | stri
 export function postNewPassword(locale: string, data: string[]) {
     return apiClient(`users/new-password/`, locale, {method: "PATCH", body: JSON.stringify({current_password: data[0], new_password: data[1], new_password_confirm: data[2]})});
 }
+
+export function deleteUser(locale: string, userId: number) {
+    return apiClient<void>(`users/${userId}/`, locale, {method: "DELETE"});
+}

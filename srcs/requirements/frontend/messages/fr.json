@@ -131,6 +131,7 @@
       "comments": "Commentaires"
     },
     "remove": "Supprimer",
+    "deleteAccount": "Supprimer le compte",
     "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
     "fields": {
       "submit": "Enregistrer les modifications",
