@@ -18,4 +18,5 @@ export interface iUser {
     profile_picture: null | string
     created_at: number
     perm?: string
+    is_following?: boolean
 }

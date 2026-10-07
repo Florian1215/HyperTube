@@ -17,6 +17,13 @@ import MediasList from "@/app/[locale]/search/MediasList";
 import {iSort, SEARCH_TYPES, tSearch, tSort, tT} from "@/types/utils";
 import {iMedia} from "@/types/media";
 import RadioButton from "@/components/ui/Button/RadioButton";
+import HorizontalScroll from "@/components/ui/HorizontalScroll";
+import {useUsersSearch} from "@/services/users.service";
+import {iUser} from "@/types/user";
+import ProfilePicture from "@/components/ProfilePicture";
+import FollowButton from "@/components/FollowButton";
+import useAuth from "@/contexts/AuthContext";
+import {Link} from "@/i18n/navigation";
 
 type tViewType = | "grid" | "list";
 
@@ -37,7 +44,10 @@ export default function Page() {
     const [viewType, setViewType] = useState<tViewType>("grid");
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [typeSearch, setTypeSearch] = useState<tSearch>(type as tSearch ?? "movies");
-    const {data: medias, isError} = useItems(typeSearch, searchValue.trim());
+    const {user: authUser} = useAuth();
+    const isUsersSearch = typeSearch === "users";
+    const {data: medias, isError} = useItems(typeSearch, searchValue.trim(), undefined, !isUsersSearch);
+    const {data: users, isError: isUsersError} = useUsersSearch(searchValue.trim(), isUsersSearch, authUser?.id);
     const t = useTranslations("search");
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,7 +75,7 @@ export default function Page() {
             params.delete("q");
         router.push(`${pathname}?${params.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [medias]);
+    }, [medias, users]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e?.target.value.toLowerCase() ?? "";
@@ -90,19 +100,41 @@ export default function Page() {
 
         {/* ---------- Filter ---------- */}
         <div className="flex justify-between px-6 gap-4">
-            <div className="flex overflow-auto gap-2 sm:gap-4">
-                {SEARCH_TYPES.map((type) => <RadioButton key={type} selected={typeSearch === type} onClick={() => handleChangeSearchType(type)}>{t(type)}</RadioButton>)}
+            <div className="min-w-0">
+                <HorizontalScroll className="gap-2 sm:gap-4">
+                    {SEARCH_TYPES.map((type) => <RadioButton key={type} selected={typeSearch === type} onClick={() => handleChangeSearchType(type)}>{t(type)}</RadioButton>)}
+                </HorizontalScroll>
             </div>
             {
                 (typeSearch === "movies" || typeSearch === "series") &&
-                <div className="flex gap-4">
+                <div className="flex shrink-0 gap-4">
                     <IconButton color={viewType == "grid" ? "black" : "gray"} onClick={() => handleSetViewType("grid")}>{(color: string) => <GridIcon color={color}/>}</IconButton>
                     <IconButton color={viewType == "list" ? "black" : "gray"} onClick={() => handleSetViewType("list")}>{(color: string) => <ListIcon color={color}/>}</IconButton>
                 </div>
             }
         </div>
 
-        <Results t={t} medias={isError ? [] : medias?.results} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+        {isUsersSearch ?
+            <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
+            <Results t={t} medias={isError ? [] : medias?.results} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+        }
+    </div>);
+}
+
+function UsersResults({t, users}: {t: tT, users?: iUser[]}) {
+    if (users && users.length === 0)
+        return (<SmallText>{t("noUsers")}</SmallText>);
+
+    return (<div className="divide-gray divide-y gap-2 sm:gap-4 px-6">
+        {users?.map((user) => (
+            <div key={user.id} className="flex items-center p-3 hover:bg-white-loading">
+                <Link href={`/users/${user.id}`} className="flex flex-1 items-center gap-4">
+                    <ProfilePicture user={user}/>
+                    <span className="text-bold truncate">{user.username}</span>
+                </Link>
+                <FollowButton user={user}/>
+            </div>
+        ))}
     </div>);
 }
 

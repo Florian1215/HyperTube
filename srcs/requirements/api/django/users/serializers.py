@@ -24,6 +24,13 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
+class UserProfileSerializer(UserSerializer):
+    is_following = serializers.BooleanField(read_only=True)
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['is_following']
+
+
 class UserMeSerializer(serializers.ModelSerializer):
     perm = serializers.CharField(read_only=True)
 

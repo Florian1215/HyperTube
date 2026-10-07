@@ -24,6 +24,7 @@
     "usersSearchPlaceholder": "Rechercher un utilisateur...",
     "users": "Utilisateurs",
     "noResults": "Aucun film trouvé",
+    "noUsers": "Aucun utilisateur trouvé",
     "emptyPage": "Rien à afficher ici.",
     "noResultsResetFilter": "Aucun résultat. Réinitialiser les filtres ?",
     "sort": {
@@ -132,6 +133,8 @@
     },
     "remove": "Supprimer",
     "deleteAccount": "Supprimer le compte",
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
     "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
     "fields": {
       "submit": "Enregistrer les modifications",

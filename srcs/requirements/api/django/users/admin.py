@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from users.models import User, UserHistory
+from users.models import User, UserFollow, UserHistory
 
 
 @admin.register(User)
@@ -24,6 +24,14 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('color', 'profile_picture', 'preferred_language', 'created_at'),
         }),
     )
+
+
+@admin.register(UserFollow)
+class UserFollowAdmin(admin.ModelAdmin):
+    list_display = ('follower', 'followed', 'created_at')
+    search_fields = ('follower__username', 'followed__username')
+    autocomplete_fields = ('follower', 'followed')
+    list_select_related = ('follower', 'followed')
 
 
 @admin.register(UserHistory)

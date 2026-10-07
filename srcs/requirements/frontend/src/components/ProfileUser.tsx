@@ -8,6 +8,7 @@ import {useLocale, useTranslations} from "next-intl";
 import {usePathname, useRouter} from "@/i18n/navigation";
 import {tTab} from "@/types/utils";
 import Tabs from "@/components/ui/Tabs";
+import FollowButton from "@/components/FollowButton";
 
 
 export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
@@ -46,6 +47,7 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
                 <h2>{user.username}</h2>
                 <p className="uppercase">{tProfile("memberSince", {date: memberSince})}</p>
             </div>
+            {!updateUserAction && <FollowButton user={user}/>}
         </div>
         <Tabs tabs={tabs.map((tab) => t(tab.name))} activeTab={activeTab} onChange={switchTab}/>
         <ActiveTab user={user} updateUser={updateUserAction}/>

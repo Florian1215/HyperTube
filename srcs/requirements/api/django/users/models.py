@@ -43,6 +43,20 @@ class User(AbstractUser):
         return self.username
 
 
+class UserFollow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['follower', 'followed'], name='unique_user_follow')
+        ]
+
+    def __str__(self):
+        return f'{self.follower} -> {self.followed}'
+
+
 class UserHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='history')
     media = models.ForeignKey('medias.Media', on_delete=models.CASCADE, related_name='history')

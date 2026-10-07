@@ -3,15 +3,30 @@ import useApiQuery from "@/hooks/useApiQuery";
 import {tListResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
 import {iMedia} from "@/types/media";
+import {useDebounce} from "use-debounce";
 
 export function getUser(locale: string, userId: string) {
     return apiClient<iUser>(`users/${userId}/`, locale);
 }
 
-export function useUser(userId: string, enabled=true) {
+export function followUser(locale: string, userId: number, follow: boolean) {
+    return apiClient<iUser>(`users/${userId}/follow/`, locale, {method: follow ? "POST" : "DELETE"});
+}
+
+export function useUser(userId: string, enabled=true, viewerId?: number) {
     return useApiQuery(
-        ["user", userId],
+        ["user", userId, viewerId],
         (locale: string) => getUser(locale, userId),
+        enabled
+    );
+}
+
+export function useUsersSearch(search: string, enabled = true, viewerId?: number) {
+    const [debouncedQuery] = useDebounce(search, 200);
+
+    return useApiQuery(
+        ["users", debouncedQuery, viewerId],
+        (locale, signal) => apiClient<tListResponse<iUser>>(`users/?search=${encodeURIComponent(debouncedQuery)}`, locale, {signal}),
         enabled
     );
 }

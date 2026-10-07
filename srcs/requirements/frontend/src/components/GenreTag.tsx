@@ -1,6 +1,7 @@
 import {useRouter} from "@/i18n/navigation";
 import {iGenre} from "@/types/genre";
 import {Dispatch, SetStateAction} from "react";
+import TagButton from "@/components/ui/Button/TagButton";
 
 export default function GenreTag({children, closeModal, setFilterGenre, selected}: {children: iGenre, closeModal?: () => void, setFilterGenre?: Dispatch<SetStateAction<iGenre[]>>, selected?: boolean}) {
     const router = useRouter();
@@ -19,7 +20,7 @@ export default function GenreTag({children, closeModal, setFilterGenre, selected
         if (closeModal)
             closeModal();
     }
-    return (<button onClick={handleClick} className={"text-nowrap px-3 custom-condensed border text-2xl custom-shadow-animation-s" + (selected ? " text-white bg-black" : "")}>
+    return (<TagButton onClick={handleClick} selected={selected}>
         {children.name}
-    </button>);
+    </TagButton>);
 }

@@ -9,6 +9,7 @@ import {useParams} from "next/navigation";
 import {ApiError} from "@/services/apiClient";
 import ProfileTabComments from "@/components/ProfileTabComments";
 import {tTab} from "@/types/utils";
+import useAuth from "@/contexts/AuthContext";
 
 export default function Page() {
     const params = useParams();
@@ -16,7 +17,8 @@ export default function Page() {
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const tabs: tTab = [{name: "history", comp: ProfileTabMediaHistory}, {name: "comments", comp: ProfileTabComments}];
     const handleError = useHandleError();
-    const {data, error} = useUser(userId);
+    const {user, loading} = useAuth();
+    const {data, error} = useUser(userId, !loading, user?.id);
 
     useEffect(() => {
         if (error) {
