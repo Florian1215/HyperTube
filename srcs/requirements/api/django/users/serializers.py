@@ -33,7 +33,7 @@ class UserProfileSerializer(UserSerializer):
 
 class UserSettingsSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['group_series']
+        fields = UserSerializer.Meta.fields + ['group_series', 'preferred_language']
 
 
 class UserMeSerializer(serializers.ModelSerializer):
@@ -48,6 +48,7 @@ class UserMeSerializer(serializers.ModelSerializer):
             'profile_picture',
             'perm',
             'group_series',
+            'preferred_language',
             'created_at'
         ]
 

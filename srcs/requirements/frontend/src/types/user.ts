@@ -11,6 +11,9 @@ export type tUserColor =
     | "blue"
     | "red"
 
+export const PREFERRED_LANGUAGES = ["vo", "vf"] as const;
+export type tPreferredLanguage = (typeof PREFERRED_LANGUAGES)[number];
+
 export interface iUser {
     id: number
     username: string
@@ -20,4 +23,5 @@ export interface iUser {
     perm?: string
     is_following?: boolean
     group_series?: boolean
+    preferred_language?: tPreferredLanguage
 }

@@ -138,6 +138,7 @@
     "deleteAccount": "Supprimer le compte",
     "follow": "Suivre",
     "unfollow": "Ne plus suivre",
+    "preferredLanguage": "Version audio préférée",
     "groupBySeries": "Grouper par série",
     "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
     "fields": {

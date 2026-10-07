@@ -138,6 +138,7 @@
     "deleteAccount": "Konto löschen",
     "follow": "Folgen",
     "unfollow": "Nicht mehr folgen",
+    "preferredLanguage": "Bevorzugte Sprachfassung",
     "groupBySeries": "Nach Serie gruppieren",
     "noMediasYet": "Sie haben noch keinen Film und keine Serie gesehen.",
     "fields": {
