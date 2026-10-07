@@ -38,4 +38,4 @@ class CommentUserAPIView(LangHistoryContext, generics.ListAPIView):
     ordering_fields = ['updated_at']
 
     def get_queryset(self):
-        return Comment.objects.filter(user=self.request.user)
+        return Comment.objects.filter(user_id=self.kwargs['user_id'])
