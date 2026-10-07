@@ -130,13 +130,15 @@
     "tabs": {
       "profile": "Profil",
       "auth": "Mot de passe",
-      "history": "Historique",
+      "movies": "Films",
+      "series": "Séries",
       "comments": "Commentaires"
     },
     "remove": "Supprimer",
     "deleteAccount": "Supprimer le compte",
     "follow": "Suivre",
     "unfollow": "Ne plus suivre",
+    "groupBySeries": "Grouper par série",
     "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
     "fields": {
       "submit": "Enregistrer les modifications",

@@ -13,14 +13,15 @@ import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
 import ProfileUser from "@/components/ProfileUser";
-import ProfileTabMediaHistory from "@/components/ProfileTabMediaHistory";
+import {ProfileTabMovies, ProfileTabSeries} from "@/components/ProfileTabMediaHistory";
 import ProfileTabComments from "@/components/ProfileTabComments";
 import {tTab} from "@/types/utils";
+import Toggle from "@/components/ui/Toggle";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
-    const tabs: tTab = [{name: "profile", comp: ProfileTab}, {name: "auth", comp: AuthProfileTab}, {name: "history", comp: ProfileTabMediaHistory}, {name: "comments", comp: ProfileTabComments}];
+    const tabs: tTab = [{name: "profile", comp: ProfileTab}, {name: "auth", comp: AuthProfileTab}, {name: "movies", comp: ProfileTabMovies}, {name: "series", comp: ProfileTabSeries}, {name: "comments", comp: ProfileTabComments}];
 
     useEffect(() => {
         if (!user && !loading)
@@ -45,7 +46,9 @@ function ProfileTab({user, updateUser}: {user: iUser, updateUser?: (patch: Parti
 function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
     const {addNotification} = useNotification();
     const t = useTranslations("profile.fields");
+    const tProfile = useTranslations("profile");
     const tSuccess = useTranslations("notifications.success");
+    const {execute} = useApiMutation();
 
     const handleUpdateUser = (data: iToken | iUser) => {
         if ("username" in data) {
@@ -55,9 +58,19 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: P
         }
     };
 
+    const handleGroupSeries = async (groupSeries: boolean) => {
+        const data = await execute((locale) => patchUser(locale, ["group_series", String(groupSeries)], user.id));
+        if (data && updateUser)
+            updateUser({group_series: data.group_series});
+    };
+
     return (<div className="flex flex-col gap-4 items-start">
         <Form formType="update" request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={user.id}
               fields={["username"]} />
+        <div className="flex items-end gap-3">
+            <Toggle val={user.group_series ?? true} setter={handleGroupSeries}/>
+            <p className="text-sm leading-5">{tProfile("groupBySeries")}</p>
+        </div>
     </div>);
 }
 

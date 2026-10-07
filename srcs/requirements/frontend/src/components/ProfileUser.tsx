@@ -9,6 +9,8 @@ import {usePathname, useRouter} from "@/i18n/navigation";
 import {tTab} from "@/types/utils";
 import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
+import {useUserHistory} from "@/services/users.service";
+import {useProfileComments} from "@/services/comments.service";
 
 
 export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
@@ -27,6 +29,10 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
     const tProfile = useTranslations("profile");
     const locale = useLocale();
     const ActiveTab = tabs[activeTab].comp;
+    const {data: movies} = useUserHistory(user.id, "movies");
+    const {data: series} = useUserHistory(user.id, "series");
+    const {data: comments} = useProfileComments(user.id, 1);
+    const counts: Record<string, number | undefined> = {movies: movies?.count, series: series?.count, comments: comments?.count};
 
     const date = new Date(user.created_at);
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");
@@ -41,7 +47,7 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
     }
 
     return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-12">
-        <div className="flex flex-col gap-4 items-center">
+        <div className="flex flex-col gap-4 items-center mb-6">
             <div className="flex items-center gap-4 justify-center">
                 <ProfilePicture user={user} size={1}/>
                 <div className="flex flex-col items-start">
@@ -51,7 +57,7 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
             </div>
             {!updateUserAction && <FollowButton user={user} className="w-32"/>}
         </div>
-        <Tabs tabs={tabs.map((tab) => t(tab.name))} activeTab={activeTab} onChange={switchTab}/>
+        <Tabs tabs={tabs.map((tab) => t(tab.name))} counts={tabs.map((tab) => counts[tab.name])} activeTab={activeTab} onChange={switchTab}/>
         <ActiveTab user={user} updateUser={updateUserAction}/>
         <div />
     </div>);

@@ -4,6 +4,7 @@ import {tListResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
 import {iMedia, iMediaActivity} from "@/types/media";
 import {useDebounce} from "use-debounce";
+import {tMedia} from "@/types/utils";
 
 export function getUser(locale: string, userId: string) {
     return apiClient<iUser>(`users/${userId}/`, locale);
@@ -31,18 +32,24 @@ export function useUsersSearch(search: string, enabled = true, viewerId?: number
     );
 }
 
-export function useUserHistory(userId?: number) {
+export function useUserHistory(userId?: number, type?: tMedia, page = 1, group = false) {
+    const params = new URLSearchParams({page: String(page)});
+    if (type)
+        params.set("type", type);
+    if (group)
+        params.set("group", "true");
+
     return useApiQuery(
-        ["user-media-history", userId],
-        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/history/`, locale),
+        ["user-media-history", userId, type, page, group],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/history/?${params.toString()}`, locale),
         !!userId
     );
 }
 
-export function useFollowingActivity(userId?: number) {
+export function useFollowingActivity(userId?: number, group = true) {
     return useApiQuery(
-        ["user-media-history", "following", userId],
-        (locale: string) => apiClient<tListResponse<iMediaActivity>>(`users/following/activity/`, locale),
+        ["user-media-history", "following", userId, group],
+        (locale: string) => apiClient<tListResponse<iMediaActivity>>(`users/following/activity/?group=${group}`, locale),
         !!userId
     );
 }

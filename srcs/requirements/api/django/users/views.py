@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Exists, OuterRef, Value
+from django.db.models import Exists, Max, OuterRef, Subquery, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -10,10 +10,12 @@ from rest_framework.response import Response
 
 from config.errors import CANNOT_FOLLOW_YOURSELF
 from medias.context import LangHistoryContext
-from medias.serializers import MediaActivitySerializer, MediaHistorySerializer
+from medias.models import Media
+from medias.serializers import MediaActivitySerializer, MediaHistorySerializer, SmallMediaSerializer
 from users.models import User, UserFollow, UserHistory
 from users.permissions import IsUserOwner
-from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer
+from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
+    UserSettingsSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -47,6 +49,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserMeSerializer
         elif self.action in ['list', 'retrieve', 'follow']:
             return UserProfileSerializer
+        elif self.action in ['update', 'partial_update']:
+            return UserSettingsSerializer
         return UserSerializer
 
     def get_permissions(self):
@@ -77,8 +81,25 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
     queryset = UserHistory.objects.all()
     serializer_class = MediaHistorySerializer
 
+    def is_grouped(self):
+        params = self.request.query_params
+        return params.get('type') == 'series' and params.get('group') == 'true'
+
+    def get_serializer_class(self):
+        if self.is_grouped():
+            return SmallMediaSerializer
+        return super().get_serializer_class()
+
     def filter_queryset(self, queryset):
-        return queryset.filter(user=self.kwargs['user_id']).order_by('-updated_at')
+        if self.is_grouped():
+            return Media.objects.filter(type='series', history__user=self.kwargs['user_id']).annotate(
+                last_watch=Max('history__updated_at')
+            ).order_by('-last_watch')
+        queryset = queryset.filter(user=self.kwargs['user_id'])
+        media_type = self.request.query_params.get('type')
+        if media_type in ('movies', 'series'):
+            queryset = queryset.filter(media__type=media_type)
+        return queryset.order_by('-updated_at')
 
 
 class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
@@ -87,8 +108,11 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def filter_queryset(self, queryset):
-        return queryset.filter(
-            user__followers__follower=self.request.user,
-            complete=True,
-            watched_at__gte=timezone.now() - timedelta(days=7)
-        ).order_by('-watched_at')
+        filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=7)}
+        queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
+        if self.request.query_params.get('group') == 'true':
+            last_watch = UserHistory.objects.filter(
+                user=OuterRef('user'), media=OuterRef('media'), **filters
+            ).order_by('-watched_at', '-id').values('id')[:1]
+            queryset = queryset.filter(id=Subquery(last_watch))
+        return queryset.order_by('-watched_at')

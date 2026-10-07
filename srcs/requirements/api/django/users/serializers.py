@@ -31,6 +31,11 @@ class UserProfileSerializer(UserSerializer):
         fields = UserSerializer.Meta.fields + ['is_following']
 
 
+class UserSettingsSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['group_series']
+
+
 class UserMeSerializer(serializers.ModelSerializer):
     perm = serializers.CharField(read_only=True)
 
@@ -42,6 +47,7 @@ class UserMeSerializer(serializers.ModelSerializer):
             'color',
             'profile_picture',
             'perm',
+            'group_series',
             'created_at'
         ]
 

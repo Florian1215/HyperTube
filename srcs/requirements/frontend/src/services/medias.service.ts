@@ -105,7 +105,7 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     const updatedMedia = {...media, ...newProgress};
     const historyQueries = queryClient.getQueriesData<tListResponse<iMedia>>({queryKey: ["user-media-history", userId]});
     historyQueries.forEach(([queryKey, current]) => {
-        if (!current)
+        if (!current || (queryKey[2] && queryKey[2] !== media.type))
             return;
         const findProgress = current.results.some(sameMedia);
         let nextCount = current.count;

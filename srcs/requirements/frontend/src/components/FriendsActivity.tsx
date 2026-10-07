@@ -9,14 +9,16 @@ import HorizontalScroll from "@/components/ui/HorizontalScroll";
 import LoadingImage from "@/components/ui/LoadingImage";
 import ProfilePicture from "@/components/ProfilePicture";
 import EpisodeLabel from "@/components/EpisodeLabel";
+import {iMediaActivity} from "@/types/media";
 
 export default function FriendsActivity({className}: {className?: string}) {
     const {user} = useAuth();
     const t = useTranslations("home");
     const tMedia = useTranslations("media");
-    const {data} = useFollowingActivity(user?.id);
-    const isSame = (a: {id: string, type: string, user: {id: number}}, b: typeof a) => a.user.id === b.user.id && a.type === b.type && String(a.id) === String(b.id);
-    const activities = (data?.results ?? []).filter((activity, index, all) => activity.backdrop_url && all.findIndex((a) => isSame(a, activity)) === index);
+    const groupSeries = user?.group_series ?? true;
+    const {data} = useFollowingActivity(user?.id, groupSeries);
+    const getImage = (activity: iMediaActivity) => (!groupSeries && activity.episode?.poster_url) || activity.backdrop_url;
+    const activities = (data?.results ?? []).filter(getImage);
 
     if (activities.length === 0)
         return null;
@@ -24,9 +26,9 @@ export default function FriendsActivity({className}: {className?: string}) {
     return (<section className={"flex flex-col gap-2 " + (className ?? "")}>
         <span className="uppercase font-wide text-xl font-bold">{t("friendsActivity")}</span>
         <HorizontalScroll className="gap-2 sm:gap-4">
-            {activities.map((activity) => (<div key={`${activity.user.id}-${activity.type}-${activity.id}-${activity.episode?.id}`} className="flex flex-col gap-2 w-34 sm:w-42 shrink-0">
+            {activities.map((activity, index) => (<div key={index} className="flex flex-col gap-2 w-34 sm:w-42 shrink-0">
                 <Link href={formatURL(activity)} title={activity.title} className="group relative aspect-3/2 overflow-hidden border">
-                    <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.title})}/>
+                    <LoadingImage className="size-full object-cover" width={400} height={225} src={getImage(activity)} alt={tMedia("posterAlt", {title: activity.title})}/>
                     <div className="custom-noise opacity-30"/>
                     {activity.episode && <div className="hidden group-hover:flex absolute inset-0 p-2 items-end justify-center">
                         <div className="bg-gradient"/>

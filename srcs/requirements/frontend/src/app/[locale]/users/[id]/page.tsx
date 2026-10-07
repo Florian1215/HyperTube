@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import ProfileUser from "@/components/ProfileUser";
-import ProfileTabMediaHistory from "@/components/ProfileTabMediaHistory";
+import {ProfileTabMovies, ProfileTabSeries} from "@/components/ProfileTabMediaHistory";
 import useHandleError from "@/hooks/useHandleError";
 import {useUser} from "@/services/users.service";
 import {useParams} from "next/navigation";
@@ -15,7 +15,7 @@ export default function Page() {
     const params = useParams();
     const userId = params.id as string;
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
-    const tabs: tTab = [{name: "history", comp: ProfileTabMediaHistory}, {name: "comments", comp: ProfileTabComments}];
+    const tabs: tTab = [{name: "movies", comp: ProfileTabMovies}, {name: "series", comp: ProfileTabSeries}, {name: "comments", comp: ProfileTabComments}];
     const handleError = useHandleError();
     const {user, loading} = useAuth();
     const {data, error} = useUser(userId, !loading, user?.id);
