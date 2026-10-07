@@ -16,7 +16,7 @@ export interface iUser {
     username: string
     color: tUserColor
     profile_picture: null | string
-    created_at: number
+    created_at: string
     perm?: string
     is_following?: boolean
 }

@@ -11,7 +11,7 @@ import {updateQuery} from "@/hooks/useApiQuery";
 import {followUser} from "@/services/users.service";
 import TagButton from "@/components/ui/Button/TagButton";
 
-export default function FollowButton({user}: {user: iUser}) {
+export default function FollowButton({user, className}: {user: iUser, className?: string}) {
     const {user: authUser} = useAuth();
     const {openModal} = useModal();
     const {execute} = useApiMutation();
@@ -36,7 +36,7 @@ export default function FollowButton({user}: {user: iUser}) {
         setPending(false);
     };
 
-    return (<TagButton onClick={handleFollow} disabled={pending}>
+    return (<TagButton onClick={handleFollow} disabled={pending} className={className}>
         {t(user.is_following ? "unfollow" : "follow")}
     </TagButton>);
 }

@@ -40,14 +40,16 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
         }
     }
 
-    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-17 px-2 md:px-4">
-        <div className="flex items-center gap-4 justify-center">
-            <ProfilePicture user={user} size={1}/>
-            <div className="flex flex-col items-start">
-                <h2>{user.username}</h2>
-                <p className="uppercase">{tProfile("memberSince", {date: memberSince})}</p>
+    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-12">
+        <div className="flex flex-col gap-4 items-center">
+            <div className="flex items-center gap-4 justify-center">
+                <ProfilePicture user={user} size={1}/>
+                <div className="flex flex-col items-start">
+                    <h2>{user.username}</h2>
+                    <p className="uppercase mb-2">{tProfile("memberSince", {date: memberSince})}</p>
+                </div>
             </div>
-            {!updateUserAction && <FollowButton user={user}/>}
+            {!updateUserAction && <FollowButton user={user} className="w-32"/>}
         </div>
         <Tabs tabs={tabs.map((tab) => t(tab.name))} activeTab={activeTab} onChange={switchTab}/>
         <ActiveTab user={user} updateUser={updateUserAction}/>
