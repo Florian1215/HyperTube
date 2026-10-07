@@ -22,7 +22,11 @@ class UserViewSet(viewsets.ModelViewSet):
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
         if self.action == 'list' and self.request.user.is_authenticated:
-            return queryset.exclude(id=self.request.user.id)
+            queryset = queryset.exclude(id=self.request.user.id)
+            if not self.request.query_params.get('search', '').strip():
+                new_q = queryset.filter(is_following=True)
+                if new_q.exists():
+                    return new_q
         return queryset
 
     def get_queryset(self):
