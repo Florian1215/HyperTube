@@ -2,7 +2,7 @@ import {iUser} from "@/types/user";
 import useApiQuery from "@/hooks/useApiQuery";
 import {tListResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
-import {iMedia} from "@/types/media";
+import {iMedia, iMediaActivity} from "@/types/media";
 import {useDebounce} from "use-debounce";
 
 export function getUser(locale: string, userId: string) {
@@ -35,6 +35,14 @@ export function useUserHistory(userId?: number) {
     return useApiQuery(
         ["user-media-history", userId],
         (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/history/`, locale),
+        !!userId
+    );
+}
+
+export function useFollowingActivity(userId?: number) {
+    return useApiQuery(
+        ["user-media-history", "following", userId],
+        (locale: string) => apiClient<tListResponse<iMediaActivity>>(`users/following/activity/`, locale),
         !!userId
     );
 }

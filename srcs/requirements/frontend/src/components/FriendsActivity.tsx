@@ -1,0 +1,38 @@
+"use client";
+
+import {useTranslations} from "next-intl";
+import useAuth from "@/contexts/AuthContext";
+import {Link} from "@/i18n/navigation";
+import {useFollowingActivity} from "@/services/users.service";
+import formatURL from "@/utils/formatURL";
+import HorizontalScroll from "@/components/ui/HorizontalScroll";
+import LoadingImage from "@/components/ui/LoadingImage";
+import ProfilePicture from "@/components/ProfilePicture";
+
+export default function FriendsActivity({className}: {className?: string}) {
+    const {user} = useAuth();
+    const t = useTranslations("home");
+    const tMedia = useTranslations("media");
+    const {data} = useFollowingActivity(user?.id);
+    const isSame = (a: {id: string, type: string, user: {id: number}}, b: typeof a) => a.user.id === b.user.id && a.type === b.type && String(a.id) === String(b.id);
+    const activities = (data?.results ?? []).filter((activity, index, all) => activity.backdrop_url && all.findIndex((a) => isSame(a, activity)) === index);
+
+    if (activities.length === 0)
+        return null;
+
+    return (<section className={"flex flex-col gap-2 " + (className ?? "")}>
+        <span className="uppercase font-wide text-xl font-bold">{t("friendsActivity")}</span>
+        <HorizontalScroll className="gap-2 sm:gap-4">
+            {activities.map((activity) => (<div key={`${activity.user.id}-${activity.type}-${activity.id}`} className="flex flex-col gap-2 w-36 sm:w-48 shrink-0">
+                <Link href={formatURL(activity)} title={activity.title} className="relative aspect-video overflow-hidden border">
+                    <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.title})}/>
+                    <div className="custom-noise opacity-30"/>
+                </Link>
+                <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0">
+                    <ProfilePicture user={activity.user}/>
+                    <span className="font-bold truncate">{activity.user.username}</span>
+                </Link>
+            </div>))}
+        </HorizontalScroll>
+    </section>);
+}

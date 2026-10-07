@@ -1,5 +1,6 @@
 import {tMedia} from "@/types/utils";
 import {iSmallEpisode} from "@/types/serie";
+import {iUser} from "@/types/user";
 
 export interface iMedia {
     id: string
@@ -17,6 +18,10 @@ export interface iMedia {
     progress: number
     watched_at: string
     episode?: iSmallEpisode
+}
+
+export interface iMediaActivity extends iMedia {
+    user: iUser
 }
 
 export interface iMediaDetails extends iMedia{

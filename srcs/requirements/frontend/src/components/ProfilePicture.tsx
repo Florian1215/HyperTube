@@ -25,7 +25,7 @@ export default function ProfilePicture({user, size = 0, color, className}: {user
     }
 
     return (<div className={`relative overflow-hidden rounded-full bg-${color} hover:bg-${color}-hover ${sizes[size]} flex items-center justify-center border shrink-0 ` + className}>
-        <div className="custom-noise" />
+        <div className="custom-noise opacity-30"/>
         {children}
     </div>);
 }

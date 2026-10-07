@@ -8,6 +8,7 @@ from medias.fetch import get_or_fetch_media_lang
 from medias.models import Media, Cast, Crew
 from medias.progress import MediaProgressMixin, get_next_episode
 from users.models import UserHistory
+from users.serializers import UserSerializer
 
 
 class MediaTitleMixin(serializers.Serializer):
@@ -205,6 +206,13 @@ class MediaHistorySerializer(serializers.ModelSerializer):
 
     def get_title(self, obj):
         return get_or_fetch_media_lang(obj.media, self.context['lang']).title
+
+
+class MediaActivitySerializer(MediaHistorySerializer):
+    user = UserSerializer()
+
+    class Meta(MediaHistorySerializer.Meta):
+        fields = MediaHistorySerializer.Meta.fields + ['user']
 
 
 class MediaTorrentSerializer(serializers.ModelSerializer):

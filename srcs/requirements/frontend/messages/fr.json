@@ -12,7 +12,8 @@
     "moviesPopular": "Films populaires",
     "seriesPopular": "Séries populaires",
     "mostRated": "Les mieux notés",
-    "directStream": "Streaming Direct"
+    "directStream": "Streaming Direct",
+    "friendsActivity": "Activité récente des amis"
   },
   "search": {
     "moviesSearchPlaceholder": "Rechercher un film...",

@@ -32,6 +32,7 @@ export default function FollowButton({user, className}: {user: iUser, className?
         if (data) {
             queryClient.setQueriesData({queryKey: ["user", String(user.id)]}, data);
             updateQuery(queryClient, ["users"], data);
+            void queryClient.invalidateQueries({queryKey: ["user-media-history", "following"]});
         }
         setPending(false);
     };

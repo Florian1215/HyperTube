@@ -9,6 +9,7 @@ import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {useItems} from "@/services/medias.service";
 import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
+import FriendsActivity from "@/components/FriendsActivity";
 import Section from "@/components/ui/Section";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
@@ -55,6 +56,7 @@ export default function HomePage() {
         <AnimateLogo maxHeight={heightAnimationLogo} />
         <SliderHero medias={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
+        <FriendsActivity className="px-4 sm:px-6 mb-6 md:mb-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching.length > 0) &&

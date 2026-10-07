@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from config.errors import CANNOT_FOLLOW_YOURSELF
 from medias.context import LangHistoryContext
-from medias.serializers import MediaHistorySerializer
+from medias.serializers import MediaActivitySerializer, MediaHistorySerializer
 from users.models import User, UserFollow, UserHistory
 from users.permissions import IsUserOwner
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer
@@ -76,3 +76,12 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
 
     def filter_queryset(self, queryset):
         return queryset.filter(user=self.kwargs['user_id']).order_by('-updated_at')
+
+
+class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
+    queryset = UserHistory.objects.select_related('user', 'media', 'episode')
+    serializer_class = MediaActivitySerializer
+    permission_classes = [IsAuthenticated]
+
+    def filter_queryset(self, queryset):
+        return queryset.filter(user__followers__follower=self.request.user).order_by('-updated_at')
