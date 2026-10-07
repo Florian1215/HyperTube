@@ -14,6 +14,7 @@ import {iAxe} from "@/types/utils";
 import {iMedia} from "@/types/media";
 import formatURL from "@/utils/formatURL";
 import {TitleMedia} from "@/components/Title";
+import Rating from "@/components/Rating";
 
 
 export default function MediaCardList({media, user, setFilterGenre} : {media?: iMedia, user?: iUser, setFilterGenre: Dispatch<SetStateAction<iGenre[]>>}) {
@@ -58,14 +59,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
             {media && <GenreTags genreIds={media.genres} limit={3} setFilterGenreAction={setFilterGenre}/>}
         </td>
         <td className="hidden sm:table-cell">
-            <div className="flex gap-1 items-center">
-                <StarIcon/>
-                {media ? <span>{media.rating.toFixed(1)}</span> :
-                    <div className="h-5.5 w-5">
-                        <div className="custom-loading"/>
-                    </div>
-                }
-            </div>
+            <Rating media={media} user={user} className="font-medium"/>
         </td>
         <td className="text-right">
             <Button className="px-3" onClick={() => media && router.push(formatURL(media))}>{t("watch")}</Button>

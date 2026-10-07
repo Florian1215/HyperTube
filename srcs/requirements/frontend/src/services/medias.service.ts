@@ -97,6 +97,8 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
         results: current.results.map((item) => sameMedia(item) ? {...item, ...newProgress} : item),
     });
     queryClient.setQueriesData<iMediaDetails>({queryKey: ["media", media.type, mediaId]}, (current) => current && {...current, ...newProgress});
+    if (newProgress.complete !== media.complete)
+        void queryClient.invalidateQueries({queryKey: ["media", media.type, mediaId]});
     if (media.type === "series")
         return;
 

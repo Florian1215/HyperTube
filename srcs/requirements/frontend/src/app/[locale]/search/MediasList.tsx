@@ -70,8 +70,8 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <col className="w-30 sm:w-55 xl:w-80" />
                 <col />
                 <col className="w-0" />
-                <col className="w-1/4 hidden lg:table-column" />
-                <col className="w-15 hidden sm:table-column" />
+                <col className="w-1/5 hidden lg:table-column" />
+                <col className="w-20 hidden sm:table-column" />
                 <col className="w-32" />
             </colgroup>
 

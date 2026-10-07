@@ -39,6 +39,7 @@
     }
   },
   "media": {
+    "watchedBy": "Watched by",
     "watch": "Watch",
     "resume": "Resume",
     "nextEpisode": "Next episode",

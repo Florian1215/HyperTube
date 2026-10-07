@@ -12,13 +12,16 @@ import {TitleMedia} from "@/components/Title";
 import useFormatDate from "@/utils/formatDate";
 import ExpandableText from "@/components/ui/ExpandableText";
 import TextButton from "@/components/ui/Button/TextButton";
-import {StarIcon} from "@/components/Icons";
+import ProfilePicture from "@/components/ProfilePicture";
+import useAuth from "@/contexts/AuthContext";
+import Rating from "@/components/Rating";
 
 export default function MediaInfoSection({media} : {media?: iMovieDetails | iSerieDetails}) {
     const t = useTranslations("media");
     const tSerie = useTranslations("serie");
     const {openModal} = useModal();
     const formattedReleaseDate = useFormatDate(media?.release_date);
+    const {user} = useAuth();
 
     const getLenght = () => {
         if (media && "runtime" in media) {
@@ -48,7 +51,19 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
                 <p>{formattedReleaseDate}</p>
             </InfoMedia>
         }
-        <InfoMedia name={t("rating")}><div className="flex gap-1 items-center"><p>{media.rating.toFixed(1)}</p><StarIcon/></div></InfoMedia>
+        {media.rating > 0 && <InfoMedia name={t("rating")}>
+            <Rating media={media} user={user} after={true}/>
+        </InfoMedia>}
+        {
+            media.watched_by.length > 0 &&
+            <InfoMedia name={t("watchedBy")}>
+                <div className="flex flex-wrap gap-1.5">
+                    {media.watched_by.map((user) => (<Link key={user.id} href={`/users/${user.id}`} title={user.username}>
+                        <ProfilePicture size={3} user={user}/>
+                    </Link>))}
+                </div>
+            </InfoMedia>
+        }
         {status && <InfoMedia name={t("status")}><p>{status}</p></InfoMedia>}
         {
             "runtime" in media && media.runtime > 0 &&
@@ -71,13 +86,13 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
                 <ExpandableText showBtn={false}>{media.summary}</ExpandableText>
             </InfoMedia>
         }
-        <TextButton onClick={() => openModal({type: "credits", cast: media.cast, crew: media.crew, media: media})}>{t("moreInfo")}</TextButton>
+        <TextButton onClick={() => openModal({type: "credits", cast: media.cast, crew: media.crew, media: media})}>{t("moreInfo")} ↗</TextButton>
     </div>);
 }
 
 
 function InfoMedia({children, name}: {children: React.ReactNode, name: string}) {
-    return (<div className="flex gap-4">
+    return (<div className="flex gap-4 items-center">
         <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2">
             <Label>{name}</Label>
         </div>

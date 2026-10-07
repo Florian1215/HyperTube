@@ -39,6 +39,7 @@
     }
   },
   "media": {
+    "watchedBy": "Gesehen von",
     "watch": "Ansehen",
     "resume": "Fortsetzen",
     "nextEpisode": "Nächste Folge",

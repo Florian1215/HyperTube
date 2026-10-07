@@ -4,7 +4,7 @@ import LoadingImage from "@/components/ui/LoadingImage";
 import {useTranslations} from "next-intl";
 
 export default function ProfilePicture({user, size = 0, color, className}: {user: iUser, size?: 0 | 1 | 2 | 3, color?: string, className?: string}) {
-    const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45", "size-7 text-sm"];
+    const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45", "size-8"];
     const t = useTranslations("common");
     let children;
 

@@ -36,6 +36,7 @@ export interface iMediaDetails extends iMedia{
     cast: iPeople[]
     backdrops_url: string[]
     feature: boolean
+    watched_by: iUser[]
 }
 
 export interface iCollectionPart extends iMedia {
