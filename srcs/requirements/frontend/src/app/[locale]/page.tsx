@@ -107,7 +107,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
             const isAtMin = virtualScroll >= (maxHeight - minHeight);
             const isAtTop = window.scrollY === 0;
 
-            if (!isAtMin || (isAtTop && e.deltaY < 0)) {
+            if (isAtTop && (!isAtMin || e.deltaY < 0)) {
                 e.preventDefault();
 
                 virtualScroll += e.deltaY;
