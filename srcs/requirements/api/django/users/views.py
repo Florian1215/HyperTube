@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.db.models import Exists, OuterRef, Value
+from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -84,4 +87,8 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def filter_queryset(self, queryset):
-        return queryset.filter(user__followers__follower=self.request.user).order_by('-updated_at')
+        return queryset.filter(
+            user__followers__follower=self.request.user,
+            complete=True,
+            watched_at__gte=timezone.now() - timedelta(days=7)
+        ).order_by('-watched_at')

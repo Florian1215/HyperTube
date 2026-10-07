@@ -3,8 +3,8 @@ import React from "react";
 import LoadingImage from "@/components/ui/LoadingImage";
 import {useTranslations} from "next-intl";
 
-export default function ProfilePicture({user, size = 0, color, className}: {user: iUser, size?: 0 | 1 | 2, color?: string, className?: string}) {
-    const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45"];
+export default function ProfilePicture({user, size = 0, color, className}: {user: iUser, size?: 0 | 1 | 2 | 3, color?: string, className?: string}) {
+    const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45", "size-7 text-sm"];
     const t = useTranslations("common");
     let children;
 
@@ -16,7 +16,7 @@ export default function ProfilePicture({user, size = 0, color, className}: {user
         if (color === undefined)
             color = user.color;
 
-        if (size === 0)
+        if (size === 0 || size === 3)
             children = <h6>{initial}</h6>;
         else if (size === 1)
             children = <h4 className="text-3xl sm:text-5xl">{initial}</h4>;
