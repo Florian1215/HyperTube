@@ -3,7 +3,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import {FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
 import LanguageDropdown from "@/components/LanguageDropdown";
-import {tLocale} from "@/i18n/request";
+import {tLocale} from "@/i18n/routing";
 import Hls from "hls.js";
 import loadSRT from "@/utils/loadSRT";
 import {syncMediaProgress, updateMediaProgress} from "@/services/medias.service";

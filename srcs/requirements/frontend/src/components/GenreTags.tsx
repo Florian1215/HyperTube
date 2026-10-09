@@ -3,7 +3,7 @@
 import useModal from "@/contexts/ModalContext";
 import {useLocale} from "next-intl";
 import useGenres from "@/hooks/useGenres";
-import {tLocale} from "@/i18n/request";
+import {tLocale} from "@/i18n/routing";
 import {iGenre} from "@/types/genre";
 import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import GenreTag from "@/components/GenreTag";

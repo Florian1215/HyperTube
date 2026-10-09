@@ -1,5 +1,5 @@
 import React from "react";
-import {routing, tLocale} from "@/i18n/request";
+import {routing, tLocale} from "@/i18n/routing";
 
 export default function LanguageDropdown({handleSwitchLanguage, selected, className, strikethrough=false}: {handleSwitchLanguage: (l: tLocale) => void, selected: tLocale | undefined, className: string, strikethrough?: boolean}) {
     const languages: Record<tLocale, string> = {en: "English", fr: "Français", de: "Deutsch"};

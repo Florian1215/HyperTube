@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {useRouter, usePathname} from "@/i18n/navigation";
-import {tLocale} from "@/i18n/request";
+import {tLocale} from "@/i18n/routing";
 import {useSearchParams} from "next/navigation";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import {useLocale} from "next-intl";
@@ -12,10 +12,10 @@ export default function SwitchLanguage(Icon: ({selected}: {selected: boolean}) =
     const searchParams = useSearchParams();
     const locale = useLocale() as tLocale;
 
-    const handleSwitchLanguage = (key: tLocale) => {
+    const handleSwitchLanguage = () => {
         const query = searchParams.toString();
         const href = query.length > 0 ? `${pathname}?${query}` : pathname;
-        router.replace(href, {locale: key});
+        router.replace(href);
         setIsOpen(false);
     }
 

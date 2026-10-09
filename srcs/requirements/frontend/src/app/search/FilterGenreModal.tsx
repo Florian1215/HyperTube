@@ -5,7 +5,7 @@ import {useLocale, useTranslations} from "next-intl";
 import {useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 import useGenres from "@/hooks/useGenres";
-import {tLocale} from "@/i18n/request";
+import {tLocale} from "@/i18n/routing";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Button from "@/components/ui/Button/Button";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";

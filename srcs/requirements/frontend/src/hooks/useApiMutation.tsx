@@ -1,7 +1,7 @@
 "use client";
 
 import {useLocale, useTranslations} from "next-intl";
-import {tLocale} from "@/i18n/request";
+import {tLocale} from "@/i18n/routing";
 import useNotification from "@/contexts/NotificationContext";
 import useModal from "@/contexts/ModalContext";
 import useAuth from "@/contexts/AuthContext";

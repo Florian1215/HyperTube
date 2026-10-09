@@ -8,7 +8,7 @@ import {SortIcon} from "@/components/Icons";
 import {iMedia} from "@/types/media";
 import TextButton from "@/components/ui/Button/TextButton";
 import useAuth from "@/contexts/AuthContext";
-import MediaCardList from "@/app/[locale]/search/MediaCardList";
+import MediaCardList from "@/app/search/MediaCardList";
 import {iSort, tSort} from "@/types/utils";
 
 export default function MediasList({mediaSets, sort, changeSort, genre} : {mediaSets?: iMedia[], sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {

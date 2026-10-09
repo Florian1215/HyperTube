@@ -15,11 +15,11 @@ import SessionExpiredHandler from "@/contexts/SessionExpiredHandler";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import SigninModal from "@/components/layout/SigninModal";
 import RegisterModal from "@/components/layout/RegisterModal";
-import CreditsMediaModal from "@/app/[locale]/[type]/[id]/CreditsMediaModal";
-import SetFeatureModal from "@/app/[locale]/[type]/[id]/SetFeatureModal";
-import SelectTorrentModal from "@/app/[locale]/[type]/[id]/SelectTorrentModal";
-import ViewAllGenreModal from "@/app/[locale]/search/ViewAllGenreModal";
-import FilterGenreModal from "@/app/[locale]/search/FilterGenreModal";
+import CreditsMediaModal from "@/app/[type]/[id]/CreditsMediaModal";
+import SetFeatureModal from "@/app/[type]/[id]/SetFeatureModal";
+import SelectTorrentModal from "@/app/[type]/[id]/SelectTorrentModal";
+import ViewAllGenreModal from "@/app/search/ViewAllGenreModal";
+import FilterGenreModal from "@/app/search/FilterGenreModal";
 
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();

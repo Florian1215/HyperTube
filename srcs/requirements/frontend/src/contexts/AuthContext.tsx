@@ -5,7 +5,7 @@ import {iUser} from "@/types/user";
 import {usePathname, useRouter} from "@/i18n/navigation";
 import {getUser} from "@/services/users.service";
 import {useLocale} from "next-intl";
-import {tLocale} from "@/i18n/request";
+import {tLocale} from "@/i18n/routing";
 
 interface AuthContextType {
     user?: iUser;
