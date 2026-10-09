@@ -61,7 +61,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
                     <ExpandableText key={season.id} lines={2} className="text-sm text-gray"  showBtn={false}>{season.overview}</ExpandableText>
                 </div>
             </div>
-            <table>
+            <table className="w-full table-fixed">
                 <tbody>
                     {season.episodes.map((episode) => <Episode key={episode.id} episode={episode} serie={serie} seasonNumber={season.season_number} user={user} altPoster={t("altEpisode", {episode: episode.episode_number, season: season.season_number, title: serie.title})} showDate={!sameDate} watchedEpisode={watchedEpisode} handleClick={handleClick}/>)}
                 </tbody>
@@ -98,12 +98,12 @@ function Episode({episode, serie, seasonNumber, user, altPoster, showDate, watch
 
     const isSelected = episode.episode_number === watchedEpisode.episode && seasonNumber === watchedEpisode.season;
     return (<tr>
-        <td className={"font-bold text-2xl font-wide text-right pr-1 pl-4" + (isSelected ? " border-l-5" : "")}>
+        <td className={"font-bold text-2xl font-wide text-right pr-1 pl-4 w-14" + (isSelected ? " border-l-5" : "")}>
             <span>{episode.episode_number}</span>
         </td>
-        <td className="px-4 w-50 py-2 custom-cursor-play" onClick={() => handleClick(currentEpisode)}>
+        <td className="px-4 w-36 sm:w-50 py-2 custom-cursor-play" onClick={() => handleClick(currentEpisode)}>
             {user && <MediaRightClick user={user} media={serie} progress={episode} seasonNumber={seasonNumber} episodeNumber={episode.episode_number} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
-            <div className="relative border aspect-10/7 overflow-hidden max-h-32" onContextMenu={handleContextMenu}>
+            <div className="relative border aspect-10/7 overflow-hidden" onContextMenu={handleContextMenu}>
                 <LoadingImage className="size-full object-cover" width={200} height={200} src={episode.poster_url} alt={altPoster}/>
                 <MediaWatchProgress user={user} media={episode}/>
                 <div className="custom-noise opacity-30"/>
@@ -111,7 +111,7 @@ function Episode({episode, serie, seasonNumber, user, altPoster, showDate, watch
             </div>
         </td>
         <td className="align-top py-2">
-            <button onClick={() => handleClick(currentEpisode)} className="font-semibold text-lg uppercase truncate">{episode.name}</button>
+            <button onClick={() => handleClick(currentEpisode)} title={episode.name} className="block max-w-full font-semibold text-lg uppercase truncate text-left">{episode.name}</button>
             <SmallText className="text-left">{t("minutes", {runtime: episode.runtime})}{showDate ? ` - ${formattedReleaseDate}` : ""}</SmallText>
             <ExpandableText className="text-sm text-gray leading-tight" lines={2} showBtn={false}>{episode.overview}</ExpandableText>
         </td>
