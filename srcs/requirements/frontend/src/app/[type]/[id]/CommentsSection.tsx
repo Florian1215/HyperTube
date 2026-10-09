@@ -32,7 +32,7 @@ export default function CommentsSection({media}: {media: iMedia}) {
 
     return (<div className="mx-auto max-w-2xl w-9/10 flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
-            <h1 className="text-center">{t("title")}</h1>
+            <h2 className="text-center">{t("title")}</h2>
             <Colors className="mt-1 sm:mt-2" />
         </div>
         <div className="w-full text-center">

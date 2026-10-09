@@ -19,7 +19,7 @@ export default function MovieCollectionSection({media}: {media: iMedia}) {
         return null;
 
     return (<div className="mx-auto max-w-2xl w-9/10">
-        <Title title={collection.name} exp={collection.parts.length}/>
+        <Title title={collection.name} tag="h2" exp={collection.parts.length}/>
         <table className="mt-2">
             <tbody>
                 {collection.parts.map((part, index) => <Part key={part.id} part={part} number={index + 1} user={user} isSelected={String(part.id) === String(media.id)}/>)}

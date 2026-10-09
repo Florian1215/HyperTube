@@ -101,7 +101,7 @@ function PersonInfo({person}: {person: iPerson}) {
         </div>
         <div className="flex flex-col gap-2 xl:gap-4 min-w-0 items-center sm:items-start text-center sm:text-left">
             <div>
-                <h2>{person.name}</h2>
+                <h3>{person.name}</h3>
                 <div className="flex items-center justify-center sm:justify-start gap-3">
                     {department && <p className="uppercase">{department}</p>}
                     {user && <PeopleWatchedCount user={user} people={person} total={person.medias_count} size={20}/>}

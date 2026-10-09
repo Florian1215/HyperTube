@@ -40,7 +40,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
     };
 
     return (<div className="mx-auto max-w-2xl w-9/10">
-        <Title title={t("seasons")} exp={serie.number_of_seasons}/>
+        <Title title={t("seasons")} tag="h2" exp={serie.number_of_seasons}/>
         <HorizontalScroll className="gap-2 py-2">
             {Array.from({length: serie.number_of_seasons}, (_, i) => <RadioButton key={i} selected={selectedSeasonNB === i} onClick={() => setSelectedSeasonNB(i)}>{t("seasonNumber", {number: i + 1})}</RadioButton>)}
         </HorizontalScroll>
@@ -54,7 +54,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
                     {season.complete && <div className="custom-complete-media"/>}
                 </div>
                 <div className="flex items-end pb-2 pt-4 gap-4">
-                    <h3>{t("episodesCount", {count: season.episodes.length})}</h3>
+                    <h4>{t("episodesCount", {count: season.episodes.length})}</h4>
                     <SmallText className="text-right">{season?.release_date.slice(0, 4)}</SmallText>
                 </div>
                 <div className="mb-4">

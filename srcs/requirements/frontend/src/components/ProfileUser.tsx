@@ -54,7 +54,7 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
             <div className="flex items-center gap-4 justify-center">
                 <ProfilePicture user={user} size={1}/>
                 <div className="flex flex-col items-start">
-                    <h2>{user.username}</h2>
+                    <h3>{user.username}</h3>
                     <p className="uppercase mb-2">{tProfile("memberSince", {date: memberSince})}</p>
                 </div>
             </div>
