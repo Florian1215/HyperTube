@@ -55,8 +55,6 @@ class PersonApiView(generics.RetrieveAPIView):
 
 
 class PersonMediasPagination(CustomPagination):
-    page_size = 18
-
     def get_paginated_response(self, data):
         response = super().get_paginated_response(data)
         response.data['counts'] = self.counts
@@ -86,5 +84,4 @@ class PersonMediasApiView(LangHistoryContext, generics.ListAPIView):
         return medias[role]
 
     def paginate_queryset(self, queryset):
-        # Only the medias of the page need the backdrops stored in the database
         return set_person_medias_backdrops(super().paginate_queryset(queryset))

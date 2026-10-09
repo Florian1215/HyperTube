@@ -34,10 +34,9 @@ TRANSCODE_PORT = environ.get('TRANSCODE_PORT', 5024)
 
 TRANSCODE_URL = f"http://{environ.get('TRANSCODE_HOST', 'host.docker.internal')}:{TRANSCODE_PORT}"
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ['DEBUG']
 APPEND_SLASH = False
-PER_PAGE = 20
+PER_PAGE = 18
 ALLOWED_HOSTS = []
 
 CORS_ALLOWED_ORIGINS = [

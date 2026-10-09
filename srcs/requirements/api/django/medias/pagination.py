@@ -11,14 +11,14 @@ TMDB_PER_PAGE = TMDBService.PER_PAGE
 
 class TMDBPagination(PageNumberPagination):
     page_query_param = 'page'
-    MAX_COUNT = 200
+    MAX_COUNT = PER_PAGE * 11
 
     def paginate_queryset(self, queryset, request, view=None):
         self.request = request
         req = view.tmdb_request
 
         self.page = req['page']
-        self.per_page = req.get('per_page', PER_PAGE)
+        self.per_page = req['per_page']
         self.total_pages = req['total_pages']
         self.total_count = min(req['total_results'], self.MAX_COUNT)
         self.results = req['results']
@@ -48,9 +48,7 @@ class TMDBPagination(PageNumberPagination):
         return f'{url.split('?')[0]}?{query_params.urlencode()}'
 
 
-def fetch_tmdb_page(fetch, page, per_page):
-    """A page of per_page results, taken from the one or two pages of TMDB it overlaps.
-    fetch gives the response of TMDB for one of its pages."""
+def fetch_tmdb_page(fetch, page, per_page=PER_PAGE):
     start = (max(page, 1) - 1) * per_page
     first_page = start // TMDB_PER_PAGE + 1
     res = fetch(first_page)

@@ -15,28 +15,21 @@ from medias.services.tmdb import TMDBService
 PEOPLE_NOT_FOUND = MEDIA_NOT_FOUND.format(type='people')
 
 SHORT_MAX_RUNTIME = 40
-# Below, a media is most likely confidential: student film, bonus, unreleased project...
 MIN_VOTE_COUNT = 50
 DOCUMENTARY_GENRE = 99
-# Appearances as oneself (making-of, ceremonies, interviews) or through reused footage
 NOT_A_ROLE = re.compile(r'\bself|archiv', re.IGNORECASE)
 EXCLUDED_JOBS = ['Thanks']
 
-# A person saved for longer is fetched again, to get the new medias of the filmography
 PEOPLE_LIFETIME = timedelta(days=7)
 
-# A multiple of 3, the people being displayed on up to 3 columns
-PEOPLE_PER_PAGE = 18
-
 PERSON_ROLES = ['cast', 'directing', 'writing', 'crew']
-# The creator of a series is credited in a department of its own
 WRITING_DEPARTMENTS = ['Writing', 'Creator']
 
 
 def fetch_people_search(query, lang, page):
     tmdb = TMDBService(lang)
     with external_service('TMDB', PEOPLE_NOT_FOUND):
-        return fetch_tmdb_page(lambda tmdb_page: tmdb.search_people(query, tmdb_page), page, PEOPLE_PER_PAGE)
+        return fetch_tmdb_page(lambda tmdb_page: tmdb.search_people(query, tmdb_page), page)
 
 
 def fetch_person(person_id, lang, get_credits=False):
@@ -49,7 +42,6 @@ def fetch_person(person_id, lang, get_credits=False):
 
 
 def is_real_credit(credit, role):
-    """False for what is not an actual work on a movie or a series: bonus videos, making-of, talk shows..."""
     genres = set(credit.get('genre_ids', []))
     if credit.get('adult') or credit.get('video') or not credit.get('poster_path') or not credit.get('backdrop_path'):
         return False
@@ -63,8 +55,6 @@ def is_real_credit(credit, role):
 
 
 def get_short_movies(tmdb, person_id, credits):
-    """The ids of the short films among the credits. The runtime is not in the credits and the one used by
-    the discover filter is not reliable, so it only gives candidates, checked against the movie itself."""
     movie_ids = {credit['id'] for credit in credits if credit['media_type'] == 'movie'}
     candidates = list(movie_ids & tmdb.get_person_short_movies(person_id, SHORT_MAX_RUNTIME))
     if not candidates:
@@ -75,7 +65,6 @@ def get_short_movies(tmdb, person_id, credits):
 
 
 def get_credit_role(credit, role):
-    """The role of PERSON_ROLES a credit of the 'cast' or 'crew' credits belongs to."""
     if role == 'cast':
         return 'cast'
     if credit.get('job') == 'Director':
@@ -86,7 +75,6 @@ def get_credit_role(credit, role):
 
 
 def get_person_medias(person):
-    """The medias of a person for each role of PERSON_ROLES: one per media, with every job the person had in it."""
     medias = {role: {} for role in PERSON_ROLES}
     with external_service('TMDB', PEOPLE_NOT_FOUND):
         credits = [(credit, role) for role in ('cast', 'crew')
@@ -116,7 +104,6 @@ def set_person_medias_backdrops(medias):
 
 
 def get_or_fetch_person(person_id, lang):
-    """The person and its data in the language, from the database when it was saved recently."""
     people = People.objects.filter(tmdb_id=person_id).first()
     outdated = people is not None and people.updated_at < timezone.now() - PEOPLE_LIFETIME
     language = people.languages.filter(lang=lang).first() if people and not outdated else None
@@ -144,8 +131,6 @@ def get_or_fetch_person(person_id, lang):
 
 
 def count_watched_medias(user, person_ids):
-    """For each person, the number of medias the user watched in which the person is credited: among the
-    filmography when the person is saved, among the credits of the saved medias (cast or crew) otherwise."""
     if not user or not user.is_authenticated:
         return {person_id: 0 for person_id in person_ids}
     watched = set(Media.objects.filter(history__user=user, history__complete=True).values_list('type', 'tmdb_id'))
