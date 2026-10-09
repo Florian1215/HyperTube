@@ -15,6 +15,7 @@ import SessionExpiredHandler from "@/contexts/SessionExpiredHandler";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import SigninModal from "@/components/layout/SigninModal";
 import SearchModal from "@/components/layout/SearchModal";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 import RegisterModal from "@/components/layout/RegisterModal";
 import CreditsMediaModal from "@/app/[type]/[id]/CreditsMediaModal";
 import SetFeatureModal from "@/app/[type]/[id]/SetFeatureModal";
@@ -41,6 +42,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                         <ModalProvider>
                             <Page404ErrorHandler/>
                             <SessionExpiredHandler/>
+                            <ScrollToTop/>
                             <NotificationList/>
 
                             <SearchModal/>
