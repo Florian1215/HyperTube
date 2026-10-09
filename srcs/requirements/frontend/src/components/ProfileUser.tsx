@@ -11,6 +11,7 @@ import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
 import {useUserHistory} from "@/services/users.service";
 import {useProfileComments} from "@/services/comments.service";
+import useAuth from "@/contexts/AuthContext";
 
 
 export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser, tabs: tTab, updateUserAction?: (patch: Partial<iUser>) => void}) {
@@ -30,7 +31,8 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
     const locale = useLocale();
     const ActiveTab = tabs[activeTab].comp;
     const {data: movies} = useUserHistory(user.id, "movies");
-    const {data: series} = useUserHistory(user.id, "series");
+    const {user: authUser} = useAuth();
+    const {data: series} = useUserHistory(user.id, "series", 1, authUser?.group_series ?? true);
     const {data: comments} = useProfileComments(user.id, 1);
     const counts: Record<string, number | undefined> = {movies: movies?.count, series: series?.count, comments: comments?.count};
 
