@@ -93,13 +93,13 @@ export default function HomePage() {
 }
 
 function AnimateLogo({maxHeight}: {maxHeight: number}) {
-    const {activeModal} = useModal();
+    const {activeModal, searchOpen} = useModal();
     const minHeight = maxHeight / 5;
     const [logoHeight, setLogoHeight] = useState(maxHeight);
     const [logoWidth, setLogoWidth] = useState(0);
 
     useEffect(() => {
-        if (activeModal.type !== null)
+        if (activeModal.type !== null || searchOpen)
             return ;
         let virtualScroll = 0;
 
@@ -117,7 +117,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
         };
         window.addEventListener("wheel", handleWheel, {passive: false});
         return () => {window.removeEventListener("wheel", handleWheel);};
-    }, [activeModal, maxHeight, minHeight]);
+    }, [activeModal, searchOpen, maxHeight, minHeight]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect

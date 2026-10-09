@@ -13,7 +13,7 @@ export default function Code({children, label}: {children: string, label: string
         })
     }
 
-    return (<div onClick={copyText} className={"flex truncate justify-between items-center gap-2 font-hairline bg-white-loading px-2 py-1 overflow-x-hidden" + (children ? " hover:cursor-pointer" : "")}>
+    return (<div onClick={copyText} className={"flex truncate justify-between items-center gap-2 font-hairline bg-white-light px-2 py-1 overflow-x-hidden" + (children ? " hover:cursor-pointer" : "")}>
         <p className="truncate">{label}: {children}</p>
         <IconButton>{(color) => <CopyIcon color={color}/>}</IconButton>
     </div>);

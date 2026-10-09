@@ -51,7 +51,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
                 <div className="w-full z-10 text-white text-center">
                     {episode && <EpisodeLabel season={episode.season_number} episode={episode.episode_number}/>}
                     {label && <p className="text-xs opacity-70 truncate">{label}</p>}
-                    <TitleMedia media={media} tag="h3" clickable={true} className="pl-[8%] justify-center" expClassName="xl:text-xl text-xl"/>
+                    <TitleMedia media={media} tag="h3" clickable={true} white={true} className="pl-[8%] justify-center" expClassName="xl:text-xl text-xl"/>
                 </div>}
         </div>
         {inHistory && media.watched_at && <div className="hidden group-hover:flex absolute items-center top-1 right-2 z-10 gap-2">

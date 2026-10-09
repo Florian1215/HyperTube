@@ -346,7 +346,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         </div>}
         <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
             {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
-                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-loading">{tAction("nextEpisode")}</button>}
+                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
             {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
@@ -362,7 +362,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
 
                     <div className="flex gap-2 sm:gap-4 items-center">
                         {selectedSubtitle && <IconButton color="white" title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}>{(color: string) => <SubDelayIcon direction={"left"} color={color}/>}</IconButton>}
-                        {<button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-loading" : "border-white hover:bg-black-hover")}>CC</button>}
+                        {<button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-light" : "border-white hover:bg-black-light")}>CC</button>}
                         {selectedSubtitle && <IconButton color="white" title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}>{(color: string) => <SubDelayIcon direction={"right"} color={color}/>}</IconButton>}
                         {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
 
@@ -370,7 +370,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                     </div>
                 </div>
 
-                <div className="w-full h-4 bg-black-hover border-t-black">
+                <div className="w-full h-4 bg-black-light border-t-black">
                     <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${barDuration ? (downloadDuration / barDuration) * 100 : 0}%`}}>
                         <div className={`pointer-events-none h-full bg-${user?.color ?? "purple"}`} style={{width: `${downloadDuration ? (seekTime / downloadDuration) * 100 : 0}%`}} />
                     </div>

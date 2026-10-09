@@ -68,7 +68,7 @@ function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onCli
         e.preventDefault();
         e.stopPropagation();
         onClick();
-    }} className="flex items-center gap-2 w-full pl-3 pr-6 py-2 text-left text-sm transition hover:bg-white-loading">
+    }} className="flex items-center gap-2 w-full pl-3 pr-6 py-2 text-left text-sm transition hover:bg-white-light">
         {Icon && <Icon size={20}/>}
         {children}
     </button>)

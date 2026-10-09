@@ -17,7 +17,7 @@ interface iMenuItem {
 }
 
 export default function Navbar() {
-    const {openModal} = useModal();
+    const {openModal, openSearch, closeSearch, searchOpen} = useModal();
     const {user, logout} = useAuth();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -37,7 +37,16 @@ export default function Navbar() {
         <Link className="flex items-center" href="/">
             <HypertubResponsiveLogo/>
         </Link>
-        <NavLink href="/search" name={t("search")} selected={searchType === null} icon={<SearchIcon selected={searchType === null}/>}/>
+        {/* the search opens over the current page, except from the search page itself */}
+        <NavLink href="/search" name={t("search")} selected={searchType === null || searchOpen} icon={<SearchIcon selected={searchType === null || searchOpen}/>} onClick={(e) => {
+            if (pathname === "/search" || e.metaKey || e.ctrlKey || e.shiftKey)
+                return;
+            e.preventDefault();
+            if (searchOpen)
+                closeSearch();
+            else
+                openSearch();
+        }}/>
         <NavLink href="/search?type=movies" name={t("movies")} selected={searchType === "movies"}/>
         <NavLink href="/search?type=series" name={t("series")} selected={searchType === "series"}/>
         <AccountMenu label={t("account")} items={menuItems} onClick={user ? undefined : () => openModal({type: "signin"})}>
@@ -46,8 +55,8 @@ export default function Navbar() {
     </nav>);
 }
 
-function NavLink({href, name, selected, icon}: {href: string, name: string, selected: boolean, icon?: React.ReactNode}) {
-    return (<Link className="uppercase flex items-center" href={href} title={name}>
+function NavLink({href, name, selected, icon, onClick}: {href: string, name: string, selected: boolean, icon?: React.ReactNode, onClick?: (e: React.MouseEvent) => void}) {
+    return (<Link className="uppercase flex items-center" href={href} title={name} onClick={onClick}>
         {icon}
         <span style={{transform: "translateY(-1px)"}} className={"custom-underline text-lg xl:text-2xl text-nowrap " + (selected ? "font-base font-light" : "font-hairline") + (icon ? " pl-1 xl:pl-2 hidden md:block" : "")}>{name}</span>
     </Link>);

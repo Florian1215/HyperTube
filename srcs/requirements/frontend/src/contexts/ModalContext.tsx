@@ -1,6 +1,6 @@
 "use client";
 
-import React, {createContext, Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
+import React, {createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
 import {iMediaDetails, iPeople, iTorrent} from "@/types/media";
 
@@ -29,6 +29,9 @@ interface ModalContextType {
     activeModal: ModalState;
     openModal: (modal: ModalState) => void;
     closeModal: () => void;
+    searchOpen: boolean;
+    openSearch: () => void;
+    closeSearch: () => void;
 }
 
 const ModalContext = createContext<ModalContextType | null>(null);
@@ -38,18 +41,21 @@ export function ModalProvider({children}: {children: React.ReactNode}) {
 
     const openModal = (modal: ModalState) => setActiveModal(modal);
     const closeModal = () => setActiveModal({type: null});
+    const [searchOpen, setSearchOpen] = useState(false);
+    const openSearch = useCallback(() => setSearchOpen(true), []);
+    const closeSearch = useCallback(() => setSearchOpen(false), []);
 
     useEffect(() => {
-        if (activeModal.type !== null) {
+        if (activeModal.type !== null || searchOpen) {
             document.body.style.overflow = "hidden";
         } else {
             document.body.style.overflow = "";
         }
 
         return () => {document.body.style.overflow = "";};
-    }, [activeModal]);
+    }, [activeModal, searchOpen]);
 
-    return (<ModalContext.Provider value={{activeModal, openModal, closeModal}}>
+    return (<ModalContext.Provider value={{activeModal, openModal, closeModal, searchOpen, openSearch, closeSearch}}>
         {children}
     </ModalContext.Provider>);
 }

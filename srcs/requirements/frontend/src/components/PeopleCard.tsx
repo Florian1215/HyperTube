@@ -11,7 +11,7 @@ export default function PeopleCard({people}: {people: iPeople}) {
     const department = people.department && (t.has(departmentKey) ? t(departmentKey) : people.department);
     const href = `/people/${people.id}`;
 
-    return (<div className="flex gap-3 items-center min-w-0 p-3 hover:bg-white-loading">
+    return (<div className="flex gap-3 items-center min-w-0 p-3 group">
         <Link href={href} className="relative border w-64 shrink-0 overflow-hidden aspect-3/2">
             <div className="custom-noise opacity-30"/>
             {
@@ -22,14 +22,14 @@ export default function PeopleCard({people}: {people: iPeople}) {
         </Link>
         <div className="flex flex-col items-start min-w-0">
             <div className="flex items-center gap-2 max-w-full">
-                <Link href={href} className="font-bold truncate custom-underline">{people.name}</Link>
+                <Link href={href} className="font-bold truncate text-dblack group-hover:underline underline-offset-2">{people.name}</Link>
                 <PeopleWatchedCount people={people}/>
             </div>
             {department && <SmallText>{department}</SmallText>}
             {people.known_for && people.known_for.length > 0 &&
             <p className="inline">
                 {people.known_for.map((media, index) => (<span key={index}>
-                    <Link className="custom-underline" href={`/${media.type}/${media.id}`}>{media.title}</Link>
+                    <Link className="custom-underline text-dblack" href={`/${media.type}/${media.id}`}>{media.title}</Link>
                     {index < people.known_for!.length - 1 && " , "}
                 </span>))}
             </p>}

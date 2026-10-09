@@ -39,7 +39,7 @@ export default function SliderHero({medias}: {medias: iMedia[]}) {
             {medias.length > 0 ?
                 medias.map((media, index) => (<MediaHero key={index} media={media} actionButton={
                     () => <Link href={formatURL(media)}>
-                            <TitleMedia media={media} clickable={true}/>
+                            <TitleMedia media={media} clickable={true} white={true}/>
                         </Link>}>
                     <Link href={formatURL(media)} className="size-full z-20 absolute"/>
                     <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)

@@ -3,7 +3,6 @@ import {useTranslations} from "next-intl";
 import React, {Dispatch, SetStateAction, useState} from "react";
 import LoadingText from "@/components/LoadingText";
 import {iGenre} from "@/types/genre";
-import {StarIcon} from "@/components/Icons";
 import Button from "@/components/ui/Button/Button";
 import LoadingImage from "@/components/ui/LoadingImage";
 import {iUser} from "@/types/user";
@@ -31,7 +30,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
         });
     };
 
-    return (<tr className="border-b" onContextMenu={handleContextMenu}>
+    return (<tr onContextMenu={handleContextMenu}>
         <td className="p-2 xl:p-4">
             {user && media && <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
             <div className="border overflow-hidden aspect-3/2 relative">

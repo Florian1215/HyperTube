@@ -80,7 +80,7 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <th />
                 {sortOptions.map((sortOption, i) =>
                     <th key={sortOption.type} className={classNames[i]}>
-                        <button className={"relative gap-1 flex items-center capitalize text-nowrap font-normal hover:underline text-xs sm:text-base" + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
+                        <button className={"relative gap-1 flex items-center capitalize text-nowrap font-normal hover:underline text-xs sm:text-base text-dblack " + (sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : "")}
                                 onClick={() => handleSort(sortOption.type)}>
                             {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} />}
                         </button>
@@ -90,7 +90,7 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <th />
             </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-gray divide-y">
             {sortedMedias ?
                 sortedMedias.map((media) => (<MediaCardList key={media.id} media={media} setFilterGenre={setFilterGenre} user={user}/>)) :
                 [...Array(6)].map((_, i) => (<MediaCardList key={i} setFilterGenre={setFilterGenre}/>))

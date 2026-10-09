@@ -2,12 +2,23 @@
 
 /* -------------------------------------------------- DEFAULT VALUE ------------------------------------------------- */
 @theme {
-    --color-black: #191919;
-    --color-black-hover: #383838;
+    --black: #191919;
+    --white: #FFFFFF;
+    --black-light: #292929;
+    --white-light: #dcdcdc;
+
+    --gray-loading: #C8C8C8;
+
+    --color-black: var(--black);
+    --color-black-light: var(--black-light);
+    --color-white-light: var(--white-light);
+
     --color-gray: #878787;
 
-    --color-gray-loading: #C8C8C8;
-    --color-white-loading: #ECECEC;
+    --color-dblack: var(--black);
+    --color-dblack-light: var(--black-light);
+    --color-dwhite: var(--white);
+    --color-dwhite-light: var(--white-light);
 
     --color-yellow: #FFD600;
     --color-pink: #FFA5F5;
@@ -49,6 +60,12 @@
     input[type="search"]::-webkit-search-cancel-button {-webkit-appearance: none; appearance: none;}
     .responsive-text-hairline { @apply font-hairline text-xs sm:text-xl xl:text-3xl tracking-normal; }
     .custom-underline:hover { @apply underline decoration-[0.07rem] underline-offset-[0.3rem]; }
+    .dark-mode {
+        --color-dblack: var(--white);
+        --color-dblack-light: var(--white-light);
+        --color-dwhite: var(--black);
+        --color-dwhite-light: var(--black-light);
+    }
 }
 
 @layer components {
@@ -80,13 +97,13 @@
         animation: loading-pulse-dark 2s ease-in-out infinite;
     }
     @keyframes loading-pulse {
-        0% {background-color: var(--color-gray-loading)}
-        50% {background-color: var(--color-white-loading);}
-        100% {background-color: var(--color-gray-loading)}
+        0% {background-color: var(--gray-loading)}
+        50% {background-color: var(--color-white-light);}
+        100% {background-color: var(--gray-loading)}
     }
     @keyframes loading-pulse-dark {
         0% {background-color: var(--color-black)}
-        50% {background-color: var(--color-black-hover);}
+        50% {background-color: var(--color-black-light);}
         100% {background-color: var(--color-black)}
     }
 }
