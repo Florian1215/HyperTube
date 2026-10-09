@@ -1,3 +1,4 @@
+import {tListResponse} from "@/types/api";
 import {tMedia} from "@/types/utils";
 import {iSmallEpisode} from "@/types/serie";
 import {iUser} from "@/types/user";
@@ -55,7 +56,27 @@ export interface iPeople {
     job?: string
     character?: string
     picture?: string
+    department?: string | null
+    known_for?: Pick<iMedia, "id" | "type" | "title">[]
+    watched_count?: number
 }
+
+export interface iPerson extends iPeople {
+    biography: string
+    birthday: string | null
+    deathday: string | null
+    place_of_birth: string | null
+    medias_count: number
+}
+
+export const PERSON_ROLES = ["cast", "directing", "writing", "crew"] as const;
+export type tPersonRole = (typeof PERSON_ROLES)[number];
+
+export interface iPersonMedia extends iMedia {
+    roles: string[]
+}
+
+export type tPersonMediasResponse = tListResponse<iPersonMedia> & {counts: Record<tPersonRole, number>};
 
 export interface iTorrent {
     id: string

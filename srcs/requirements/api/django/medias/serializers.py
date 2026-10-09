@@ -79,12 +79,18 @@ class CollectionPartSerializer(MediaSerializer):
 
 
 class CastSerializer(serializers.ModelSerializer):
+    # The id of the person on TMDB, the one the people endpoints expect
+    id = serializers.IntegerField(source='cast_id')
+
     class Meta:
         model = Cast
         fields = ['id', 'name', 'picture', 'character']
 
 
 class CrewSerializer(serializers.ModelSerializer):
+    # The id of the person on TMDB, the one the people endpoints expect
+    id = serializers.IntegerField(source='crew_id')
+
     class Meta:
         model = Crew
         fields = ['id', 'name', 'picture', 'job']

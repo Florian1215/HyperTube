@@ -25,6 +25,7 @@
     "usersSearchPlaceholder": "Rechercher un utilisateur...",
     "users": "Utilisateurs",
     "noResults": "Aucun film trouvé",
+    "noPeople": "Aucune personne trouvée",
     "noUsers": "Aucun utilisateur trouvé",
     "emptyPage": "Rien à afficher ici.",
     "noResultsResetFilter": "Aucun résultat. Réinitialiser les filtres ?",
@@ -95,6 +96,31 @@
       "requestError": "Erreur lors de la requete: {error}",
       "chooseBackdrop": "Choisir un arrière-plan",
       "feature": "Afficher ce film dans les films mis en avant sur la page d'accueil"
+    }
+  },
+  "people": {
+    "cast": "Acteur",
+    "directing": "Réalisateur",
+    "writing": "Scénariste",
+    "crew": "Équipe technique",
+    "born": "Naissance",
+    "died": "Décès",
+    "noMedias": "Aucun film ou série à afficher.",
+    "watched": "{count, plural, one {# film ou série vu} other {# films ou séries vus}}",
+    "departments": {
+      "Acting": "Acteur",
+      "Directing": "Réalisateur",
+      "Writing": "Scénariste",
+      "Production": "Producteur",
+      "Editing": "Monteur",
+      "Camera": "Directeur de la photographie",
+      "Sound": "Ingénieur du son",
+      "Art": "Décorateur",
+      "Costume & Make-Up": "Costumier / Maquilleur",
+      "Visual Effects": "Superviseur des effets visuels",
+      "Lighting": "Éclairagiste",
+      "Crew": "Technicien",
+      "Creator": "Créateur"
     }
   },
   "serie": {
@@ -234,6 +260,7 @@
       "loginRequired": "Vous devez être connecté pour accéder à cette page.",
       "notFoundFilm": "Film introuvable",
       "notFoundSerie": "Série introuvable",
+      "notFoundPeople": "Personne introuvable",
       "notFoundUser": "Utilisateur introuvable",
       "notFound": "Page {path} non trouvée.",
       "torrentNotFound": "Torrent introuvable. Ce film peut ne pas être encore disponible en streaming. Veuillez réessayer plus tard.",

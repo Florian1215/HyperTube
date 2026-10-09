@@ -7,7 +7,11 @@ from config.errors import MEDIA_NOT_FOUND
 from config.exceptions import external_service
 from config.tmdb_media import format_tmdb_image
 from medias.models import Media, Genre, MediaLanguage
+from medias.pagination import fetch_tmdb_page
 from medias.services.tmdb import TMDBService
+
+# A multiple of 3, the medias being displayed on 3 columns
+POPULAR_PER_PAGE = 18
 
 
 def get_or_fetch_media_lang(media, lang, media_data=None):
@@ -116,8 +120,12 @@ def get_media_collection(request, media):
 
 
 def fetch_search(type, query, lang, page):
+    tmdb = TMDBService(lang)
     with external_service('TMDB', MEDIA_NOT_FOUND.format(type=type)):
-        return TMDBService(lang).search_medias(type, query=query, page=page)
+        if query == 'popular':
+            return fetch_tmdb_page(lambda tmdb_page: tmdb.search_medias(type, query=query, page=tmdb_page), page,
+                                   POPULAR_PER_PAGE)
+        return tmdb.search_medias(type, query=query, page=page)
 
 
 def set_custom_backdrops(medias_data, type):

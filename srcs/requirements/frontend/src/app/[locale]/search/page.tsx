@@ -15,10 +15,14 @@ import {usePathname, useRouter} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
 import MediasList from "@/app/[locale]/search/MediasList";
 import {iSort, SEARCH_TYPES, tSearch, tSort, tT} from "@/types/utils";
-import {iMedia} from "@/types/media";
+import {iMedia, iPeople} from "@/types/media";
 import RadioButton from "@/components/ui/Button/RadioButton";
 import HorizontalScroll from "@/components/ui/HorizontalScroll";
 import {useUsersSearch} from "@/services/users.service";
+import {usePeopleSearch} from "@/services/people.service";
+import PeopleCard from "@/components/PeopleCard";
+import Pagination from "@/components/ui/Pagination";
+import computeTotalPage from "@/utils/computeTotalPage";
 import {iUser} from "@/types/user";
 import ProfilePicture from "@/components/ProfilePicture";
 import FollowButton from "@/components/FollowButton";
@@ -46,8 +50,12 @@ export default function Page() {
     const [typeSearch, setTypeSearch] = useState<tSearch>(type as tSearch ?? "movies");
     const {user: authUser} = useAuth();
     const isUsersSearch = typeSearch === "users";
-    const {data: medias, isError} = useItems(typeSearch, searchValue.trim(), undefined, !isUsersSearch);
-    const {data: users, isError: isUsersError} = useUsersSearch(searchValue.trim(), isUsersSearch, authUser?.id);
+    const isPeopleSearch = typeSearch === "people";
+    const [page, setPage] = useState(1);
+    const {data: medias, isError} = useItems(typeSearch, searchValue.trim(), page, !isUsersSearch && !isPeopleSearch);
+    const {data: people, isError: isPeopleError} = usePeopleSearch(searchValue.trim(), isPeopleSearch, page);
+    const {data: users, isError: isUsersError} = useUsersSearch(searchValue.trim(), isUsersSearch, authUser?.id, page);
+    const results = isUsersSearch ? users : isPeopleSearch ? people : medias;
     const t = useTranslations("search");
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,15 +83,17 @@ export default function Page() {
             params.delete("q");
         router.push(`${pathname}?${params.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [medias, users]);
+    }, [medias, users, people]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e?.target.value.toLowerCase() ?? "";
         setSearchValue(newValue);
+        setPage(1);
     }
     const handleChangeSearchType = (value: tSearch) => {
         localStorage.setItem("searchType", value);
         setTypeSearch(value);
+        setPage(1);
     };
     const handleSetViewType = (value: tViewType) => {
         localStorage.setItem("searchViewType", value);
@@ -114,10 +124,14 @@ export default function Page() {
             }
         </div>
 
-        {isUsersSearch ?
-            <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
-            <Results t={t} medias={isError ? [] : medias?.results} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
-        }
+        <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(results)} variableMT={true}>
+            {isUsersSearch ?
+                <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
+                isPeopleSearch ?
+                <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/> :
+                <Results t={t} medias={isError ? [] : medias?.results} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+            }
+        </Pagination>
     </div>);
 }
 
@@ -135,6 +149,15 @@ function UsersResults({t, users}: {t: tT, users?: iUser[]}) {
                 <FollowButton user={user}/>
             </div>
         ))}
+    </div>);
+}
+
+function PeopleResults({t, people}: {t: tT, people?: iPeople[]}) {
+    if (people && people.length === 0)
+        return (<SmallText>{t("noPeople")}</SmallText>);
+
+    return (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 sm:gap-x-4 px-6">
+        {people?.map((p) => <PeopleCard key={p.id} people={p}/>)}
     </div>);
 }
 

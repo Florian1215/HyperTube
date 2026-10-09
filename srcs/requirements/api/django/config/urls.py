@@ -10,5 +10,6 @@ urlpatterns = [
     path('api/v1/', include('series.urls')),
     path('api/v1/', include('comments.urls')),
     path('api/v1/', include('users.urls')),
+    path('api/v1/', include('people.urls')),
     path('api/v1/', include('torrents.urls'))
 ]

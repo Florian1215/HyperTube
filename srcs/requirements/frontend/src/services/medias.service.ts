@@ -38,9 +38,11 @@ export function useItems(type: tSearch, search_title?: string, page?: number, en
             else if (search_title === "featured")
                 endpoint += "featured/"
             else if (search_title === "top-rated")
-                endpoint += "top-rated/"
+                endpoint += `top-rated/?page=${page ?? 1}`
             else if (search_title)
-                endpoint += `?search=${search_title}&page=${page}`;
+                endpoint += `?search=${search_title}&page=${page ?? 1}`;
+            else
+                endpoint += `?page=${page ?? 1}`;
             return apiClient<tListResponse<iMedia>>(endpoint, locale, {signal});
         },
         enabled
@@ -81,6 +83,10 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     const mediaId = String(media.id);
     const sameMedia = (item: iMedia) => String(item.id) === mediaId && item.type === media.type;
 
+    // the lists of medias of the people are updated below, their number of watched medias has to be fetched again
+    void queryClient.invalidateQueries({queryKey: ["people"]});
+    void queryClient.invalidateQueries({queryKey: ["person"], predicate: (query) => query.queryKey[2] !== "medias" || episodeNumber !== undefined});
+
     if (media.type === "series") {
         void queryClient.invalidateQueries({queryKey: ["series", mediaId, "season"]});
         void queryClient.invalidateQueries({queryKey: ["user-media-history", userId]});
@@ -93,6 +99,10 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
 
     const newProgress = progress ?? NO_PROGRESS;
     queryClient.setQueriesData<tListResponse<iMedia>>({queryKey: ["medias", media.type]}, (current) => current && {
+        ...current,
+        results: current.results.map((item) => sameMedia(item) ? {...item, ...newProgress} : item),
+    });
+    queryClient.setQueriesData<tListResponse<iMedia>>({queryKey: ["person"], predicate: (query) => query.queryKey[2] === "medias"}, (current) => current && {
         ...current,
         results: current.results.map((item) => sameMedia(item) ? {...item, ...newProgress} : item),
     });

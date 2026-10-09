@@ -13,7 +13,7 @@ import {iMedia} from "@/types/media";
 import formatURL from "@/utils/formatURL";
 import useFormatDate from "@/utils/formatDate";
 
-export default function MediaCard({media, user, className, showTitle=true, inHistory=false} : {media?: iMedia, user?: iUser, className?: string, showTitle?: boolean, inHistory?: boolean}) {
+export default function MediaCard({media, user, className, showTitle=true, inHistory=false, label} : {media?: iMedia, user?: iUser, className?: string, showTitle?: boolean, inHistory?: boolean, label?: string}) {
     const t = useTranslations("media");
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [contextMenu, setContextMenu] = useState<iAxe>();
@@ -50,6 +50,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
             {showTitle &&
                 <div className="w-full z-10 text-white text-center">
                     {episode && <EpisodeLabel season={episode.season_number} episode={episode.episode_number}/>}
+                    {label && <p className="text-xs opacity-70 truncate">{label}</p>}
                     <TitleMedia media={media} tag="h3" clickable={true} className="pl-[8%] justify-center" expClassName="xl:text-xl text-xl"/>
                 </div>}
         </div>

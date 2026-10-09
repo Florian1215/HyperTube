@@ -22,12 +22,12 @@ export function useUser(userId: string, enabled=true, viewerId?: number) {
     );
 }
 
-export function useUsersSearch(search: string, enabled = true, viewerId?: number) {
+export function useUsersSearch(search: string, enabled = true, viewerId?: number, page = 1) {
     const [debouncedQuery] = useDebounce(search, 200);
 
     return useApiQuery(
-        ["users", debouncedQuery, viewerId],
-        (locale, signal) => apiClient<tListResponse<iUser>>(`users/?search=${encodeURIComponent(debouncedQuery)}`, locale, {signal}),
+        ["users", debouncedQuery, viewerId, page],
+        (locale, signal) => apiClient<tListResponse<iUser>>(`users/?search=${encodeURIComponent(debouncedQuery)}&page=${page}`, locale, {signal}),
         enabled
     );
 }

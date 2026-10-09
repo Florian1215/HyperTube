@@ -25,6 +25,7 @@
     "usersSearchPlaceholder": "Nach einem Benutzer suchen...",
     "users": "Benutzer",
     "noResults": "Kein Film gefunden",
+    "noPeople": "Keine Person gefunden",
     "noUsers": "Kein Benutzer gefunden",
     "emptyPage": "Nichts hier zu sehen.",
     "noResultsResetFilter": "Keine Ergebnisse. Filter zurücksetzen?",
@@ -95,6 +96,31 @@
       "requestError": "Fehler bei der Anfrage: {error}",
       "chooseBackdrop": "Wählen Sie ein Hintergrundbild",
       "feature": "Zeigen Sie diesen Film in den empfohlenen Filmen auf der Startseite an"
+    }
+  },
+  "people": {
+    "cast": "Schauspieler",
+    "directing": "Regisseur",
+    "writing": "Drehbuchautor",
+    "crew": "Crew",
+    "born": "Geboren",
+    "died": "Gestorben",
+    "noMedias": "Keine Filme oder Serien vorhanden.",
+    "watched": "{count, plural, one {# Film oder Serie gesehen} other {# Filme oder Serien gesehen}}",
+    "departments": {
+      "Acting": "Schauspieler",
+      "Directing": "Regisseur",
+      "Writing": "Drehbuchautor",
+      "Production": "Produzent",
+      "Editing": "Filmeditor",
+      "Camera": "Kameramann",
+      "Sound": "Tontechniker",
+      "Art": "Szenenbildner",
+      "Costume & Make-Up": "Kostüm- / Maskenbildner",
+      "Visual Effects": "VFX-Künstler",
+      "Lighting": "Beleuchter",
+      "Crew": "Crewmitglied",
+      "Creator": "Schöpfer"
     }
   },
   "serie": {
@@ -234,6 +260,7 @@
       "loginRequired": "Sie müssen angemeldet sein, um fortzufahren.",
       "notFoundFilm": "Film nicht gefunden",
       "notFoundSerie": "Serie nicht gefunden",
+      "notFoundPeople": "Person nicht gefunden",
       "notFoundUser": "Benutzer nicht gefunden",
       "notFound": "Seite {path} nicht gefunden.",
       "torrentNotFound": "Torrent nicht gefunden. Dieser Film ist möglicherweise noch nicht zum Streaming verfügbar. Bitte versuchen Sie es später erneut.",

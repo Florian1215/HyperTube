@@ -6,6 +6,7 @@ from django.conf import settings
 
 
 class TMDBService:
+    PER_PAGE = 20
     DEFAULT_LANGUAGE = 'en'
     LANGUAGES_CODE = {
         'en': 'en-US',
@@ -122,6 +123,66 @@ class TMDBService:
         )
         response.raise_for_status()
         return response.json()
+
+    def search_people(self, query, page=1):
+        params = {
+            'language': self.lang4,
+            'page': page,
+        }
+        if query:
+            params['query'] = query
+            endpoint = 'search/person'
+        else:
+            endpoint = 'person/popular'
+
+        response = requests.get(
+            f'{settings.TMDB_BASE_URL}/{endpoint}',
+            headers=self.headers,
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def get_person(self, person_id, get_credits=False):
+        params = {
+            'language': self.lang4
+        }
+        if get_credits:
+            params['append_to_response'] = 'combined_credits'
+
+        response = requests.get(
+            f'{settings.TMDB_BASE_URL}/person/{person_id}',
+            headers=self.headers,
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def get_person_short_movies(self, person_id, max_runtime):
+        """The ids of the movies of a person that TMDB lists with a runtime of at most max_runtime minutes."""
+        ids = set()
+        page = total_pages = 1
+        while page <= total_pages:
+            response = requests.get(
+                f'{settings.TMDB_BASE_URL}/discover/movie',
+                headers=self.headers,
+                params={
+                    'with_people': person_id,
+                    'with_runtime.gte': 1,
+                    'with_runtime.lte': max_runtime,
+                    'include_video': 'true',
+                    'page': page,
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
+            res = response.json()
+            ids.update(media_data['id'] for media_data in res['results'])
+            total_pages = res['total_pages']
+            page += 1
+        return ids
 
     def get_collection(self, collection_id):
         response = requests.get(

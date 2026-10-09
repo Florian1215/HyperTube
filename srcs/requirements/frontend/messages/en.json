@@ -25,6 +25,7 @@
     "usersSearchPlaceholder": "Search for a user...",
     "users": "Users",
     "noResults": "No movie found",
+    "noPeople": "No one found",
     "noUsers": "No user found",
     "emptyPage": "Nothing to show here.",
     "noResultsResetFilter": "No results. Reset filters?",
@@ -95,6 +96,31 @@
       "requestError": "Request error: {error}",
       "chooseBackdrop": "Choose a backdrop",
       "feature": "Display this movie in the featured movies on the homepage"
+    }
+  },
+  "people": {
+    "cast": "Actor",
+    "directing": "Director",
+    "writing": "Writer",
+    "crew": "Crew",
+    "born": "Born",
+    "died": "Died",
+    "noMedias": "No movie or series to show.",
+    "watched": "{count, plural, one {# movie or series watched} other {# movies or series watched}}",
+    "departments": {
+      "Acting": "Actor",
+      "Directing": "Director",
+      "Writing": "Writer",
+      "Production": "Producer",
+      "Editing": "Editor",
+      "Camera": "Cinematographer",
+      "Sound": "Sound engineer",
+      "Art": "Production designer",
+      "Costume & Make-Up": "Costume / Make-up artist",
+      "Visual Effects": "Visual effects artist",
+      "Lighting": "Lighting technician",
+      "Crew": "Crew member",
+      "Creator": "Creator"
     }
   },
   "serie": {
@@ -234,6 +260,7 @@
       "loginRequired": "You must be signed in to access this page.",
       "notFoundFilm": "Film not found",
       "notFoundSerie": "Serie not found",
+      "notFoundPeople": "Person not found",
       "notFoundUser": "User not found",
       "notFound": "Page {path} not found.",
       "torrentNotFound": "Torrent not found. This film may not be available for streaming yet. Please try again later.",
