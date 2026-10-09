@@ -24,7 +24,7 @@ export default function FriendsActivity({className}: {className?: string}) {
         return null;
 
     return (<section className={"flex flex-col gap-2 " + (className ?? "")}>
-        <span className="uppercase font-wide text-xl font-bold">{t("friendsActivity")}</span>
+        <span className="uppercase font-wide text-lg sm:text-xl font-bold">{t("friendsActivity")}</span>
         <HorizontalScroll className="gap-2 sm:gap-4">
             {activities.map((activity, index) => (<div key={index} className="flex flex-col gap-2 w-34 sm:w-42 shrink-0">
                 <Link href={formatURL(activity)} title={activity.title} className="group relative aspect-3/2 overflow-hidden border">

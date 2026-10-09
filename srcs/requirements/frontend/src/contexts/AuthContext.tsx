@@ -61,7 +61,7 @@ export function AuthProvider({children}: {children: ReactNode}) {
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         setUser(undefined);
-        if (pathname === "/users")
+        if (pathname === "/settings")
             router.push("/");
     };
 

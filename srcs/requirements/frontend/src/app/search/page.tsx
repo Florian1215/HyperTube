@@ -94,6 +94,11 @@ export default function Page() {
         localStorage.setItem("searchType", value);
         setTypeSearch(value);
         setPage(1);
+        if (type) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("type", value);
+            router.replace(`${pathname}?${params.toString()}`);
+        }
     };
     const handleSetViewType = (value: tViewType) => {
         localStorage.setItem("searchViewType", value);

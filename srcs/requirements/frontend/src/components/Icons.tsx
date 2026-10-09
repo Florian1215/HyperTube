@@ -70,36 +70,6 @@ export function SearchIcon({selected, color="black", size=20 }: {selected: boole
     </svg>);
 }
 
-export function RegisterIcon({color="black", size=20}) {
-    const fullColor = `var(--color-${color})`;
-
-    return (<svg width={size} height={size} viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16.731 18.0498H20.7808V18.9502H16.731V23H15.8306V18.9502H11.7808V18.0498H15.8306V14H16.731V18.0498ZM8.99951 11C10.3007 11.0001 11.5403 11.2906 12.6606 11.8076C12.2737 11.99 11.9026 12.2011 11.5503 12.4375C10.7471 12.1557 9.88893 12.0001 8.99951 12C4.49281 12 0.780709 15.9391 1.00928 20.5508L1.01025 20.5635C1.03042 20.5958 1.09754 20.6786 1.29443 20.8018C1.64264 21.0193 2.21053 21.2385 2.99072 21.4277C4.37577 21.7635 6.22142 21.9557 8.15283 21.9922C8.2584 22.3369 8.38701 22.6716 8.53369 22.9961C4.33845 22.9629 0.280074 22.2151 0.0239258 20.748L0.0112305 20.5996C-0.244646 15.4328 3.90558 11 8.99951 11ZM8.99951 0C11.7605 0.000527208 13.9995 2.2389 13.9995 5C13.9995 7.7611 11.7605 9.99947 8.99951 10C6.23809 10 3.99951 7.76142 3.99951 5C3.99951 2.23858 6.23809 4.81392e-07 8.99951 0ZM8.99951 1C6.79037 1 4.99951 2.79086 4.99951 5C4.99951 7.20914 6.79037 9 8.99951 9C11.2082 8.99947 12.9995 7.20881 12.9995 5C12.9995 2.79119 11.2082 1.00053 8.99951 1Z" fill={fullColor}/>
-    </svg>);
-}
-
-export function LanguageIcon({selected,color="black", size=24}: {selected: boolean, color?: string, size?: number}) {
-    const fullColor = `var(--color-${color})`;
-    const fullWhite = `var(--color-white)`;
-
-    if (selected) {
-        return (<svg width={size} height={size} viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="13.5" cy="13.5" r="13" fill={fullColor} stroke={fullColor}/>
-            <circle cx="13.3262" cy="13.5" r="11" stroke={fullWhite}/>
-            <path d="M13.3262 2.5C14.5418 2.5 15.7906 3.54737 16.7646 5.58398C17.7211 7.58399 18.3262 10.3822 18.3262 13.5C18.3262 16.6178 17.7211 19.416 16.7646 21.416C15.7906 23.4526 14.5418 24.5 13.3262 24.5C12.1105 24.5 10.8617 23.4526 9.8877 21.416C8.93121 19.416 8.32617 16.6178 8.32617 13.5C8.32617 10.3822 8.93121 7.58399 9.8877 5.58398C10.8617 3.54737 12.1105 2.5 13.3262 2.5Z" stroke={fullWhite}/>
-            <line x1="2.82617" y1="9.5" x2="24" y2="9.5" stroke={fullWhite}/>
-            <line x1="2.82617" y1="15.5" x2="24.8262" y2="15.5" stroke={fullWhite}/>
-        </svg>);
-    }
-    return (<svg width={size} height={size} viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="13.5" cy="13.5" r="13" fill={fullWhite} stroke={fullWhite}/>
-        <circle cx="13.3262" cy="13.5" r="11" stroke={fullColor}/>
-        <path d="M13.3262 2.5C14.5418 2.5 15.7906 3.54737 16.7646 5.58398C17.7211 7.58399 18.3262 10.3822 18.3262 13.5C18.3262 16.6178 17.7211 19.416 16.7646 21.416C15.7906 23.4526 14.5418 24.5 13.3262 24.5C12.1105 24.5 10.8617 23.4526 9.8877 21.416C8.93121 19.416 8.32617 16.6178 8.32617 13.5C8.32617 10.3822 8.93121 7.58399 9.8877 5.58398C10.8617 3.54737 12.1105 2.5 13.3262 2.5Z" stroke={fullColor}/>
-        <line x1="2.82617" y1="9.5" x2="24" y2="9.5" stroke={fullColor}/>
-        <line x1="2.82617" y1="15.5" x2="24.8262" y2="15.5" stroke={fullColor}/>
-    </svg>);
-}
-
 export function EyeIcon({color="black", size=24, crossed=false}: {color?: string, size?: number, crossed?: boolean}) {
     const fullColor = `var(--color-${color})`;
 
@@ -153,7 +123,7 @@ export function HypertubResponsiveLogo({color="black", height=20}: {color?: stri
         return () => window.removeEventListener("resize", handlWindowResize);
     }, []);
 
-    return (<svg className="h-3 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg">
+    return (<svg className="h-2 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg">
         {/*h*/} <path d="M590.15 30.5918C590.15 41.8558 595.142 48.1279 610.758 48.1279C611.645 48.1279 612.498 48.1057 613.317 48.0654V64.6094C612.48 64.6282 611.626 64.6396 610.758 64.6396C579.014 64.6396 567.75 52.0958 567.75 30.5918V0H590.15V30.5918Z" fill={fullColor}/>
         {/*y*/} <path d="M22.5283 23.4238H63.7441V0H86.2725V64H63.7441V40.0645H22.5283V64H0V0H22.5283V23.4238Z" fill={fullColor}/>
         {/*p*/} <path d="M143.669 25.0879L166.325 0H194.613L154.805 39.2959V64H132.277V39.2959L92.4688 0H120.757L143.669 25.0879Z" fill={fullColor}/>

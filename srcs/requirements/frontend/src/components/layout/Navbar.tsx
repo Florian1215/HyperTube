@@ -1,74 +1,91 @@
 "use client";
 
-import React, {useState} from "react";
-import {ExitDoorIcon, HypertubResponsiveLogo, LanguageIcon, RegisterIcon, SearchIcon, UserIcon} from "@/components/Icons";
-import {usePathname} from "@/i18n/navigation";
+import React, {useEffect, useRef, useState} from "react";
+import {HypertubResponsiveLogo, SearchIcon, UserIcon} from "@/components/Icons";
+import {Link, usePathname} from "@/i18n/navigation";
+import {useSearchParams} from "next/navigation";
 import {useTranslations} from "next-intl";
 import ProfilePicture from "@/components/ProfilePicture";
 import useAuth from "@/contexts/AuthContext";
 import useModal from "@/contexts/ModalContext";
-import SwitchLanguage from "@/components/layout/SwitchLanguage";
-import Link from "next/link";
 
-export interface iNavItem {
+interface iMenuItem {
     name: string
-    icon: ({color, size}: {
-        selected: boolean
-        color?: string
-        size?: number
-    }) => React.JSX.Element
     href?: string
     action?: () => void
-    hover?: (Icon: ({selected}: {selected: boolean}) => React.JSX.Element) => React.JSX.Element
+    danger?: boolean
 }
 
 export default function Navbar() {
     const {openModal} = useModal();
     const {user, logout} = useAuth();
-    const pathname = usePathname()
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const t = useTranslations("nav");
-    const homeNav = {name: "", icon: HypertubResponsiveLogo, href: "/"};
-    const searchNav = {name: t("search"), icon: SearchIcon, href: "/search"};
+    const searchType = pathname === "/search" ? searchParams.get("type") : undefined;
 
-    const navItems: iNavItem[] = user ? [
-        homeNav, searchNav, {
-        name: t("account"), icon: () => <ProfilePicture user={user} />, href: "/users"}, {
-        name: t("logout"), icon: ExitDoorIcon, action: logout}, {
-        name: "", icon: LanguageIcon, hover: SwitchLanguage,
-    },] : [
-        homeNav, searchNav, {
-        name: t("signin"), icon: UserIcon, action: () => openModal({type: "signin"})}, {
-        name: t("createAccount"), icon: RegisterIcon, action: () => openModal({type: "register"})}, {
-        name: "", icon: LanguageIcon, hover: SwitchLanguage,
-    },];
+    const menuItems: iMenuItem[] = user ? [
+        {name: t("profile"), href: `/users/${user.id}`},
+        {name: t("settings"), href: "/settings"},
+        {name: t("logout"), action: logout, danger: true},
+    ] : [
+        {name: t("signin"), action: () => openModal({type: "signin"})},
+        {name: t("createAccount"), action: () => openModal({type: "register"})},
+    ];
 
-    return (<nav className="flex justify-between px-6 sm:px-10 xl:px-16 py-4 sm:py-10">
-        {navItems.map((item, index) => (<NavItem key={index} item={item} selected={pathname === item.href} logoutBtn={t("logout")} />))}
-    </nav>)
+    return (<nav className="flex justify-between items-center gap-3 px-6 sm:px-10 xl:px-16 py-4 sm:py-10">
+        <Link className="flex items-center" href="/">
+            <HypertubResponsiveLogo/>
+        </Link>
+        <NavLink href="/search" name={t("search")} selected={searchType === null} icon={<SearchIcon selected={searchType === null}/>}/>
+        <NavLink href="/search?type=movies" name={t("movies")} selected={searchType === "movies"}/>
+        <NavLink href="/search?type=series" name={t("series")} selected={searchType === "series"}/>
+        <AccountMenu label={t("account")} items={menuItems} onClick={user ? undefined : () => openModal({type: "signin"})}>
+            {(selected) => user ? <ProfilePicture user={user}/> : <UserIcon selected={selected}/>}
+        </AccountMenu>
+    </nav>);
 }
 
-function NavItem({item, selected, logoutBtn}: {item: iNavItem, selected: boolean, logoutBtn: string}) {
-    const isLogoutBtn = item.name === logoutBtn;
-    const className = "uppercase flex items-center";
-    const PName = item.name ? <span style={{transform: "translateY(-1px)"}} className={"custom-underline pl-1 xl:pl-2 text-lg xl:text-2xl hidden md:block text-nowrap " + (selected ? "font-base font-light" : "font-hairline") + (isLogoutBtn ? " hover:text-red" : "")}>{item.name}</span> : null;
-    const [isHover, setIsHover] = useState(false);
+function NavLink({href, name, selected, icon}: {href: string, name: string, selected: boolean, icon?: React.ReactNode}) {
+    return (<Link className="uppercase flex items-center" href={href} title={name}>
+        {icon}
+        <span style={{transform: "translateY(-1px)"}} className={"custom-underline text-lg xl:text-2xl text-nowrap " + (selected ? "font-base font-light" : "font-hairline") + (icon ? " pl-1 xl:pl-2 hidden md:block" : "")}>{name}</span>
+    </Link>);
+}
 
-    if (item.href !== undefined) {
-        return (<Link className={className} href={item.href}>
-            {<item.icon selected={selected}/>}
-            {PName}
-        </Link>);
-    }
+function AccountMenu({label, items, onClick, children}: {label: string, items: iMenuItem[], onClick?: () => void, children: (selected: boolean) => React.ReactNode}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const itemClassName = "uppercase text-xl font-hairline text-nowrap custom-underline";
 
-    if (item.hover !== undefined)
-        return item.hover(item.icon);
+    useEffect(() => {
+        if (!isOpen)
+            return;
+        const closeMenu = (e: PointerEvent) => {
+            if (!ref.current?.contains(e.target as Node))
+                setIsOpen(false);
+        };
+        document.addEventListener("pointerdown", closeMenu);
+        return () => document.removeEventListener("pointerdown", closeMenu);
+    }, [isOpen]);
 
-    return (<button
-        className={className}
-        onClick={item.action}
-        onMouseEnter={() => (setIsHover(true))}
-        onMouseLeave={() => (setIsHover(false))}>
-        <item.icon selected={isHover && isLogoutBtn ? true : selected} color={isHover && isLogoutBtn ? "red" : "black"}/>
-        {PName}
-    </button>);
+    return (<div ref={ref} className="relative flex items-center" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
+        <button className="flex items-center" aria-label={label} aria-haspopup="menu" aria-expanded={isOpen} onClick={() => {
+            setIsOpen(onClick === undefined);
+            onClick?.();
+        }}>
+            {children(isOpen)}
+        </button>
+        {isOpen && <div className="absolute z-50 top-full right-0 pt-4" role="menu">
+            <div className="flex flex-col gap-1 items-start bg-white py-4 px-5 custom-shadow-m border border-black">
+                {items.map((item) => item.href ?
+                    <Link key={item.name} role="menuitem" className={itemClassName} href={item.href} onClick={() => setIsOpen(false)}>{item.name}</Link> :
+                    <button key={item.name} role="menuitem" className={itemClassName + (item.danger ? " hover:text-red" : "")} onClick={() => {
+                        setIsOpen(false);
+                        item.action?.();
+                    }}>{item.name}</button>
+                )}
+            </div>
+        </div>}
+    </div>);
 }

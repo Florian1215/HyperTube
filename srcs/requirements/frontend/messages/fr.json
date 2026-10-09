@@ -1,6 +1,10 @@
 {
   "nav": {
     "search": "Rechercher",
+    "movies": "Films",
+    "series": "Séries",
+    "profile": "Profil",
+    "settings": "Paramètres",
     "account": "Compte",
     "logout": "Déconnexion",
     "signin": "Connexion",
@@ -13,7 +17,7 @@
     "seriesPopular": "Séries populaires",
     "mostRated": "Les mieux notés",
     "directStream": "Streaming Direct",
-    "friendsActivity": "Activité récente des amis"
+    "friendsActivity": "Activité des amis"
   },
   "search": {
     "moviesSearchPlaceholder": "Rechercher un film...",
@@ -151,11 +155,16 @@
     "noCommentsYet": "Vous n'avez encore publié aucun commentaire.",
     "noCommentsPrompt": "Aucun commentaire pour le moment. Soyez le premier à en publier un !"
   },
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "avatar": "Avatar",
+    "password": "Mot de passe",
+    "account": "Compte"
+  },
   "profile": {
     "memberSince": "Membre depuis {date}",
     "tabs": {
-      "profile": "Profil",
-      "auth": "Mot de passe",
       "movies": "Films",
       "series": "Séries",
       "comments": "Commentaires"

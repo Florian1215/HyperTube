@@ -60,7 +60,7 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching.length > 0) &&
-            <Section title={t("continueWatching")} href="/users?tab=movies">
+            <Section title={t("continueWatching")} href={`/users/${user?.id}?tab=movies`}>
                 <MediasGrid mediaSets={continueWatching.slice(0, 3)} setLimit={true}/>
             </Section>}
 

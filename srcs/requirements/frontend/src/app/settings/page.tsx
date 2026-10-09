@@ -12,17 +12,13 @@ import useModal from "@/contexts/ModalContext";
 import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
-import ProfileUser from "@/components/ProfileUser";
-import {ProfileTabMovies, ProfileTabSeries} from "@/components/ProfileTabMediaHistory";
-import ProfileTabComments from "@/components/ProfileTabComments";
-import {tTab} from "@/types/utils";
 import Toggle from "@/components/ui/Toggle";
 import RadioButton from "@/components/ui/Button/RadioButton";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
-    const tabs: tTab = [{name: "profile", comp: ProfileTab}, {name: "auth", comp: AuthProfileTab}, {name: "movies", comp: ProfileTabMovies}, {name: "series", comp: ProfileTabSeries}, {name: "comments", comp: ProfileTabComments}];
+    const t = useTranslations("settings");
 
     useEffect(() => {
         if (!user && !loading)
@@ -30,18 +26,31 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, loading]);
 
-
     if (!user)
         return null;
 
-    return <ProfileUser user={user} updateUserAction={updateUser} tabs={tabs} />;
+    return (<div className="flex flex-col gap-10 sm:gap-14 max-w-9/10 md:max-w-3xl w-full mx-auto mt-12 pb-10">
+        <h2 className="text-center">{t("title")}</h2>
+        <SettingsSection title={t("profile")}>
+            <ProfileSection user={user} updateUser={updateUser}/>
+        </SettingsSection>
+        <SettingsSection title={t("avatar")}>
+            <AvatarSection user={user} updateUser={updateUser}/>
+        </SettingsSection>
+        <SettingsSection title={t("password")}>
+            <PasswordSection/>
+        </SettingsSection>
+        <SettingsSection title={t("account")}>
+            <AccountSection/>
+        </SettingsSection>
+    </div>);
 }
 
-function ProfileTab({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
-    return (<div className="flex flex-col sm:flex-row gap-14 sm:gap-20 xl:gap-30 max-w-9/10 xl:max-w-2/3 w-full justify-center items-center mx-auto">
-        <ProfileSection user={user} updateUser={updateUser} />
-        <AvatarSection user={user} updateUser={updateUser} />
-    </div>);
+function SettingsSection({title, children}: {title: string, children: React.ReactNode}) {
+    return (<section className="flex flex-col gap-4">
+        <span className="uppercase font-wide text-xl font-bold border-b pb-2">{title}</span>
+        {children}
+    </section>);
 }
 
 function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
@@ -107,7 +116,7 @@ function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Pa
         })
     }
 
-    return (<div className="flex flex-col gap-2 items-center justify-center">
+    return (<div className="flex flex-col gap-2 items-start">
         <ProfilePicture user={user} size={2} className="mb-2" />
         <TextButton
             className={user.profile_picture ? "text-red custom-underline-red" : "hover:no-underline"}
@@ -124,10 +133,22 @@ function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Pa
     </div>);
 }
 
-function AuthProfileTab() {
+function PasswordSection() {
     const {addNotification} = useNotification();
     const t = useTranslations("auth.changePassword");
     const tSuccess = useTranslations("notifications.success");
+
+    const handlePasswordChange = () => {
+        addNotification(tSuccess("passwordChanged"), "success");
+    };
+
+    return (<div className="w-full sm:max-w-1/2 flex flex-col items-start">
+        <Form formType="auth" request={postNewPassword} handleRequest={handlePasswordChange} t={t}
+              fields={["current-password", "new-password", "confirm-new-password"]} />
+    </div>);
+}
+
+function AccountSection() {
     const tProfile = useTranslations("profile");
     const {user, logout} = useAuth();
     const {openModal} = useModal();
@@ -142,13 +163,7 @@ function AuthProfileTab() {
         }});
     };
 
-    const handlePasswordChange = () => {
-        addNotification(tSuccess("passwordChanged"), "success");
-    };
-
-    return (<div className="max-w-9/10 sm:max-w-1/2 xl:max-w-2/6 w-full mx-auto flex flex-col items-start gap-4">
-        <Form formType="auth" request={postNewPassword} handleRequest={handlePasswordChange} t={t}
-              fields={["current-password", "new-password", "confirm-new-password"]} />
+    return (<div className="flex">
         <TextButton className="text-red custom-underline-red" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
     </div>);
 }
