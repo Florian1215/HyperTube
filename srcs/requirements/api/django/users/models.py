@@ -70,3 +70,17 @@ class UserHistory(models.Model):
 
     def __str__(self):
         return f'{self.user} - {self.media}[{self.pourcent}%]'
+
+
+class UserWatchlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist')
+    media = models.ForeignKey('medias.Media', on_delete=models.CASCADE, related_name='watchlist')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'media'], name='unique_user_watchlist')
+        ]
+
+    def __str__(self):
+        return f'{self.user} - {self.media}'

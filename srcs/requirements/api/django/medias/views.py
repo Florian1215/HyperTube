@@ -4,6 +4,7 @@ from django.db.models import Max
 from django.utils.translation import get_language_from_request
 from rest_framework import generics
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from config.errors import MEDIA_NOT_FOUND, PROGRESS_NOT_FOUND
@@ -17,7 +18,7 @@ from medias.serializers import MediaDetailSerializer, MediaSerializer, MediaFeat
 from series.fetch import get_or_fetch_season
 from series.models import Episode
 from torrents.fetch import get_or_fetch_torrent
-from users.models import UserHistory
+from users.models import UserHistory, UserWatchlist
 
 
 class MediaApiView(LangHistoryContext, generics.RetrieveAPIView):
@@ -99,6 +100,20 @@ class MediaProgressApiView(generics.ListAPIView, generics.UpdateAPIView, generic
     def get_queryset(self):
         media = get_or_fetch_media(self.request, self.kwargs['media_id'], self.kwargs['type'])
         return UserHistory.objects.filter(user=self.request.user, media=media)
+
+
+class MediaWatchlistApiView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        media = get_or_fetch_media(request, kwargs['media_id'], kwargs['type'])
+        UserWatchlist.objects.get_or_create(user=request.user, media=media)
+        return Response({'in_watchlist': True})
+
+    def delete(self, request, *args, **kwargs):
+        UserWatchlist.objects.filter(user=request.user, media__tmdb_id=kwargs['media_id'],
+                                     media__type=kwargs['type']).delete()
+        return Response({'in_watchlist': False})
 
 
 class MediaTorrentsApiView(generics.ListAPIView):

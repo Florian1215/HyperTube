@@ -9,7 +9,7 @@ import {usePathname, useRouter} from "@/i18n/navigation";
 import {tTab} from "@/types/utils";
 import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
-import {useUserHistory} from "@/services/users.service";
+import {useUserHistory, useUserWatchlist} from "@/services/users.service";
 import {useProfileComments} from "@/services/comments.service";
 import useAuth from "@/contexts/AuthContext";
 
@@ -33,8 +33,9 @@ export default function ProfileUser({user, tabs, updateUserAction}: {user: iUser
     const {data: movies} = useUserHistory(user.id, "movies");
     const {user: authUser} = useAuth();
     const {data: series} = useUserHistory(user.id, "series", 1, authUser?.group_series ?? true);
+    const {data: watchlist} = useUserWatchlist(user.id);
     const {data: comments} = useProfileComments(user.id, 1);
-    const counts: Record<string, number | undefined> = {movies: movies?.count, series: series?.count, comments: comments?.count};
+    const counts: Record<string, number | undefined> = {movies: movies?.count, series: series?.count, watchlist: watchlist?.count, comments: comments?.count};
 
     const date = new Date(user.created_at);
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(date).replace(/[\/-]/g, ".");

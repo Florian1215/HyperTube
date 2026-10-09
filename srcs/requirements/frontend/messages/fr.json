@@ -73,6 +73,9 @@
     "clearProgression": "Effacer la progression",
     "setAsWatched": "Marquer comme vu",
     "setAsNotWatched": "Marquer comme non vu",
+    "addToWatchlist": "Ajouter à la watchlist",
+    "removeFromWatchlist": "Retirer de la watchlist",
+    "watchlist": "Watchlist",
     "setFeature": "Mettre en avant",
     "moreInfo": "Plus d'infos",
     "credits": {
@@ -167,6 +170,7 @@
     "tabs": {
       "movies": "Films",
       "series": "Séries",
+      "watchlist": "Watchlist",
       "comments": "Commentaires"
     },
     "remove": "Supprimer",
@@ -176,6 +180,7 @@
     "preferredLanguage": "Version audio préférée",
     "groupBySeries": "Grouper par série",
     "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
+    "noWatchlistYet": "Aucun film ni série dans la watchlist.",
     "fields": {
       "submit": "Enregistrer les modifications",
       "username": "Nom d'utilisateur"
@@ -273,7 +278,8 @@
       "notFoundUser": "Utilisateur introuvable",
       "notFound": "Page {path} non trouvée.",
       "torrentNotFound": "Torrent introuvable. Ce film peut ne pas être encore disponible en streaming. Veuillez réessayer plus tard.",
-      "failedChangeProgression": "Impossible de mettre à jour la progression: {error}"
+      "failedChangeProgression": "Impossible de mettre à jour la progression: {error}",
+      "failedChangeWatchlist": "Impossible de mettre à jour la watchlist: {error}"
     }
   }
 }

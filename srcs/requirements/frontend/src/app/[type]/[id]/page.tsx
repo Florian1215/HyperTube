@@ -24,6 +24,8 @@ import SerieSeasonsSection from "@/app/[type]/[id]/SerieSeasonsSection";
 import MovieCollectionSection from "@/app/[type]/[id]/MovieCollectionSection";
 import {useSeason} from "@/services/series.service";
 import {iMovieDetails} from "@/types/movie";
+import useWatchlist from "@/hooks/useWatchlist";
+import {BookmarkIcon, PlayPauseIcon} from "@/components/Icons";
 
 export default function MediaPage() {
     const params = useParams();
@@ -41,6 +43,7 @@ export default function MediaPage() {
     const tError = useTranslations("notifications.error");
     const {openModal} = useModal();
     const t = useTranslations("media");
+    const toggleWatchlist = useWatchlist();
     const featureBtn= (media && hasPerm(user, "medias.can_recommend_medias")) ? () => openModal({type: "set-feature", media: media}) : undefined;
     const [selectedEpisode, setSelectedEpisode] = useState<iWatchEpisode>();
     const nextEpisode = media && "next_episode" in media ? media.next_episode : undefined;
@@ -169,12 +172,18 @@ export default function MediaPage() {
             }
             return <div className={"size-full z-10 absolute" + (onClick ? " custom-cursor-play" : "")} onClick={onClick}/>;}
         } actionButton={() => {
+            const className = "my-2 xl:my-4 font-bold md:h-12";
+            const classNameFlex = className + " flex items-center gap-3.5";
+
             if (startVideo || torrentId)
                 return undefined;
             return (<div className="relative z-30">
                 {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode}/>}
-                <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12" onClick={onClick} onContextMenu={handleRightClick}>{t(resumeAt > 0 ? "resume" : "watch")}</SecondaryButton>
-                {featureBtn && <SecondaryButton className="my-2 xl:my-4 font-bold md:h-12 border-l" onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
+                <div className="flex gap-2">
+                    <SecondaryButton className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></SecondaryButton>
+                    {featureBtn && <SecondaryButton className={className} onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
+                    {user && media && <Button className={classNameFlex + " border border-white bg-transparent text-white"} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></Button>}
+                </div>
             </div>);}
         }>
             {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">

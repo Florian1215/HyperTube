@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from config.errors import PROGRESS_NOT_FOUND
 from medias.context import LangHistoryContext
 from medias.fetch import get_or_fetch_media
-from medias.progress import get_serie_progress
+from medias.progress import get_serie_progress, remove_watched_from_watchlist
 from series.fetch import get_or_fetch_season
 from series.serializers import SeasonSerializer
 
@@ -51,6 +51,7 @@ class SeriesWatchedAPIView(APIView):
                     history.filter(complete=False).update(complete=True, pourcent=100, watched_at=None, updated_at=now)
                 else:
                     episode.history.create(user=request.user, media=media, complete=True, pourcent=100)
+        remove_watched_from_watchlist(request.user, media)
         return Response(get_serie_progress(media, request.user), status=status.HTTP_201_CREATED)
 
     def delete(self, request, media_id):

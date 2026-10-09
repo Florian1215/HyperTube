@@ -226,6 +226,14 @@ export function EditIcon({color="black", size=20}) {
     </svg>);
 }
 
+export function BookmarkIcon({color="black", size=20, filled=false}: {color?: string, size?: number, filled?: boolean}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill={filled ? fullColor : "none"} stroke={fullColor} strokeWidth={2} d="M6 3h12v18l-6-4.5L6 21V3Z"/>
+    </svg>);
+}
+
 export function TrashIcon({color="red", size=20}) {
     const fullColor = `var(--color-${color})`;
 

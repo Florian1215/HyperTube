@@ -18,6 +18,7 @@ export interface iMedia {
     type: tMedia
     progress: number
     watched_at: string
+    in_watchlist?: boolean
     episode?: iSmallEpisode
 }
 

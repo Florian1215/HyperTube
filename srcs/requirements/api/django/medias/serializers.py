@@ -7,7 +7,7 @@ from series.serializers import SmallEpisodeSerializer
 from torrents.models import Torrent
 from medias.fetch import get_or_fetch_media_lang
 from medias.models import Media, Cast, Crew
-from medias.progress import MediaProgressMixin, get_next_episode
+from medias.progress import MediaProgressMixin, MediaWatchlistMixin, get_next_episode, remove_watched_from_watchlist
 from users.models import User, UserHistory
 from users.serializers import UserSerializer
 
@@ -33,17 +33,18 @@ SMALL_MEDIA_FIELDS = [
     'complete',
     'pourcent',
     'watched_at',
+    'in_watchlist',
     'type'
 ]
 
 
-class SmallMediaSerializer(MediaTitleMixin, MediaProgressMixin, serializers.ModelSerializer):
+class SmallMediaSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistMixin, serializers.ModelSerializer):
     class Meta:
         model = Media
         fields = SMALL_MEDIA_FIELDS
 
 
-class MediaSerializer(MediaProgressMixin, serializers.Serializer):
+class MediaSerializer(MediaProgressMixin, MediaWatchlistMixin, serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()
     year = serializers.SerializerMethodField()
@@ -79,7 +80,6 @@ class CollectionPartSerializer(MediaSerializer):
 
 
 class CastSerializer(serializers.ModelSerializer):
-    # The id of the person on TMDB, the one the people endpoints expect
     id = serializers.IntegerField(source='cast_id')
 
     class Meta:
@@ -88,7 +88,6 @@ class CastSerializer(serializers.ModelSerializer):
 
 
 class CrewSerializer(serializers.ModelSerializer):
-    # The id of the person on TMDB, the one the people endpoints expect
     id = serializers.IntegerField(source='crew_id')
 
     class Meta:
@@ -96,7 +95,7 @@ class CrewSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'picture', 'job']
 
 
-class MediaDetailSerializer(MediaTitleMixin, MediaProgressMixin, serializers.ModelSerializer):
+class MediaDetailSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistMixin, serializers.ModelSerializer):
     cast = CastSerializer(many=True)
     crew = CrewSerializer(many=True)
     genres = serializers.SerializerMethodField()
@@ -133,6 +132,7 @@ class MediaDetailSerializer(MediaTitleMixin, MediaProgressMixin, serializers.Mod
             'pourcent',
             'watched_at',
             'watched_by',
+            'in_watchlist',
             'type',
 
             'runtime',
@@ -209,10 +209,13 @@ class MediaProgressSerializer(serializers.ModelSerializer):
             validated_data['pourcent'] = 100
             if 'watched_at' not in validated_data:
                 validated_data['watched_at'] = timezone.now()
-        return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        if instance.complete:
+            remove_watched_from_watchlist(instance.user, instance.media)
+        return instance
 
 
-class MediaHistorySerializer(serializers.ModelSerializer):
+class MediaHistorySerializer(MediaWatchlistMixin, serializers.ModelSerializer):
     id = serializers.IntegerField(source='media.tmdb_id')
     title = serializers.SerializerMethodField()
     year = serializers.CharField(source='media.year')

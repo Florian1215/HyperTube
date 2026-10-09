@@ -1,6 +1,6 @@
 from django.urls import re_path
 from medias.views import MediasListView, MediaApiView, MediaFeatureApiView, MediasFeatureApiView, MediaProgressApiView, \
-    MediaTorrentsApiView, MediasDirectStreamApiView, MediaCollectionApiView
+    MediaTorrentsApiView, MediasDirectStreamApiView, MediaCollectionApiView, MediaWatchlistApiView
 
 
 def get_media_path(View, endpoint='', name=None, media_id=False):
@@ -21,6 +21,7 @@ urlpatterns = [
     get_media_path(MediaFeatureApiView, '/feature', name='set-feature', media_id=True),
     get_media_path(MediaApiView, name='media-detail', media_id=True),
     get_media_path(MediaProgressApiView, '/progress', name='media-progress', media_id=True),
+    get_media_path(MediaWatchlistApiView, '/watchlist', name='media-watchlist', media_id=True),
     get_media_path(MediaTorrentsApiView, '/torrents', name='media-torrents', media_id=True),
     get_media_path(MediaCollectionApiView, '/collection', name='media-collection', media_id=True),
 ]

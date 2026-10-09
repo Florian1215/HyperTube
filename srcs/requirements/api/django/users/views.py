@@ -102,6 +102,17 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
         return queryset.order_by('-updated_at')
 
 
+class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
+    serializer_class = SmallMediaSerializer
+
+    def get_queryset(self):
+        queryset = Media.objects.filter(watchlist__user=self.kwargs['user_id'])
+        media_type = self.request.query_params.get('type')
+        if media_type in ('movies', 'series'):
+            queryset = queryset.filter(type=media_type)
+        return queryset.order_by('-watchlist__created_at')
+
+
 class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
     queryset = UserHistory.objects.select_related('user', 'media', 'episode')
     serializer_class = MediaActivitySerializer

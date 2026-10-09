@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from users.models import User, UserFollow, UserHistory
+from users.models import User, UserFollow, UserHistory, UserWatchlist
 
 
 @admin.register(User)
@@ -43,3 +43,11 @@ class UserHistoryAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     list_select_related = ('user', 'media', 'episode__serie', 'episode__season')
     date_hierarchy = 'updated_at'
+
+
+@admin.register(UserWatchlist)
+class UserWatchlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'media', 'created_at')
+    search_fields = ('user__username', 'media__original_title')
+    autocomplete_fields = ('user', 'media')
+    list_select_related = ('user', 'media')

@@ -3,7 +3,7 @@ import {useTranslations} from "next-intl";
 import computeTotalPage from "@/utils/computeTotalPage";
 import Pagination from "@/components/ui/Pagination";
 import MediasGrid from "@/components/MediasGrid";
-import {useUserHistory} from "@/services/users.service";
+import {useUserHistory, useUserWatchlist} from "@/services/users.service";
 import {iUser} from "@/types/user";
 import {tMedia} from "@/types/utils";
 import SmallText from "@/components/ui/SmallText";
@@ -22,6 +22,18 @@ export default function ProfileTabMediaHistory({user, type}: {user: iUser, type:
         return (<SmallText>{t("noMediasYet")}</SmallText>);
     return (<Pagination currentIndex={index} onClick={changeIndex} totalPage={totalPage} variableMT={true}>
         <MediasGrid mediaSets={watchMedias?.results} inHistory={true}/>
+    </Pagination>);
+}
+
+export function ProfileTabWatchlist({user}: {user: iUser}) {
+    const [index, setIndex] = useState(1);
+    const t = useTranslations("profile");
+    const {data: medias} = useUserWatchlist(user.id, index);
+
+    if (medias && medias.results.length === 0)
+        return (<SmallText>{t("noWatchlistYet")}</SmallText>);
+    return (<Pagination currentIndex={index} onClick={setIndex} totalPage={computeTotalPage(medias)} variableMT={true}>
+        <MediasGrid mediaSets={medias?.results}/>
     </Pagination>);
 }
 

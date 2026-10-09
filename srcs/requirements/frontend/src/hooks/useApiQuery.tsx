@@ -57,11 +57,16 @@ export function updateMediaBackdrop(queryClient: QueryClient, media: Pick<iMedia
     const setBackdrop = <T extends Pick<iMedia, "id" | "type" | "backdrop_url">>(v: T): T =>
         (v.type === media.type && String(v.id) === String(media.id)) ? {...v, backdrop_url: media.backdrop_url} : v;
 
-    ["medias", "user-media-history"].forEach((key) => {
+    ["medias", "user-media-history", "user-watchlist"].forEach((key) => {
         queryClient.getQueriesData<tListResponse<iMedia>>({queryKey: [key]}).forEach(([queryKey, current]) => {
             if (current?.results)
                 queryClient.setQueryData(queryKey, {...current, results: current.results.map(setBackdrop)});
         });
+    });
+    // the medias of the people: ["person", id, "medias", ...]
+    queryClient.getQueriesData<tListResponse<iMedia>>({queryKey: ["person"], predicate: (query) => query.queryKey[2] === "medias"}).forEach(([queryKey, current]) => {
+        if (current?.results)
+            queryClient.setQueryData(queryKey, {...current, results: current.results.map(setBackdrop)});
     });
     queryClient.getQueriesData<iCollection>({queryKey: ["collection"]}).forEach(([queryKey, current]) => {
         if (current?.parts)

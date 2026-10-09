@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from medias.models import Media
 from series.models import Episode
-from users.models import UserHistory
+from users.models import UserHistory, UserWatchlist
 
 
 def get_progress_ratio(watched, total):
@@ -58,6 +58,12 @@ def get_next_episode(serie, user):
     return res
 
 
+def remove_watched_from_watchlist(user, media):
+    if media.type == 'series' and not get_serie_progress(media, user)['complete']:
+        return
+    UserWatchlist.objects.filter(user=user, media=media).delete()
+
+
 class MediaProgressMixin(serializers.Serializer):
     progress = serializers.SerializerMethodField()
     complete = serializers.SerializerMethodField()
@@ -104,3 +110,19 @@ class MediaProgressMixin(serializers.Serializer):
 
     def get_watched_at(self, obj):
         return self.get_progress_field(obj, 'watched_at', None)
+
+
+class MediaWatchlistMixin(serializers.Serializer):
+    in_watchlist = serializers.SerializerMethodField()
+
+    def get_in_watchlist(self, obj):
+        request = self.context.get('request')
+        if request is None or not request.user.is_authenticated:
+            return False
+        if 'watchlist' not in self.context:
+            self.context['watchlist'] = set(UserWatchlist.objects.filter(user=request.user)
+                                            .values_list('media__type', 'media__tmdb_id'))
+        if type(obj) is dict:
+            return (MediaProgressMixin.get_media_type(obj), obj['id']) in self.context['watchlist']
+        media = getattr(obj, 'media', obj)
+        return (media.type, media.tmdb_id) in self.context['watchlist']

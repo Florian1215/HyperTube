@@ -4,7 +4,7 @@ import {useDebounce} from "use-debounce";
 import useApiQuery from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse} from "@/types/api";
-import {QueryClient} from "@tanstack/react-query";
+import {Query, QueryClient} from "@tanstack/react-query";
 import {tMedia, tSearch} from "@/types/utils";
 import {iSerieDetails} from "@/types/serie";
 import {iMovieDetails} from "@/types/movie";
@@ -77,6 +77,23 @@ export function updateMediaFeature(local: string, mediaType: tMedia, mediaId: st
     return apiClient<iMedia>(`${mediaType}/${mediaId}/feature/`, local, {method: "PATCH", body: JSON.stringify({feature, backdrop_url})});
 }
 
+export function updateMediaWatchlist(mediaId: string, mediaType: tMedia, inWatchlist: boolean) {
+    return apiClient<{in_watchlist: boolean}>(`${mediaType}/${mediaId}/watchlist/`, undefined, {method: inWatchlist ? "POST" : "DELETE"});
+}
+
+export function syncMediaWatchlist(queryClient: QueryClient, media: Pick<iMedia, "id" | "type">, inWatchlist: boolean) {
+    const mediaId = String(media.id);
+    const setWatchlist = <T extends Pick<iMedia, "id" | "type">>(item: T): T =>
+        (String(item.id) === mediaId && item.type === media.type) ? {...item, in_watchlist: inWatchlist} : item;
+
+    [{queryKey: ["medias", media.type]}, {queryKey: ["user-media-history"]}, {queryKey: ["person"], predicate: (query: Query) => query.queryKey[2] === "medias"}].forEach((filters) => {
+        queryClient.setQueriesData<tListResponse<iMedia>>(filters, (current) => current?.results && {...current, results: current.results.map(setWatchlist)});
+    });
+    queryClient.setQueriesData<iCollection>({queryKey: ["collection"]}, (current) => current?.parts && {...current, parts: current.parts.map(setWatchlist)});
+    queryClient.setQueriesData<iMediaDetails>({queryKey: ["media", media.type, mediaId]}, (current) => current && {...current, in_watchlist: inWatchlist});
+    void queryClient.invalidateQueries({queryKey: ["user-watchlist"]});
+}
+
 const NO_PROGRESS: iProgress = {progress: 0, complete: false, pourcent: 0, watched_at: ""};
 
 export function syncMediaProgress(queryClient: QueryClient, userId: number, media: iMedia, progress?: iProgress, episodeNumber?: number) {
@@ -85,6 +102,12 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
 
     // the lists of medias of the people are updated below, their number of watched medias has to be fetched again
     void queryClient.invalidateQueries({queryKey: ["people"]});
+
+    // a watched media leaves the watchlist: a series only once all its episodes are watched, which the server decides
+    if (progress?.complete && episodeNumber === undefined)
+        syncMediaWatchlist(queryClient, media, false);
+    else if (progress?.complete)
+        void queryClient.invalidateQueries({queryKey: ["user-watchlist"]});
     void queryClient.invalidateQueries({queryKey: ["person"], predicate: (query) => query.queryKey[2] !== "medias" || episodeNumber !== undefined});
 
     if (media.type === "series") {
