@@ -90,7 +90,7 @@ function PersonInfo({person}: {person: iPerson}) {
         ["died", deathday],
     ];
 
-    return (<div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-center w-full max-w-4xl mx-auto">
+    return (<div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-center sm:items-start w-full max-w-4xl mx-auto">
         <div className="relative border w-4/5 sm:w-62 aspect-3/2 sm:aspect-5/6 shrink-0 overflow-hidden">
             {
                 person.picture ?
@@ -99,7 +99,7 @@ function PersonInfo({person}: {person: iPerson}) {
             }
             <div className="custom-noise"/>
         </div>
-        <div className="flex flex-col gap-2 xl:gap-4 min-w-0 items-center sm:items-start text-center sm:text-left">
+        <div className="flex flex-col gap-2 xl:gap-4 min-w-0 items-center sm:items-start text-center sm:text-left mt-8">
             <div>
                 <h3>{person.name}</h3>
                 <div className="flex items-center justify-center sm:justify-start gap-3">
