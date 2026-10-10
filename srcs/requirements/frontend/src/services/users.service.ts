@@ -46,6 +46,14 @@ export function useUserHistory(userId?: number, type?: tMedia, page = 1, group =
     );
 }
 
+export function useContinueWatching(userId?: number) {
+    return useApiQuery(
+        ["user-media-history", userId, "continue"],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/continue-watching/`, locale),
+        !!userId
+    );
+}
+
 export function useUserWatchlist(userId?: number, page = 1) {
     return useApiQuery(
         ["user-watchlist", userId, page],

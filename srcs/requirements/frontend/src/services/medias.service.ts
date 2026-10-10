@@ -100,10 +100,10 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     const mediaId = String(media.id);
     const sameMedia = (item: iMedia) => String(item.id) === mediaId && item.type === media.type;
 
-    // the lists of medias of the people are updated below, their number of watched medias has to be fetched again
+    void queryClient.invalidateQueries({queryKey: ["user-media-history", userId, "continue"]});
+
     void queryClient.invalidateQueries({queryKey: ["people"]});
 
-    // a watched media leaves the watchlist: a series only once all its episodes are watched, which the server decides
     if (progress?.complete && episodeNumber === undefined)
         syncMediaWatchlist(queryClient, media, false);
     else if (progress?.complete)

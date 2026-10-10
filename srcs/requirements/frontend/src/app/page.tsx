@@ -14,7 +14,7 @@ import Section from "@/components/ui/Section";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
-import {useUserHistory} from "@/services/users.service";
+import {useContinueWatching} from "@/services/users.service";
 import {iMedia} from "@/types/media";
 
 export default function HomePage() {
@@ -24,7 +24,7 @@ export default function HomePage() {
     const genreCount = {xs: 3, md: 4, lg: 6, xl: 8}[size];
     const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
 
-    const {data: continueWatchingData} = useUserHistory(user?.id);
+    const {data: continueWatchingData} = useContinueWatching(user?.id);
     const {data: movies} = useItems("movies");
     const popular = filterAlreadyWatch(movies?.results);
     const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
@@ -47,7 +47,7 @@ export default function HomePage() {
     const mostRated = filterAlreadyWatch(mostRatedMovies?.results);
     const shuffledMostRated = useMemo(() => shuffleArray(mostRated), [mostRated])
 
-    const continueWatching = continueWatchingData ? continueWatchingData.results.filter((m) => !m.complete) : [];
+    const continueWatching = continueWatchingData?.results ?? [];
 
     const {data: dirctedWatchMovies} = useItems("movies", "directstream");
     const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
@@ -61,7 +61,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href={`/users/${user?.id}?tab=movies`}>
-                <MediasGrid mediaSets={continueWatching.slice(0, 3)} setLimit={true}/>
+                <MediasGrid mediaSets={continueWatching.slice(0, 3)} setLimit={true} showEpisode={true}/>
             </Section>}
 
             {

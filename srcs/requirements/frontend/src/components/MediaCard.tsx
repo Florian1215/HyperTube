@@ -13,7 +13,7 @@ import {iMedia} from "@/types/media";
 import formatURL from "@/utils/formatURL";
 import useFormatDate from "@/utils/formatDate";
 
-export default function MediaCard({media, user, className, showTitle=true, inHistory=false, label} : {media?: iMedia, user?: iUser, className?: string, showTitle?: boolean, inHistory?: boolean, label?: string}) {
+export default function MediaCard({media, user, className, showTitle=true, inHistory=false, showEpisode=false, label} : {media?: iMedia, user?: iUser, className?: string, showTitle?: boolean, inHistory?: boolean, showEpisode?: boolean, label?: string}) {
     const t = useTranslations("media");
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [contextMenu, setContextMenu] = useState<iAxe>();
@@ -34,7 +34,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
         </div>);
     }
 
-    const episode = inHistory ? media.episode : undefined;
+    const episode = (inHistory || showEpisode) ? media.episode : undefined;
 
     return (<Link href={formatURL(media)} className={containerClass + " group " + className} onContextMenu={handleContextMenu}>
         {user && media && <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}
