@@ -61,7 +61,7 @@ export default function HomePage() {
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
         <FriendsActivity className="px-4 sm:px-6 mb-6 md:mb-8"/>
 
-        <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
+        <div className="flex flex-col gap-4 px-4 sm:gap-10 sm:px-6" >
             {(continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href={`/search?type=${continueWatching[0].type}&q=${encodeURIComponent(SEARCH_CONTINUE)}`}>
                 <MediasGrid mediaSets={continueWatching} setLimit={true} showEpisode={true}/>

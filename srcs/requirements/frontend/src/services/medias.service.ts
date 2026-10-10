@@ -111,6 +111,8 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     const sameMedia = (item: iMedia) => String(item.id) === mediaId && item.type === media.type;
 
     void queryClient.invalidateQueries({queryKey: ["user-media-history", userId, "continue"]});
+    void queryClient.invalidateQueries({queryKey: ["user-media-history", "following"]});
+    void queryClient.invalidateQueries({queryKey: ["medias", media.type, SEARCH_FRIENDS]});
 
     void queryClient.invalidateQueries({queryKey: ["people"]});
 

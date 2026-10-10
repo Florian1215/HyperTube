@@ -1,4 +1,5 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
+import useAuth from "@/contexts/AuthContext";
 import {deleteMediaProgress, syncMediaProgress, updateMediaProgress} from "@/services/medias.service";
 import {iMedia, iProgress} from "@/types/media";
 import {ApiError} from "@/services/apiClient";
@@ -67,6 +68,21 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
             {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
         </div>);
     return null;
+}
+
+export function useMediaRightClick(media?: iMedia) {
+    const {user} = useAuth();
+    const [contextMenu, setContextMenu] = useState<iAxe>();
+
+    const onContextMenu = (e: React.MouseEvent) => {
+        if (!user || !media)
+            return;
+        e.preventDefault();
+        setContextMenu({x: e.clientX, y: e.clientY});
+    };
+
+    const menu = user && media ? <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}/> : null;
+    return {onContextMenu, menu};
 }
 
 function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onClick: () => void, Icon?: React.ElementType}) {

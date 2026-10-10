@@ -248,9 +248,24 @@ class MediaHistorySerializer(MediaWatchlistMixin, serializers.ModelSerializer):
 
 class MediaActivitySerializer(MediaHistorySerializer):
     user = UserSerializer()
+    progress = serializers.SerializerMethodField()
+    complete = serializers.SerializerMethodField()
+    pourcent = serializers.SerializerMethodField()
 
     class Meta(MediaHistorySerializer.Meta):
         fields = MediaHistorySerializer.Meta.fields + ['user']
+
+    def get_viewer_progress(self, obj, field, default):
+        return MediaProgressMixin(context=self.context).get_progress_field(obj.media, field, default)
+
+    def get_progress(self, obj):
+        return self.get_viewer_progress(obj, 'progress', 0)
+
+    def get_complete(self, obj):
+        return self.get_viewer_progress(obj, 'complete', False)
+
+    def get_pourcent(self, obj):
+        return self.get_viewer_progress(obj, 'pourcent', 0)
 
 
 class MediaTorrentSerializer(serializers.ModelSerializer):

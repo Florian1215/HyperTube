@@ -9,6 +9,7 @@ import MediaWatchProgress from "@/components/MediaWatchProgress";
 import {iUser} from "@/types/user";
 import ExpandableText from "@/components/ui/ExpandableText";
 import {Link} from "@/i18n/navigation";
+import {useMediaRightClick} from "@/components/MediaRightClick";
 import formatURL from "@/utils/formatURL";
 
 export default function MovieCollectionSection({media}: {media: iMedia}) {
@@ -30,6 +31,7 @@ export default function MovieCollectionSection({media}: {media: iMedia}) {
 
 function Part({part, number, user, isSelected}: {part: iCollectionPart, number: number, user?: iUser, isSelected: boolean}) {
     const image = part.backdrop_url || part.poster_url;
+    const {onContextMenu, menu} = useMediaRightClick(part);
     const poster = (<div className="relative border aspect-10/7 overflow-hidden max-h-32">
         {image && <LoadingImage className="size-full object-cover" width={200} height={200} src={image} alt={part.title}/>}
         <MediaWatchProgress user={user} media={part}/>
@@ -37,11 +39,12 @@ function Part({part, number, user, isSelected}: {part: iCollectionPart, number: 
         {part.complete && <div className="custom-complete-media"/>}
     </div>);
 
-    return (<tr>
+    return (<tr onContextMenu={onContextMenu}>
         <td className={"font-bold text-2xl font-wide text-right pr-1 pl-4" + (isSelected ? " border-l-5" : "")}>
             <span>{number}</span>
         </td>
         <td className="px-4 w-50 py-2">
+            {menu}
             {isSelected ? poster : <Link href={formatURL(part)}>{poster}</Link>}
         </td>
         <td className="align-top py-2">
