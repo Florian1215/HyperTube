@@ -9,6 +9,7 @@ from medias.fetch import get_or_fetch_media
 from medias.models import Media
 from series.models import Episode
 from series.fetch import get_or_fetch_season
+from torrents.models import TorrentRequest
 from users.models import UserHistory
 
 
@@ -40,7 +41,6 @@ def get_continue_watching(request, user_id):
             following = get_next_released_episode(request, history.media, history.episode)
             if following is None:
                 continue
-            # an episode released after the last viewing is as recent as its release
             released_at = datetime.fromisoformat(following.release_date[:10]).replace(tzinfo=timezone.utc)
             date = max(date, released_at)
             history = UserHistory(user_id=user_id, media=history.media, episode=following)
@@ -48,6 +48,15 @@ def get_continue_watching(request, user_id):
             continue
         history.rewatch = False
         items.append((date, history))
+    watching = {history.media_id for _, history in items}
+    requests = TorrentRequest.objects.filter(user=user_id, available_at__isnull=False)
+    for torrent_request in requests.select_related('media', 'episode__season').order_by('-available_at'):
+        if torrent_request.media_id in watching:
+            continue
+        watching.add(torrent_request.media_id)
+        history = UserHistory(user_id=user_id, media=torrent_request.media, episode=torrent_request.episode)
+        history.rewatch = False
+        items.append((torrent_request.available_at, history))
     items.sort(key=lambda item: item[0], reverse=True)
     return [history for _, history in items]
 

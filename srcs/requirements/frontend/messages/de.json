@@ -82,6 +82,10 @@
     "removeFromWatchlist": "Von der Watchlist entfernen",
     "watchlist": "Watchlist",
     "setFeature": "Als empfohlen markieren",
+    "torrentUnavailable": "{type, select, series {Diese Episode} other {Dieser Film}} ist noch nicht verfügbar.",
+    "torrentRequested": "{type, select, series {Diese Episode} other {Dieser Film}} erscheint unter „Weiter ansehen“, sobald {type, select, series {sie} other {er}} verfügbar ist.",
+    "requestTorrent": "Anfragen",
+    "cancelTorrentRequest": "Nicht mehr anfragen",
     "moreInfo": "Mehr Infos",
     "credits": {
       "title": "Details",

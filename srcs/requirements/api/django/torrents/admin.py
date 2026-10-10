@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from torrents.models import DownloadMedia, Torrent
+from torrents.models import DownloadMedia, Torrent, TorrentRequest
 
 
 @admin.register(Torrent)
@@ -44,3 +44,13 @@ class DownloadMediaAdmin(admin.ModelAdmin):
     autocomplete_fields = ('torrent',)
     readonly_fields = ('created_at', 'last_watched_at')
     list_select_related = ('torrent',)
+
+
+@admin.register(TorrentRequest)
+class TorrentRequestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'media', 'episode', 'created_at', 'available_at')
+    search_fields = ('user__username', 'media__original_title')
+    autocomplete_fields = ('user', 'media')
+    raw_id_fields = ('episode',)
+    readonly_fields = ('created_at',)
+    list_select_related = ('user', 'media', 'episode')

@@ -206,3 +206,27 @@ export function useTorrents(media?: iMedia, season_number?: number, episode_numb
         media !== undefined && (!isSerie || season_number !== undefined)
     );
 }
+
+type tTorrentRequest = {requested: boolean};
+
+function torrentRequestEndpoint(media: Pick<iMedia, "id" | "type">, season_number?: number, episode_number?: number) {
+    const endpoint = `${media.type}/${media.id}/torrents/request/`;
+
+    if (media.type === "series")
+        return endpoint + `?season_number=${season_number}&episode_number=${episode_number}`;
+    return endpoint;
+}
+
+export function useTorrentRequest(media?: iMedia, season_number?: number, episode_number?: number, enabled = true) {
+    const isSerie = media?.type === "series";
+
+    return useApiQuery(
+        ["torrent-request", media?.type ?? "", media?.id ?? "", isSerie ? season_number : undefined, isSerie ? episode_number : undefined],
+        () => apiClient<tTorrentRequest>(torrentRequestEndpoint(media!, season_number, episode_number)),
+        enabled && media !== undefined
+    );
+}
+
+export function updateTorrentRequest(media: Pick<iMedia, "id" | "type">, requested: boolean, season_number?: number, episode_number?: number) {
+    return apiClient<tTorrentRequest>(torrentRequestEndpoint(media, season_number, episode_number), undefined, {method: requested ? "POST" : "DELETE"});
+}

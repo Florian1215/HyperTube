@@ -27,6 +27,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'torrents.tasks.delete_expired_downloads',
         'schedule': crontab(hour=4, minute=0),
     },
+    'check-requested-torrents': {
+        'task': 'torrents.tasks.check_requested_torrents',
+        'schedule': crontab(hour=5, minute=0),
+    },
 }
 
 DOWNLOAD_RETENTION = timedelta(days=30)

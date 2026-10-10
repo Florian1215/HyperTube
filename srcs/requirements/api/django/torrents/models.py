@@ -2,7 +2,7 @@ import shutil
 
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -52,7 +52,7 @@ class Torrent(models.Model):
 
 
 class DownloadMedia(models.Model):
-    id = models.CharField(primary_key=True)  # stream id, see Torrent.get_stream_id
+    id = models.CharField(primary_key=True)
     torrent = models.ForeignKey(Torrent, on_delete=models.CASCADE, related_name='downloaded')
     language = models.CharField(max_length=2, default='')
     status = models.CharField(max_length=20, choices=Torrent.STATUS_CHOICES, default='downloading')
@@ -62,6 +62,22 @@ class DownloadMedia(models.Model):
 
     def __str__(self):
         return self.torrent.title
+
+
+class TorrentRequest(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='torrent_requests')
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='torrent_requests')
+    episode = models.ForeignKey('series.Episode', on_delete=models.CASCADE, related_name='torrent_requests', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    available_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user} - {self.episode or self.media}'
+
+
+@receiver(post_save, sender='users.UserHistory')
+def delete_watched_torrent_requests(sender, instance, **kwargs):
+    TorrentRequest.objects.filter(user=instance.user_id, media=instance.media_id, episode=instance.episode_id).delete()
 
 
 @receiver(post_delete, sender=DownloadMedia)

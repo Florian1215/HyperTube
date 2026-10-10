@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {torrentStreaming, torrentStreamStatus, useMedia, useTorrents} from "@/services/medias.service";
+import {torrentStreaming, torrentStreamStatus, updateTorrentRequest, useMedia, useTorrentRequest, useTorrents} from "@/services/medias.service";
 import useHandleError from "@/hooks/useHandleError";
 import MediaHero from "@/components/MediaHero";
 import getBestTorrent from "@/utils/getBestTorrent";
@@ -17,6 +17,7 @@ import CommentsSection from "@/app/[type]/[id]/CommentsSection";
 import Button from "@/components/ui/Button/Button";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import SmallText from "@/components/ui/SmallText";
+import TextButton from "@/components/ui/Button/TextButton";
 import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import {iWatchEpisode, tMedia} from "@/types/utils";
 import EpisodeLabel from "@/components/EpisodeLabel";
@@ -26,6 +27,7 @@ import {useSeason} from "@/services/series.service";
 import {iMovieDetails} from "@/types/movie";
 import useWatchlist from "@/hooks/useWatchlist";
 import {BookmarkIcon, PlayPauseIcon} from "@/components/Icons";
+import {useQueryClient} from "@tanstack/react-query";
 
 export default function MediaPage() {
     const params = useParams();
@@ -55,6 +57,9 @@ export default function MediaPage() {
     const {data: torrents, isLoading: torrentsLoading} = useTorrents(media, watchedEpisode.season, watchedEpisode.episode);
     const {data: season} = useSeason(id, watchedEpisode.season, type === "series");
     const episodeDetails = season?.episodes.find((e) => e.episode_number === watchedEpisode.episode);
+    const queryClient = useQueryClient();
+    const unavailable = !!media && !torrentsLoading && !getBestTorrent(torrents?.results);
+    const {data: torrentRequest} = useTorrentRequest(media, watchedEpisode.season, watchedEpisode.episode, !!user && unavailable);
 
     useEffect(() => {
         if (error) {
@@ -155,6 +160,18 @@ export default function MediaPage() {
         openModal({type: "select-torrent", torrents: torrents?.results, setTorrentId: startTorrent});
     };
 
+    const toggleTorrentRequest = async () => {
+        if (!media || !torrentRequest)
+            return;
+        const isSerie = media.type === "series";
+        try {
+            const res = await updateTorrentRequest(media, !torrentRequest.requested, watchedEpisode.season, watchedEpisode.episode);
+            queryClient.setQueriesData({queryKey: ["torrent-request", media.type, media.id, isSerie ? watchedEpisode.season : undefined, isSerie ? watchedEpisode.episode : undefined]}, res);
+        } catch (error) {
+            addNotification(error instanceof ApiError ? error.message : tError("unknown"), "error");
+        }
+    }
+
     const onClick = !torrentsLoading && getBestTorrent(torrents?.results) ? handleTorrent : undefined;
     const runtime = media?.type === "series" ? episodeDetails?.runtime : (media as iMovieDetails | undefined)?.runtime;
     const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
@@ -177,13 +194,17 @@ export default function MediaPage() {
 
             if (startVideo || torrentId)
                 return undefined;
-            return (<div className="relative z-30">
+            return (<div className="relative flex flex-col z-30 items-center">
                 {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode}/>}
                 <div className="flex gap-2">
                     <SecondaryButton className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></SecondaryButton>
                     {featureBtn && <SecondaryButton className={className} onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
                     {user && media && <Button className={classNameFlex + " border border-white bg-transparent text-white"} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></Button>}
                 </div>
+                {unavailable && <SmallText className="mb-2 text-white">
+                    {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
+                    {torrentRequest && <TextButton className="ml-2 text-white font-semibold hover:underline underline-offset-2" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
+                </SmallText>}
             </div>);}
         }>
             {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">

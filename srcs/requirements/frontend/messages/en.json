@@ -82,6 +82,10 @@
     "removeFromWatchlist": "Remove from watchlist",
     "watchlist": "Watchlist",
     "setFeature": "Feature this movie",
+    "torrentUnavailable": "This {type, select, series {episode} other {movie}} is not available yet.",
+    "torrentRequested": "This {type, select, series {episode} other {movie}} will show up in “Continue watching” as soon as it is available.",
+    "requestTorrent": "Request",
+    "cancelTorrentRequest": "Stop requesting",
     "moreInfo": "More info",
     "credits": {
       "title": "Details",

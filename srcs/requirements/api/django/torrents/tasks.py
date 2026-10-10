@@ -4,11 +4,14 @@ import time
 
 import requests
 from celery import shared_task
+from django.http import HttpRequest
 from django.utils import timezone
 import libtorrent as lt
+from rest_framework.exceptions import APIException
 
 from config.settings import DOWNLOAD_RETENTION, TORRENT_DIR, TRANSCODE_URL
-from torrents.models import DownloadMedia, Torrent
+from torrents.fetch import get_or_fetch_torrent
+from torrents.models import DownloadMedia, Torrent, TorrentRequest
 
 
 def set_status(torrent, stream_id, status, error=None):
@@ -133,3 +136,20 @@ def delete_expired_downloads():
     for download_id in list(expired.values_list('id', flat=True)):
         print(f'Download {download_id}: expired, deleted', flush=True)
     expired.delete()
+
+
+@shared_task
+def check_requested_torrents():
+    pending = TorrentRequest.objects.filter(available_at__isnull=True)
+    targets = {(r.media, r.episode) for r in pending.select_related('media', 'episode__season')}
+    for media, episode in targets:
+        season_number = episode.season.season_number if episode else None
+        episode_number = episode.episode_number if episode else None
+        try:
+            torrents = get_or_fetch_torrent(HttpRequest(), media.tmdb_id, media.type, season_number, episode_number)
+        except APIException as exc:
+            print(f'Torrent request {episode or media}: {exc}', flush=True)
+            continue
+        if torrents:
+            print(f'Torrent request {episode or media}: available', flush=True)
+            pending.filter(media=media, episode=episode).update(available_at=timezone.now())

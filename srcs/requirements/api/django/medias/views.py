@@ -17,7 +17,8 @@ from medias.serializers import MediaDetailSerializer, MediaSerializer, MediaFeat
     MediaTorrentSerializer, SmallMediaSerializer, CollectionPartSerializer
 from series.fetch import get_or_fetch_season
 from series.models import Episode
-from torrents.fetch import get_or_fetch_torrent
+from torrents.fetch import get_or_fetch_torrent, to_int
+from torrents.models import TorrentRequest
 from users.models import UserHistory, UserWatchlist
 
 
@@ -123,6 +124,34 @@ class MediaTorrentsApiView(generics.ListAPIView):
         params = self.request.query_params
         return get_or_fetch_torrent(self.request, **self.kwargs, season_number=params.get('season_number'),
                                     episode_number=params.get('episode_number'))
+
+
+class MediaTorrentRequestApiView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_target(self):
+        media = get_or_fetch_media(self.request, self.kwargs['media_id'], self.kwargs['type'])
+        episode = None
+        if media.type == 'series':
+            params = self.request.query_params
+            season = get_or_fetch_season(self.request, media, to_int(params.get('season_number')))
+            episode = season.episodes.filter(episode_number=to_int(params.get('episode_number'))).first()
+            if episode is None:
+                raise NotFound(MEDIA_NOT_FOUND.format(type='episode'))
+        return {'user': self.request.user, 'media': media, 'episode': episode}
+
+    def get(self, request, *args, **kwargs):
+        return Response({'requested': TorrentRequest.objects.filter(**self.get_target()).exists()})
+
+    def post(self, request, *args, **kwargs):
+        target = self.get_target()
+        if not TorrentRequest.objects.filter(**target).exists():
+            TorrentRequest.objects.create(**target)
+        return Response({'requested': True})
+
+    def delete(self, request, *args, **kwargs):
+        TorrentRequest.objects.filter(**self.get_target()).delete()
+        return Response({'requested': False})
 
 
 class MediaCollectionApiView(LangHistoryContext, generics.GenericAPIView):
