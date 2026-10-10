@@ -61,31 +61,40 @@ def get_or_fetch_torrent(request, media_id, type, season_number=None, episode_nu
         torrents = torrents.filter(season_number=season_number)
     else:
         season_number = None
-    if not torrents.exists():
+
+    def get_cached():
+        """The saved torrents answering the request: for an episode, its own torrents and the ones of the whole season."""
+        if type == 'series':
+            return [t for t in torrents.all() if t.episode_number is None or t.episode_number == episode_number]
+        return list(torrents.all())
+
+    cached = get_cached()
+    if cached:
+        return cached
+    # nothing saved for what is asked, even if the rest of the season is: an episode is published after the others
+    with external_service('C411', TORRENT_NOT_FOUND):
+        torrents_data = C411Client.search_medias(media_id, season_number)
+    for t in torrents_data:
+        torrent_episode = None
+        if type == 'series':
+            torrent_season, torrent_episode = get_season_episode(t['title'])
+            if torrent_season != season_number:
+                continue
         with external_service('C411', TORRENT_NOT_FOUND):
-            torrents_data = C411Client.search_medias(media_id, season_number)
-            for t in torrents_data:
-                torrent_episode = None
-                if type == 'series':
-                    torrent_season, torrent_episode = get_season_episode(t['title'])
-                    if torrent_season != season_number:
-                        continue
-                Torrent.objects.update_or_create(
-                    id=t['guid'],
-                    defaults={
-                        'title': t['title'],
-                        'url': t['enclosure']['@url'],
-                        'size': get_size(t),
-                        'seeders': t['seeders'],
-                        'peers': t['peers'],
-                        'quality': get_quality(t),
-                        'language': get_language(t),
-                        'published_at': datetime.strptime(t['pubDate'], '%a, %d %b %Y %H:%M:%S %z'),
-                        'media': media,
-                        'season_number': season_number,
-                        'episode_number': torrent_episode,
-                    }
-                )
-    if type == 'series':
-        return [t for t in torrents if t.episode_number is None or t.episode_number == episode_number]
-    return torrents
+            Torrent.objects.update_or_create(
+                id=t['guid'],
+                defaults={
+                    'title': t['title'],
+                    'url': t['enclosure']['@url'],
+                    'size': get_size(t),
+                    'seeders': t['seeders'],
+                    'peers': t['peers'],
+                    'quality': get_quality(t),
+                    'language': get_language(t),
+                    'published_at': datetime.strptime(t['pubDate'], '%a, %d %b %Y %H:%M:%S %z'),
+                    'media': media,
+                    'season_number': season_number,
+                    'episode_number': torrent_episode,
+                }
+            )
+    return get_cached()
