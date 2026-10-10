@@ -45,7 +45,7 @@ export default function CommentsSection({media}: {media: iMedia}) {
                     <TextButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</TextButton>
             }
         </div>
-        <Comments currentUser={user} comments={data?.results ?? []} index={index} setIndex={setIndex} totalPage={totalPage} currentMedia={media}/>
+        <Comments currentUser={user} comments={data?.results ?? []} index={index} setIndex={setIndex} totalPage={totalPage}/>
     </div>);
 }
 

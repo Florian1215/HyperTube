@@ -1,4 +1,4 @@
-import useApiQuery, {addQuery, removeQuery, updateQuery} from "@/hooks/useApiQuery";
+import useApiQuery, {addQuery, removeQuery} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse} from "@/types/api";
 import {iComment, iCommentDetails} from "@/types/comment";
@@ -45,11 +45,15 @@ export function addCommentCache(queryClient: QueryClient, newComment: iComment, 
     addQuery(queryClient, ["user-comments", userId, 1], newDetailComment);
 }
 
-export function updateCommentCache(queryClient: QueryClient, newComment: iCommentDetails, userId: number) {
-    updateQuery(queryClient, ["user-comments", userId, 1], newComment);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {media, ...comment}: {media: iMedia} & iComment = newComment;
-    updateQuery(queryClient, ["comments"], comment);
+export function updateCommentCache(queryClient: QueryClient, comment: iComment) {
+    ["comments", "user-comments"].forEach((key) => {
+        queryClient.setQueriesData<tListResponse<iComment>>({queryKey: [key]}, (current) => {
+            if (!current?.results)
+                return current;
+            return {...current, results: current.results.map((v) => v.id === comment.id ? {...v, ...comment} : v)};
+        });
+        void queryClient.invalidateQueries({queryKey: [key]});
+    });
 }
 
 export function removeCommentCache(queryClient: QueryClient, commentId: number, userId: number) {

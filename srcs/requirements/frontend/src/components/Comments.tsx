@@ -9,9 +9,8 @@ import dayjs from "dayjs";
 import SmallText from "@/components/ui/SmallText";
 import {useQueryClient} from "@tanstack/react-query";
 import {removeCommentCache, updateCommentCache} from "@/services/comments.service";
-import {iMedia} from "@/types/media";
 
-export default function Comments({currentUser, comments, index, setIndex, totalPage, profilePage=false, currentMedia}: {currentUser?: iUser, comments: iComment[], index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean, currentMedia?: iMedia}) {
+export default function Comments({currentUser, comments, index, setIndex, totalPage, profilePage=false}: {currentUser?: iUser, comments: iComment[], index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean}) {
     const {addNotification} = useNotification();
     const locale = useLocale();
     const t = useTranslations("comments");
@@ -21,15 +20,10 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
     dayjs.locale(locale);
 
     const updateComment = (comment: iComment, newContent: string) => {
-        const newComment = structuredClone(comment) as iCommentDetails;
-        newComment.content = newContent.replace("\n\n", "\n");
-        newComment.edited = true;
-        if (currentMedia)
-            newComment.media = currentMedia;
-        patchComment(locale, newComment.id, newComment.content).then(() => {
-            updateCommentCache(queryClient, newComment, newComment.user.id);
-        });
-        addNotification(tSuccess("commentChange"), "success");
+        patchComment(locale, comment.id, newContent.replace("\n\n", "\n")).then((saved) => {
+            updateCommentCache(queryClient, saved);
+            addNotification(tSuccess("commentChange"), "success");
+        }).catch((e) => addNotification(e instanceof Error ? e.message : String(e), "error"));
     }
 
     const deleteDisplayComment = async (commentId: number) => {
