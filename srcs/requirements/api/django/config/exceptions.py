@@ -26,13 +26,13 @@ class GatewayTimeout(APIException):
     default_code = 'gateway_timeout'
 
 
+class InsufficientStorage(APIException):
+    status_code = status.HTTP_507_INSUFFICIENT_STORAGE
+    default_code = 'insufficient_storage'
+
+
 @contextmanager
 def external_service(service, not_found):
-    """
-    Maps the failures of an external service (TMDB, C411) to the matching HTTP error:
-    404 only if the service says the resource does not exist, 502 / 503 / 504 if the service itself failed.
-    Any other exception is a bug of the API and stays a 500.
-    """
     try:
         yield
     except APIException:
@@ -47,7 +47,6 @@ def external_service(service, not_found):
             raise NotFound(not_found) from exc
         if code in (status.HTTP_429_TOO_MANY_REQUESTS, status.HTTP_503_SERVICE_UNAVAILABLE):
             raise ServiceUnavailable(SERVICE_UNAVAILABLE.format(service=service)) from exc
-        # a 401 / 403 of the service is about the API key of the server, not about the user
         raise BadGateway(SERVICE_ERROR.format(service=service)) from exc
     except (requests.exceptions.JSONDecodeError, ExpatError) as exc:
         logger.warning('%s invalid response: %s', service, exc)

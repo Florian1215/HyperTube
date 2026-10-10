@@ -11,6 +11,7 @@ from config import settings
 from config.errors import TORRENT_NOT_FOUND
 from config.exceptions import external_service
 from torrents.models import DownloadMedia, Torrent
+from torrents.storage import ensure_disk_space
 from torrents.tasks import download_and_transcode
 
 
@@ -55,6 +56,8 @@ class TorrentsApiView(APIView):
             lang = 'fr'
         episode_number = self.get_episode_number(torrent, request.data)
         stream_id = torrent.get_stream_id(episode_number)
+        if not DownloadMedia.objects.filter(id=stream_id).exclude(status='error').exists():
+            ensure_disk_space(torrent, episode_number)
         download, start = DownloadMedia.objects.get_or_create(id=stream_id, defaults={'torrent': torrent, 'language': lang})
         if not start:
             start = DownloadMedia.objects.filter(id=stream_id, status='error').update(
