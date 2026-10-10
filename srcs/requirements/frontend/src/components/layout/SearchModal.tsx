@@ -34,7 +34,8 @@ export default function SearchModal() {
 
     return (<div className="fixed inset-0 z-40 bg-black/70">
         <div className="custom-noise-bg"/>
-        <div className="absolute inset-0 overflow-y-auto overscroll-contain"
+        {/* a column: the navbar and the search bar stay in place, only the results of Search scroll */}
+        <div className="absolute inset-0 flex flex-col"
              onMouseDown={(e) => {mouseDownTarget.current = e.target;}}
              onMouseUp={(e) => {
                  if (isBackground(e) && mouseDownTarget.current === e.target)
@@ -45,7 +46,7 @@ export default function SearchModal() {
                  if ((e.target as HTMLElement).closest("a"))
                      closeSearch();
              }}>
-            <div className="bg-white">
+            <div className="bg-white shrink-0">
                 <Navbar/>
             </div>
             <Search modal={true}/>

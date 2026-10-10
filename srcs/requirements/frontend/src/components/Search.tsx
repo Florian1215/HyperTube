@@ -154,10 +154,10 @@ export default function Search({modal = false}: {modal?: boolean}) {
 
     if (modal)
         return (<>
-            <div className="bg-white border-b px-2 md:px-4 xl:px-6 pb-4 md:pb-6">
+            <div className="bg-white border-b px-2 md:px-4 xl:px-6 pb-4 md:pb-6 shrink-0">
                 {searchBar}
             </div>
-            <div data-search-background="" className="dark-mode flex flex-col gap-2 md:gap-4 px-2 md:px-4 xl:px-6 py-4 md:py-6">
+            <div data-search-background="" className="dark-mode flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-2 md:gap-4 px-2 md:px-4 xl:px-6 py-4 md:py-6">
                 {results}
             </div>
         </>);
