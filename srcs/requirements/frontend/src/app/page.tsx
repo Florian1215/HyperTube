@@ -2,11 +2,12 @@
 
 import React, {useEffect, useMemo, useState} from "react";
 import {HypertubeLogo} from "@/components/Icons";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
-import {useItems} from "@/services/medias.service";
+import {SEARCH_CONTINUE, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
+import formatReleaseDate from "@/utils/formatReleaseDate";
 import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
 import FriendsActivity from "@/components/FriendsActivity";
@@ -14,7 +15,7 @@ import Section from "@/components/ui/Section";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
-import {useContinueWatching} from "@/services/users.service";
+import {useComingSoon, useContinueWatching} from "@/services/users.service";
 import {iMedia} from "@/types/media";
 
 export default function HomePage() {
@@ -25,6 +26,8 @@ export default function HomePage() {
     const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
 
     const {data: continueWatchingData} = useContinueWatching(user?.id);
+    const {data: comingSoon} = useComingSoon(user?.id);
+    const locale = useLocale();
     const {data: movies} = useItems("movies");
     const popular = filterAlreadyWatch(movies?.results);
     const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
@@ -60,8 +63,13 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-4 px-4 sm:gap-6 sm:px-6" >
             {(continueWatching.length > 0) &&
-            <Section title={t("continueWatching")} href={`/users/${user?.id}?tab=movies`}>
-                <MediasGrid mediaSets={continueWatching.slice(0, 3)} setLimit={true} showEpisode={true}/>
+            <Section title={t("continueWatching")} href={`/search?type=${continueWatching[0].type}&q=${encodeURIComponent(SEARCH_CONTINUE)}`}>
+                <MediasGrid mediaSets={continueWatching} setLimit={true} showEpisode={true}/>
+            </Section>}
+
+            {comingSoon && comingSoon.results.length > 0 &&
+            <Section title={t("comingSoon")} href={`/search?type=${comingSoon.results[0].type}&q=${encodeURIComponent(SEARCH_UPCOMING)}`}>
+                <MediasGrid mediaSets={comingSoon.results} setLimit={true} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>
             </Section>}
 
             {

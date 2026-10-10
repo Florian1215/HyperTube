@@ -54,7 +54,12 @@ class SeasonSerializer(serializers.ModelSerializer):
 
 class SmallEpisodeSerializer(serializers.ModelSerializer):
     season_number = serializers.IntegerField(source='season.season_number')
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = Episode
-        fields = ['id', 'season_number', 'episode_number', 'poster_url']
+        fields = ['id', 'season_number', 'episode_number', 'poster_url', 'name']
+
+    def get_name(self, obj):
+        names = {language.lang: language.name for language in obj.languages.all()}
+        return names.get(self.context.get('lang')) or next(iter(names.values()), '')

@@ -44,6 +44,14 @@ class SmallMediaSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistMi
         fields = SMALL_MEDIA_FIELDS
 
 
+class MediaComingSoonSerializer(SmallMediaSerializer):
+    release_date = serializers.CharField(source='coming_date')
+    episode = SmallEpisodeSerializer(source='coming_episode')
+
+    class Meta(SmallMediaSerializer.Meta):
+        fields = SMALL_MEDIA_FIELDS + ['release_date', 'episode']
+
+
 class MediaSerializer(MediaProgressMixin, MediaWatchlistMixin, serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()

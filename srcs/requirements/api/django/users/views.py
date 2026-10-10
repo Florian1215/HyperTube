@@ -11,9 +11,10 @@ from rest_framework.response import Response
 from config.errors import CANNOT_FOLLOW_YOURSELF
 from medias.context import LangHistoryContext
 from medias.models import Media
-from medias.serializers import MediaActivitySerializer, MediaHistorySerializer, SmallMediaSerializer
+from medias.serializers import MediaActivitySerializer, MediaComingSoonSerializer, MediaHistorySerializer, SmallMediaSerializer
 from users.models import User, UserFollow, UserHistory
 from users.permissions import IsUserOwner
+from users.watching import get_coming_soon, get_continue_watching
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
     UserSettingsSerializer
 
@@ -110,6 +111,33 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
         return annotate_rewatch(queryset).order_by('-updated_at')
 
 
+class UserMediasApiView(LangHistoryContext, generics.ListAPIView):
+    get_medias = None
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('user_id') or self.request.user.id
+        if user_id is None:
+            return []
+        medias = type(self).get_medias(self.request, user_id)
+        media_type = self.kwargs.get('type')
+        if media_type:
+            medias = [media for media in medias if getattr(media, 'media', media).type == media_type]
+        return medias
+
+    def filter_queryset(self, queryset):
+        return queryset
+
+
+class UserContinueWatchingApiView(UserMediasApiView):
+    serializer_class = MediaHistorySerializer
+    get_medias = get_continue_watching
+
+
+class UserComingSoonApiView(UserMediasApiView):
+    serializer_class = MediaComingSoonSerializer
+    get_medias = get_coming_soon
+
+
 class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
     serializer_class = SmallMediaSerializer
 
@@ -129,7 +157,10 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
     def filter_queryset(self, queryset):
         filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=7)}
         queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
-        if self.request.query_params.get('group') == 'true':
+        if 'type' in self.kwargs:
+            queryset = queryset.filter(media__type=self.kwargs['type'])
+        group = self.request.query_params.get('group', str(self.request.user.group_series).lower())
+        if group == 'true':
             last_watch = UserHistory.objects.filter(
                 user=OuterRef('user'), media=OuterRef('media'), **filters
             ).order_by('-watched_at', '-id').values('id')[:1]

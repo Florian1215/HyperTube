@@ -48,4 +48,5 @@ export interface iSmallEpisode {
     poster_url: string
     episode_number: number
     season_number: number
+    name?: string
 }

@@ -13,7 +13,7 @@ import {iMedia} from "@/types/media";
 import formatURL from "@/utils/formatURL";
 import useFormatDate from "@/utils/formatDate";
 
-export default function MediaCard({media, user, className, showTitle=true, inHistory=false, showEpisode=false, label} : {media?: iMedia, user?: iUser, className?: string, showTitle?: boolean, inHistory?: boolean, showEpisode?: boolean, label?: string}) {
+export default function MediaCard({media, user, className, showTitle=true, inHistory=false, showEpisode=false, showProgress=true, label} : {media?: iMedia, user?: iUser, className?: string, showTitle?: boolean, inHistory?: boolean, showEpisode?: boolean, showProgress?: boolean, label?: string}) {
     const t = useTranslations("media");
     const containerClass = "relative aspect-10/7 overflow-hidden border";
     const [contextMenu, setContextMenu] = useState<iAxe>();
@@ -43,14 +43,14 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
         <LoadingImage key={episode?.poster_url || media.backdrop_url} className="size-full object-cover transition-transform duration-200"
                width={1000} height={1000} src={episode?.poster_url || media.backdrop_url} alt={t("posterAlt", {title: media.title})} loading="eager"
         />
-        <MediaWatchProgress user={user} media={media} />
+        {showProgress && <MediaWatchProgress user={user} media={media} />}
         <div className="absolute inset-0 p-4 flex items-end">
             <div className="custom-noise" />
-            <div className={media.complete ? "custom-complete-media" : "bg-gradient"} />
+            <div className={media.complete && showProgress ? "custom-complete-media" : "bg-gradient"} />
             {showTitle &&
                 <div className="w-full z-10 text-white text-center">
-                    {episode && <EpisodeLabel season={episode.season_number} episode={episode.episode_number}/>}
                     {label && <p className="text-xs opacity-70 truncate">{label}</p>}
+                    {episode && <EpisodeLabel season={episode.season_number} episode={episode.episode_number}/>}
                     <TitleMedia media={media} tag="h3" clickable={true} white={true} className="pl-[8%] justify-center" expClassName="xl:text-xl text-xl"/>
                 </div>}
         </div>

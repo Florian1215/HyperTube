@@ -25,6 +25,10 @@ export function useCollection(media?: iMedia) {
     );
 }
 
+export const SEARCH_UPCOMING = "upcoming";
+export const SEARCH_CONTINUE = "continue to watch";
+export const SEARCH_FRIENDS = "friends activity";
+
 export function useItems(type: tSearch, search_title?: string, page?: number, enabled = true) {
     const [debouncedQuery] = useDebounce(search_title ?? "", 200);
 
@@ -37,6 +41,12 @@ export function useItems(type: tSearch, search_title?: string, page?: number, en
                 endpoint += "directstream/"
             else if (search_title === "featured")
                 endpoint += "featured/"
+            else if (search_title === SEARCH_UPCOMING)
+                endpoint += `upcoming/?page=${page ?? 1}`
+            else if (search_title === SEARCH_CONTINUE)
+                endpoint += `continue-watching/?page=${page ?? 1}`
+            else if (search_title === SEARCH_FRIENDS)
+                endpoint += `friends-activity/?page=${page ?? 1}`
             else if (search_title === "top-rated")
                 endpoint += `top-rated/?page=${page ?? 1}`
             else if (search_title)

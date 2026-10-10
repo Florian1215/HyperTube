@@ -54,6 +54,14 @@ export function useContinueWatching(userId?: number) {
     );
 }
 
+export function useComingSoon(userId?: number) {
+    return useApiQuery(
+        ["user-watchlist", userId, "coming-soon"],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/coming-soon/`, locale),
+        !!userId
+    );
+}
+
 export function useUserWatchlist(userId?: number, page = 1) {
     return useApiQuery(
         ["user-watchlist", userId, page],

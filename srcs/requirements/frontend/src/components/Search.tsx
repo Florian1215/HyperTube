@@ -6,7 +6,9 @@ import {GridIcon, ListIcon} from "@/components/Icons";
 import {useLocale, useTranslations} from "next-intl";
 import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/routing";
-import {useItems} from "@/services/medias.service";
+import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
+import {FriendsActivityList} from "@/components/FriendsActivity";
+import formatReleaseDate from "@/utils/formatReleaseDate";
 import CloseButton from "@/components/ui/Button/CloseButton";
 import MediasGrid from "@/components/MediasGrid";
 import SmallText from "@/components/ui/SmallText";
@@ -15,7 +17,7 @@ import {usePathname, useRouter} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
 import MediasList from "@/app/search/MediasList";
 import {iSort, SEARCH_TYPES, tSearch, tSort, tT} from "@/types/utils";
-import {iMedia, iPeople} from "@/types/media";
+import {iMedia, iMediaActivity, iPeople} from "@/types/media";
 import RadioButton from "@/components/ui/Button/RadioButton";
 import HorizontalScroll from "@/components/ui/HorizontalScroll";
 import {useUsersSearch} from "@/services/users.service";
@@ -147,7 +149,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
                 <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
                 isPeopleSearch ?
                 <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/> :
-                <Results t={t} medias={isError ? [] : medias?.results} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+                <Results t={t} medias={isError ? [] : medias?.results} search={searchValue.trim()} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
             }
         </Pagination>}
     </>);
@@ -194,9 +196,18 @@ function PeopleResults({t, people}: {t: tT, people?: iPeople[]}) {
     </div>);
 }
 
-function Results({t, medias, viewType, sort, changeSort, genre}: {t: tT, medias?: iMedia[], viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
+function Results({t, medias, search, viewType, sort, changeSort, genre}: {t: tT, medias?: iMedia[], search: string, viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
+    const locale = useLocale();
+
     if (medias && medias.length === 0)
         return (<SmallText>{t("noResults")}</SmallText>);
+
+    if (search === SEARCH_UPCOMING)
+        return (<MediasGrid mediaSets={medias} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>);
+    if (search === SEARCH_FRIENDS)
+        return (<div className="px-6"><FriendsActivityList activities={medias as iMediaActivity[] | undefined}/></div>);
+    if (search === SEARCH_CONTINUE)
+        return (<MediasGrid mediaSets={medias} showEpisode={true}/>);
 
     const today = new Date();
     if (medias)
