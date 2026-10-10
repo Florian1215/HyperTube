@@ -24,6 +24,7 @@ PEOPLE_LIFETIME = timedelta(days=7)
 
 PERSON_ROLES = ['cast', 'directing', 'writing', 'crew']
 WRITING_DEPARTMENTS = ['Writing', 'Creator']
+DEPARTMENT_ROLES = {'Acting': 'cast', 'Directing': 'directing', 'Writing': 'writing', 'Creator': 'writing'}
 
 
 def fetch_people_search(query, lang, page):
@@ -97,6 +98,12 @@ def get_person_medias(person):
             for role, role_medias in medias.items()}
 
 
+def get_main_role_medias(department, credits):
+    main_role = DEPARTMENT_ROLES.get(department, 'crew')
+    role = next((role for role in [main_role] + PERSON_ROLES if credits.get(role)), main_role)
+    return sorted({(media['type'], media['id']) for media in credits.get(role, [])})
+
+
 def set_person_medias_backdrops(medias):
     for type in ('movies', 'series'):
         set_custom_backdrops([media for media in medias if (type == 'series') == ('first_air_date' in media)], type)
@@ -119,7 +126,7 @@ def get_or_fetch_person(person_id, lang):
         'birthday': person.get('birthday'),
         'deathday': person.get('deathday'),
         'place_of_birth': person.get('place_of_birth'),
-        'medias': sorted({(media['type'], media['id']) for medias in credits.values() for media in medias}),
+        'medias': get_main_role_medias(person.get('known_for_department'), credits),
     })
     if outdated:
         people.languages.exclude(lang=lang).delete()
