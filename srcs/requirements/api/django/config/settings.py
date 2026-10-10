@@ -37,10 +37,13 @@ TRANSCODE_URL = f"http://{environ.get('TRANSCODE_HOST', 'host.docker.internal')}
 DEBUG = environ['DEBUG']
 APPEND_SLASH = False
 PER_PAGE = 18
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '192.168.1.30'
+]
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
+    'http://192.168.1.30:4200'
 ]
 
 AUTH_USER_MODEL = 'users.User'

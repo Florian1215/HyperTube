@@ -1,7 +1,7 @@
 import {refreshAccessToken} from "@/services/auth.service";
 
 type ApiOptions = RequestInit & {body?: unknown};
-export const API_URL = "http://localhost:8439/api/v1/";
+export const API_URL = "http://192.168.1.30:8439/api/v1/";
 export const SESSION_EXPIRED_EVENT = "session-expired";
 
 export default async function apiClient<T>(endpoint: string, locale?: string, options?: ApiOptions): Promise<T> {
