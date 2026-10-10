@@ -180,6 +180,8 @@ class MediaFeatureSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if 'feature' in validated_data:
             validated_data['feature_at'] = timezone.now()
+        if validated_data.get('backdrop_url', instance.backdrop_url) != instance.backdrop_url:
+            validated_data['backdrop_custom'] = True
         return super().update(instance, validated_data)
 
 

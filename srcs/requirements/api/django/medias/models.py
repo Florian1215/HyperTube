@@ -58,6 +58,8 @@ class Media(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     feature = models.BooleanField(default=False)
     feature_at = models.DateTimeField(null=True, blank=True)
+    fetched_at = models.DateTimeField(null=True, blank=True)
+    backdrop_custom = models.BooleanField(default=False)
     type = models.CharField(max_length=10, choices=MEDIA_TYPE_CHOICE)
 
     budget = models.BigIntegerField(default=None, null=True)

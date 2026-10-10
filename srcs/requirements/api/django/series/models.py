@@ -10,6 +10,8 @@ class Season(models.Model):
     release_date = models.CharField()
     poster_url = models.URLField()
     created_at = models.DateTimeField(auto_now_add=True)
+    # The last refresh of the data from TMDB, null when it was never refreshed since its creation
+    fetched_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['season_number']
