@@ -17,27 +17,32 @@ import SmallText from "@/components/ui/SmallText";
 const TABS = ["info", "cast", "crew"] as const;
 
 export default function CreditsMediaModal() {
-    const {activeModal, closeModal} = useModal();
+    const {activeModal} = useModal();
+
+    if (activeModal.type !== "credits" || activeModal.cast === undefined || activeModal.crew === undefined)
+        return null;
+    return (<CreditsMedia cast={activeModal.cast} crew={activeModal.crew} media={activeModal.media} initialTab={activeModal.tab ?? "info"}/>);
+}
+
+function CreditsMedia({cast, crew, media, initialTab}: {cast: iPeople[], crew: iPeople[], media?: iMediaDetails, initialTab: typeof TABS[number]}) {
+    const {closeModal} = useModal();
     const t = useTranslations("media.credits");
-    const [activeTab, setActiveTab] = useState<number>(0);
+    const [activeTab, setActiveTab] = useState<number>(TABS.indexOf(initialTab));
 
     const switchTab = (tabIdx: number) => {
         if (activeTab !== tabIdx)
             setActiveTab(tabIdx);
     }
 
-    if (activeModal.type !== "credits" || activeModal.cast === undefined || activeModal.crew === undefined)
-        return null;
-
     const tab = TABS[activeTab];
-    const people = {cast: activeModal.cast, crew: activeModal.crew};
+    const people = {cast, crew};
 
     return (<ModalLayout title={t("title")} onCloseAction={closeModal}>
         <div className="w-full sm:w-xl lg:w-216">
-            <Tabs tabs={TABS.map((tab) => t(tab))} activeTab={activeTab} onChange={switchTab}/>
+            <Tabs tabs={TABS.map((tab) => t(tab))} counts={[undefined, cast.length, crew.length]} activeTab={activeTab} onChange={switchTab}/>
             <div className="h-100 overflow-y-auto p-6">
                 {tab === "info" ?
-                    (activeModal.media && <MediaInfo media={activeModal.media}/>) :
+                    (media && <MediaInfo media={media}/>) :
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
                         {people[tab].map((item, index) => <People key={index} p={item} closeModal={closeModal}/>)}
                     </div>

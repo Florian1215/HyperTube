@@ -4,7 +4,7 @@ import React, {createContext, Dispatch, SetStateAction, useCallback, useContext,
 import {iGenre} from "@/types/genre";
 import {iMediaDetails, iPeople, iTorrent} from "@/types/media";
 
-type ModalType = "signin" | "register" | "genre" | "filter-genre" | "set-new-password" | "delete-confirmation" | "select-torrent" | "credits" | "set-feature" | null;
+type ModalType = "signin" | "register" | "genre" | "filter-genre" | "set-new-password" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | null;
 
 export interface ModalState {
     type: ModalType;
@@ -23,6 +23,7 @@ export interface ModalState {
     cast?: iPeople[]
     crew?: iPeople[]
     media?: iMediaDetails
+    tab?: "info" | "cast" | "crew"
 }
 
 interface ModalContextType {

@@ -234,6 +234,14 @@ export function BookmarkIcon({color="black", size=20, filled=false}: {color?: st
     </svg>);
 }
 
+export function RewatchIcon({color="black", size=16}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="390.14 200 12 12" fill="none">
+        <path stroke={fullColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M400.112557,201 L400.112557,203.5 L397.615057,203.5 M391.5012,206.055 C391.5012,203.45 393.579117,201.335 396.141549,201.335 C397.510177,201.335 398.738945,201.935 399.593089,202.895 C399.757924,203.085 399.912769,203.29 400.052629,203.505 M392.120557,211 L392.120557,208.5 L394.618057,208.5 M400.786914,206.055 C400.786914,208.665 398.708997,210.78 396.14157,210.78 C394.777937,210.78 393.544174,210.175 392.695025,209.22 C392.53019,209.03 392.375346,208.825 392.235486,208.605"/>
+    </svg>);
+}
+
 export function TrashIcon({color="red", size=20}) {
     const fullColor = `var(--color-${color})`;
 

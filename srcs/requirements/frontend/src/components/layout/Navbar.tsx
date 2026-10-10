@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {HypertubResponsiveLogo, SearchIcon, UserIcon} from "@/components/Icons";
+import {ExitDoorIcon, HypertubResponsiveLogo, SearchIcon, UserIcon} from "@/components/Icons";
 import {Link, usePathname} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
 import {useTranslations} from "next-intl";
@@ -14,6 +14,7 @@ interface iMenuItem {
     href?: string
     action?: () => void
     danger?: boolean
+    icon?: (selected: boolean, color: string) => React.ReactNode
 }
 
 export default function Navbar() {
@@ -27,7 +28,7 @@ export default function Navbar() {
     const menuItems: iMenuItem[] = user ? [
         {name: t("profile"), href: `/users/${user.id}`},
         {name: t("settings"), href: "/settings"},
-        {name: t("logout"), action: logout, danger: true},
+        {name: t("logout"), action: logout, danger: true, icon: (selected, color) => <ExitDoorIcon selected={selected} color={color}/>},
     ] : [
         {name: t("signin"), action: () => openModal({type: "signin"})},
         {name: t("createAccount"), action: () => openModal({type: "register"})},
@@ -37,7 +38,6 @@ export default function Navbar() {
         <Link className="flex items-center" href="/">
             <HypertubResponsiveLogo/>
         </Link>
-        {/* the search opens over the current page, except from the search page itself */}
         <NavLink href="/search" name={t("search")} selected={searchType === null || searchOpen} icon={<SearchIcon selected={searchType === null || searchOpen}/>} onClick={(e) => {
             if (pathname === "/search" || e.metaKey || e.ctrlKey || e.shiftKey)
                 return;
@@ -89,10 +89,16 @@ function AccountMenu({label, items, onClick, children}: {label: string, items: i
             <div className="flex flex-col gap-1 items-start bg-white py-4 px-5 custom-shadow-m border border-black">
                 {items.map((item) => item.href ?
                     <Link key={item.name} role="menuitem" className={itemClassName} href={item.href} onClick={() => setIsOpen(false)}>{item.name}</Link> :
-                    <button key={item.name} role="menuitem" className={itemClassName + (item.danger ? " hover:text-red" : "")} onClick={() => {
+                    <button key={item.name} role="menuitem" className={itemClassName + " group flex items-center gap-2" + (item.danger ? " hover:text-red" : "")} onClick={() => {
                         setIsOpen(false);
                         item.action?.();
-                    }}>{item.name}</button>
+                    }}>
+                        {item.icon && <>
+                            <span className="group-hover:hidden">{item.icon(false, "black")}</span>
+                            <span className="hidden group-hover:block">{item.icon(true, item.danger ? "red" : "black")}</span>
+                        </>}
+                        {item.name}
+                    </button>
                 )}
             </div>
         </div>}

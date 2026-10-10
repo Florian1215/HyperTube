@@ -18,6 +18,7 @@ import SearchModal from "@/components/layout/SearchModal";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import RegisterModal from "@/components/layout/RegisterModal";
 import CreditsMediaModal from "@/app/[type]/[id]/CreditsMediaModal";
+import WatchedByModal from "@/app/[type]/[id]/WatchedByModal";
 import SetFeatureModal from "@/app/[type]/[id]/SetFeatureModal";
 import SelectTorrentModal from "@/app/[type]/[id]/SelectTorrentModal";
 import ViewAllGenreModal from "@/app/search/ViewAllGenreModal";
@@ -53,6 +54,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <DeleteConfirmationModal/>
                             <SetFeatureModal/>
                             <CreditsMediaModal/>
+                            <WatchedByModal/>
                             <SelectTorrentModal/>
 
                             <Navbar/>

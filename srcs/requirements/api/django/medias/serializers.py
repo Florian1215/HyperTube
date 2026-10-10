@@ -7,7 +7,7 @@ from series.serializers import SmallEpisodeSerializer
 from torrents.models import Torrent
 from medias.fetch import get_or_fetch_media_lang
 from medias.models import Media, Cast, Crew
-from medias.progress import MediaProgressMixin, MediaWatchlistMixin, get_next_episode, remove_watched_from_watchlist
+from medias.progress import get_views, MediaProgressMixin, MediaWatchlistMixin, get_next_episode, remove_watched_from_watchlist
 from users.models import User, UserHistory
 from users.serializers import UserSerializer
 
@@ -166,7 +166,11 @@ class MediaDetailSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistM
             history__media=obj,
             history__complete=True
         ).distinct().order_by('username')
-        return UserSerializer(users, many=True).data
+        res = []
+        for watcher in users:
+            views = get_views(obj, watcher)
+            res.append({**UserSerializer(watcher).data, 'watch_count': len(views), 'views': views})
+        return res
 
 
 class MediaFeatureSerializer(serializers.ModelSerializer):
@@ -224,10 +228,11 @@ class MediaHistorySerializer(MediaWatchlistMixin, serializers.ModelSerializer):
     backdrop_url = serializers.CharField(source='media.backdrop_url')
     episode = SmallEpisodeSerializer()
     type = serializers.CharField(source='media.type')
+    rewatch = serializers.BooleanField()
 
     class Meta:
         model = UserHistory
-        fields = SMALL_MEDIA_FIELDS + ['episode']
+        fields = SMALL_MEDIA_FIELDS + ['episode', 'rewatch']
 
     def get_title(self, obj):
         return get_or_fetch_media_lang(obj.media, self.context['lang']).title

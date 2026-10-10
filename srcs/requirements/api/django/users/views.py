@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Exists, Max, OuterRef, Subquery, Value
+from django.db.models import Exists, Max, OuterRef, Q, Subquery, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -16,6 +16,14 @@ from users.models import User, UserFollow, UserHistory
 from users.permissions import IsUserOwner
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
     UserSettingsSerializer
+
+
+def annotate_rewatch(queryset):
+    earlier = UserHistory.objects.filter(
+        Q(episode=OuterRef('episode')) | Q(episode__isnull=True),
+        user=OuterRef('user'), media=OuterRef('media'), complete=True, id__lt=OuterRef('id'),
+    )
+    return queryset.annotate(rewatch=Exists(earlier))
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -99,7 +107,7 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
         media_type = self.request.query_params.get('type')
         if media_type in ('movies', 'series'):
             queryset = queryset.filter(media__type=media_type)
-        return queryset.order_by('-updated_at')
+        return annotate_rewatch(queryset).order_by('-updated_at')
 
 
 class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
@@ -126,4 +134,4 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
                 user=OuterRef('user'), media=OuterRef('media'), **filters
             ).order_by('-watched_at', '-id').values('id')[:1]
             queryset = queryset.filter(id=Subquery(last_watch))
-        return queryset.order_by('-watched_at')
+        return annotate_rewatch(queryset).order_by('-watched_at')

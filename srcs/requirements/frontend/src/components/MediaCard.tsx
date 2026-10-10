@@ -4,7 +4,7 @@ import React, {useState} from "react";
 import LoadingImage from "@/components/ui/LoadingImage";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
 import {Link} from "@/i18n/navigation";
-import {EyeIcon} from "@/components/Icons";
+import {EyeIcon, RewatchIcon} from "@/components/Icons";
 import MediaRightClick from "@/components/MediaRightClick";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {TitleMedia} from "@/components/Title";
@@ -55,7 +55,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
                 </div>}
         </div>
         {inHistory && media.watched_at && <div className="hidden group-hover:flex absolute items-center top-1 right-2 z-10 gap-2">
-            <EyeIcon size={20} color="white"/>
+            {media.rewatch ? <RewatchIcon color="white"/> : <EyeIcon size={20} color="white"/>}
             <p className="text-white text-sm font-bold">{watchedAt}</p>
         </div>}
     </Link>);

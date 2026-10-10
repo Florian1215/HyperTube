@@ -20,6 +20,7 @@ export interface iMedia {
     watched_at: string
     in_watchlist?: boolean
     episode?: iSmallEpisode
+    rewatch?: boolean
 }
 
 export interface iMediaActivity extends iMedia {
@@ -38,7 +39,7 @@ export interface iMediaDetails extends iMedia{
     cast: iPeople[]
     backdrops_url: string[]
     feature: boolean
-    watched_by: iUser[]
+    watched_by: (iUser & {watch_count: number, views: (string | null)[]})[]
 }
 
 export interface iCollectionPart extends iMedia {

@@ -10,6 +10,7 @@ import LoadingImage from "@/components/ui/LoadingImage";
 import ProfilePicture from "@/components/ProfilePicture";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {iMediaActivity} from "@/types/media";
+import {RewatchIcon} from "@/components/Icons";
 
 export default function FriendsActivity({className}: {className?: string}) {
     const {user} = useAuth();
@@ -35,10 +36,15 @@ export default function FriendsActivity({className}: {className?: string}) {
                         <EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number} className="z-10 text-white"/>
                     </div>}
                 </Link>
-                <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 ml-1">
-                    <ProfilePicture size={3} user={activity.user}/>
-                    <span className="font-semibold text-sm truncate">{activity.user.username}</span>
-                </Link>
+                <div className="flex justify-between items-center px-1.5">
+                    <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0">
+                        <ProfilePicture size={3} user={activity.user}/>
+                        <span className="font-semibold text-sm truncate">{activity.user.username}</span>
+                    </Link>
+                    {activity.rewatch && <div title={tMedia("rewatch")} className="">
+                        <RewatchIcon/>
+                    </div>}
+                </div>
             </div>))}
         </HorizontalScroll>
     </section>);

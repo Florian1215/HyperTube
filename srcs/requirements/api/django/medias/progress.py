@@ -15,6 +15,20 @@ def count_watched_episodes(user, **filters):
     return UserHistory.objects.filter(user=user, complete=True, **filters).values('episode').distinct().count()
 
 
+def get_views(media, user):
+    history = UserHistory.objects.filter(user=user, media=media, complete=True).order_by('id')
+    if media.type != 'series':
+        return [h.watched_at for h in reversed(history)]
+    episodes = {}
+    for h in history.filter(episode__season__season_number__gte=1):
+        episodes.setdefault(h.episode_id, []).append(h.watched_at)
+    if not media.number_of_episodes or len(episodes) < media.number_of_episodes:
+        return [max((h.watched_at for h in history if h.watched_at), default=None)]
+    count = min(len(dates) for dates in episodes.values())
+    views = [max((dates[i] for dates in episodes.values() if dates[i]), default=None) for i in range(count)]
+    return views[::-1]
+
+
 def get_season_progress(season, user):
     return get_progress_ratio(count_watched_episodes(user, episode__season=season), season.episodes.count())
 
