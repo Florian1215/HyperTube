@@ -3,7 +3,7 @@
 import React, {useEffect} from "react";
 import {useRouter} from "@/i18n/navigation";
 import useAuth from "@/contexts/AuthContext";
-import {iToken, iUser, PREFERRED_LANGUAGES, tPreferredLanguage} from "@/types/user";
+import {iToken, iUser} from "@/types/user";
 import useNotification from "@/contexts/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import Form from "@/components/ui/Form";
@@ -13,7 +13,6 @@ import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
 import Toggle from "@/components/ui/Toggle";
-import RadioButton from "@/components/ui/Button/RadioButton";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
@@ -74,24 +73,12 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: P
             updateUser({group_series: data.group_series});
     };
 
-    const handlePreferredLanguage = async (preferredLanguage: tPreferredLanguage) => {
-        const data = await execute((locale) => patchUser(locale, ["preferred_language", preferredLanguage], user.id));
-        if (data && updateUser)
-            updateUser({preferred_language: data.preferred_language});
-    };
-
     return (<div className="flex flex-col gap-4 items-start">
         <Form formType="update" request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={user.id}
               fields={["username"]} />
         <div className="flex items-end gap-3">
             <Toggle val={user.group_series ?? true} setter={handleGroupSeries}/>
             <p className="text-sm leading-5">{tProfile("groupBySeries")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-            <div className="flex">
-                {PREFERRED_LANGUAGES.map((language) => <RadioButton key={language} selected={(user.preferred_language ?? "vo") === language} onClick={() => handlePreferredLanguage(language)}>{language}</RadioButton>)}
-            </div>
-            <p className="text-sm">{tProfile("preferredLanguage")}</p>
         </div>
     </div>);
 }

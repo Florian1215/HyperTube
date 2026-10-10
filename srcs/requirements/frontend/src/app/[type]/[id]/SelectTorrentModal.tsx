@@ -11,6 +11,7 @@ import {DownloadIcon, SortIcon} from "@/components/Icons";
 import IconButton from "@/components/ui/Button/IconButton";
 import {API_URL} from "@/services/apiClient";
 import {tT} from "@/types/utils";
+import getBestTorrent from "@/utils/getBestTorrent";
 
 type SortKey = "title" | "status" | "quality" | "size" | "language" | "seeders";
 type SortDir = "asc" | "desc";
@@ -27,6 +28,8 @@ export default function SelectTorrentModal() {
     const torrents = useMemo(() => {
         return activeModal.torrents ?? [];
     }, [activeModal.torrents]);
+
+    const bestTorrentId = useMemo(() => getBestTorrent(torrents)?.id, [torrents]);
 
     const totalPage = useMemo(() => {
         return Math.ceil(torrents.length / itemPerPage);
@@ -93,7 +96,7 @@ export default function SelectTorrentModal() {
 
                 <tbody>
                 {sortedTorrents.slice((index - 1) * itemPerPage, (index - 1) * itemPerPage + itemPerPage).map((torrent) => (
-                    <TorrentRow key={torrent.id} torrent={torrent} setTorrentId={activeModal.setTorrentId} closeModal={closeModal} t={t}/>
+                    <TorrentRow key={torrent.id} torrent={torrent} setTorrentId={activeModal.setTorrentId} closeModal={closeModal} t={t} autoSelected={torrent.id === bestTorrentId}/>
                 ))}
                 </tbody>
             </table>
@@ -101,11 +104,14 @@ export default function SelectTorrentModal() {
     </ModalLayout>);
 }
 
-function TorrentRow({torrent, setTorrentId, closeModal, t}: {torrent: iTorrent; setTorrentId?: (id: string) => void; closeModal: () => void; t: tT}) {
+function TorrentRow({torrent, setTorrentId, closeModal, t, autoSelected}: {torrent: iTorrent; setTorrentId?: (id: string) => void; closeModal: () => void; t: tT, autoSelected: boolean}) {
     const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-nowrap";
 
-    return (<tr className="border-t">
-        <td className={className + " max-w-60 sm:max-w-96 truncate"} title={torrent.title}>{torrent.title}</td>
+    return (<tr className={"border-t border-gray"}>
+        <td className={className + " max-w-60 sm:max-w-96"} title={torrent.title}>
+            <p className="truncate">{torrent.title}</p>
+            {autoSelected && <p className="text-xs font-normal text-gray">{t("autoSelected")}</p>}
+        </td>
         <td className={className}>{torrent.status}</td>
         <td className={className + " text-center"}>{torrent.quality}</td>
         <td className={className + " text-right"}>{`${Math.round(torrent.size)} ${t("gb")}`}</td>

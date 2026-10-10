@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from config.tmdb_media import format_tmdb_image
 from series.serializers import SmallEpisodeSerializer
-from torrents.models import Torrent
+from torrents.models import DownloadMedia, Torrent
 from medias.fetch import get_or_fetch_media_lang
 from medias.models import Media, Cast, Crew
 from medias.progress import get_views, MediaProgressMixin, MediaWatchlistMixin, get_next_episode, remove_watched_from_watchlist
@@ -246,6 +246,8 @@ class MediaActivitySerializer(MediaHistorySerializer):
 
 
 class MediaTorrentSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+
     class Meta:
         model = Torrent
         fields = [
@@ -259,3 +261,13 @@ class MediaTorrentSerializer(serializers.ModelSerializer):
             'language',
             'published_at'
         ]
+
+    def get_status(self, obj):
+        episode_number = self.context['request'].query_params.get('episode_number')
+        if obj.is_season_pack and episode_number is None:
+            return 'not-downloaded'
+        if 'downloads' not in self.context:
+            self.context['downloads'] = dict(DownloadMedia.objects.filter(torrent__media=obj.media_id).values_list('id', 'status'))
+        if obj.is_season_pack:
+            episode_number = int(episode_number)
+        return self.context['downloads'].get(obj.get_stream_id(episode_number), 'not-downloaded')

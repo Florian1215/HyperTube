@@ -94,6 +94,9 @@ class TorrentHLSApiView(APIView):
         if file_path.suffix.lower() == '.m3u8':
             stream_id = file_path.parent.relative_to(settings.STREAM_DIR).as_posix()
             DownloadMedia.objects.filter(id=stream_id).update(last_watched_at=timezone.now())
-        content_types = {'.m3u8': 'application/vnd.apple.mpegurl', '.ts': 'video/mp2t'}
+        content_types = {
+            '.m3u8': 'application/vnd.apple.mpegurl', '.ts': 'video/mp2t',
+            '.vtt': 'text/vtt; charset=utf-8', '.json': 'application/json',
+        }
         content_type = content_types.get(file_path.suffix.lower(), 'application/octet-stream')
         return FileResponse(open(file_path, 'rb'), content_type=content_type)

@@ -68,8 +68,11 @@
     "mediaDownloading": "The {type, select, series {series} other {movie}} is being downloaded. This may take up to 1 minute. Please wait...",
     "torrentError": "An error occurred while trying to play the {type, select, series {series} other {movie}}. Please try refreshing the page or try again later.",
     "reloadPlayer": "Click Here to Reload Player",
-    "decreaseSubDelay": "Decrease subtitle delay",
-    "increaseSubDelay": "Increase subtitle delay",
+    "audio": "Audio",
+    "subtitles": "Subtitles",
+    "subtitlesOff": "Off",
+    "track": "Track",
+    "forcedSubtitles": "forced",
     "clearProgression": "Clear progression",
     "setAsWatched": "Mark as watched",
     "setAsNotWatched": "Mark as not watched",
@@ -244,6 +247,7 @@
         "language": "Language",
         "seeds": "Seeds"
       },
+      "autoSelected": "Automatic selection",
       "choose": "Select",
       "download": "Download the torrent"
     }

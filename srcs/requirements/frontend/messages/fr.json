@@ -68,8 +68,11 @@
     "mediaDownloading": "Le téléchargement {type, select, series {de la série} other {du film}} est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter...",
     "torrentError": "Erreur lors de la lecture {type, select, series {de la série} other {du film}}. Veuillez actualiser la page ou réessayer plus tard.",
     "reloadPlayer": "Cliquez ici pour recharger le lecteur",
-    "decreaseSubDelay": "Diminuer le délai des sous-titres",
-    "increaseSubDelay": "Augmenter le délai des sous-titres",
+    "audio": "Audio",
+    "subtitles": "Sous-titres",
+    "subtitlesOff": "Désactivés",
+    "track": "Piste",
+    "forcedSubtitles": "forcés",
     "clearProgression": "Effacer la progression",
     "setAsWatched": "Marquer comme vu",
     "setAsNotWatched": "Marquer comme non vu",
@@ -244,6 +247,7 @@
         "language": "Langue",
         "seeds": "Seeds"
       },
+      "autoSelected": "Sélection automatique",
       "choose": "Choisir",
       "download": "Télécharger le torrent"
     }

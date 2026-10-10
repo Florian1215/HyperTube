@@ -4,9 +4,11 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     if (!torrents || !torrents.length)
         return null;
 
-    const find = torrents.find(t => t.status === "completed" || t.status === "transcoding" || t.status === "downloading");
-    if (find)
-        return find;
+    const statusScore: Record<string, number> = {
+        "completed": 3000,
+        "transcoding": 2000,
+        "downloading": 1000,
+    };
 
     const qualityScore: Record<string, number> = {
         "2160p": 100,
@@ -53,6 +55,7 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
         const seedScore = Math.log10(torrent.seeders + 1) * 30;
 
         const score =
+            (statusScore[torrent.status] || 0) +
             (qualityScore[torrent.quality] || 0) +
             (languageScore[torrent.language] || 0) +
             seedScore +

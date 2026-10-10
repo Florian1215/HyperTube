@@ -68,8 +68,11 @@
     "mediaDownloading": "{type, select, series {Die Serie} other {Der Film}} wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
     "torrentError": "Beim Abspielen {type, select, series {der Serie} other {des Films}} ist ein Fehler aufgetreten. Bitte versuchen Sie, die Seite zu aktualisieren oder später erneut.",
     "reloadPlayer": "Klicken Sie hier, um den Player neu zu laden",
-    "decreaseSubDelay": "Untertitelverzögerung verringern",
-    "increaseSubDelay": "Untertitelverzögerung erhöhen",
+    "audio": "Audio",
+    "subtitles": "Untertitel",
+    "subtitlesOff": "Aus",
+    "track": "Spur",
+    "forcedSubtitles": "erzwungen",
     "clearProgression": "Fortschritt löschen",
     "setAsWatched": "Als gesehen markieren",
     "setAsNotWatched": "Als nicht gesehen markieren",
@@ -244,6 +247,7 @@
         "language": "Sprache",
         "seeds": "Seeds"
       },
+      "autoSelected": "Automatische Auswahl",
       "choose": "Auswählen",
       "download": "Torrent herunterladen"
     }
