@@ -6,7 +6,7 @@ export default function Rating({media, className, after=false}: {media?: iMedia,
     const icon = <StarIcon color="accent"/>;
     return (<div className="flex gap-1.5 items-center">
         {after ? icon : null}
-        {media ? <p className={"tracking-widest text-dblack " + className}>{media.rating.toFixed(1)}</p> :
+        {media ? <p className={`tracking-widest text-dblack ${className}`}>{media.rating.toFixed(1)}</p> :
             <div className="h-5.5 w-5">
                 <div className="custom-loading"/>
             </div>

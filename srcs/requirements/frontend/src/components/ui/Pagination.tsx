@@ -20,7 +20,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
     return (<div className="w-full">
         {children}
         {totalPage > 1 &&
-            <div className={"flex w-full gap-2 justify-center " + (variableMT ? "mt-2 md:mt-4 xl:mt-6" : "mt4")}>
+            <div className={`flex w-full gap-2 justify-center ${variableMT ? "mt-2 md:mt-4 xl:mt-6" : "mt4"}`}>
                 <IconButton disabled={currentIndex === 1} className="mt-1" onClick={handleLeftArrow} color={"gray"}>
                     {(color: string) => <LeftIcon color={color}/>}
                 </IconButton>
@@ -46,7 +46,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
 }
 
 function PageButton({index, currentIndex, onClick}: {index?: number, currentIndex: number, onClick: (i: number) => void}) {
-    return (<button className={"custom-condensed text-2xl leading-6 " + (index === currentIndex ? "text-dblack font-bold" : "text-gray hover:underline")} onClick={() => {
+    return (<button className={`custom-condensed text-2xl leading-6 ${index === currentIndex ? "text-dblack font-bold" : "text-gray hover:underline"}`} onClick={() => {
         if (index && index !== currentIndex)
             onClick(index)
     }}>

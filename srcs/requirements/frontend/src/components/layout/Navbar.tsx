@@ -58,7 +58,7 @@ export default function Navbar() {
 function NavLink({href, name, selected, icon, onClick}: {href: string, name: string, selected: boolean, icon?: React.ReactNode, onClick?: (e: React.MouseEvent) => void}) {
     return (<Link className="uppercase flex items-center" href={href} title={name} onClick={onClick}>
         {icon}
-        <span style={{transform: "translateY(-1px)"}} className={"custom-underline text-lg xl:text-2xl text-nowrap " + (selected ? "font-base font-light" : "font-hairline") + (icon ? " pl-1 xl:pl-2 hidden md:block" : "")}>{name}</span>
+        <span style={{transform: "translateY(-1px)"}} className={`custom-underline text-lg xl:text-2xl text-nowrap ${selected ? "font-base font-light" : "font-hairline"} ${icon ? "pl-1 xl:pl-2 hidden md:block" : ""}`}>{name}</span>
     </Link>);
 }
 
@@ -89,7 +89,7 @@ function AccountMenu({label, items, onClick, children}: {label: string, items: i
             <div className="flex flex-col gap-1 items-start bg-dwhite py-4 px-5 custom-shadow-m border border-dblack">
                 {items.map((item) => item.href ?
                     <Link key={item.name} role="menuitem" className={itemClassName} href={item.href} onClick={() => setIsOpen(false)}>{item.name}</Link> :
-                    <button key={item.name} role="menuitem" className={itemClassName + " group flex items-center gap-2" + (item.danger ? " hover:text-red" : "")} onClick={() => {
+                    <button key={item.name} role="menuitem" className={`${itemClassName} group flex items-center gap-2${item.danger ? " hover:text-red" : ""}`} onClick={() => {
                         setIsOpen(false);
                         item.action?.();
                     }}>

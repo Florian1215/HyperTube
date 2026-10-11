@@ -185,7 +185,7 @@ export function torrentStreaming(torrentId: string, episode_number?: number) {
 }
 
 export function torrentStreamStatus(torrentId: string, episode_number?: number) {
-    return apiClient<tTorrentStream>(`torrents/${torrentId}/` + (episode_number !== undefined ? `?episode_number=${episode_number}` : ""));
+    return apiClient<tTorrentStream>(`torrents/${torrentId}/${episode_number !== undefined ? `?episode_number=${episode_number}` : ""}`);
 }
 
 export function useTorrents(media?: iMedia, season_number?: number, episode_number?: number) {
@@ -213,7 +213,7 @@ function torrentRequestEndpoint(media: Pick<iMedia, "id" | "type">, season_numbe
     const endpoint = `${media.type}/${media.id}/torrents/request/`;
 
     if (media.type === "series")
-        return endpoint + `?season_number=${season_number}&episode_number=${episode_number}`;
+        return `${endpoint}?season_number=${season_number}&episode_number=${episode_number}`;
     return endpoint;
 }
 

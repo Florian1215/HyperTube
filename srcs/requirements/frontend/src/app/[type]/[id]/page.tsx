@@ -186,10 +186,10 @@ export default function MediaPage() {
                                     seasonNumber={isSerie ? watchedEpisode.season : undefined} episodeNumber={isSerie ? watchedEpisode.episode : undefined} episodeName={isSerie ? episodeDetails?.name : undefined}
                                     setErrorAction={setError} tAction={t} nextEpisodeAction={followingEpisode ? showFollowingEpisode : undefined} endedAction={isSerie ? showFollowingEpisode : undefined}/>;
             }
-            return <div className={"size-full z-10 absolute" + (onClick ? " custom-cursor-play" : "")} onClick={onClick}/>;}
+            return <div className={`size-full z-10 absolute ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}/>;}
         } actionButton={() => {
             const className = "my-2 xl:my-4 font-bold md:h-12";
-            const classNameFlex = className + " flex items-center gap-3.5";
+            const classNameFlex = `${className} flex items-center gap-3.5`;
 
             if (startVideo || torrentId)
                 return undefined;

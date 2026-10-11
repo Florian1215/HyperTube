@@ -11,7 +11,7 @@ export default function PeopleWatchedCount({user, people, total, size = 16, clas
     if (total === undefined ? watched === 0 : total === 0)
         return null;
 
-    return (<span className={"flex items-center gap-1 shrink-0 " + (isFull ? "text-accent" : "text-dblack") + (className ?? "")} title={t("watched", {count: watched})}>
+    return (<span className={`flex items-center gap-1 shrink-0 ${isFull ? "text-accent" : "text-dblack"} ${className ?? ""}`} title={t("watched", {count: watched})}>
         <EyeIcon size={size} color={isFull ? "accent" : "dblack"}/>
         <span className="text-sm font-bold">{watched}{total !== undefined && `/${total}`}</span>
     </span>);

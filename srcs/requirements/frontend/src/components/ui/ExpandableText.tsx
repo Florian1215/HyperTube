@@ -66,7 +66,7 @@ export default function ExpandableText({children, lines=3, className, showBtn=tr
     };
 
     return (<div>
-        <div ref={boxRef} className={"overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none " + (overflowing ? (expanded ? "hover:cursor-grab" : "hover:cursor-pointer") : "")} onClick={toggle}
+        <div ref={boxRef} className={`overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none ${overflowing ? (expanded ? "hover:cursor-grab" : "hover:cursor-pointer") : ""}`} onClick={toggle}
              onTransitionEnd={(e) => e.target === boxRef.current && endAnimation()}>
             <p ref={textRef} className={className}
                style={clamped ? {display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: lines, overflow: "hidden"} : undefined}>

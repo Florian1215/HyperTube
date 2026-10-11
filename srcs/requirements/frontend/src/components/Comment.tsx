@@ -33,7 +33,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
             onMouseLeave={() => setShowSettingBtn(false)}>
         {displayMovie && previousCommentMovieId != comment.media.id && <div className="flex justify-center mb-6">
             <MediaCard user={currentUser} className="aspect-21/9" media={comment.media}/></div>}
-        <div className={"flex gap-2 sm:gap-4" + ((!updateComment) ? " flex-col sm:flex-row mx-4" : "") + (displayMovie ? " px-4" : "")}>
+        <div className={`flex gap-2 sm:gap-4 ${(!updateComment) ? "flex-col sm:flex-row mx-4" : ""} ${displayMovie ? "px-4" : ""}`}>
             <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
             <div className="w-full">
                 <div className="flex justify-between w-full">

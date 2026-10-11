@@ -66,7 +66,7 @@ export default function SetFeatureModal() {
 
     const displayBackdrop = activeModal.media.backdrops_url.length > 1;
     return (<ModalLayout title={t("title")} onCloseAction={closeModal}>
-        <div className={"space-y-6 text-center " + (displayBackdrop ? "w-full md:w-2xl lg:w-4xl" : "w-full")}>
+        <div className={`space-y-6 text-center ${displayBackdrop ? "w-full md:w-2xl lg:w-4xl" : "w-full"}`}>
             {
                 displayBackdrop &&
                 <div className="w-full text-left space-y-1">
@@ -94,7 +94,7 @@ function MediaHero({media, backdrop_url, selected, setIdx}: {media: iMediaDetail
     const t = useTranslations("media");
 
     return (<button onClick={setIdx}>
-        <div className={"relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border" + (selected ? " border-3" : "")}>
+        <div className={`relative flex flex-col items-center gap-4 aspect-video xl:aspect-21/9 border ${selected ? "border-3" : ""}`}>
             <LoadingImage key={backdrop_url} className="absolute inset-0 size-full object-cover"
                                                 width={1000} height={1000} loading="eager"
                                                 src={backdrop_url} alt={t("posterAlt", { title: media.title })}/>

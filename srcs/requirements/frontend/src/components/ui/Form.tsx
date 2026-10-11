@@ -23,7 +23,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
             fieldRefs.current[focusedIndex]?.focus();
     }, [focusedIndex]);
 
-    const getId = (field: fieldType | number) => (typeof field  === "number" ? fields[field] : field) + "-" + formType;
+    const getId = (field: fieldType | number) => `${typeof field  === "number" ? fields[field] : field}-${formType}`;
     const hasError = (error: Record<string, string>) => Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
     const newSetterErrorUtils = (field: fieldType | number, error?: string) => newSetterError({[getId(field)]: error ? tError(error) : ""});
 
@@ -123,7 +123,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
 
     return (<form id={formType} className="w-full" onSubmit={(e) => {e.preventDefault(); onSubmit();}}>
         {fields.map((field, idx) => RenderInput(field, idx))}
-        {handleForgotPassword && <div className={"relative mb-4" + (errors["password-signin"] ? " pt-3" : "")}>
+        {handleForgotPassword && <div className={`relative mb-4${errors["password-signin"] ? " pt-3" : ""}`}>
             <TextButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</TextButton>
         </div>}
         <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>

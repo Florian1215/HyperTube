@@ -41,7 +41,7 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
             setCallbackUrl(undefined);
             closeModal();
         }
-    } : undefined} title={t("title" + (callbackUrl ? "LoginRequired" : ""))}>
+    } : undefined} title={t(`title${callbackUrl ? "LoginRequired" : ""}`)}>
         <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t} handleForgotPassword={handleForgotPassword}
               fields={isReg ? ["username", "password"] : ["username", "password"]} />
         <div className="flex gap-2 mt-2">

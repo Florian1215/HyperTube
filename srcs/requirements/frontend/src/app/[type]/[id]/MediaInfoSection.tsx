@@ -94,7 +94,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
 
 
 function InfoMedia({children, name, center=true, onClick}: {children: React.ReactNode, name: string, center?: boolean, onClick?: () => void}) {
-    return (<div className={"flex gap-4 " + (center ? "items-center" : "items-start")}>
+    return (<div className={`flex gap-4 ${center ? "items-center" : "items-start"}`}>
         <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2">
             {onClick ? <button className="custom-underline text-right" onClick={onClick}><Label>{name}</Label></button> : <Label>{name}</Label>}
         </div>

@@ -29,7 +29,7 @@ export default function useApiMutation(setErrorsAction?: (errors: Record<string,
                 if (formType && fields !== undefined) {
                     fields.forEach((field, idx)=> {
                         if (error.data && error.data[field]) {
-                            newErrors[field + "-" + formType] = error.data[field][0];
+                            newErrors[`${field}-${formType}`] = error.data[field][0];
                             if (!setNewFocus && setFocusedIndex) {
                                 setNewFocus = true;
                                 setFocusedIndex(idx);

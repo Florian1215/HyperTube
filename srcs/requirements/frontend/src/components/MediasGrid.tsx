@@ -13,7 +13,7 @@ export default function MediasGrid({mediaSets, setLimit, className, inHistory=fa
     else if (size === "xs")
         mediasCount = 2;
 
-    return (<div className={"grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 " + className}>
+    return (<div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 ${className}`}>
         {mediaSets ?
             (setLimit ? mediaSets.slice(0, mediasCount) : mediaSets).map((media, i) => (<MediaCard key={i} media={media} user={user} inHistory={inHistory} showEpisode={showEpisode} showProgress={showProgress} label={getLabel?.(media)}/>)) :
             [...Array(mediasCount)].map((_, i) => (<MediaCard key={i} user={user}/>))

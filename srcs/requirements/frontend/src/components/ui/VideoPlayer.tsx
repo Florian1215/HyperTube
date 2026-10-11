@@ -428,22 +428,22 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     }, []);
 
     /* ---------------------------------------------- REACT COMPONENT ----------------------------------------------- */
-    return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/10" : "")} onMouseMove={resetHideTimer} >
+    return (<div ref={containerRef} className={`absolute inset-0 size-full overflow-hidden z-10 ${showControls ? "bg-black" : "bg-[#000000]"}${(isBuffering && seekTime === 0) ? "/10" : ""}`} onMouseMove={resetHideTimer} >
         {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 
-        <video ref={videoRef} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
+        <video ref={videoRef} className={`size-full ${!isPlaying ? "custom-cursor-play" : (showControls ? "" : "cursor-none")}`}
             onClick={togglePlay} onTimeUpdate={handleTimeUpdate} onEnded={endedAction} controls={false}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className={"absolute bottom-3 sm:bottom-6 lg:bottom-10 w-full text-center text-lg sm:text-2xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow " + (isPlaying ? "z-10" : "")}>
+        {subs && <div className={`absolute bottom-3 sm:bottom-6 lg:bottom-10 w-full text-center text-lg sm:text-2xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow ${isPlaying ? "z-10" : ""}`}>
             <div className="max-w-2/3 sm:max-w-1/2 mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
         </div>}
-        <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
+        <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
             {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
                 <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
@@ -470,7 +470,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                         {<button title={tAction("subtitles")} onClick={() => {
                             setShowAudioMenu(false);
                             setShowSubtitleMenu((prev) => !prev);
-                        }} className={"px-2 font-wide border " + (selectedSubtitle !== undefined ? "text-black bg-white hover:bg-white-light" : "border-white hover:bg-black-light")}>CC</button>}
+                        }} className={`px-2 font-wide border ${selectedSubtitle !== undefined ? "text-black bg-white hover:bg-white-light" : "border-white hover:bg-black-light"}`}>CC</button>}
                         {showSubtitleMenu && <TracksMenu>
                             <TrackButton selected={selectedSubtitle === undefined} onClick={() => changeSubtitle()}>{tAction("subtitlesOff")}</TrackButton>
                             {subtitleTracks.map((track, index) => <TrackButton key={index} selected={index === selectedSubtitle} onClick={() => changeSubtitle(index)}>{getTrackLabel(track, index)}</TrackButton>)}
@@ -499,5 +499,5 @@ function TracksMenu({children}: {children: React.ReactNode}) {
 }
 
 function TrackButton({selected, onClick, children}: {selected: boolean, onClick: () => void, children: React.ReactNode}) {
-    return (<button className={"text-lg text-left text-nowrap " + (selected ? "font-base font-light" : "font-hairline custom-underline")} onClick={onClick}>{children}</button>);
+    return (<button className={`text-lg text-left text-nowrap ${selected ? "font-base font-light" : "font-hairline custom-underline"}`} onClick={onClick}>{children}</button>);
 }

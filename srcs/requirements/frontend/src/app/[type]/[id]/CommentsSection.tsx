@@ -85,7 +85,7 @@ function NewComment({user, media}: {user: iUser, media: iMedia}) {
     }
 
     return (<div className="flex flex-col items-center w-full gap-2">
-        <textarea ref={textareaRef} className={"border w-full block px-3 py-1.5" + (errors["content"] ? " border-red text-red" : "")}
+        <textarea ref={textareaRef} className={`border w-full block px-3 py-1.5 ${errors["content"] ? "border-red text-red" : ""}`}
                   style={{resize: expendComment ? "vertical" : "none"}}
                   maxLength={1000} rows={expendComment ? 5 : 1}
                   placeholder={expendComment ? "" : t("writeComment")}
