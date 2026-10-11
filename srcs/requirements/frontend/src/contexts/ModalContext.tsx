@@ -4,7 +4,7 @@ import React, {createContext, Dispatch, SetStateAction, useCallback, useContext,
 import {iGenre} from "@/types/genre";
 import {iMediaDetails, iPeople, iTorrent} from "@/types/media";
 
-type ModalType = "signin" | "register" | "genre" | "filter-genre" | "set-new-password" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | null;
+type ModalType = "signin" | "register" | "genre" | "filter-genre" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | null;
 
 export interface ModalState {
     type: ModalType;

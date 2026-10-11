@@ -13,7 +13,7 @@ import {tT} from "@/types/utils";
 
 type AuthModalType = "signin" | "register";
 
-export default function AuthModalLayout({type, t, handleForgotPassword, activeModal}: {type: AuthModalType, t: tT, handleForgotPassword?: () => void, activeModal: ModalState}) {
+export default function AuthModalLayout({type, t, activeModal}: {type: AuthModalType, t: tT, activeModal: ModalState}) {
     const {openModal, closeModal} = useModal();
     const isReg = type === "register";
     const otherType: AuthModalType = isReg ? "signin" : "register";
@@ -42,7 +42,7 @@ export default function AuthModalLayout({type, t, handleForgotPassword, activeMo
             closeModal();
         }
     } : undefined} title={t(`title${callbackUrl ? "LoginRequired" : ""}`)}>
-        <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t} handleForgotPassword={handleForgotPassword}
+        <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t}
               fields={isReg ? ["username", "password"] : ["username", "password"]} />
         <div className="flex gap-2 mt-2">
             <span className="text-sm">{t(isReg ? "haveAccount" : "noAccount")}</span>

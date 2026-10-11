@@ -2,14 +2,13 @@ import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import useApiMutation from "@/hooks/useApiMutation";
 import Button from "@/components/ui/Button/Button";
-import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
 import {fieldType, tT} from "@/types/utils";
 
 
-type formType = "auth" | "update" |  "signin" | "register" | "set-new-password";
+type formType = "auth" | "update" |  "signin" | "register";
 
-export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: tT, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
+export default function Form<T>({formType, request, handleRequest, t, fields, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: tT, fields: fieldType[], extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
@@ -46,7 +45,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
                 newSetterErrorUtils("new-password")
         }
 
-        if ((formType === "auth" || formType === "set-new-password") && fieldsValue.at(-1) && fieldsValue.at(-2)) {
+        if (formType === "auth" && fieldsValue.at(-1) && fieldsValue.at(-2)) {
             if (fieldsValue.at(-1) != fieldsValue.at(-2))
                 newSetterErrorUtils("confirm-new-password", "passwordsDontMatch");
             else if (errors[getId("confirm-new-password")] == tError("passwordsDontMatch"))
@@ -123,9 +122,6 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
 
     return (<form id={formType} className="w-full" onSubmit={(e) => {e.preventDefault(); onSubmit();}}>
         {fields.map((field, idx) => RenderInput(field, idx))}
-        {handleForgotPassword && <div className={`relative mb-4${errors["password-signin"] ? " pt-3" : ""}`}>
-            <TextButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</TextButton>
-        </div>}
-        <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
+        <Button onClick={onSubmit} disabled={disableBtn}>{t("submit")}</Button>
     </form>)
 }
