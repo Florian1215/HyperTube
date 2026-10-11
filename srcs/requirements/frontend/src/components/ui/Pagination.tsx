@@ -46,7 +46,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
 }
 
 function PageButton({index, currentIndex, onClick}: {index?: number, currentIndex: number, onClick: (i: number) => void}) {
-    return (<button className={"custom-condensed text-2xl leading-6 " + (index === currentIndex ? "text-black font-bold" : "text-gray hover:underline")} onClick={() => {
+    return (<button className={"custom-condensed text-2xl leading-6 " + (index === currentIndex ? "text-dblack font-bold" : "text-gray hover:underline")} onClick={() => {
         if (index && index !== currentIndex)
             onClick(index)
     }}>

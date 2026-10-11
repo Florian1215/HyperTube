@@ -2,7 +2,7 @@
 
 import {useEffect, useState} from "react";
 
-export function CrossIcon({color="black", size=30, className=""}) {
+export function CrossIcon({color="dblack", size=30, className=""}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg className={className} width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -11,7 +11,7 @@ export function CrossIcon({color="black", size=30, className=""}) {
     </svg>);
 }
 
-export function RightIcon({color="black", size=13}) {
+export function RightIcon({color="dblack", size=13}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} viewBox="0 0 16 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -19,7 +19,7 @@ export function RightIcon({color="black", size=13}) {
     </svg>);
 }
 
-export function LeftIcon({color="black", size=13}) {
+export function LeftIcon({color="dblack", size=13}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} viewBox="0 0 16 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -27,7 +27,7 @@ export function LeftIcon({color="black", size=13}) {
     </svg>);
 }
 
-export function RightArrowIcon({color="black", size=13}) {
+export function RightArrowIcon({color="dblack", size=13}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} viewBox="0 0 45 61" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -35,7 +35,7 @@ export function RightArrowIcon({color="black", size=13}) {
     </svg>);
 }
 
-export function LeftArrowIcon({color="black", size=13}) {
+export function LeftArrowIcon({color="dblack", size=13}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} viewBox="0 0 45 61" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -43,7 +43,7 @@ export function LeftArrowIcon({color="black", size=13}) {
     </svg>);
 }
 
-export function UserIcon({selected, color="black", size=20}: {selected: boolean, color?: string, size?: number}) {
+export function UserIcon({selected, color="dblack", size=20}: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 
     if (selected) {
@@ -57,7 +57,7 @@ export function UserIcon({selected, color="black", size=20}: {selected: boolean,
     </svg>);
 }
 
-export function SearchIcon({selected, color="black", size=20 }: {selected: boolean, color?: string, size?: number}) {
+export function SearchIcon({selected, color="dblack", size=20 }: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 
     if (selected) {
@@ -70,7 +70,7 @@ export function SearchIcon({selected, color="black", size=20 }: {selected: boole
     </svg>);
 }
 
-export function EyeIcon({color="black", size=24, crossed=false}: {color?: string, size?: number, crossed?: boolean}) {
+export function EyeIcon({color="dblack", size=24, crossed=false}: {color?: string, size?: number, crossed?: boolean}) {
     const fullColor = `var(--color-${color})`;
 
     if (crossed)
@@ -102,7 +102,7 @@ export function EyeIcon({color="black", size=24, crossed=false}: {color?: string
     </svg>);
 }
 
-export function HypertubResponsiveLogo({color="black", height=20}: {color?: string, height?: number, width?: number, className?: string}) {
+export function HypertubResponsiveLogo({color="dblack", height=20}: {color?: string, height?: number, width?: number, className?: string}) {
     const fullColor = `var(--color-${color})`;
     const defaultRecWidth = 266;
     const minWindowWidth = 640;
@@ -138,7 +138,7 @@ export function HypertubResponsiveLogo({color="black", height=20}: {color?: stri
     </svg>);
 }
 
-export function HypertubeLogo({color="black", height=20, width, className}: {color?: string, height?: number, width?: number, className?: string}) {
+export function HypertubeLogo({color="dblack", height=20, width, className}: {color?: string, height?: number, width?: number, className?: string}) {
     const fullColor = `var(--color-${color})`;
     const preserveRatio = height && width ? "none" : "xMidYMid meet";
     if (!width)
@@ -159,7 +159,7 @@ export function HypertubeLogo({color="black", height=20, width, className}: {col
     </svg>);
 }
 
-export function ExitDoorIcon({selected, color="black", size=20}: {selected: boolean, color?: string, size?: number}) {
+export function ExitDoorIcon({selected, color="dblack", size=20}: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 
     if (selected) {
@@ -173,7 +173,7 @@ export function ExitDoorIcon({selected, color="black", size=20}: {selected: bool
     </svg>);
 }
 
-export function CheckIcon({color="black", size=20, className="" }) {
+export function CheckIcon({color="dblack", size=20, className="" }) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg className={className} width={size} height={size} viewBox="0 0 18 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -181,7 +181,7 @@ export function CheckIcon({color="black", size=20, className="" }) {
     </svg>);
 }
 
-export function GridIcon({color="black", size=20}) {
+export function GridIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 15">
@@ -189,7 +189,7 @@ export function GridIcon({color="black", size=20}) {
     </svg>);
 }
 
-export function ListIcon({color="black", size=20}) {
+export function ListIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
@@ -198,7 +198,7 @@ export function ListIcon({color="black", size=20}) {
     </svg>);
 }
 
-export function SortIcon({sideUp=true, color="black", size=15}) {
+export function SortIcon({sideUp=true, color="dblack", size=15}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 16">
@@ -216,7 +216,7 @@ export function StarIcon({color="yellow", size=18}) {
     </svg>);
 }
 
-export function EditIcon({color="black", size=20}) {
+export function EditIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384.24 384.24">
@@ -226,7 +226,7 @@ export function EditIcon({color="black", size=20}) {
     </svg>);
 }
 
-export function BookmarkIcon({color="black", size=20, filled=false}: {color?: string, size?: number, filled?: boolean}) {
+export function BookmarkIcon({color="dblack", size=20, filled=false}: {color?: string, size?: number, filled?: boolean}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -234,7 +234,7 @@ export function BookmarkIcon({color="black", size=20, filled=false}: {color?: st
     </svg>);
 }
 
-export function RewatchIcon({color="black", size=16}) {
+export function RewatchIcon({color="dblack", size=16}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="390.14 200 12 12" fill="none">
@@ -285,7 +285,7 @@ export function CopyIcon({color="white", size=15}) {
     </svg>);
 }
 
-export function DownloadIcon({color="black", size=20}) {
+export function DownloadIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} aria-hidden="true" focusable="false" viewBox="0 0 16 16">

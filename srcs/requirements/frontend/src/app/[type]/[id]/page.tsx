@@ -197,9 +197,9 @@ export default function MediaPage() {
             return (<div className="relative flex flex-col z-30 items-center">
                 {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode}/>}
                 <div className="flex gap-2">
-                    <SecondaryButton className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></SecondaryButton>
-                    {featureBtn && <SecondaryButton className={className} onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
-                    {user && media && <Button className={classNameFlex + " border border-white bg-transparent text-white"} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></Button>}
+                    <SecondaryButton darkMode={false} className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></SecondaryButton>
+                    {featureBtn && <SecondaryButton darkMode={false} className={className} onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
+                    {user && media && <SecondaryButton className={classNameFlex + " border border-white bg-transparent text-white"} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></SecondaryButton>}
                 </div>
                 {unavailable && <SmallText className="mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
@@ -207,12 +207,12 @@ export default function MediaPage() {
                 </SmallText>}
             </div>);}
         }>
-            {errorStr && <div className="size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">
+            {errorStr && <div className="z-30 size-full absolute inset-0 bg-black/80 flex items-center justify-center overflow-hidden">
                 <div
-                    className="max-w-4/5 sm:max-w-130 bg-white border p-3 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
+                    className="max-w-4/5 sm:max-w-130 bg-white text-black border p-3 sm:p-8 shadow-2xl text-center space-y-2 sm:space-y-4">
                     <p className="text-sm sm:text-xl font-medium text-red">{t("torrentError", {type})}</p>
                     <SmallText className="mb-4 sm:mb-6">{errorStr}</SmallText>
-                    <Button onClick={() => setError(undefined)}>{t("reloadPlayer")}</Button>
+                    <Button darkMode={false} onClick={() => setError(undefined)}>{t("reloadPlayer")}</Button>
                 </div>
             </div>}
 

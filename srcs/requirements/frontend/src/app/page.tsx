@@ -6,16 +6,16 @@ import {useLocale, useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
-import {SEARCH_CONTINUE, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
+import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
-import FriendsActivity from "@/components/FriendsActivity";
+import {FriendActivityCard, getImage} from "@/components/FriendsActivity";
 import Section from "@/components/ui/Section";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
-import {useComingSoon, useContinueWatching} from "@/services/users.service";
+import {useComingSoon, useContinueWatching, useFollowingActivity} from "@/services/users.service";
 import {iMedia} from "@/types/media";
 
 export default function HomePage() {
@@ -55,13 +55,21 @@ export default function HomePage() {
     const {data: dirctedWatchMovies} = useItems("movies", "directstream");
     const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
 
+    const groupSeries = user?.group_series ?? true;
+    const {data: friendAct} = useFollowingActivity(user?.id, groupSeries);
+    const activities = (friendAct?.results ?? []).filter((activity) => getImage(activity, groupSeries));
+
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
         <SliderHero medias={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
-        <FriendsActivity className="px-4 sm:px-6 mb-6 md:mb-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-10 sm:px-6" >
+            {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-x-2 sm:gap-x-4 grid-rows-1 auto-rows-0 overflow-hidden">
+                    {activities.map((activity, index) => <FriendActivityCard key={index} activity={activity}/>)}
+                </div>
+            </Section>}
             {(continueWatching.length > 0) &&
             <Section title={t("continueWatching")} href={`/search?type=${continueWatching[0].type}&q=${encodeURIComponent(SEARCH_CONTINUE)}`}>
                 <MediasGrid mediaSets={continueWatching} setLimit={true} showEpisode={true}/>

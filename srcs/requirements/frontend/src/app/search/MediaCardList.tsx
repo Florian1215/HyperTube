@@ -37,7 +37,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
                 <div className="custom-noise"/>
                 {!media && (<div className="custom-loading"/>)}
                 {media && <Link href={formatURL(media)}>
-                    <MediaWatchProgress user={user} media={media} />
+                    <MediaWatchProgress user={user} media={media}/>
                     <LoadingImage key={media.backdrop_url}
                         className="size-full object-cover"
                         width={600} height={400} src={media.backdrop_url} alt={t("posterAlt", {title: media.title})}
@@ -58,7 +58,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
             {media && <GenreTags genreIds={media.genres} limit={3} setFilterGenreAction={setFilterGenre}/>}
         </td>
         <td className="hidden sm:table-cell">
-            <Rating media={media} user={user} className="font-medium"/>
+            <Rating media={media} className="font-medium"/>
         </td>
         <td className="text-right">
             <Button className="px-3" onClick={() => media && router.push(formatURL(media))}>{t("watch")}</Button>

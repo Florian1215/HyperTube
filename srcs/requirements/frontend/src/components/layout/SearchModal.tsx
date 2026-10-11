@@ -46,7 +46,7 @@ export default function SearchModal() {
                  if ((e.target as HTMLElement).closest("a"))
                      closeSearch();
              }}>
-            <div className="bg-white shrink-0">
+            <div className="bg-dwhite shrink-0">
                 <Navbar/>
             </div>
             <Search modal={true}/>

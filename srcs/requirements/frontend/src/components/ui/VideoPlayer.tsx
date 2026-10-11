@@ -482,7 +482,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
 
                 <div className="w-full h-4 bg-black-light border-t-black">
                     <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${barDuration ? (downloadDuration / barDuration) * 100 : 0}%`}}>
-                        <div className={`pointer-events-none h-full bg-${user?.color ?? "purple"}`} style={{width: `${downloadDuration ? (seekTime / downloadDuration) * 100 : 0}%`}} />
+                        <div className="pointer-events-none h-full bg-accent" style={{width: `${downloadDuration ? (seekTime / downloadDuration) * 100 : 0}%`}} />
                     </div>
                 </div>
             </div>

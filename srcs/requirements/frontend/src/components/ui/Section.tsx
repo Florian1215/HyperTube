@@ -5,7 +5,7 @@ export default function Section({children, title, href}: {children: React.ReactN
     const className = "uppercase font-wide text-lg sm:text-xl font-bold";
     return (<section className="flex flex-col gap-2">
         {href ?
-            <Link className={className + " hover:text-black-light"} href={href}>{title + " >"}</Link> :
+            <Link className={className + " hover:text-cblack"} href={href}>{title + " >"}</Link> :
             <span className={className}>{title}</span>}
         {children}
     </section>);

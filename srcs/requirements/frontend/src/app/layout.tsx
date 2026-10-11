@@ -24,18 +24,25 @@ import SelectTorrentModal from "@/app/[type]/[id]/SelectTorrentModal";
 import ViewAllGenreModal from "@/app/search/ViewAllGenreModal";
 import FilterGenreModal from "@/app/search/FilterGenreModal";
 
+const ACCENT_COLORS = ["yellow", "pink", "green", "purple", "blue", "red"];
+
+function getRandomAccent() {
+    return ACCENT_COLORS[Math.floor(Math.random() * ACCENT_COLORS.length)];
+}
+
 export default async function RootLayout({children}: {children: React.ReactNode}) {
     const messages = await getMessages();
     const currentLocale = await getLocale();
+    const accent = getRandomAccent();
 
-    return (<html lang={currentLocale}>
+    return (<html lang={currentLocale} data-accent={accent}>
     <body>
 
     <div className="fixed inset-0 -z-10">
         <Colors heigth="h-full"/>
     </div>
 
-    <div className="bg-white min-h-screen">
+    <div className="bg-dwhite min-h-screen">
         <NextIntlClientProvider locale={currentLocale} messages={messages}>
             <Providers>
                 <AuthProvider>

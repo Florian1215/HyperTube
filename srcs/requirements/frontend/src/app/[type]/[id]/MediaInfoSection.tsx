@@ -11,9 +11,7 @@ import {iSerieDetails} from "@/types/serie";
 import {TitleMedia} from "@/components/Title";
 import useFormatDate from "@/utils/formatDate";
 import ExpandableText from "@/components/ui/ExpandableText";
-import TextButton from "@/components/ui/Button/TextButton";
 import ProfilePicture from "@/components/ProfilePicture";
-import useAuth from "@/contexts/AuthContext";
 import Rating from "@/components/Rating";
 
 const MAX_WATCHED_BY = 10;
@@ -23,8 +21,6 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
     const tSerie = useTranslations("serie");
     const {openModal} = useModal();
     const formattedReleaseDate = useFormatDate(media?.release_date);
-    const {user} = useAuth();
-    const tCommon = useTranslations("common");
 
     const getLenght = () => {
         if (media && "runtime" in media) {
@@ -57,7 +53,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
             </InfoMedia>
         }
         {media.rating > 0 && <InfoMedia name={t("rating")}>
-            <Rating media={media} user={user} after={true}/>
+            <Rating media={media} after={true}/>
         </InfoMedia>}
         {
             media.watched_by.length > 0 &&

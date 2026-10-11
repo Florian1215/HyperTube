@@ -35,13 +35,13 @@ export default function HorizontalScroll({children, className}: {children: React
     const showArrows = canScrollLeft || canScrollRight;
 
     return (<div className="flex items-center gap-2">
-        {showArrows && <IconButton disabled={!canScrollLeft} onClick={() => scroll(-1)} color="black" disabledColor="gray">
+        {showArrows && <IconButton disabled={!canScrollLeft} onClick={() => scroll(-1)} color="dblack" disabledColor="gray">
             {(color: string) => <LeftArrowIcon color={color}/>}
         </IconButton>}
         <div ref={rowRef} className={"flex min-w-0 flex-1 overflow-x-auto scrollbar-hide " + (className ?? "") + (canScrollRight ? " border-r" : "") + (canScrollLeft ? " border-l" : "")}>
             {children}
         </div>
-        {showArrows && <IconButton disabled={!canScrollRight} onClick={() => scroll(1)} color="black" disabledColor="gray">
+        {showArrows && <IconButton disabled={!canScrollRight} onClick={() => scroll(1)} color="dblack" disabledColor="gray">
             {(color: string) => <RightArrowIcon color={color}/>}
         </IconButton>}
     </div>);

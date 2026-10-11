@@ -86,7 +86,7 @@ function AccountMenu({label, items, onClick, children}: {label: string, items: i
             {children(isOpen)}
         </button>
         {isOpen && <div className="absolute z-50 top-full right-0 pt-4" role="menu">
-            <div className="flex flex-col gap-1 items-start bg-white py-4 px-5 custom-shadow-m border border-black">
+            <div className="flex flex-col gap-1 items-start bg-dwhite py-4 px-5 custom-shadow-m border border-dblack">
                 {items.map((item) => item.href ?
                     <Link key={item.name} role="menuitem" className={itemClassName} href={item.href} onClick={() => setIsOpen(false)}>{item.name}</Link> :
                     <button key={item.name} role="menuitem" className={itemClassName + " group flex items-center gap-2" + (item.danger ? " hover:text-red" : "")} onClick={() => {
@@ -94,8 +94,8 @@ function AccountMenu({label, items, onClick, children}: {label: string, items: i
                         item.action?.();
                     }}>
                         {item.icon && <>
-                            <span className="group-hover:hidden">{item.icon(false, "black")}</span>
-                            <span className="hidden group-hover:block">{item.icon(true, item.danger ? "red" : "black")}</span>
+                            <span className="group-hover:hidden">{item.icon(false, "dblack")}</span>
+                            <span className="hidden group-hover:block">{item.icon(true, item.danger ? "red" : "dblack")}</span>
                         </>}
                         {item.name}
                     </button>

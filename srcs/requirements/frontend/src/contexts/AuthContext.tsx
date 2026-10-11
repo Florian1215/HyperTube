@@ -50,6 +50,14 @@ export function AuthProvider({children}: {children: ReactNode}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        if (!user?.color)
+            return;
+        const root = document.documentElement;
+        root.style.setProperty("--accent", `var(--color-${user.color})`);
+        return () => {root.style.removeProperty("--accent");};
+    }, [user?.color]);
+
     const login = async (access: string, refresh: string) => {
         localStorage.setItem("access", access);
         localStorage.setItem("refresh", refresh);
