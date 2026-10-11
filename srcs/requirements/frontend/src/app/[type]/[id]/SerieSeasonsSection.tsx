@@ -15,6 +15,7 @@ import {iUser} from "@/types/user";
 import ExpandableText from "@/components/ui/ExpandableText";
 import HorizontalScroll from "@/components/ui/HorizontalScroll";
 import RadioButton from "@/components/ui/Button/RadioButton";
+import MediaRow from "@/app/[type]/[id]/MediaRow";
 
 export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEpisode}: {serie: iSerieDetails, watchedEpisode: iWatchEpisode, setWatchedEpisode: (val: iWatchEpisode) => void}) {
     const t = useTranslations("serie");
@@ -96,24 +97,9 @@ function Episode({episode, serie, seasonNumber, user, altPoster, showDate, watch
         });
     };
 
-    const isSelected = episode.episode_number === watchedEpisode.episode && seasonNumber === watchedEpisode.season;
-    return (<tr>
-        <td onClick={() => handleClick(currentEpisode)} className={"font-bold text-2xl font-wide text-right pr-1 pl-4 w-14 hover:cursor-pointer hover:text-cblack" + (isSelected ? " border-l-5 border-cblack" : "")}>
-            <span>{episode.episode_number}</span>
-        </td>
-        <td className="px-4 w-36 sm:w-50 py-2 align-top custom-cursor-play" onClick={() => handleClick(currentEpisode)}>
-            {user && <MediaRightClick user={user} media={serie} progress={episode} seasonNumber={seasonNumber} episodeNumber={episode.episode_number} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
-            <div className="relative border aspect-10/7 overflow-hidden" onContextMenu={handleContextMenu}>
-                <LoadingImage className="size-full object-cover" width={200} height={200} src={episode.poster_url} alt={altPoster}/>
-                < MediaWatchProgress user={user} media={episode}/>
-                <div className="custom-noise opacity-30"/>
-                {episode.complete && <div className="custom-complete-media"/>}
-            </div>
-        </td>
-        <td className="align-top pt-5 pb-2">
-            <button onClick={() => handleClick(currentEpisode)} title={episode.name} className="block max-w-full font-semibold text-lg uppercase truncate text-left hover:text-cblack">{episode.name}</button>
-            <SmallText className="text-left">{t("minutes", {runtime: episode.runtime})}{showDate ? ` - ${formattedReleaseDate}` : ""}</SmallText>
-            <ExpandableText className="text-sm text-gray leading-tight" lines={2} showBtn={false}>{episode.overview}</ExpandableText>
-        </td>
-    </tr>)
+    return (<MediaRow number={episode.episode_number} title={episode.name} overview={episode.overview} image={episode.poster_url} alt={altPoster}
+                      subtitle={t("minutes", {runtime: episode.runtime}) + (showDate ? ` - ${formattedReleaseDate}` : "")}
+                      progress={episode} user={user} isSelected={episode.episode_number === watchedEpisode.episode && seasonNumber === watchedEpisode.season}
+                      onClick={() => handleClick(currentEpisode)} onContextMenu={handleContextMenu}
+                      menu={user && <MediaRightClick user={user} media={serie} progress={episode} seasonNumber={seasonNumber} episodeNumber={episode.episode_number} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}/>);
 }
