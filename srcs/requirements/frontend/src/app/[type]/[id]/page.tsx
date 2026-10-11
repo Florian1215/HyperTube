@@ -18,7 +18,6 @@ import Button from "@/components/ui/Button/Button";
 import VideoPlayer from "@/components/ui/VideoPlayer";
 import SmallText from "@/components/ui/SmallText";
 import TextButton from "@/components/ui/Button/TextButton";
-import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import {iWatchEpisode, tMedia} from "@/types/utils";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import SerieSeasonsSection from "@/app/[type]/[id]/SerieSeasonsSection";
@@ -155,7 +154,7 @@ export default function MediaPage() {
             addNotification(tError("torrentNotFound"), "error");
     }
 
-    const handleRightClick = (e?: React.MouseEvent<HTMLDivElement>) => {
+    const handleRightClick = (e?: React.MouseEvent) => {
         e?.preventDefault();
         openModal({type: "select-torrent", torrents: torrents?.results, setTorrentId: startTorrent});
     };
@@ -197,9 +196,9 @@ export default function MediaPage() {
             return (<div className="relative flex flex-col z-30 items-center">
                 {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode}/>}
                 <div className="flex gap-2">
-                    <SecondaryButton darkMode={false} className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></SecondaryButton>
-                    {featureBtn && <SecondaryButton darkMode={false} className={className} onClick={featureBtn}>{t("setFeature")}</SecondaryButton>}
-                    {user && media && <SecondaryButton className={classNameFlex + " border border-white bg-transparent text-white"} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></SecondaryButton>}
+                    <Button variant="secondary" darkMode={false} className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></Button>
+                    {featureBtn && <Button variant="secondary" darkMode={false} className={className} onClick={featureBtn}>{t("setFeature")}</Button>}
+                    {user && media && <Button variant="outline" darkMode={false} className={classNameFlex} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></Button>}
                 </div>
                 {unavailable && <SmallText className="mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}

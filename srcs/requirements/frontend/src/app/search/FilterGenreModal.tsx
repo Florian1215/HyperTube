@@ -8,7 +8,6 @@ import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/routing";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Button from "@/components/ui/Button/Button";
-import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import GenreTag from "@/components/GenreTag";
 
 export default function FilterGenreModal() {
@@ -39,11 +38,11 @@ export default function FilterGenreModal() {
         </div>
         <div className="flex">
             <Button className="mt-5" onClick={closeModal}>{t("apply")}</Button>
-            <SecondaryButton className="mt-5" onClick={() => {
+            <Button variant="secondary" className="mt-5" onClick={() => {
                 closeModal();
                 if (activeModal.filterGenre !== undefined)
                     activeModal.filterGenre[1]([]);
-            }}>{t("reset")}</SecondaryButton>
+            }}>{t("reset")}</Button>
         </div>
     </ModalLayout>);
 }

@@ -8,7 +8,6 @@ import {iComment, iCommentDetails} from "@/types/comment";
 import {Link} from "@/i18n/navigation";
 import {EditIcon, TrashIcon} from "@/components/Icons";
 import ExpandableText from "@/components/ui/ExpandableText";
-import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import Button from "@/components/ui/Button/Button";
 import IconButton from "@/components/ui/Button/IconButton";
 import MediaCard from "@/components/MediaCard";
@@ -110,10 +109,10 @@ function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComme
             <Button className="xl:px-6"
                     disabled={newEditedComment.trim().length <= 0 || newEditedComment.trim() === comment.content}
                     onClick={saveChange}>{t("saveChange")}</Button>
-            <SecondaryButton className="w-30 xl:w-40" onClick={() => {
+            <Button variant="secondary" className="w-30 xl:w-40" onClick={() => {
                 setEditMode(false);
                 setNewEditedComment(comment.content);
-            }}>{t("cancel")}</SecondaryButton>
+            }}>{t("cancel")}</Button>
         </div>
     </div>);
 }

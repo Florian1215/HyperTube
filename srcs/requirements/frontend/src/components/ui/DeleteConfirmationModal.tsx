@@ -5,7 +5,6 @@ import {useTranslations} from "next-intl";
 import useModal from "@/contexts/ModalContext";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Button from "@/components/ui/Button/Button";
-import SecondaryButton from "@/components/ui/Button/SecondaryButton";
 import useApiMutation from "@/hooks/useApiMutation";
 
 export default function DeleteConfirmationModal() {
@@ -23,7 +22,7 @@ export default function DeleteConfirmationModal() {
                     await execute(() => activeModal.deleteFunc!(activeModal.deleteObjId ?? 0));
                 closeModal();
             }}>{t("confirm")}</Button>
-            <SecondaryButton className="w-full" onClick={closeModal}>{t("cancel")}</SecondaryButton>
+            <Button variant="secondary" className="w-full" onClick={closeModal}>{t("cancel")}</Button>
         </div>
     </ModalLayout>);
 }
