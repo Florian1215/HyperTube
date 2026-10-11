@@ -70,7 +70,7 @@ class MediaSerializer(MediaProgressMixin, MediaWatchlistMixin, serializers.Seria
 
     @staticmethod
     def get_poster_url(obj):
-        return format_tmdb_image(obj['poster_path'], 'w500')
+        return format_tmdb_image(obj['poster_path'], 'original')
 
     @staticmethod
     def get_backdrop_url(obj):
