@@ -84,7 +84,6 @@
     .dark-mode {
         color-scheme: dark;
     }
-        .custom-loading { animation-name: loading-pulse-dark; }
 }
 
 @layer components {
@@ -116,9 +115,9 @@
         animation: loading-pulse-dark 2s ease-in-out infinite;
     }
     @keyframes loading-pulse {
-        0% {background-color: var(--gray-loading)}
-        50% {background-color: var(--color-white-light);}
-        100% {background-color: var(--gray-loading)}
+        0% {background-color: light-dark(var(--gray-loading), var(--black-light))}
+        50% {background-color: light-dark(var(--white-light), var(--black));}
+        100% {background-color: light-dark(var(--gray-loading), var(--black-light))}
     }
     @keyframes loading-pulse-dark {
         0% {background-color: var(--color-black)}
