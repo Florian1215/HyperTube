@@ -38,7 +38,7 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
             <div className="w-full">
                 <div className="flex justify-between w-full">
                     <div>
-                        <Link href={`/users/${user.id}`} className="text-bold hover:underline">{user.username}</Link>
+                        <Link href={`/users/${user.id}`} className="text-bold hover:text-dblack-light">{user.username}</Link>
                         <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
                     {

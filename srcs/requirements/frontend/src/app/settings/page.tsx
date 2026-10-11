@@ -106,7 +106,7 @@ function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Pa
     return (<div className="flex flex-col gap-2 items-start">
         <ProfilePicture user={user} size={2} className="mb-2" />
         <TextButton
-            className={user.profile_picture ? "text-red custom-underline-red" : "hover:no-underline"}
+            className={user.profile_picture ? "text-red hover:text-red-hover" : ""}
             onClick={() => handleNewAvatar(["profile_picture", ""])}>{t("remove")}</TextButton>
 
         {!user.profile_picture && (
@@ -151,6 +151,6 @@ function AccountSection() {
     };
 
     return (<div className="flex">
-        <TextButton className="text-red custom-underline-red" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
+        <TextButton className="text-red hover:text-red-hover" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
     </div>);
 }

@@ -23,9 +23,9 @@ export default function WatchedByModal() {
 
     return (<ModalLayout title={t("watchedBy")} onCloseAction={closeModal}>
         <div className="w-full sm:w-md max-h-100 overflow-y-auto divide-y divide-gray">
-            {views.map(({user, date, rewatch}, index) => (<Link key={index} href={`/users/${user.id}`} onClick={closeModal} className="flex items-center gap-4 p-2 group">
+            {views.map(({user, date, rewatch}, index) => (<Link key={index} href={`/users/${user.id}`} onClick={closeModal} className="flex items-center gap-4 p-2 hover:bg-dwhite-light">
                 <ProfilePicture size={3} user={user}/>
-                <span className="flex-1 min-w-0 truncate text-left font-semibold group-hover:underline">{user.username}</span>
+                <span className="flex-1 min-w-0 truncate text-left font-semibold">{user.username}</span>
                 {rewatch && <span className="mt-0.5"><RewatchIcon color="gray" size={15}/></span>}
                 {date && <SmallText>{new Date(date).toLocaleDateString(locale, {day: "numeric", month: "long", year: "numeric"})}</SmallText>}
             </Link>))}

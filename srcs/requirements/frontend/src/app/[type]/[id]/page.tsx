@@ -202,7 +202,7 @@ export default function MediaPage() {
                 </div>
                 {unavailable && <SmallText className="mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
-                    {torrentRequest && <TextButton className="ml-2 text-white font-semibold hover:underline underline-offset-2" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
+                    {torrentRequest && <TextButton className="ml-2 text-white font-semibold hover:text-accent" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
                 </SmallText>}
             </div>);}
         }>

@@ -11,12 +11,12 @@ import formatReleaseDate from "@/utils/formatReleaseDate";
 import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
 import {FriendActivityCard, getImage} from "@/components/FriendsActivity";
-import Section from "@/components/ui/Section";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
 import {useComingSoon, useContinueWatching, useFollowingActivity} from "@/services/users.service";
 import {iMedia} from "@/types/media";
+import {Link} from "@/i18n/navigation";
 
 export default function HomePage() {
     const {user} = useAuth();
@@ -106,6 +106,16 @@ export default function HomePage() {
 
         <Colors className="mt-4 sm:mt-6" />
     </div>);
+}
+
+function Section({children, title, href}: {children: React.ReactNode, title: string, href?: string}) {
+    const className = "uppercase font-wide text-lg sm:text-xl font-bold";
+    return (<section className="flex flex-col gap-2">
+        {href ?
+            <Link className={`${className} hover:text-accent`} href={href}>{`${title} >`}</Link> :
+            <span className={className}>{title}</span>}
+        {children}
+    </section>);
 }
 
 function AnimateLogo({maxHeight}: {maxHeight: number}) {

@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from "react";
 
-export default function IconButton({children, disabled, color="dblack", hoverColor, disabledColor, className, title, onClick}: {children: (color: string) => React.ReactNode, disabled?: boolean, color?: string, hoverColor?: string, disabledColor?: string, className?: string, title?: string, onClick?: () => void}) {
+export default function IconButton({children, disabled, color="dblack", hoverColor, disabledColor, className, title, onClick, accent=false}: {children: (color: string) => React.ReactNode, disabled?: boolean, color?: string, hoverColor?: string, disabledColor?: string, className?: string, title?: string, onClick?: () => void, accent?: boolean}) {
     const usedColor = (disabled && disabledColor) ? disabledColor : color;
     const [iconColor, setIconColor] = useState(usedColor);
-    let usedHoverColor = hoverColor ?? "dblack-light";
-    if (!hoverColor) {
+    let usedHoverColor = accent ? "accent" : hoverColor ?? "dblack-light";
+    if (!hoverColor && !accent) {
         if (color === "dwhite")
             usedHoverColor = "dwhite-light";
         else if (color === "white")

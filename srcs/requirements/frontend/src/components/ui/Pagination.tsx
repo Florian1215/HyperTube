@@ -21,7 +21,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
         {children}
         {totalPage > 1 &&
             <div className={`flex w-full gap-2 justify-center ${variableMT ? "mt-2 md:mt-4 xl:mt-6" : "mt4"}`}>
-                <IconButton disabled={currentIndex === 1} className="mt-1" onClick={handleLeftArrow} color={"gray"}>
+                <IconButton accent={true} disabled={currentIndex === 1} className="mt-1" onClick={handleLeftArrow} color={"gray"}>
                     {(color: string) => <LeftIcon color={color}/>}
                 </IconButton>
 
@@ -38,7 +38,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
                         Array.from({length: totalPage}, (_, i) => <PageButton key={i} index={i + 1} currentIndex={currentIndex} onClick={onClick}/>)
                 }
 
-                <IconButton disabled={currentIndex === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
+                <IconButton accent={true} disabled={currentIndex === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
                     {(color: string) => <RightIcon color={color}/>}
                 </IconButton>
         </div>}
@@ -46,7 +46,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
 }
 
 function PageButton({index, currentIndex, onClick}: {index?: number, currentIndex: number, onClick: (i: number) => void}) {
-    return (<button className={`custom-condensed text-2xl leading-6 ${index === currentIndex ? "text-dblack font-bold" : "text-gray hover:underline"}`} onClick={() => {
+    return (<button className={`custom-condensed text-2xl leading-6 ${index === currentIndex ? "text-dblack font-bold" : "text-gray hover:text-accent"}`} onClick={() => {
         if (index && index !== currentIndex)
             onClick(index)
     }}>

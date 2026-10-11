@@ -138,8 +138,8 @@ export default function Search({modal = false}: {modal?: boolean}) {
             {
                 hasResults && (typeSearch === "movies" || typeSearch === "series") &&
                 <div className="flex shrink-0 gap-4">
-                    <IconButton color={viewType == "grid" ? "dblack" : "gray"} onClick={() => handleSetViewType("grid")}>{(color: string) => <GridIcon color={color}/>}</IconButton>
-                    <IconButton color={viewType == "list" ? "dblack" : "gray"} onClick={() => handleSetViewType("list")}>{(color: string) => <ListIcon color={color}/>}</IconButton>
+                    <IconButton color={viewType == "grid" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("grid")}>{(color: string) => <GridIcon color={color}/>}</IconButton>
+                    <IconButton color={viewType == "list" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("list")}>{(color: string) => <ListIcon color={color}/>}</IconButton>
                 </div>
             }
         </div>
@@ -176,10 +176,10 @@ function UsersResults({t, users}: {t: tT, users?: iUser[]}) {
 
     return (<div className="divide-gray divide-y gap-2 sm:gap-4 px-6">
         {users?.map((user) => (
-            <div key={user.id} className="flex items-center p-3 group">
+            <div key={user.id} className="flex items-center p-3 hover:bg-dwhite-light">
                 <Link href={`/users/${user.id}`} className="flex flex-1 items-center gap-4">
                     <ProfilePicture user={user}/>
-                    <span className="text-bold truncate text-dblack group-hover:underline">{user.username}</span>
+                    <span className="text-bold truncate text-dblack">{user.username}</span>
                 </Link>
                 <FollowButton user={user}/>
             </div>

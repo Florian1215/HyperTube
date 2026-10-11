@@ -43,7 +43,7 @@ function CreditsMedia({cast, crew, media, initialTab}: {cast: iPeople[], crew: i
             <div className="h-100 overflow-y-auto p-6">
                 {tab === "info" ?
                     (media && <MediaInfo media={media}/>) :
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 content-start">
                         {people[tab].map((item, index) => <People key={index} p={item} closeModal={closeModal}/>)}
                     </div>
                 }
@@ -91,7 +91,7 @@ function MediaInfo({media}: {media: iMediaDetails}) {
 }
 
 function People({p, closeModal}: {p: iPeople, closeModal: () => void}) {
-    return (<Link href={`/people/${p.id}`} className="w-full min-w-0" onClick={closeModal}>
+    return (<Link href={`/people/${p.id}`} className="w-full min-w-0 hover:bg-dwhite-light p-2" onClick={closeModal}>
         <div className="flex gap-2 items-center">
             <div className="relative border size-20 shrink-0 overflow-hidden">
                 <div className="custom-noise opacity-25"/>
@@ -102,7 +102,7 @@ function People({p, closeModal}: {p: iPeople, closeModal: () => void}) {
                 }
             </div>
             <div className="flex flex-col items-start min-w-0">
-                <p className="hover:underline">{p.name}</p>
+                <p>{p.name}</p>
                 {p.job && <SmallText className="truncate max-w-full">{p.job}</SmallText>}
                 {p.character && <SmallText className="truncate max-w-full">{p.character}</SmallText>}
             </div>

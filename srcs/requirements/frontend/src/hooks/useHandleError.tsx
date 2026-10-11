@@ -22,9 +22,9 @@ export default function useHandleError() {
                 setCallbackUrl(pathname);
                 openModal({type: "signin"});
                 logout();
-                return (<button className="w-full hover:underline" onClick={() =>
+                return (<button className="w-full" onClick={() =>
                     openModal({type: "signin"})
-                }><SmallText>{tError("loginRequired")}</SmallText></button>);
+                }><SmallText className="hover:text-accent">{tError("loginRequired")}</SmallText></button>);
             } else if (error.status === 404)
                 addNotification(tError("notFound" + translation), "error");
                 router.push("/");

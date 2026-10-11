@@ -96,7 +96,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
 function InfoMedia({children, name, center=true, onClick}: {children: React.ReactNode, name: string, center?: boolean, onClick?: () => void}) {
     return (<div className={`flex gap-4 ${center ? "items-center" : "items-start"}`}>
         <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2">
-            {onClick ? <button className="custom-underline text-right" onClick={onClick}><Label>{name}</Label></button> : <Label>{name}</Label>}
+            {onClick ? <button className="hover:text-accent text-right" onClick={onClick}><Label>{name}</Label></button> : <Label>{name}</Label>}
         </div>
         <div className="w-3/4 md:w-2/3 xl:w-1/2">
             {children}
@@ -110,7 +110,7 @@ function InfoPeopleMedia({name, items, onClick}: {name: string, items: iPeople[]
     return (<InfoMedia name={name} center={false} onClick={onClick}>
         <p className="inline">
             {items.map((i, index) => (<span key={index}>
-                <Link className="custom-underline" href={`/people/${i.id}`}>{i.name}</Link>
+                <Link className="hover:text-accent" href={`/people/${i.id}`}>{i.name}</Link>
                 {index < items.length - 1 && " , "}
             </span>))}
         </p>

@@ -499,5 +499,5 @@ function TracksMenu({children}: {children: React.ReactNode}) {
 }
 
 function TrackButton({selected, onClick, children}: {selected: boolean, onClick: () => void, children: React.ReactNode}) {
-    return (<button className={`text-lg text-left text-nowrap ${selected ? "font-base font-light" : "font-hairline custom-underline"}`} onClick={onClick}>{children}</button>);
+    return (<button className={`text-lg text-left text-nowrap ${selected ? "font-base font-light" : "font-hairline hover:text-accent"}`} onClick={onClick}>{children}</button>);
 }

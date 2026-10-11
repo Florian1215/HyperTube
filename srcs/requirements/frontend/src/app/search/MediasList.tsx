@@ -48,11 +48,12 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
     }
 
 
+    const openGenreModal = () => openModal({type: "filter-genre", filterGenre: [filterGenre, setFilterGenre]})
     const handleSort = (sortOption: tSort) => {
         if (sortOption === "genre")
-            openModal({type: "filter-genre", filterGenre: [filterGenre, setFilterGenre]})
+            openGenreModal();
         else
-            changeSort(sortOption, sort.type === sortOption ? !sort.side : true)
+            changeSort(sortOption, sort.type === sortOption ? !sort.side : true);
     }
 
     const deleteGenre = (genre: iGenre[]) => {
@@ -80,11 +81,11 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <th />
                 {sortOptions.map((sortOption, i) =>
                     <th key={sortOption.type} className={classNames[i]}>
-                        <button className={`relative gap-1 flex items-center capitalize text-nowrap font-normal hover:underline text-xs sm:text-base text-dblack ${sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : ""}`}
+                        <button className={`relative gap-1 flex items-center capitalize text-nowrap font-normal hover:text-accent hover:[&_path]:fill-accent text-xs sm:text-base text-dblack ${sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : ""}`}
                                 onClick={() => handleSort(sortOption.type)}>
                             {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} />}
                         </button>
-                        {sortOption.type === "genre" && <SelectedGenre genres={filterGenre} deleteGenre={deleteGenre}/>}
+                        {sortOption.type === "genre" && <SelectedGenre genres={filterGenre} deleteGenre={deleteGenre} openGenreModal={openGenreModal}/>}
                     </th>
                 )}
                 <th />
@@ -102,14 +103,14 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
     </div>);
 }
 
-function SelectedGenre({genres, deleteGenre}: {genres: iGenre[], deleteGenre:(genre: iGenre[]) => void}) {
+function SelectedGenre({genres, deleteGenre, openGenreModal}: {genres: iGenre[], deleteGenre:(genre: iGenre[]) => void, openGenreModal: () => void}) {
     const showGenres = genres.slice(0, 2);
     const t = useTranslations("search");
 
-    const GenreTag = (id: number, name: string, onClick: () => void) => <div key={id} className="border flex items-center">
+    const GenreTag = (id: number, name: string, onClick: () => void) => <button key={id} onClick={openGenreModal} className="border flex items-center">
         <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{name}</span>
-        <CloseButton size={20} className="border-l px-1" onClickAction={onClick} />
-    </div>;
+        <CloseButton size={20} className="border-l px-1" onClickAction={onClick}/>
+    </button>;
 
     return (<div className="flex gap-2">
         {showGenres.map((genre, index) => GenreTag(index, genre.name, () => deleteGenre([genre])))}

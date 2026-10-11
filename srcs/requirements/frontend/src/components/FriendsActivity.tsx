@@ -39,15 +39,15 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
             </Link>}
         </div>
         <Link href={formatURL(activity)} className="flex flex-wrap items-baseline gap-x-2 min-w-0 lg:max-w-md group" onContextMenu={onContextMenu}>
-            <span className="font-semibold uppercase group-hover:underline">{activity.title}</span>
+            <span className="font-semibold uppercase group-hover:text-accent">{activity.title}</span>
             {activity.episode && <div className="flex items-baseline gap-2 text-sm text-gray">
                 <EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number}/>
                 {activity.episode.name}
             </div>}
         </Link>
-        <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 group ml-4">
+        <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 ml-4">
             <ProfilePicture size={3} user={activity.user}/>
-            <span className="font-semibold truncate group-hover:underline">{activity.user.username}</span>
+            <span className="font-semibold truncate">{activity.user.username}</span>
         </Link>
         <div className="flex items-center justify-end gap-4 ml-auto">
             {activity.rewatch && <span title={tMedia("rewatch")} className="flex items-center gap-1 text-sm">

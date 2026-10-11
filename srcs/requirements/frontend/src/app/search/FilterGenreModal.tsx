@@ -36,7 +36,7 @@ export default function FilterGenreModal() {
         <div className="grid grid-cols-3 gap-2">
             {data?.genres.map(genre => <GenreTag key={genre.id} selected={modalFilterGenre.includes(genre)} setFilterGenre={setModalFilterGenre}>{genre}</GenreTag>)}
         </div>
-        <div className="flex">
+        <div className="flex gap-2">
             <Button className="mt-5" onClick={closeModal}>{t("apply")}</Button>
             <Button variant="secondary" className="mt-5" onClick={() => {
                 closeModal();
