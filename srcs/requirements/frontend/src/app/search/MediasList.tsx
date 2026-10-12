@@ -4,12 +4,14 @@ import {iGenre} from "@/types/genre";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {useTranslations} from "next-intl";
 import CloseButton from "@/components/ui/Button/CloseButton";
+import IconButton from "@/components/ui/Button/IconButton";
 import {SortIcon} from "@/components/Icons";
 import {iMedia} from "@/types/media";
 import TextButton from "@/components/ui/Button/TextButton";
 import useAuth from "@/contexts/AuthContext";
 import MediaCardList from "@/app/search/MediaCardList";
 import {iSort, tSort} from "@/types/utils";
+import SmallText from "@/components/ui/SmallText";
 
 export default function MediasList({mediaSets, sort, changeSort, genre} : {mediaSets?: iMedia[], sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
     const {openModal} = useModal();
@@ -81,10 +83,10 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <th />
                 {sortOptions.map((sortOption, i) =>
                     <th key={sortOption.type} className={classNames[i]}>
-                        <button className={`relative gap-1 flex items-center capitalize text-nowrap font-normal hover:text-accent hover:[&_path]:fill-accent text-xs sm:text-base text-dblack ${sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : ""}`}
+                        <IconButton accent={true} className={`relative gap-1 flex items-center capitalize text-nowrap font-normal text-xs sm:text-base ${sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : ""}`}
                                 onClick={() => handleSort(sortOption.type)}>
-                            {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} />}
-                        </button>
+                            {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} color="current"/>}
+                        </IconButton>
                         {sortOption.type === "genre" && <SelectedGenre genres={filterGenre} deleteGenre={deleteGenre} openGenreModal={openGenreModal}/>}
                     </th>
                 )}
@@ -99,7 +101,10 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
             </tbody>
         </table>
         {(sortedMedias && sortedMedias.length === 0) &&
-            <TextButton className="w-full italic py-4" onClick={() => deleteGenre(filterGenre)}>{t("noResultsResetFilter")}</TextButton>}
+            <div className="flex gap-2 items-center justify-center">
+                <SmallText className="font-light" italic={false}>{t("noResults")}.</SmallText>
+                <TextButton className="italic py-4 hover:text-accent" onClick={() => deleteGenre(filterGenre)}>{t("noResultsResetFilter")}</TextButton>
+            </div>}
     </div>);
 }
 
@@ -107,8 +112,8 @@ function SelectedGenre({genres, deleteGenre, openGenreModal}: {genres: iGenre[],
     const showGenres = genres.slice(0, 2);
     const t = useTranslations("search");
 
-    const GenreTag = (id: number, name: string, onClick: () => void) => <button key={id} onClick={openGenreModal} className="border flex items-center">
-        <span className="font-hairline tracking-wider text-sm px-2 text-nowrap">{name}</span>
+    const GenreTag = (id: number, name: string, onClick: () => void) => <button key={id} className="border flex items-center">
+        <span onClick={openGenreModal}  className="font-hairline tracking-wider text-sm px-2 text-nowrap">{name}</span>
         <CloseButton size={20} className="border-l px-1" onClickAction={onClick}/>
     </button>;
 

@@ -44,14 +44,14 @@ export default function Comment({comment, currentUser, updateComment, deleteComm
                     {
                         (currentUser && comment.user.id === currentUser.id && showSettingBtn) &&
                         <div className="flex gap-1">
-                            <IconButton onClick={() => setEditMode(true)} className="uppercase font-condensed text-2xl">
-                                {(color: string) => <EditIcon color={color}/>}
+                            <IconButton accent={true} onClick={() => setEditMode(true)} className="uppercase font-condensed text-2xl">
+                                <EditIcon color="current"/>
                             </IconButton>
                             <IconButton onClick={() => {
                                 setEditMode(false);
                                 openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "media" in comment ? comment.media.id : undefined)});
                             }} className="uppercase font-condensed text-2xl" hoverColor="red">
-                                {(color: string) => <TrashIcon color={color}/>}
+                                <TrashIcon color="current"/>
                             </IconButton>
                         </div>
                     }

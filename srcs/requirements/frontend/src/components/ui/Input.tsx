@@ -52,8 +52,7 @@ export default function Input(
                className={`pointer-events-none uppercase absolute text-xs font-light bottom-15\
                    peer-focus:text-xs peer-focus:font-body peer-focus:font-light peer-focus:bottom-15\
                    peer-placeholder-shown:font-condensed peer-placeholder-shown:tracking-wide peer-placeholder-shown:bottom-9 peer-placeholder-shown:text-2xl ${requestErrorMessage ? "text-red" : ""}`}>{placeholder}</label>
-        {isPassword && (<button type="button" className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color={requestErrorMessage ? "red" : "dblack"} /></button>)}
-        {isPassword && (<IconButton color={requestErrorMessage ? "red" : "dblack"} className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}>{(color: string) => <EyeIcon crossed={isPasswordVisible} color={color}/>}</IconButton>)}
+        {isPassword && (<IconButton accent={true} color={requestErrorMessage ? "red" : "dblack"} className="absolute right-0 top-1" onClick={handleTogglePasswordVisibility}><EyeIcon crossed={isPasswordVisible} color="current"/></IconButton>)}
         {requestErrorMessage && <span className="max-w-80 text-xs text-red overflow-x-scroll text-nowrap scrollbar-hide">{requestErrorMessage}</span>}
     </div>
     );

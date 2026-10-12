@@ -46,7 +46,7 @@ export default function AuthModalLayout({type, t, activeModal}: {type: AuthModal
               fields={isReg ? ["username", "password"] : ["username", "password"]} />
         <div className="flex gap-2 mt-2">
             <span className="text-sm">{t(isReg ? "haveAccount" : "noAccount")}</span>
-            <TextButton onClick={() => {closeModal(); openModal({type: otherType, noClose: activeModal.noClose});}}>{t(otherType)}</TextButton>
+            <TextButton className="hover:text-accent" onClick={() => {closeModal(); openModal({type: otherType, noClose: activeModal.noClose});}}>{t(otherType)}</TextButton>
         </div>
     </ModalLayout>);
 }

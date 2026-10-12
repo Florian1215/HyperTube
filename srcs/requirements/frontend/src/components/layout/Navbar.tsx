@@ -8,13 +8,14 @@ import {useTranslations} from "next-intl";
 import ProfilePicture from "@/components/ProfilePicture";
 import useAuth from "@/contexts/AuthContext";
 import useModal from "@/contexts/ModalContext";
+import IconButton from "@/components/ui/Button/IconButton";
 
 interface iMenuItem {
     name: string
     href?: string
     action?: () => void
     danger?: boolean
-    icon?: (selected: boolean, color: string) => React.ReactNode
+    icon?: (selected: boolean) => React.ReactNode
 }
 
 export default function Navbar() {
@@ -28,7 +29,7 @@ export default function Navbar() {
     const menuItems: iMenuItem[] = user ? [
         {name: t("profile"), href: `/users/${user.id}`},
         {name: t("settings"), href: "/settings"},
-        {name: t("logout"), action: logout, danger: true, icon: (selected, color) => <ExitDoorIcon selected={selected} color={color}/>},
+        {name: t("logout"), action: logout, danger: true, icon: (selected) => <ExitDoorIcon selected={selected} color="current"/>},
     ] : [
         {name: t("signin"), action: () => openModal({type: "signin"})},
         {name: t("createAccount"), action: () => openModal({type: "register"})},
@@ -38,7 +39,7 @@ export default function Navbar() {
         <Link className="flex items-center" href="/">
             <HypertubResponsiveLogo/>
         </Link>
-        <NavLink href="/search" name={t("search")} selected={searchType === null || searchOpen} icon={<SearchIcon selected={searchType === null || searchOpen}/>} onClick={(e) => {
+        <NavLink href="/search" name={t("search")} selected={searchType === null || searchOpen} icon={<SearchIcon selected={searchType === null || searchOpen} color="current"/>} onClick={(e) => {
             if (pathname === "/search" || e.metaKey || e.ctrlKey || e.shiftKey)
                 return;
             e.preventDefault();
@@ -56,8 +57,8 @@ export default function Navbar() {
 }
 
 function NavLink({href, name, selected, icon, onClick}: {href: string, name: string, selected: boolean, icon?: React.ReactNode, onClick?: (e: React.MouseEvent) => void}) {
-    return (<Link className="group uppercase flex items-center hover:text-accent" href={href} title={name} onClick={onClick}>
-        {icon && <span className="group-hover:[&_path]:fill-accent">{icon}</span>}
+    return (<Link className="uppercase flex items-center hover:text-accent" href={href} title={name} onClick={onClick}>
+        {icon}
         <span style={{transform: "translateY(-1px)"}} className={`text-lg xl:text-2xl text-nowrap ${selected ? "font-base font-light" : "font-hairline"} ${icon ? "pl-1 xl:pl-2 hidden md:block" : ""}`}>{name}</span>
     </Link>);
 }
@@ -89,16 +90,16 @@ function AccountMenu({label, items, onClick, children}: {label: string, items: i
             <div className="flex flex-col gap-1 items-start bg-dwhite py-4 px-5 custom-shadow-m border border-dblack">
                 {items.map((item) => item.href ?
                     <Link key={item.name} role="menuitem" className={`${itemClassName} hover:text-accent`} href={item.href} onClick={() => setIsOpen(false)}>{item.name}</Link> :
-                    <button key={item.name} role="menuitem" className={`${itemClassName} group flex items-center gap-2 ${item.danger ? "hover:text-red" : "hover:text-accent"}`} onClick={() => {
+                    <IconButton key={item.name} role="menuitem" className={`${itemClassName} flex items-center gap-2`} hoverColor={item.danger ? "red" : "accent"} onClick={() => {
                         setIsOpen(false);
                         item.action?.();
                     }}>
                         {item.icon && <>
-                            <span className="group-hover:hidden">{item.icon(false, "dblack")}</span>
-                            <span className="hidden group-hover:block">{item.icon(true, item.danger ? "red" : "dblack")}</span>
+                            <span className="group-hover:hidden">{item.icon(false)}</span>
+                            <span className="hidden group-hover:block">{item.icon(true)}</span>
                         </>}
                         {item.name}
-                    </button>
+                    </IconButton>
                 )}
             </div>
         </div>}

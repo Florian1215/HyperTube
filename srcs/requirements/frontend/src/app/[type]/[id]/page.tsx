@@ -200,9 +200,9 @@ export default function MediaPage() {
                     {featureBtn && <Button variant="secondary" darkMode={false} className={className} onClick={featureBtn}>{t("setFeature")}</Button>}
                     {user && media && <Button variant="outline" darkMode={false} className={classNameFlex} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></Button>}
                 </div>
-                {unavailable && <SmallText className="mb-2 text-white">
+                {unavailable && <SmallText italic={false} className="mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
-                    {torrentRequest && <TextButton className="ml-2 text-white font-semibold hover:text-accent" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
+                    {torrentRequest && <TextButton className="ml-2 text-white italic hover:text-accent" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
                 </SmallText>}
             </div>);}
         }>

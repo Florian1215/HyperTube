@@ -72,11 +72,11 @@ export default function SelectTorrentModal() {
         return null;
 
     const renderHeader = (key: SortKey, label: string, hidden=false) => (
-        <th onClick={() => changeSort(key)} className={`cursor-pointer select-none hover:text-accent hover:[&_path]:fill-accent p-1 sm:px-3 sm:py-2 text-left text-xs sm:text-sm ${hidden ? "hidden sm:table-cell" : ""}`}>
-            <div className="flex items-center gap-1">
+        <th className={`select-none p-1 sm:px-3 sm:py-2 text-left text-xs sm:text-sm ${hidden ? "hidden sm:table-cell" : ""}`}>
+            <IconButton accent={true} className="flex items-center gap-1" onClick={() => changeSort(key)}>
                 {label}
-                {sortKey === key && <SortIcon sideUp={sortDir === "asc"} />}
-            </div>
+                {sortKey === key && <SortIcon sideUp={sortDir === "asc"} color="current"/>}
+            </IconButton>
         </th>);
 
     return (<ModalLayout onCloseAction={closeModal} title={t("title")} addMaxWTitle={false}>
@@ -125,7 +125,7 @@ function TorrentRow({torrent, setTorrentId, closeModal, t, autoSelected}: {torre
                             setTorrentId(torrent.id);
                     }}>{t("choose")}</Button>
                 <IconButton accent={true} title={t("download")} onClick={() => window.location.assign(`${API_URL}torrents/${torrent.id}/file/`)}>
-                    {(color: string) => <DownloadIcon color={color}/>}
+                    <DownloadIcon color="current"/>
                 </IconButton>
             </div>
         </td>

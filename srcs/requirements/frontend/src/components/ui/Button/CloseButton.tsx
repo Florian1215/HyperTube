@@ -1,10 +1,10 @@
 "use client";
 
 import {CrossIcon} from "@/components/Icons";
-import IconButton from "@/components/ui/Button/IconButton";
+import IconButton, {tIconColor} from "@/components/ui/Button/IconButton";
 
-export default function CloseButton({onClickAction, size = 30, className, disabled=false, color}: {onClickAction: () => void, size?: number, className?: string, disabled?: boolean, color?: string}) {
+export default function CloseButton({onClickAction, size = 30, className, disabled=false, color}: {onClickAction: () => void, size?: number, className?: string, disabled?: boolean, color?: tIconColor}) {
     return (<IconButton className={`text-nowrap ${className}`} disabled={disabled} onClick={onClickAction} color={color} disabledColor={"dwhite"}>
-        {(color: string) => <CrossIcon color={color} size={size} className={(color === "dblack-light" ? "stroke-2 stroke-black-light" : "")}/>}
+        <CrossIcon color="current" size={size} className={color ? "" : "group-enabled:group-hover:stroke-2"}/>
     </IconButton>);
 }

@@ -455,7 +455,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
-                        <IconButton color="white" className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</IconButton>
+                        <IconButton accent={true} color="white" className="px-1 sm:px-3" onClick={togglePlay}><PlayPauseIcon isPlaying={isPlaying} color="current"/></IconButton>
                         <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
                     </div>
 
@@ -463,20 +463,20 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                         {audioTracks.length > 1 && <button title={tAction("audio")} onClick={() => {
                             setShowSubtitleMenu(false);
                             setShowAudioMenu((prev) => !prev);
-                        }} className="px-2 font-wide border border-white hover:bg-black-light uppercase">{audioTracks.find((track) => track.id === selectedAudio)?.language || tAction("audio")}</button>}
+                        }} className="px-2 font-wide border hover:text-accent uppercase">{audioTracks.find((track) => track.id === selectedAudio)?.language || tAction("audio")}</button>}
                         {showAudioMenu && <TracksMenu>
                             {audioTracks.map((track, index) => <TrackButton key={track.id} selected={track.id === selectedAudio} onClick={() => changeAudio(track)}>{getTrackLabel(track, index)}</TrackButton>)}
                         </TracksMenu>}
                         {<button title={tAction("subtitles")} onClick={() => {
                             setShowAudioMenu(false);
                             setShowSubtitleMenu((prev) => !prev);
-                        }} className={`px-2 font-wide border ${selectedSubtitle !== undefined ? "text-black bg-white hover:bg-white-light" : "border-white hover:bg-black-light"}`}>CC</button>}
+                        }} className={`px-2 font-wide border ${selectedSubtitle !== undefined ? "text-black bg-white hover:bg-accent" : "hover:text-accent"}`}>CC</button>}
                         {showSubtitleMenu && <TracksMenu>
                             <TrackButton selected={selectedSubtitle === undefined} onClick={() => changeSubtitle()}>{tAction("subtitlesOff")}</TrackButton>
                             {subtitleTracks.map((track, index) => <TrackButton key={index} selected={index === selectedSubtitle} onClick={() => changeSubtitle(index)}>{getTrackLabel(track, index)}</TrackButton>)}
                         </TracksMenu>}
 
-                        <IconButton color="white" className="px-1 sm:px-3" onClick={toggleFullscreen}>{(color: string) => <FullScreenIcon iFullScreen={fullscreenEnabled} color={color}/>}</IconButton>
+                        <IconButton accent={true} color="white" className="px-1 sm:px-3" onClick={toggleFullscreen}><FullScreenIcon iFullScreen={fullscreenEnabled} color="current"/></IconButton>
                     </div>
                 </div>
 

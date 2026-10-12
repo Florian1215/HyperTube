@@ -138,8 +138,8 @@ export default function Search({modal = false}: {modal?: boolean}) {
             {
                 hasResults && (typeSearch === "movies" || typeSearch === "series") &&
                 <div className="flex shrink-0 gap-4">
-                    <IconButton color={viewType == "grid" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("grid")}>{(color: string) => <GridIcon color={color}/>}</IconButton>
-                    <IconButton color={viewType == "list" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("list")}>{(color: string) => <ListIcon color={color}/>}</IconButton>
+                    <IconButton color={viewType == "grid" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("grid")}><GridIcon color="current"/></IconButton>
+                    <IconButton color={viewType == "list" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("list")}><ListIcon color="current"/></IconButton>
                 </div>
             }
         </div>

@@ -78,6 +78,7 @@
         --color-dwhite:       light-dark(var(--white), var(--black));
         --color-dwhite-light: light-dark(var(--white-light), var(--black-light));
         --color-accent: var(--accent);
+        --color-current: currentColor;
     }
 
     .dark-mode {

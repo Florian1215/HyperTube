@@ -46,7 +46,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
         {totalPage > 1 &&
             <div className={`flex w-full gap-2 justify-center ${variableMT ? "mt-2 md:mt-4 xl:mt-6" : "mt4"}`}>
                 <IconButton accent={true} disabled={currentIndex === 1} className="mt-1" onClick={handleLeftArrow} color={"gray"}>
-                    {(color: string) => <LeftIcon color={color}/>}
+                    <LeftIcon color="current"/>
                 </IconButton>
 
                 {getPages(currentIndex, totalPage).map((page, i) => page === null ?
@@ -54,7 +54,7 @@ export default function Pagination({children, currentIndex, totalPage, onClick, 
                     <PageButton key={page} index={page} currentIndex={currentIndex} onClick={changePage}/>)}
 
                 <IconButton accent={true} disabled={currentIndex === totalPage} className="mt-1" onClick={handleRightArrow} color={"gray"}>
-                    {(color: string) => <RightIcon color={color}/>}
+                    <RightIcon color="current"/>
                 </IconButton>
         </div>}
     </div>);
