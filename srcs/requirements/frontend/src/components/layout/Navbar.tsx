@@ -2,7 +2,7 @@
 
 import React, {useEffect, useRef, useState} from "react";
 import {ExitDoorIcon, HypertubResponsiveLogo, SearchIcon, UserIcon} from "@/components/Icons";
-import {Link, usePathname} from "@/i18n/navigation";
+import {Link, usePathname, useRouter} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
 import {useTranslations} from "next-intl";
 import ProfilePicture from "@/components/ProfilePicture";
@@ -22,6 +22,7 @@ export default function Navbar() {
     const {openModal, openSearch, closeSearch, searchOpen} = useModal();
     const {user, logout} = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
     const searchParams = useSearchParams();
     const t = useTranslations("nav");
     const searchType = pathname === "/search" ? searchParams.get("type") : undefined;
@@ -50,7 +51,7 @@ export default function Navbar() {
         }}/>
         <NavLink href="/search?type=movies" name={t("movies")} selected={searchType === "movies"}/>
         <NavLink href="/search?type=series" name={t("series")} selected={searchType === "series"}/>
-        <AccountMenu label={t("account")} items={menuItems} onClick={user ? undefined : () => openModal({type: "signin"})}>
+        <AccountMenu label={t("account")} items={menuItems} onClick={user ? () => router.push(`/users/${user.id}`) : () => openModal({type: "signin"})} hasMenu={!!user}>
             {(selected) => user ? <ProfilePicture user={user}/> : <UserIcon selected={selected}/>}
         </AccountMenu>
     </nav>);
@@ -63,7 +64,7 @@ function NavLink({href, name, selected, icon, onClick}: {href: string, name: str
     </Link>);
 }
 
-function AccountMenu({label, items, onClick, children}: {label: string, items: iMenuItem[], onClick?: () => void, children: (selected: boolean) => React.ReactNode}) {
+function AccountMenu({label, items, onClick, hasMenu, children}: {label: string, items: iMenuItem[], onClick: () => void, hasMenu: boolean, children: (selected: boolean) => React.ReactNode}) {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const itemClassName = "uppercase text-xl font-hairline text-nowrap";
@@ -80,9 +81,11 @@ function AccountMenu({label, items, onClick, children}: {label: string, items: i
     }, [isOpen]);
 
     return (<div ref={ref} className="relative flex items-center" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-        <button className="flex items-center" aria-label={label} aria-haspopup="menu" aria-expanded={isOpen} onClick={() => {
-            setIsOpen(onClick === undefined);
-            onClick?.();
+        <button className="flex items-center" aria-label={label} aria-haspopup="menu" aria-expanded={isOpen} onClick={(e) => {
+            const openMenu = hasMenu && (e.nativeEvent as PointerEvent).pointerType !== "mouse";
+            setIsOpen(openMenu);
+            if (!openMenu)
+                onClick();
         }}>
             {children(isOpen)}
         </button>
