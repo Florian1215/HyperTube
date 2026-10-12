@@ -60,29 +60,45 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
     </div>);
 }
 
+function formatRelativeDate(date: string, locale: string) {
+    const days = Math.round((new Date(date).getTime() - Date.now()) / 86400000);
+    const formatter = new Intl.RelativeTimeFormat(locale, {numeric: "auto"});
+
+    if (days > -7)
+        return formatter.format(days, "day");
+    if (days > -30)
+        return formatter.format(Math.round(days / 7), "week");
+    if (days > -365)
+        return formatter.format(Math.round(days / 30), "month");
+    return formatter.format(Math.round(days / 365), "year");
+}
+
 export function FriendActivityCard({activity}: {activity: iMediaActivity}) {
     const {user} = useAuth();
     const tMedia = useTranslations("media");
+    const locale = useLocale();
     const {onContextMenu, menu} = useMediaRightClick(activity);
 
-    return (<div className="flex flex-col gap-2 min-w-0">
+    return (<div className="flex flex-col min-w-0">
         {menu}
         <Link href={formatURL(activity)} title={activity.title} className="group relative aspect-3/2 overflow-hidden border" onContextMenu={onContextMenu}>
             <LoadingImage className="size-full object-cover" width={400} height={225} src={getImage(activity, user?.group_series ?? true)} alt={tMedia("posterAlt", {title: activity.title})}/>
             <div className="custom-noise opacity-30"/>
+            <div className="bg-gradient"/>
             {activity.episode && <div className="hidden group-hover:flex absolute inset-0 p-2 items-end justify-center">
                 <div className="bg-gradient"/>
                 <EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number} className="z-10 text-white"/>
             </div>}
         </Link>
-        <div className="flex justify-between items-center px-1.5">
-            <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0">
-                <ProfilePicture size={3} user={activity.user}/>
-                <span className="font-semibold text-sm truncate">{activity.user.username}</span>
-            </Link>
-            {activity.rewatch && <div title={tMedia("rewatch")}>
+        <Link href={`/users/${activity.user.id}`} className="group/user flex items-center gap-2 min-w-0 p-1.5">
+            <ProfilePicture size={3} user={activity.user}/>
+            <div className="flex flex-col min-w-0 leading-4">
+                <span className="font-semibold text-sm truncate group-hover/user:text-dblack-light">{activity.user.username}</span>
+                {activity.watched_at && <span className="text-xs text-gray truncate">{formatRelativeDate(activity.watched_at, locale)}</span>}
+            </div>
+            {activity.rewatch && <div title={tMedia("rewatch")} className="ml-auto shrink-0">
                 <RewatchIcon/>
             </div>}
-        </div>
+        </Link>
     </div>);
 }

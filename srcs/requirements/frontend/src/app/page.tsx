@@ -68,7 +68,7 @@ export default function HomePage() {
         <SliderHero medias={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
-        <div className="flex flex-col gap-4 px-4 sm:gap-10 sm:px-6" >
+        <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
             {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-x-2 sm:gap-x-4 grid-rows-1 auto-rows-0 overflow-hidden">
                     {activities.map((activity, index) => <FriendActivityCard key={index} activity={activity}/>)}
@@ -111,12 +111,9 @@ export default function HomePage() {
     </div>);
 }
 
-function Section({children, title, href}: {children: React.ReactNode, title: string, href?: string}) {
-    const className = "uppercase font-wide text-lg sm:text-xl font-bold";
-    return (<section className="flex flex-col gap-2">
-        {href ?
-            <Link className={`${className} hover:text-accent`} href={href}>{`${title} >`}</Link> :
-            <span className={className}>{title}</span>}
+function Section({children, title, href}: {children: React.ReactNode, title: string, href: string}) {
+    return (<section className="flex flex-col">
+        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit p-2" href={href}>{`${title} >`}</Link>
         {children}
     </section>);
 }
