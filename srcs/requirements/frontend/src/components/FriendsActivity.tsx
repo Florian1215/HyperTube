@@ -2,7 +2,6 @@
 
 import {useLocale, useTranslations} from "next-intl";
 import SmallText from "@/components/ui/SmallText";
-import useAuth from "@/contexts/AuthContext";
 import {Link} from "@/i18n/navigation";
 import formatURL from "@/utils/formatURL";
 import LoadingImage from "@/components/ui/LoadingImage";
@@ -11,10 +10,6 @@ import EpisodeLabel from "@/components/EpisodeLabel";
 import {iMediaActivity} from "@/types/media";
 import {RewatchIcon} from "@/components/Icons";
 import {useMediaRightClick} from "@/components/MediaRightClick";
-
-export function getImage(activity: iMediaActivity, groupSeries: boolean) {
-    return (!groupSeries && activity.episode?.poster_url) || activity.backdrop_url;
-}
 
 export function FriendsActivityList({activities}: {activities?: iMediaActivity[]}) {
     return (<div className="divide-gray divide-y lg:grid lg:grid-cols-[auto_auto_auto_1fr]">
@@ -73,32 +68,43 @@ function formatRelativeDate(date: string, locale: string) {
     return formatter.format(Math.round(days / 365), "year");
 }
 
-export function FriendActivityCard({activity}: {activity: iMediaActivity}) {
-    const {user} = useAuth();
+const MAX_USERS = 6;
+
+export function groupActivities(activities: iMediaActivity[]) {
+    const groups = new Map<string, iMediaActivity[]>();
+
+    activities.forEach((activity) => {
+        const key = `${activity.type}-${activity.id}`;
+        const group = groups.get(key) ?? [];
+
+        if (!group.some((other) => other.user.id === activity.user.id))
+            group.push(activity);
+        groups.set(key, group);
+    });
+    return [...groups.values()];
+}
+
+export function FriendActivityCard({activities}: {activities: iMediaActivity[]}) {
     const tMedia = useTranslations("media");
     const locale = useLocale();
-    const {onContextMenu, menu} = useMediaRightClick(activity);
+    const media = activities[0];
+    const {onContextMenu, menu} = useMediaRightClick(media);
+    const hidden = activities.length - MAX_USERS;
 
-    return (<div className="flex flex-col min-w-0">
+    return (<div className="relative min-w-0 w-48" onContextMenu={onContextMenu}>
         {menu}
-        <Link href={formatURL(activity)} title={activity.title} className="group relative aspect-3/2 overflow-hidden border" onContextMenu={onContextMenu}>
-            <LoadingImage className="size-full object-cover" width={400} height={225} src={getImage(activity, user?.group_series ?? true)} alt={tMedia("posterAlt", {title: activity.title})}/>
+        <Link href={formatURL(media)} title={media.title} className="block relative aspect-3/2 overflow-hidden border">
+            <LoadingImage className="size-full object-cover" width={400} height={225} src={media.backdrop_url} alt={tMedia("posterAlt", {title: media.title})}/>
             <div className="custom-noise opacity-30"/>
             <div className="bg-gradient"/>
-            {activity.episode && <div className="hidden group-hover:flex absolute inset-0 p-2 items-end justify-center">
-                <div className="bg-gradient"/>
-                <EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number} className="z-10 text-white"/>
-            </div>}
         </Link>
-        <Link href={`/users/${activity.user.id}`} className="group/user flex items-center gap-2 min-w-0 p-1.5">
-            <ProfilePicture size={3} user={activity.user}/>
-            <div className="flex flex-col min-w-0 leading-4">
-                <span className="font-semibold text-sm truncate group-hover/user:text-dblack-light">{activity.user.username}</span>
-                {activity.watched_at && <span className="text-xs text-gray truncate">{formatRelativeDate(activity.watched_at, locale)}</span>}
-            </div>
-            {activity.rewatch && <div title={tMedia("rewatch")} className="ml-auto shrink-0">
-                <RewatchIcon/>
-            </div>}
-        </Link>
+        <div className="absolute bottom-1.5 left-1.5 flex items-center -space-x-2">
+            {activities.slice(0, MAX_USERS).map((activity) =>
+                <Link key={activity.user.id} href={`/users/${activity.user.id}`} className="hover:z-10"
+                      title={activity.user.username + (activity.watched_at ? ` · ${formatRelativeDate(activity.watched_at, locale)}` : "")}>
+                    <ProfilePicture size={3} user={activity.user}/>
+                </Link>)}
+            {hidden > 0 && <span className="relative flex items-center justify-center size-8 rounded-full border border-black bg-white text-black text-xs font-semibold">{`+${hidden}`}</span>}
+        </div>
     </div>);
 }

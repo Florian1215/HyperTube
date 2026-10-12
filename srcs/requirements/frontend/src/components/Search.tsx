@@ -4,6 +4,7 @@ import {iGenre} from "@/types/genre";
 import React, {useEffect, useRef, useState} from "react";
 import {GridIcon, ListIcon} from "@/components/Icons";
 import {useLocale, useTranslations} from "next-intl";
+import {useDebounce} from "use-debounce";
 import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/routing";
 import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
@@ -65,6 +66,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
     const {data: people, isError: isPeopleError} = usePeopleSearch(searchValue.trim(), hasResults && isPeopleSearch, page);
     const {data: users, isError: isUsersError} = useUsersSearch(searchValue.trim(), hasResults && isUsersSearch, authUser?.id, page);
     const found = isUsersSearch ? users : isPeopleSearch ? people : medias;
+    const [debouncedSearch] = useDebounce(searchValue.trim(), 200);
     const t = useTranslations("search");
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
@@ -166,7 +168,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
                 </HorizontalScroll>
             </div>
             {
-                hasResults && (typeSearch === "movies" || typeSearch === "series") &&
+                hasResults && (typeSearch === "movies" || typeSearch === "series") && debouncedSearch !== SEARCH_UPCOMING && debouncedSearch !== SEARCH_FRIENDS &&
                 <div className="flex shrink-0 gap-4">
                     <IconButton color={viewType == "grid" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("grid")}><GridIcon color="current"/></IconButton>
                     <IconButton color={viewType == "list" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("list")}><ListIcon color="current"/></IconButton>
@@ -180,7 +182,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
                 <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
                 isPeopleSearch ?
                 <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/> :
-                <Results t={t} medias={isError ? [] : medias?.results} search={searchValue.trim()} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+                <Results t={t} medias={isError ? [] : medias?.results} search={debouncedSearch} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
             }
             </div>
         </Pagination>}
@@ -243,7 +245,7 @@ function Results({t, medias, search, viewType, sort, changeSort, genre}: {t: tT,
 
     const today = new Date();
     if (medias)
-        medias = medias.filter(m => m.poster_url.length > 0 && m.backdrop_url.length > 0 && (m.vote_count > 50 || !m.release_date || new Date(m.release_date) > today));
+        medias = medias.filter(m => m.poster_url?.length > 0 && m.backdrop_url?.length > 0 && (m.vote_count > 50 || !m.release_date || new Date(m.release_date) > today));
 
     if (medias && medias.length === 0)
         return (<SmallText>{t("emptyPage")}</SmallText>);

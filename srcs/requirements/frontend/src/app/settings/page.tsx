@@ -28,28 +28,15 @@ export default function Page() {
     if (!user)
         return null;
 
-    return (<div className="flex flex-col gap-10 sm:gap-14 max-w-9/10 md:max-w-3xl w-full mx-auto mt-12 pb-10">
+    return (<div className="flex flex-col items-center mt-12 pb-16 px-4">
         <h2 className="text-center">{t("title")}</h2>
-        <SettingsSection title={t("profile")}>
-            <ProfileSection user={user} updateUser={updateUser}/>
-        </SettingsSection>
-        <SettingsSection title={t("avatar")}>
+        <div className="flex flex-col items-center gap-16 sm:gap-24 w-full max-w-64 mt-12 sm:mt-16 [&_form>button]:w-full">
             <AvatarSection user={user} updateUser={updateUser}/>
-        </SettingsSection>
-        <SettingsSection title={t("password")}>
+            <ProfileSection user={user} updateUser={updateUser}/>
             <PasswordSection/>
-        </SettingsSection>
-        <SettingsSection title={t("account")}>
             <AccountSection/>
-        </SettingsSection>
+        </div>
     </div>);
-}
-
-function SettingsSection({title, children}: {title: string, children: React.ReactNode}) {
-    return (<section className="flex flex-col gap-4">
-        <span className="uppercase font-wide text-xl font-bold border-b pb-2">{title}</span>
-        {children}
-    </section>);
 }
 
 function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
@@ -73,12 +60,12 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: P
             updateUser({group_series: data.group_series});
     };
 
-    return (<div className="flex flex-col gap-4 items-start">
+    return (<div className="flex flex-col gap-8 w-full">
         <Form formType="update" request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={user.id}
               fields={["username"]} />
-        <div className="flex items-end gap-3">
+        <div className="flex items-end justify-between gap-3 w-full">
+            <p className="text-sm leading-5 text-left">{tProfile("groupBySeries")}</p>
             <Toggle val={user.group_series ?? true} setter={handleGroupSeries}/>
-            <p className="text-sm leading-5">{tProfile("groupBySeries")}</p>
         </div>
     </div>);
 }
@@ -103,14 +90,14 @@ function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Pa
         })
     }
 
-    return (<div className="flex flex-col gap-2 items-start">
+    return (<div className="flex flex-col gap-2 items-center w-full">
         <ProfilePicture user={user} size={2} className="mb-2" />
         <TextButton
             className={user.profile_picture ? "text-red hover:text-red-hover" : ""}
             onClick={() => handleNewAvatar(["profile_picture", ""])}>{t("remove")}</TextButton>
 
         {!user.profile_picture && (
-            <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="flex justify-between w-full mt-4">
                 {colors.map((color, index) => (
                     <button key={index} onClick={() => handleNewAvatar(["color", color])}>
                         <ProfilePicture user={user} color={color} className={user.color === color ? "border-3" : ""}/>
@@ -129,7 +116,7 @@ function PasswordSection() {
         addNotification(tSuccess("passwordChanged"), "success");
     };
 
-    return (<div className="w-full sm:max-w-1/2 flex flex-col items-start">
+    return (<div className="w-full">
         <Form formType="auth" request={postNewPassword} handleRequest={handlePasswordChange} t={t}
               fields={["current-password", "new-password", "confirm-new-password"]} />
     </div>);
@@ -150,7 +137,7 @@ function AccountSection() {
         }});
     };
 
-    return (<div className="flex">
+    return (<div className="flex justify-center w-full">
         <TextButton className="text-red hover:text-red-hover" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
     </div>);
 }

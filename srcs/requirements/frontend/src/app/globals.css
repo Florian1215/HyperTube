@@ -70,8 +70,7 @@
     :root[data-accent="blue"] { --accent: var(--color-blue); }
     :root[data-accent="red"] { --accent: var(--color-red); }
 
-    :root {
-        color-scheme: light dark;
+    :root, .dark-mode {
         --color-cblack:       light-dark(var(--black), var(--accent));
         --color-dblack:       light-dark(var(--black), var(--white));
         --color-dblack-light: light-dark(var(--black-light), var(--white-light));

@@ -190,7 +190,7 @@
     "noMediasYet": "Vous n'avez encore vu aucun film ou aucune série.",
     "noWatchlistYet": "Aucun film ni série dans la watchlist.",
     "fields": {
-      "submit": "Enregistrer les modifications",
+      "submit": "Enregistrer",
       "username": "Nom d'utilisateur"
     }
   },

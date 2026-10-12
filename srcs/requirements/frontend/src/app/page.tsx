@@ -9,7 +9,7 @@ import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import GenreTags from "@/components/GenreTags";
-import {FriendActivityCard, getImage} from "@/components/FriendsActivity";
+import {FriendActivityCard, groupActivities} from "@/components/FriendsActivity";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
@@ -61,7 +61,7 @@ export default function HomePage() {
 
     const groupSeries = user?.group_series ?? true;
     const {data: friendAct} = useFollowingActivity(user?.id, groupSeries);
-    const activities = (friendAct?.results ?? []).filter((activity) => getImage(activity, groupSeries));
+    const activities = (friendAct?.results ?? []).filter((activity) => activity.backdrop_url);
 
     return (<div>
         <AnimateLogo maxHeight={heightAnimationLogo} />
@@ -70,8 +70,8 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
             {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-x-2 sm:gap-x-4 grid-rows-1 auto-rows-0 overflow-hidden">
-                    {activities.map((activity, index) => <FriendActivityCard key={index} activity={activity}/>)}
+                <div className="flex gap-x-2 sm:gap-x-4 overflow-hidden">
+                    {groupActivities(activities).map((group) => <FriendActivityCard key={`${group[0].type}-${group[0].id}`} activities={group}/>)}
                 </div>
             </Section>}
             {(continueWatching.length > 0) &&
