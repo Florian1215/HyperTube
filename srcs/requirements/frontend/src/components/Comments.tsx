@@ -34,7 +34,7 @@ export default function Comments({currentUser, comments, index, setIndex, totalP
     };
 
     if (!comments || comments.length === 0)
-        return (<SmallText>{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</SmallText>);
+        return (<SmallText className="whitespace-pre-line" italic={false}>{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</SmallText>);
 
     return (<Pagination currentIndex={index} totalPage={totalPage} onClick={changeIndex}>
         <div className="flex flex-col gap-6">

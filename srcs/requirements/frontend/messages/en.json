@@ -29,11 +29,11 @@
     "people": "Actors / Directors",
     "usersSearchPlaceholder": "Search for a user...",
     "users": "Users",
-    "noResults": "No movie found",
+    "noResults": "No results found",
     "noPeople": "No one found",
     "noUsers": "No user found",
     "emptyPage": "Nothing to show here.",
-    "noResultsResetFilter": "No results. Reset filters?",
+    "noResultsResetFilter": "Reset filters?",
     "sort": {
       "title": "Title",
       "year": "Year",
@@ -165,7 +165,7 @@
     "writeComment": "Write a comment...",
     "publishComment": "Publish comment",
     "noCommentsYet": "You haven't posted any comments yet.",
-    "noCommentsPrompt": "No comments yet. Be the first to post one!"
+    "noCommentsPrompt": "No comments yet.\nBe the first to post one!"
   },
   "settings": {
     "title": "Settings",

@@ -29,11 +29,11 @@
     "people": "Schauspieler / Regisseure",
     "usersSearchPlaceholder": "Nach einem Benutzer suchen...",
     "users": "Benutzer",
-    "noResults": "Kein Film gefunden",
+    "noResults": "Kein Ergebnisse gefunden",
     "noPeople": "Keine Person gefunden",
     "noUsers": "Kein Benutzer gefunden",
     "emptyPage": "Nichts hier zu sehen.",
-    "noResultsResetFilter": "Keine Ergebnisse. Filter zurücksetzen?",
+    "noResultsResetFilter": "Filter zurücksetzen?",
     "sort": {
       "title": "Titel",
       "year": "Jahr",
@@ -165,7 +165,7 @@
     "writeComment": "Kommentar schreiben...",
     "publishComment": "Kommentar veröffentlichen",
     "noCommentsYet": "Sie haben noch keine Kommentare verfasst.",
-    "noCommentsPrompt": "Noch keine Kommentare. Schreib den ersten!"
+    "noCommentsPrompt": "Noch keine Kommentare.\nSchreib den ersten!"
   },
   "settings": {
     "title": "Einstellungen",

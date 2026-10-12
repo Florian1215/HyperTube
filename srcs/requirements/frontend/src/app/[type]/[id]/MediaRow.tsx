@@ -29,7 +29,7 @@ export default function MediaRow({number, title, subtitle, overview, image, alt,
     const withLink = (children: React.ReactNode) => href !== undefined ? <Link href={href}>{children}</Link> : children;
 
     return (<tr>
-        <td onClick={onClick} className={`font-bold text-2xl font-wide text-right pr-1 pl-4 w-14 ${clickable ? "hover:cursor-pointer hover:text-accent" : ""} ${isSelected ? "border-l-5 border-accent" : ""}`}>
+        <td onClick={onClick} className={`font-bold text-2xl font-wide text-right pr-1 pl-4 w-14 ${clickable ? "hover:cursor-pointer hover:text-accent" : ""} ${isSelected ? "border-l-5 border-accent hover:cursor-default" : ""}`}>
             {withLink(<span>{number}</span>)}
         </td>
         <td className={`px-4 w-36 sm:w-50 py-2 align-top ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}>

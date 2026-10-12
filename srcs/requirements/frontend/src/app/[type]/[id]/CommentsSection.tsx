@@ -42,7 +42,7 @@ export default function CommentsSection({media}: {media: iMedia}) {
                         <ProfilePicture user={user}/>
                         <NewComment user={user} media={media} />
                     </div> :
-                    <TextButton onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</TextButton>
+                    <TextButton className="italic hover:text-accent" onClick={() => openModal({type: "signin"})}>{t("signInToComment")}</TextButton>
             }
         </div>
         <Comments currentUser={user} comments={data?.results ?? []} index={index} setIndex={setIndex} totalPage={totalPage}/>
