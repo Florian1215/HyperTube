@@ -31,12 +31,14 @@ export default function HomePage() {
     const {data: comingSoon} = useComingSoon(user?.id);
     const locale = useLocale();
     const {data: movies} = useItems("movies");
-    const popular = filterAlreadyWatch(movies?.results);
-    const shuffledPopular = useMemo(() => shuffleArray(popular), [popular])
-
     const {data: series} = useItems("series");
-    const popularSeries = filterAlreadyWatch(series?.results);
-    const shuffledPopularSeries = useMemo(() => shuffleArray(popularSeries), [popularSeries])
+    const shuffledPopular = useMemo(() => {
+        const featured = [
+            ...filterAlreadyWatch(movies?.results),
+            ...filterAlreadyWatch(series?.results),
+        ];
+        return shuffleArray(featured);
+    }, [movies?.results, series?.results]);
 
     const {data: featuredMovies} = useItems("movies", "featured");
     const {data: featuredSeries} = useItems("series", "featured");
@@ -77,11 +79,6 @@ export default function HomePage() {
                 <MediasGrid mediaSets={continueWatching} setLimit={true} showEpisode={true}/>
             </Section>}
 
-            {comingSoon && comingSoon.results.length > 0 &&
-            <Section title={t("comingSoon")} href={`/search?type=${comingSoon.results[0].type}&q=${encodeURIComponent(SEARCH_UPCOMING)}`}>
-                <MediasGrid mediaSets={comingSoon.results} setLimit={true} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>
-            </Section>}
-
             {
                 (shuffledFeatured === undefined || shuffledFeatured.length > 0) &&
                 <Section title={t("featured")} href="/search?type=movies&q=featured">
@@ -89,17 +86,21 @@ export default function HomePage() {
                 </Section>
             }
 
-            <Section title={t("moviesPopular")} href="/search?type=movies&q=popular">
-                <MediasGrid mediaSets={shuffledPopular.length > 0 ? shuffledPopular : undefined} setLimit={true}/>
-            </Section>
-
-            <Section title={t("seriesPopular")} href="/search?type=series&q=popular">
-                <MediasGrid mediaSets={shuffledPopularSeries.length > 0 ? shuffledPopularSeries : undefined} setLimit={true}/>
-            </Section>
+            {
+                (shuffledPopular === undefined || shuffledPopular.length > 0) &&
+                <Section title={t("popular")} href={`/search?type=${shuffledPopular[0].type}&q=popular`}>
+                    <MediasGrid mediaSets={shuffledPopular} setLimit={true}/>
+                </Section>
+            }
 
             <Section title={t("mostRated")} href="/search?type=movies&q=top-rated">
                 <MediasGrid mediaSets={shuffledMostRated.length > 0 ? shuffledMostRated : undefined} setLimit={true}/>
             </Section>
+
+            {comingSoon && comingSoon.results.length > 0 &&
+                <Section title={t("comingSoon")} href={`/search?type=${comingSoon.results[0].type}&q=${encodeURIComponent(SEARCH_UPCOMING)}`}>
+                    <MediasGrid mediaSets={comingSoon.results} setLimit={true} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>
+                </Section>}
 
             {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/search?type=movies&q=directstream">
                 <MediasGrid mediaSets={filterDirectedWatchMovies} setLimit={true}/>
