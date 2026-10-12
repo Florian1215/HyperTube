@@ -55,7 +55,8 @@ export default function Search({modal = false}: {modal?: boolean}) {
     const [sort, setSort] = useState<iSort>({type: mostRated ? "grade" : undefined, side: true});
     const [typeSearch, setTypeSearch] = useState<tSearch>(type as tSearch ?? "movies");
     const {user: authUser} = useAuth();
-    const {closeSearch} = useModal();
+    const {closeSearch, activeModal} = useModal();
+    const hasModal = activeModal.type !== null;
     const isUsersSearch = typeSearch === "users";
     const isPeopleSearch = typeSearch === "people";
     const [page, setPage] = useState(1);
@@ -66,6 +67,35 @@ export default function Search({modal = false}: {modal?: boolean}) {
     const found = isUsersSearch ? users : isPeopleSearch ? people : medias;
     const t = useTranslations("search");
     const inputRef = useRef<HTMLInputElement>(null);
+    const resultsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!modal || hasModal)
+            return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.key !== "Tab" && e.key !== "Enter") || e.isComposing)
+                return;
+            const hrefs = new Set<string>();
+            const links = Array.from(resultsRef.current?.querySelectorAll<HTMLAnchorElement>("a[href]") ?? []).filter((link) => !hrefs.has(link.href) && hrefs.add(link.href));
+
+            if (e.key === "Enter") {
+                if (document.activeElement === inputRef.current && links.length > 0) {
+                    e.preventDefault();
+                    links[0].click();
+                }
+                return;
+            }
+            e.preventDefault();
+            if (links.length === 0)
+                return;
+            const index = links.indexOf(document.activeElement as HTMLAnchorElement);
+            const step = e.shiftKey ? -1 : 1;
+            const next = index === -1 ? (e.shiftKey ? links.length - 1 : 0) : (index + step + links.length) % links.length;
+            links[next].focus();
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [modal, hasModal]);
 
     useEffect(() => {
         const el = inputRef.current;
@@ -145,12 +175,14 @@ export default function Search({modal = false}: {modal?: boolean}) {
         </div>
 
         {hasResults && <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(found)} variableMT={true}>
+            <div ref={resultsRef}>
             {isUsersSearch ?
                 <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
                 isPeopleSearch ?
                 <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/> :
                 <Results t={t} medias={isError ? [] : medias?.results} search={searchValue.trim()} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
             }
+            </div>
         </Pagination>}
     </>);
 
