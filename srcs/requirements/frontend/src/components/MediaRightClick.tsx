@@ -1,15 +1,17 @@
 import React, {useEffect, useState} from "react";
 import useAuth from "@/contexts/AuthContext";
 import {deleteMediaProgress, syncMediaProgress, updateMediaProgress} from "@/services/medias.service";
-import {iMedia, iProgress} from "@/types/media";
-import {ApiError} from "@/services/apiClient";
+import {iMedia, iMediaDetails, iProgress} from "@/types/media";
+import apiClient, {ApiError} from "@/services/apiClient";
 import useNotification from "@/contexts/NotificationContext";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
-import {BookmarkIcon, EyeIcon, TrashIcon} from "@/components/Icons";
+import {BookmarkIcon, EyeIcon, StarIcon, TrashIcon} from "@/components/Icons";
 import {iAxe} from "@/types/utils";
 import useWatchlist from "@/hooks/useWatchlist";
+import useModal from "@/contexts/ModalContext";
+import hasPerm from "@/utils/hasPerm";
 
 
 export default function MediaRightClick({user, media, contextMenu, setContextMenu, seasonNumber, episodeNumber, progress = media}: {user: iUser, media: iMedia, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void, seasonNumber?: number, episodeNumber?: number, progress?: Pick<iProgress, "complete" | "pourcent"> & {progress?: number}}) {
@@ -18,6 +20,8 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     const tError = useTranslations("notifications.error");
     const queryClient = useQueryClient();
     const toggleWatchlist = useWatchlist();
+    const {openModal} = useModal();
+    const locale = useLocale();
 
     useEffect(() => {
         const closeMenu = () => setContextMenu(undefined);
@@ -52,6 +56,16 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
         }
     };
 
+    const openFeatureModal = async () => {
+        setContextMenu(undefined);
+        try {
+            const details = "backdrops_url" in media ? media as iMediaDetails : await apiClient<iMediaDetails>(`${media.type}/${media.id}/`, locale);
+            openModal({type: "set-feature", media: details});
+        } catch (e) {
+            addNotification(e instanceof ApiError ? e.message : tError("unknown"), "error");
+        }
+    };
+
     if (contextMenu)
         return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
              onClick={(e) => e.stopPropagation()}
@@ -65,6 +79,7 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
                 <MenuAction Icon={(size: number) => <EyeIcon size={size} crossed={true}/>} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("setAsNotWatched")}</MenuAction> :
                 <MenuAction Icon={EyeIcon} onClick={() => handleAction(() => updateMediaProgress(media?.id, media.type, 0, 100, true, (progress.progress ?? 0) > 0, seasonNumber, episodeNumber))}>{t("setAsWatched")}</MenuAction>
             }
+            {hasPerm(user, "medias.can_recommend_medias") && <MenuAction Icon={({size}: {size: number}) => <StarIcon size={size} color="dblack"/>} onClick={() => void openFeatureModal()}>{t("setFeature")}</MenuAction>}
             {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
         </div>);
     return null;
