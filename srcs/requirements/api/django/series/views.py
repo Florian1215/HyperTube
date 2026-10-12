@@ -48,6 +48,7 @@ class SeriesWatchedAPIView(APIView):
             for episode in season.episodes.all():
                 history = episode.history.filter(user=request.user)
                 if history.exists():
+                    history.filter(complete=False, progress__gt=0).update(complete=True, pourcent=100, watched_at=now, updated_at=now)
                     history.filter(complete=False).update(complete=True, pourcent=100, watched_at=None, updated_at=now)
                 else:
                     episode.history.create(user=request.user, media=media, complete=True, pourcent=100)

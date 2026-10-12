@@ -12,7 +12,7 @@ import {iAxe} from "@/types/utils";
 import useWatchlist from "@/hooks/useWatchlist";
 
 
-export default function MediaRightClick({user, media, contextMenu, setContextMenu, seasonNumber, episodeNumber, progress = media}: {user: iUser, media: iMedia, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void, seasonNumber?: number, episodeNumber?: number, progress?: Pick<iProgress, "complete" | "pourcent">}) {
+export default function MediaRightClick({user, media, contextMenu, setContextMenu, seasonNumber, episodeNumber, progress = media}: {user: iUser, media: iMedia, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void, seasonNumber?: number, episodeNumber?: number, progress?: Pick<iProgress, "complete" | "pourcent"> & {progress?: number}}) {
     const {addNotification} = useNotification();
     const t = useTranslations("media");
     const tError = useTranslations("notifications.error");
@@ -63,7 +63,7 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
             }}>{t(media.in_watchlist ? "removeFromWatchlist" : "addToWatchlist")}</MenuAction>
             {progress.complete ?
                 <MenuAction Icon={(size: number) => <EyeIcon size={size} crossed={true}/>} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("setAsNotWatched")}</MenuAction> :
-                <MenuAction Icon={EyeIcon} onClick={() => handleAction(() => updateMediaProgress(media?.id, media.type, 0, 100, true, false, seasonNumber, episodeNumber))}>{t("setAsWatched")}</MenuAction>
+                <MenuAction Icon={EyeIcon} onClick={() => handleAction(() => updateMediaProgress(media?.id, media.type, 0, 100, true, (progress.progress ?? 0) > 0, seasonNumber, episodeNumber))}>{t("setAsWatched")}</MenuAction>
             }
             {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
         </div>);
