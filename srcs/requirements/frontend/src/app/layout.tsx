@@ -9,20 +9,19 @@ import Colors from "@/components/Colors";
 import {AuthProvider} from "@/contexts/AuthContext";
 import {NotificationProvider} from "@/contexts/NotificationContext";
 import {ModalProvider} from "@/contexts/ModalContext";
-import NotificationList from "@/components/ui/Notification/NotificationList";
 import Page404ErrorHandler from "@/contexts/Page404ErrorHandler";
 import SessionExpiredHandler from "@/contexts/SessionExpiredHandler";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
-import SigninModal from "@/components/layout/SigninModal";
 import SearchModal from "@/components/layout/SearchModal";
 import ScrollToTop from "@/components/layout/ScrollToTop";
-import RegisterModal from "@/components/layout/RegisterModal";
 import CreditsMediaModal from "@/app/[type]/[id]/CreditsMediaModal";
 import WatchedByModal from "@/app/[type]/[id]/WatchedByModal";
 import SetFeatureModal from "@/app/[type]/[id]/SetFeatureModal";
 import SelectTorrentModal from "@/app/[type]/[id]/SelectTorrentModal";
 import ViewAllGenreModal from "@/app/search/ViewAllGenreModal";
 import FilterGenreModal from "@/app/search/FilterGenreModal";
+import AuthModalLayout from "@/components/layout/AuthModalLayout";
+import NotificationList from "@/components/ui/Notifications";
 
 const ACCENT_COLORS = ["yellow", "pink", "green", "purple", "blue", "red"];
 
@@ -54,8 +53,8 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <NotificationList/>
 
                             <SearchModal/>
-                            <SigninModal/>
-                            <RegisterModal/>
+                            <AuthModalLayout type="signin"/>
+                            <AuthModalLayout type="register"/>
                             <ViewAllGenreModal/>
                             <FilterGenreModal/>
                             <DeleteConfirmationModal/>

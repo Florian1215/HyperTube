@@ -9,7 +9,7 @@ import {tMedia} from "@/types/utils";
 import SmallText from "@/components/ui/SmallText";
 import useAuth from "@/contexts/AuthContext";
 
-export default function ProfileTabMediaHistory({user, type}: {user: iUser, type: tMedia}) {
+export default function TabMediaHistory({user, type}: {user: iUser, type: tMedia}) {
     const [index, setIndex] = useState(1);
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
     const t = useTranslations("profile");
@@ -25,7 +25,7 @@ export default function ProfileTabMediaHistory({user, type}: {user: iUser, type:
     </Pagination>);
 }
 
-export function ProfileTabWatchlist({user}: {user: iUser}) {
+export function TabWatchlist({user}: {user: iUser}) {
     const [index, setIndex] = useState(1);
     const t = useTranslations("profile");
     const {data: medias} = useUserWatchlist(user.id, index);
@@ -37,10 +37,10 @@ export function ProfileTabWatchlist({user}: {user: iUser}) {
     </Pagination>);
 }
 
-export function ProfileTabMovies({user}: {user: iUser}) {
-    return (<ProfileTabMediaHistory user={user} type="movies"/>);
+export function TabMovies({user}: {user: iUser}) {
+    return (<TabMediaHistory user={user} type="movies"/>);
 }
 
-export function ProfileTabSeries({user}: {user: iUser}) {
-    return (<ProfileTabMediaHistory user={user} type="series"/>);
+export function TabSeries({user}: {user: iUser}) {
+    return (<TabMediaHistory user={user} type="series"/>);
 }

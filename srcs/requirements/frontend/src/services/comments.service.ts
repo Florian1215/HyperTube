@@ -19,10 +19,11 @@ export function useComments(mediaType: tMedia, mediaId?: string, page?: number) 
     );
 }
 
-export function useProfileComments(userId: number, page: number) {
+export function useProfileComments(userId: number | undefined, page: number) {
     return useApiQuery(
         ["user-comments", userId, page],
         (locale) => apiClient<tListResponse<iCommentDetails>>(`users/${userId}/comments/?ordering=-updated_at&page=${page}`, locale),
+        !!userId
     );
 }
 

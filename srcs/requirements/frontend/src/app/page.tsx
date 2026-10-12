@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {HypertubeLogo} from "@/components/Icons";
 import {useLocale, useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
@@ -8,7 +8,6 @@ import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
 import formatReleaseDate from "@/utils/formatReleaseDate";
-import SliderHero from "@/components/SliderHero";
 import GenreTags from "@/components/GenreTags";
 import {FriendActivityCard, getImage} from "@/components/FriendsActivity";
 import MediasGrid from "@/components/MediasGrid";
@@ -17,6 +16,9 @@ import shuffleArray from "@/utils/shuffleArray";
 import {useComingSoon, useContinueWatching, useFollowingActivity} from "@/services/users.service";
 import {iMedia} from "@/types/media";
 import {Link} from "@/i18n/navigation";
+import MediaHero from "@/components/MediaHero";
+import formatURL from "@/utils/formatURL";
+import {TitleMedia} from "@/components/Title";
 
 export default function HomePage() {
     const {user} = useAuth();
@@ -167,6 +169,52 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
             {[...Array(2)].map((_, i) => (
                 <HypertubeLogo key={i} className="animate-marquee min-w-full" width={logoWidth} height={logoHeight} />
             ))}
+        </div>
+    </div>);
+}
+
+function SliderHero({medias}: {medias: iMedia[]}) {
+    const [index, setIndex] = useState(0);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+    const startInterval = useCallback(() => {
+        if (intervalRef.current)
+            clearInterval(intervalRef.current);
+
+        intervalRef.current = setInterval(() => {
+            setIndex((prev) => (prev + 1) % medias.length);
+        }, 6000);
+    }, [medias.length]);
+
+    const onSlide = (side: number) => {
+        if (side > 0)
+            setIndex((prev) => (prev + 1) % medias.length);
+        else
+            setIndex((prev) => (prev - 1 + medias.length) % medias.length);
+        startInterval();
+    };
+
+    useEffect(() => {
+        if (!medias.length)
+            return;
+        startInterval();
+        return () => clearInterval(intervalRef.current);
+    }, [medias.length, startInterval]);
+
+    return (<div className="overflow-hidden w-full">
+        <div className="flex transition-transform duration-600 ease-out"
+             style={{transform: `translateX(-${100 * index}%)`}}>
+            {medias.length > 0 ?
+                medias.map((media, index) => (<MediaHero key={index} media={media} actionButton={
+                                                                                       () => <Link href={formatURL(media)}>
+                                                                                           <TitleMedia media={media} clickable={true} white={true}/>
+                                                                                       </Link>}>
+                    <Link href={formatURL(media)} className="size-full z-20 absolute"/>
+                    <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)
+                    <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)
+                </MediaHero>)) :
+                <MediaHero media={undefined} />
+            }
         </div>
     </div>);
 }

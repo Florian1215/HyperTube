@@ -5,7 +5,7 @@ import computeTotalPage from "@/utils/computeTotalPage";
 import Comments from "@/components/Comments";
 import useAuth from "@/contexts/AuthContext";
 
-export default function ProfileTabComments({user}: {user: iUser}) {
+export default function TabComments({user}: {user: iUser}) {
     const [index, setIndex] = useState(1);
     const {data: comments} = useProfileComments(user.id, index);
     const {user: currentUser} = useAuth();

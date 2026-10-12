@@ -1,26 +1,31 @@
+"use client";
+
 import React from "react";
 import {iToken, iUser} from "@/types/user";
 import {useRouter} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
-import useModal, {ModalState} from "@/contexts/ModalContext";
+import useModal from "@/contexts/ModalContext";
 import useNotification from "@/contexts/NotificationContext";
 import useAuth from "@/contexts/AuthContext";
 import ModalLayout from "@/components/layout/ModalLayout";
 import Form from "@/components/ui/Form";
 import {postLogin, postRegister} from "@/services/auth.service";
 import TextButton from "@/components/ui/Button/TextButton";
-import {tT} from "@/types/utils";
 
 type AuthModalType = "signin" | "register";
 
-export default function AuthModalLayout({type, t, activeModal}: {type: AuthModalType, t: tT, activeModal: ModalState}) {
-    const {openModal, closeModal} = useModal();
+export default function AuthModalLayout({type}: {type: AuthModalType}) {
+    const t = useTranslations(`auth.${type}`);
+    const {activeModal, openModal, closeModal} = useModal();
     const isReg = type === "register";
     const otherType: AuthModalType = isReg ? "signin" : "register";
     const {addNotification} = useNotification();
     const router = useRouter();
     const {login, callbackUrl, setCallbackUrl} = useAuth();
     const tSuccess = useTranslations("notifications.success");
+
+    if (activeModal.type !== type)
+        return null;
 
     const handleLoginRegister = (data: iToken | iUser) => {
         if ("access" in data) {
@@ -43,7 +48,7 @@ export default function AuthModalLayout({type, t, activeModal}: {type: AuthModal
         }
     } : undefined} title={t(`title${callbackUrl ? "LoginRequired" : ""}`)}>
         <Form formType={type} request={isReg ? postRegister : postLogin} handleRequest={handleLoginRegister} t={t}
-              fields={isReg ? ["username", "password"] : ["username", "password"]} />
+              fields={["username", "password"]} />
         <div className="flex gap-2 mt-2">
             <span className="text-sm">{t(isReg ? "haveAccount" : "noAccount")}</span>
             <TextButton className="hover:text-accent" onClick={() => {closeModal(); openModal({type: otherType, noClose: activeModal.noClose});}}>{t(otherType)}</TextButton>

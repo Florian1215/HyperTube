@@ -1,8 +1,24 @@
+"use client";
+
+import useNotification, {tNotification} from "@/contexts/NotificationContext";
 import {CheckIcon} from "@/components/Icons";
 import CloseButton from "@/components/ui/Button/CloseButton";
-import {tNotification} from "@/contexts/NotificationContext";
 
-export default function NotificationItem({notification, onClose}: {notification: tNotification; onClose: (id: string) => void})  {
+export default function NotificationList() {
+    const {notifications, removeNotification} = useNotification();
+
+    return (<div className="fixed top-5 right-5 z-60 flex flex-col gap-4 max-w-9/10">
+        {notifications.map(notification => (
+            <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onClose={removeNotification}
+            />
+        ))}
+    </div>);
+}
+
+function NotificationItem({notification, onClose}: {notification: tNotification; onClose: (id: string) => void})  {
     const bgColors = {success: "green", warning: "yellow", error: "red", info: "purple"};
 
     return (<div className={`flex justify-between custom-shadow-m-black text-black border bg-${bgColors[notification.type]}`} onClick={() => onClose(notification.id)}>
