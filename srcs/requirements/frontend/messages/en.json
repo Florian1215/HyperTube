@@ -183,6 +183,7 @@
     },
     "remove": "Remove",
     "deleteAccount": "Delete account",
+    "uploadPicture": "Change picture",
     "follow": "Follow",
     "unfollow": "Unfollow",
     "preferredLanguage": "Preferred audio version",
@@ -279,6 +280,8 @@
     "error": {
       "unknown": "An error occurred. Please try again later.",
       "network": "Unable to contact the server. Please check your internet connection.",
+      "pictureTooLarge": "The image is too large ({max} MB maximum).",
+      "pictureInvalid": "The file must be a JPEG, PNG or WebP image.",
       "loginRequired": "You must be signed in to access this page.",
       "notFoundFilm": "Film not found",
       "notFoundSerie": "Serie not found",

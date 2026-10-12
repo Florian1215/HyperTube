@@ -2,6 +2,7 @@ import {iUser} from "@/types/user";
 import React from "react";
 import LoadingImage from "@/components/ui/LoadingImage";
 import {useTranslations} from "next-intl";
+import {getApiFileUrl} from "@/services/apiClient";
 
 export default function ProfilePicture({user, size = 0, color, className}: {user: iUser, size?: 0 | 1 | 2 | 3, color?: string, className?: string}) {
     const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45", "size-8"];
@@ -9,7 +10,7 @@ export default function ProfilePicture({user, size = 0, color, className}: {user
     let children;
 
     if (user.profile_picture)
-        children = <LoadingImage key={user.profile_picture} className="w-full h-full object-cover" height={200} width={200} src={user.profile_picture} alt={t("profilePictureAlt")} />;
+        children = <LoadingImage key={user.profile_picture} className="w-full h-full object-cover" height={200} width={200} unoptimized={true} src={getApiFileUrl(user.profile_picture)} alt={t("profilePictureAlt")} />;
     else {
         const initial = user.username.slice(0, 2);
 

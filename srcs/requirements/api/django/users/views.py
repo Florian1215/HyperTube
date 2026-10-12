@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -14,6 +15,7 @@ from medias.models import Media
 from medias.serializers import MediaActivitySerializer, MediaComingSoonSerializer, MediaHistorySerializer, SmallMediaSerializer
 from users.models import User, UserFollow, UserHistory
 from users.permissions import IsUserOwner
+from users.pictures import delete_profile_picture, save_profile_picture
 from users.watching import get_coming_soon, get_continue_watching
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
     UserSettingsSerializer
@@ -54,7 +56,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return RegisterSerializer
-        elif self.action == 'me':
+        elif self.action in ['me', 'profile_picture']:
             return UserMeSerializer
         elif self.action in ['list', 'retrieve', 'follow']:
             return UserProfileSerializer
@@ -63,7 +65,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
     def get_permissions(self):
-        if self.action in ['me', 'update', 'partial_update', 'destroy']:
+        if self.action in ['me', 'update', 'partial_update', 'destroy', 'profile_picture']:
             return [IsAuthenticated(), IsUserOwner()]
         elif self.action == 'follow':
             return [IsAuthenticated()]
@@ -73,6 +75,22 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+    def perform_destroy(self, instance):
+        delete_profile_picture(instance)
+        super().perform_destroy(instance)
+
+    @action(detail=True, methods=['post', 'delete'], url_path='profile-picture',
+            parser_classes=[MultiPartParser, FormParser, JSONParser])
+    def profile_picture(self, request, id=None):
+        user = self.get_object()
+        if request.method == 'POST':
+            save_profile_picture(user, request.FILES.get('file'))
+        else:
+            delete_profile_picture(user)
+            user.profile_picture = None
+            user.save(update_fields=['profile_picture'])
+        return Response(self.get_serializer(user).data)
 
     @action(detail=True, methods=['post', 'delete'], url_path='follow')
     def follow(self, request, id=None):

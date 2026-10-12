@@ -2,8 +2,9 @@ from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from config.errors import USERNAME_CONTAINS, USER_ALREADY_TAKEN
+from config.errors import PICTURE_ONLY_UPLOAD, USERNAME_CONTAINS, USER_ALREADY_TAKEN
 from users.models import User
+from users.pictures import delete_profile_picture
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -34,6 +35,17 @@ class UserProfileSerializer(UserSerializer):
 class UserSettingsSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ['group_series', 'preferred_language']
+
+    @staticmethod
+    def validate_profile_picture(value):
+        if value:
+            raise serializers.ValidationError(PICTURE_ONLY_UPLOAD)
+        return None
+
+    def update(self, instance, validated_data):
+        if 'profile_picture' in validated_data:
+            delete_profile_picture(instance)
+        return super().update(instance, validated_data)
 
 
 class UserMeSerializer(serializers.ModelSerializer):

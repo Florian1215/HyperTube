@@ -183,6 +183,7 @@
     },
     "remove": "Entfernen",
     "deleteAccount": "Konto löschen",
+    "uploadPicture": "Foto ändern",
     "follow": "Folgen",
     "unfollow": "Nicht mehr folgen",
     "preferredLanguage": "Bevorzugte Sprachfassung",
@@ -279,6 +280,8 @@
     "error": {
       "unknown": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
       "network": "Der Server konnte nicht erreicht werden. Bitte überprüfen Sie Ihre Internetverbindung.",
+      "pictureTooLarge": "Das Bild ist zu groß (maximal {max} MB).",
+      "pictureInvalid": "Die Datei muss ein JPEG-, PNG- oder WebP-Bild sein.",
       "loginRequired": "Sie müssen angemeldet sein, um fortzufahren.",
       "notFoundFilm": "Film nicht gefunden",
       "notFoundSerie": "Serie nicht gefunden",

@@ -183,6 +183,7 @@
     },
     "remove": "Supprimer",
     "deleteAccount": "Supprimer le compte",
+    "uploadPicture": "Changer la photo",
     "follow": "Suivre",
     "unfollow": "Ne plus suivre",
     "preferredLanguage": "Version audio préférée",
@@ -279,6 +280,8 @@
     "error": {
       "unknown": "Une erreur est survenue. Veuillez réessayer plus tard.",
       "network": "Impossible de contacter le serveur. Vérifiez votre connexion internet.",
+      "pictureTooLarge": "L'image est trop lourde ({max} Mo maximum).",
+      "pictureInvalid": "Le fichier doit être une image JPEG, PNG ou WebP.",
       "loginRequired": "Vous devez être connecté pour accéder à cette page.",
       "notFoundFilm": "Film introuvable",
       "notFoundSerie": "Série introuvable",

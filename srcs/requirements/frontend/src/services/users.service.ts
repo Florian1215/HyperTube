@@ -93,6 +93,16 @@ export function patchUser(locale: string, data: string[], userId?: number | stri
     return apiClient<iUser>(`users/${userId}/`, locale, {method: "PATCH", body: JSON.stringify(updateData)});
 }
 
+export const PICTURE_MAX_SIZE_MB = 5;
+export const PICTURE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export function uploadProfilePicture(locale: string, userId: number, file: File) {
+    const data = new FormData();
+
+    data.append("file", file);
+    return apiClient<iUser>(`users/${userId}/profile-picture/`, locale, {method: "POST", body: data});
+}
+
 export function postNewPassword(locale: string, data: string[]) {
     return apiClient(`users/new-password/`, locale, {method: "PATCH", body: JSON.stringify({current_password: data[0], new_password: data[1], new_password_confirm: data[2]})});
 }

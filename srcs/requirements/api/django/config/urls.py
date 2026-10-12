@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -11,5 +13,6 @@ urlpatterns = [
     path('api/v1/', include('comments.urls')),
     path('api/v1/', include('users.urls')),
     path('api/v1/', include('people.urls')),
-    path('api/v1/', include('torrents.urls'))
+    path('api/v1/', include('torrents.urls')),
+    re_path(r'^api/v1/media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}, name='media')
 ]

@@ -14,6 +14,7 @@ STREAM_DIR = DATA_DIR / 'streams'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/api/v1/media/'
 SECRET_KEY = environ['SECRET_KEY']
 TMDB_API_KEY = environ['TMDB_API_KEY']
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
