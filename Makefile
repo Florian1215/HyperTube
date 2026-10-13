@@ -3,7 +3,7 @@ NAME		:=	hypertube
 SRCS_D		:=	srcs
 TRANSCODE_D	:=	$(SRCS_D)/requirements/transcode/
 DATA_DIR	:=	medias
-COMPOSE_F	:=	$(SRCS_D)/docker-compose.yml
+COMPOSE_F	?=	$(SRCS_D)/docker-compose.prod.yml
 SERVICE		?=	#Leave blank
 
 ######################################################## FLAGS #########################################################

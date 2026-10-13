@@ -3,6 +3,7 @@ from os import environ
 
 from celery.schedules import crontab
 from pathlib import Path
+from urllib.parse import urlsplit
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,7 +49,10 @@ def env_list(name, default=''):
     return [value.strip() for value in environ.get(name, default).split(',') if value.strip()]
 
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', *env_list('SERVER_NAME')]
+SERVER_URLS = [urlsplit(value) for value in env_list('SERVER_NAME')]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', *(url.hostname if url.scheme else url.path for url in SERVER_URLS)]
+CSRF_TRUSTED_ORIGINS = [f'{url.scheme}://{url.netloc}' for url in SERVER_URLS if url.scheme]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS')
 
 AUTH_USER_MODEL = 'users.User'
@@ -157,6 +161,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = environ.get('STATIC_ROOT', BASE_DIR / 'staticfiles')
 
 
 # Email
