@@ -1,18 +1,49 @@
+x-api-environment: &api-environment
+  TZ: Europe/Paris
+  DEBUG: "True" # True or False
+  SERVER_NAME: ${SERVER_NAME:-localhost}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+  POSTGRES_DB: ${POSTGRES_DB_NAME}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  SECRET_KEY: ${DJANGO_SECRET_KEY}
+  TMDB_API_KEY: ${TMDB_API_KEY}
+  C411_API_KEY: ${C411_API_KEY}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  TRANSCODE_PORT: ${TRANSCODE_PORT}
+
 services:
-#  frontend:
-#    build:
-#      context: "requirements/frontend"
-#      target: development
-#    restart: unless-stopped
-#    ports:
-#      - "4200:4200"
-#    networks:
-#      - frontend_network
-#    volumes:
-#      - frontend-volume:/app
-#      - /app/node_modules
-#    depends_on:
-#      - api
+  nginx:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./requirements/nginx:/etc/nginx/conf.d:ro
+    networks:
+      - frontend_network
+    depends_on:
+      - frontend
+      - api
+
+  frontend:
+    build:
+      context: "requirements/frontend"
+      target: development
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-localhost}
+    expose:
+      - "4200"
+    networks:
+      - frontend_network
+    volumes:
+      - frontend-volume:/app
+      - /app/node_modules
+    depends_on:
+      - api
 
   api:
     build:
@@ -28,21 +59,10 @@ services:
       - api-volume:/code
       - stream-volume:/stream
     environment:
-      TZ: Europe/Paris
-      DEBUG: "True" # True or False
+      <<: *api-environment
       MIGRATION: "true" # true or false
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      SECRET_KEY: ${DJANGO_SECRET_KEY}
-      TMDB_API_KEY: ${TMDB_API_KEY}
-      C411_API_KEY: ${C411_API_KEY}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-      TRANSCODE_PORT: ${TRANSCODE_PORT}
-    ports:
-      - "8439:8000"
+    expose:
+      - "8000"
     networks:
       - backend_network
       - frontend_network
@@ -62,19 +82,8 @@ services:
       - api-volume:/code
       - stream-volume:/stream
     environment:
-      TZ: Europe/Paris
-      DEBUG: "True"
+      <<: *api-environment
       MIGRATION: "false"
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      SECRET_KEY: ${DJANGO_SECRET_KEY}
-      TMDB_API_KEY: ${TMDB_API_KEY}
-      C411_API_KEY: ${C411_API_KEY}
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-      TRANSCODE_PORT: ${TRANSCODE_PORT}
     command: celery -A config worker -B -s /tmp/celerybeat-schedule -l INFO
     networks:
       - backend_network
@@ -103,7 +112,6 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-
     networks:
       - backend_network
 

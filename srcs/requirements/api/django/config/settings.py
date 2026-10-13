@@ -39,17 +39,17 @@ TRANSCODE_PORT = environ.get('TRANSCODE_PORT', 5024)
 
 TRANSCODE_URL = f"http://{environ.get('TRANSCODE_HOST', 'host.docker.internal')}:{TRANSCODE_PORT}"
 
-DEBUG = environ['DEBUG']
+DEBUG = environ.get('DEBUG', 'False').lower() == 'true'
 APPEND_SLASH = False
 PER_PAGE = 18
-ALLOWED_HOSTS = [
-    '192.168.1.30'
-]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:4200',
-    'http://192.168.1.30:4200'
-]
+
+def env_list(name, default=''):
+    return [value.strip() for value in environ.get(name, default).split(',') if value.strip()]
+
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', *env_list('SERVER_NAME')]
+CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS')
 
 AUTH_USER_MODEL = 'users.User'
 
