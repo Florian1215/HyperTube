@@ -2,10 +2,11 @@
 *.env
 
 /medias
+**/media
 node_modules/
 .next/
 out/
-
+.claude
 .idea/
 .DS_Store
 **/.DS_Store
