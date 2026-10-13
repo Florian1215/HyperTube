@@ -1,0 +1,145 @@
+x-api-environment: &api-environment
+  TZ: Europe/Paris
+  DEBUG: "False"
+  SERVER_NAME: ${SERVER_NAME:-localhost}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+  STATIC_ROOT: /staticfiles
+  POSTGRES_DB: ${POSTGRES_DB_NAME}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_HOST: ${POSTGRES_HOST}
+  SECRET_KEY: ${DJANGO_SECRET_KEY}
+  TMDB_API_KEY: ${TMDB_API_KEY}
+  C411_API_KEY: ${C411_API_KEY}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  TRANSCODE_PORT: ${TRANSCODE_PORT}
+
+services:
+  nginx:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./requirements/nginx/prod:/etc/nginx/conf.d:ro
+      - static-volume:/staticfiles:ro
+    networks:
+      - frontend_network
+    depends_on:
+      - frontend
+      - api
+
+  frontend:
+    build:
+      context: "requirements/frontend"
+      target: production
+    restart: unless-stopped
+    expose:
+      - "4200"
+    networks:
+      - frontend_network
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: "requirements/api"
+      target: production
+    depends_on:
+      api-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    volumes:
+      - media-volume:/code/media
+      - static-volume:/staticfiles
+      - stream-volume:/stream
+    environment:
+      <<: *api-environment
+      MIGRATION: "true" # true or false
+      COLLECTSTATIC: "true" # true or false
+    expose:
+      - "8000"
+    # The transcode service runs on the host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - backend_network
+      - frontend_network
+      - api_network
+
+  celery:
+    build:
+      context: "requirements/api"
+      target: production
+    depends_on:
+      api-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    volumes:
+      - media-volume:/code/media
+      - stream-volume:/stream
+    environment:
+      <<: *api-environment
+      MIGRATION: "false"
+    command: celery -A config worker -B -s /tmp/celerybeat-schedule -l INFO
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - backend_network
+      - api_network
+
+  api-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Paris
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - api-db-volume:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --dbname=$$POSTGRES_DB --username=$$POSTGRES_USER"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - backend_network
+
+networks:
+  api_network:
+    internal: false
+  backend_network:
+  frontend_network:
+
+volumes:
+  api-db-volume:
+    name: api-db-volume
+  static-volume:
+    name: static-volume
+  stream-volume:
+    name: stream-volume
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "../medias"
+  # Uploaded profile pictures, shared with the development stack
+  media-volume:
+    name: media-volume
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "requirements/api/django/media"

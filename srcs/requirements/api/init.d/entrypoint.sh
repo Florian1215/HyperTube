@@ -13,4 +13,9 @@ if [[ $MIGRATION = true ]]; then
     python manage.py migrate
 fi
 
+if [[ $COLLECTSTATIC = true ]]; then
+    echo -e $BOLD$RED"- Collecting static files"$RESET
+    python manage.py collectstatic --noinput
+fi
+
 exec "$@"

@@ -1,8 +1,10 @@
 import {NextConfig} from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
+const serverName = process.env.SERVER_NAME?.replace(/^\w+:\/\//, "").replace(/[:/].*$/, "");
+
 const nextConfig: NextConfig = {
-    allowedDevOrigins: ['192.168.1.30'],
+    allowedDevOrigins: serverName ? [serverName] : [],
     images: {
         remotePatterns: [
             {
@@ -32,14 +34,6 @@ const nextConfig: NextConfig = {
             {source: "/:locale(en|fr|de)/:path*", destination: "/:path*", permanent: false},
         ];
     },
-    async rewrites() {
-    return [
-        {
-            source: "/api/:path*",
-            destination: `http://api:8794/api/:path*`,
-        },
-    ];
-},
 };
 
 const withNextIntl = createNextIntlPlugin();
