@@ -65,7 +65,7 @@ export default function SetFeatureModal() {
         return null;
 
     const displayBackdrop = activeModal.media.backdrops_url.length > 1;
-    return (<ModalLayout title={t("title")} onCloseAction={closeModal}>
+    return (<ModalLayout title={t("title")} onCloseAction={closeModal} addMaxWTitle={false}>
         <div className={`space-y-6 text-center ${displayBackdrop ? "w-full md:w-2xl lg:w-4xl" : "w-full"}`}>
             {
                 displayBackdrop &&

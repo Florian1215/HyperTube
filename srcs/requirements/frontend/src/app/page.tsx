@@ -208,8 +208,8 @@ function SliderHero({medias}: {medias: iMedia[]}) {
                                                                                            <TitleMedia media={media} clickable={true} white={true}/>
                                                                                        </Link>}>
                     <Link href={formatURL(media)} className="size-full z-20 absolute"/>
-                    <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>)
-                    <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>)
+                    <div className="h-full w-50 z-30 absolute left-0 custom-cursor-left" onClick={() => onSlide?.(-1)}/>
+                    <div className="h-full w-50 z-30 absolute right-0 custom-cursor-right" onClick={() => onSlide?.(1)}/>
                 </MediaHero>)) :
                 <MediaHero media={undefined} />
             }
