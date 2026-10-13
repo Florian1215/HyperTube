@@ -175,7 +175,7 @@ export default function MediaPage() {
     const runtime = media?.type === "series" ? episodeDetails?.runtime : (media as iMovieDetails | undefined)?.runtime;
     const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
 
-    return (<div className="flex flex-col gap-4 sm:gap-6 xl:gap-10">
+    return (<div className="flex flex-col gap-8 xl:gap-10">
         <MediaHero media={media} childrenAction={() => {
             if (errorStr || !media)
                 return undefined;
