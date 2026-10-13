@@ -1,21 +1,14 @@
 import React, {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
-import {tOauthService} from "@/types/user";
-import {OAuthIcon} from "@/components/Icons";
-import {usePathname} from "@/i18n/navigation";
 import useApiMutation from "@/hooks/useApiMutation";
-import {tResponse} from "@/types/api";
-import useAuth from "@/contexts/AuthContext";
 import Button from "@/components/ui/Button/Button";
-import {handleOauth} from "@/services/auth.service";
-import TextButton from "@/components/ui/Button/TextButton";
 import Input from "@/components/ui/Input";
-import useResponsiveSize from "@/hooks/useResponsiveSize";
+import {fieldType, tT} from "@/types/utils";
 
-export type fieldType = "email" | "login" | "first_name" |  "last_name" | "username" | "password" | "current-password" | "new-password" | "confirm-new-password" | "name" | "redirect_uri";
-type formType = "auth" | "update" |  "signin" | "register" | "send-email-reset-password" | "set-new-password" | "application";
 
-export default function Form<T>({formType, request, handleRequest, t, fields, handleForgotPassword, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<tResponse<T>>, handleRequest: (data: tResponse<T>) => void, t: (key: string) => string, fields: fieldType[], handleForgotPassword?: () => void, extraParam?: string | number}) {
+type formType = "auth" | "update" |  "signin" | "register";
+
+export default function Form<T>({formType, request, handleRequest, t, fields, extraParam}: {formType: formType, request: (locale: string, data: string[], extraParam?: string | number) => Promise<T>, handleRequest: (data: T) => void, t: tT, fields: fieldType[], extraParam?: string | number}) {
     const [fieldsValue, setFieldsValue] = useState<string[]>(Array(fields.length).fill(""));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [disableBtn, setDisableBtn] = useState(false);
@@ -23,31 +16,27 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
     const [focusedIndex, setFocusedIndex] = useState((formType === "update" || formType === "auth")? -1 : 0);
     const {execute} = useApiMutation(setErrors, setFocusedIndex, formType, fields);
     const fieldRefs = useRef<HTMLInputElement[]>([]);
-    const showOAuth = formType === "signin" || formType === "register";
 
     useEffect(() => {
         if (focusedIndex >= 0)
             fieldRefs.current[focusedIndex]?.focus();
     }, [focusedIndex]);
 
-    const getId = (field: fieldType | number) => (typeof field  === "number" ? fields[field] : field) + "-" + formType;
+    const getId = (field: fieldType | number) => `${typeof field  === "number" ? fields[field] : field}-${formType}`;
     const hasError = (error: Record<string, string>) => Object.keys(error).length > 0 && Object.values(error).some((v) => !!v);
     const newSetterErrorUtils = (field: fieldType | number, error?: string) => newSetterError({[getId(field)]: error ? tError(error) : ""});
 
     const newSetterError = (value: Record<string, string>) => {
         setErrors((prevErrors) => {
             const newErrors = {...prevErrors, ...value};
-            const field = formType === "application" ? "name" : "email";
-            if (prevErrors[getId(field)] === tError("atLeastOneField") && !value[getId(field)])
-                newErrors[getId(field)] = "";
             setDisableBtn(hasError(newErrors));
             return newErrors;
         });
     };
 
     useEffect(() => {
-        if (formType === "signin" && errors[getId("login")] == tError("invalidLoginOrPassword"))
-            newSetterErrorUtils("login");
+        if (formType === "signin" && errors[getId("username")] == tError("invalidCredentials"))
+            newSetterErrorUtils("username");
 
         if (formType === "auth" && fieldsValue[0]) {
             if (fieldsValue[0] == fieldsValue[1])
@@ -56,7 +45,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
                 newSetterErrorUtils("new-password")
         }
 
-        if ((formType === "auth" || formType === "set-new-password") && fieldsValue.at(-1) && fieldsValue.at(-2)) {
+        if (formType === "auth" && fieldsValue.at(-1) && fieldsValue.at(-2)) {
             if (fieldsValue.at(-1) != fieldsValue.at(-2))
                 newSetterErrorUtils("confirm-new-password", "passwordsDontMatch");
             else if (errors[getId("confirm-new-password")] == tError("passwordsDontMatch"))
@@ -95,7 +84,7 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
         if (disableBtn)
             return ;
         const requiredErrors: Record<string, string> = {};
-        const isAllFieldRequired = !(formType === "update" || (formType === "application" && extraParam != undefined));
+        const isAllFieldRequired = !(formType === "update");
 
         if (!isAllFieldRequired && fieldsValue.filter((v) => v.trim().length !== 0).length === 0) {
             newSetterErrorUtils(0, "atLeastOneField")
@@ -127,39 +116,12 @@ export default function Form<T>({formType, request, handleRequest, t, fields, ha
 
     const RenderInput = (type: fieldType, idx: number, className?: string) =>
         <Input key={idx} id={getId(type)} type={type.includes("password") ? "password" : "text"} placeholder={t(type)}
-               value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className + ((type === "username" || (formType === "register" && type === "password")) ? " max-w-2/3" : "")}
+               value={fieldsValue[idx]} idx={idx} onChange={setFieldsValue} className={className}
                requestErrorMessage={errors[getId(type)]} setErrorsMessage={newSetterError} ref={(el: HTMLInputElement) => {fieldRefs.current[idx] = el;}}
                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)} />;
 
     return (<form id={formType} className="w-full" onSubmit={(e) => {e.preventDefault(); onSubmit();}}>
-        {fields.map((field, idx) => {
-            if (field === "first_name") {
-                return (<div key="div" className="flex gap-2">
-                    {RenderInput(field, idx)}
-                    {RenderInput(fields[idx + 1], idx + 1)}
-                </div>);
-            } else if (field !== "last_name")
-                return RenderInput(field, idx);
-        })}
-        {handleForgotPassword && <div className={"relative mb-4" + (errors["password-signin"] ? " pt-3" : "")}>
-            <TextButton className="absolute bottom-1" onClick={handleForgotPassword}>{t("forgotPassword")}</TextButton>
-        </div>}
-        <div className="flex gap-2">
-            <Button onClick={onSubmit} disabled={disableBtn} className={formType.includes("password") ? "w-full" : ""}>{t("submit")}</Button>
-            {showOAuth && <OauthServices oauth="42" title={t("oAuth")} />}
-            {showOAuth && <OauthServices oauth="github" title={t("oAuth")} />}
-            {showOAuth && <OauthServices oauth="gitlab" title={t("oAuth")} />}
-        </div>
+        {fields.map((field, idx) => RenderInput(field, idx))}
+        <Button onClick={onSubmit} disabled={disableBtn}>{t("submit")}</Button>
     </form>)
-}
-
-function OauthServices({oauth, title}: {oauth: tOauthService, title: string}) {
-    const {callbackUrl} = useAuth();
-    const pathname = usePathname();
-    const size = useResponsiveSize();
-    const iconSize = size === "xs" ? 23 : 30;
-
-    return (<button type="button" title={title + " " + oauth} onClick={() => handleOauth(oauth, callbackUrl || pathname)} className="flex items-center justify-center size-10 hover:bg-black-hover bg-black">
-        <OAuthIcon oauth={oauth} size={iconSize}/>
-    </button>)
 }

@@ -1,8 +1,14 @@
-import {iTorrent} from "@/types/movie";
+import {iTorrent} from "@/types/media";
 
 export default function getBestTorrent(torrents?: iTorrent[]) {
     if (!torrents || !torrents.length)
         return null;
+
+    const statusScore: Record<string, number> = {
+        "completed": 3000,
+        "transcoding": 2000,
+        "downloading": 1000,
+    };
 
     const qualityScore: Record<string, number> = {
         "2160p": 100,
@@ -23,13 +29,10 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
         switch (quality) {
             case "2160p":
                 return { min: 8, ideal: 20, max: 80 };
-
             case "1080p":
                 return { min: 4, ideal: 12, max: 35 };
-
             case "720p":
                 return { min: 2, ideal: 5, max: 15 };
-
             default:
                 return { min: 1, ideal: 3, max: 10 };
         }
@@ -49,22 +52,17 @@ export default function getBestTorrent(torrents?: iTorrent[]) {
     }
 
     const ranked = torrents.map((torrent) => {
-        const seeds = parseInt(torrent.seeds, 10);
-        const seedScore = Math.log10(seeds + 1) * 30;
+        const seedScore = Math.log10(torrent.seeders + 1) * 30;
 
         const score =
+            (statusScore[torrent.status] || 0) +
             (qualityScore[torrent.quality] || 0) +
             (languageScore[torrent.language] || 0) +
             seedScore +
             sizeScore(torrent.size, torrent.quality);
 
-        return {
-            torrent,
-            score,
-        };
+        return {torrent, score};
     });
-
     ranked.sort((a, b) => b.score - a.score);
-
     return ranked[0].torrent;
 }

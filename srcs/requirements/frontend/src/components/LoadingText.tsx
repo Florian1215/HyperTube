@@ -11,6 +11,6 @@ export default function LoadingText({center=false}) {
     }, []);
 
     return (<div className="h-8 sm:h-15 xl:h-20 w-full">
-        <div className={"custom-loading " + randomWidth + (center ? " mx-auto" : "")} />
+        <div className={`custom-loading ${randomWidth} ${center ? "mx-auto" : ""}`} />
     </div>);
 }

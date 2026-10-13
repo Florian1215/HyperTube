@@ -1,61 +1,63 @@
-import useApiQuery, {addQuery, removeQuery, updateQuery} from "@/hooks/useApiQuery";
+import useApiQuery, {addQuery, removeQuery} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
-import {tListResponse, tResponse} from "@/types/api";
+import {tListResponse} from "@/types/api";
 import {iComment, iCommentDetails} from "@/types/comment";
 import {QueryClient} from "@tanstack/react-query";
-import {iMovie} from "@/types/movie";
+import {iMedia} from "@/types/media";
+import {tMedia} from "@/types/utils";
 
-function getComments(movieId?: string, page?: number, locale?: string) {
-    let endpoint = "/comments";
-    if (movieId !== undefined && page !== undefined)
-        endpoint = `/movies/${movieId}/comments?page=${page}`;
-    return apiClient<tListResponse<iComment[]>>(endpoint, locale);
+export function useComments(mediaType: tMedia, mediaId?: string, page?: number) {
+    return useApiQuery(
+        ["comments", mediaType, mediaId, page],
+        (locale) => {
+            let endpoint = `comments/${mediaType}/`;
+
+            if (mediaId !== undefined && page !== undefined)
+                endpoint = `${mediaType}/${mediaId}/comments/?ordering=-updated_at&page=${page}`;
+            return apiClient<tListResponse<iComment>>(endpoint, locale);
+        },
+    );
 }
 
-function getUserComments(userId: number, page: number, locale: string) {
-    return apiClient<tListResponse<iCommentDetails[]>>(`/users/${userId}/comments?page=${page}`, locale);
+export function useProfileComments(userId: number | undefined, page: number) {
+    return useApiQuery(
+        ["user-comments", userId, page],
+        (locale) => apiClient<tListResponse<iCommentDetails>>(`users/${userId}/comments/?ordering=-updated_at&page=${page}`, locale),
+        !!userId
+    );
 }
 
-export function postComment(locale: string, movieId: string, content: string) {
-    return apiClient<tResponse<iComment>>(`/movies/${movieId}/comments`, locale, {method: "POST", body: JSON.stringify({content})});
+export function postComment(locale: string, mediaType: tMedia, mediaId: string, content: string) {
+    return apiClient<iComment>(`${mediaType}/${mediaId}/comments/`, locale, {method: "POST", body: JSON.stringify({content})});
 }
 
 export function patchComment(locale: string, commentId: number, content: string) {
-    return apiClient<tResponse<iComment>>(`/comments/${commentId}`, locale, {method: "PATCH", body: JSON.stringify({content})});
+    return apiClient<iComment>(`comments/${commentId}/`, locale, {method: "PATCH", body: JSON.stringify({content})});
 }
 
 export function deleteComment(locale: string, commentId: number) {
-    return apiClient<tResponse<iComment>>(`/comments/${commentId}`, locale, {method: "DELETE"});
+    return apiClient<iComment>(`comments/${commentId}/`, locale, {method: "DELETE"});
 }
 
-export function useComments(movieId?: string, page?: number) {
-    return useApiQuery(
-        ["comments", movieId, page],
-        (locale) => getComments(movieId, page, locale),
-    );
-}
-
-export function useProfileComments(userId: number, page: number) {
-    return useApiQuery(
-        ["user-comments", userId, page],
-        (locale) => getUserComments(userId, page, locale),
-    );
-}
-
-export function addCommentCache(queryClient: QueryClient, newComment: iComment, movie: iMovie, userId: number) {
-    addQuery(queryClient, ["comments", movie.imdb_id, 0], newComment);
+export function addCommentCache(queryClient: QueryClient, newComment: iComment, media: iMedia, userId: number) {
+    addQuery(queryClient, ["comments", media.type, media.id, 1], newComment);
     const newDetailComment = structuredClone(newComment as iCommentDetails);
-    newDetailComment.movie = movie;
-    addQuery(queryClient, ["user-comments", userId, 0], newDetailComment);
+    newDetailComment.media = media;
+    addQuery(queryClient, ["user-comments", userId, 1], newDetailComment);
 }
 
-export function updateCommentCache(queryClient: QueryClient, newComment: iCommentDetails, userId: number) {
-    updateQuery(queryClient, ["user-comments", userId], newComment);
-    const {movie, ...comment}: {movie: iMovie} & iComment = newComment;
-    updateQuery(queryClient, ["comments", movie.imdb_id], comment);
+export function updateCommentCache(queryClient: QueryClient, comment: iComment) {
+    ["comments", "user-comments"].forEach((key) => {
+        queryClient.setQueriesData<tListResponse<iComment>>({queryKey: [key]}, (current) => {
+            if (!current?.results)
+                return current;
+            return {...current, results: current.results.map((v) => v.id === comment.id ? {...v, ...comment} : v)};
+        });
+        void queryClient.invalidateQueries({queryKey: [key]});
+    });
 }
 
-export function removeCommentCache(queryClient: QueryClient, commentId: number, movieId: string, userId: number) {
-    removeQuery(queryClient, ["comments", movieId], commentId);
-    removeQuery(queryClient, ["user-comments", userId], commentId);
+export function removeCommentCache(queryClient: QueryClient, commentId: number, userId: number) {
+    removeQuery(queryClient, ["comments"], commentId);
+    removeQuery(queryClient, ["user-comments", userId, 1], commentId);
 }

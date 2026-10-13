@@ -2,11 +2,11 @@ import {useTranslations} from "next-intl";
 import {useCallback} from "react";
 import Link from "next/link";
 import {usePathname, useRouter} from "@/i18n/navigation";
-import {ApiError} from "@/services/ApiError";
 import useModal from "@/contexts/ModalContext";
 import useNotification from "@/contexts/NotificationContext";
 import useAuth from "@/contexts/AuthContext";
 import SmallText from "@/components/ui/SmallText";
+import {ApiError} from "@/services/apiClient";
 
 export default function useHandleError() {
     const {openModal} = useModal();
@@ -16,15 +16,15 @@ export default function useHandleError() {
     const pathname = usePathname();
     const router = useRouter();
 
-    return useCallback((error: ApiError, translation: "Film" | "User") => {
+    return useCallback((error: ApiError, translation: "Film" | "Serie" | "User" | "People") => {
         if (error instanceof ApiError) {
             if (error.status === 401) {
                 setCallbackUrl(pathname);
                 openModal({type: "signin"});
                 logout();
-                return (<button className="w-full hover:underline" onClick={() =>
+                return (<button className="w-full" onClick={() =>
                     openModal({type: "signin"})
-                }><SmallText>{tError("loginRequired")}</SmallText></button>);
+                }><SmallText className="hover:text-accent">{tError("loginRequired")}</SmallText></button>);
             } else if (error.status === 404)
                 addNotification(tError("notFound" + translation), "error");
                 router.push("/");

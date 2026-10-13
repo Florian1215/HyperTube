@@ -1,9 +1,8 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import {tOauthService} from "@/types/user";
 
-export function CrossIcon({color="black", size=30, className=""}) {
+export function CrossIcon({color="dblack", size=30, className=""}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg className={className} width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -12,7 +11,7 @@ export function CrossIcon({color="black", size=30, className=""}) {
     </svg>);
 }
 
-export function RightIcon({color="black", size=13}) {
+export function RightIcon({color="dblack", size=13}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} viewBox="0 0 16 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,7 +19,7 @@ export function RightIcon({color="black", size=13}) {
     </svg>);
 }
 
-export function LeftIcon({color="black", size=13}) {
+export function LeftIcon({color="dblack", size=13}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg width={size} height={size} viewBox="0 0 16 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -28,7 +27,23 @@ export function LeftIcon({color="black", size=13}) {
     </svg>);
 }
 
-export function UserIcon({selected, color="black", size=20}: {selected: boolean, color?: string, size?: number}) {
+export function RightArrowIcon({color="dblack", size=13}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} viewBox="0 0 45 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill={fullColor} d="M43.5076 28.1185C45.2048 29.325 45.1868 31.8514 43.4725 33.0335L4.70302 59.7671C2.71286 61.1394 -2.73295e-06 59.7148 -2.62728e-06 57.2973L-2.54102e-07 3.00532C-1.47579e-07 0.56835 2.75182 -0.851789 4.73811 0.560122L43.5076 28.1185Z"/>
+    </svg>);
+}
+
+export function LeftArrowIcon({color="dblack", size=13}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} viewBox="0 0 45 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill={fullColor} d="M1.26197 32.1839C-0.435305 30.9775 -0.41727 28.4511 1.29706 27.269L40.0665 0.535405C42.0567 -0.836918 44.7695 0.587725 44.7695 3.00516L44.7695 57.2972C44.7695 59.7341 42.0177 61.1543 40.0314 59.7424L1.26197 32.1839Z"/>
+    </svg>);
+}
+
+export function UserIcon({selected, color="dblack", size=20}: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 
     if (selected) {
@@ -42,7 +57,7 @@ export function UserIcon({selected, color="black", size=20}: {selected: boolean,
     </svg>);
 }
 
-export function SearchIcon({selected, color="black", size=20 }: {selected: boolean, color?: string, size?: number}) {
+export function SearchIcon({selected, color="dblack", size=20 }: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 
     if (selected) {
@@ -55,37 +70,7 @@ export function SearchIcon({selected, color="black", size=20 }: {selected: boole
     </svg>);
 }
 
-export function RegisterIcon({color="black", size=20}) {
-    const fullColor = `var(--color-${color})`;
-
-    return (<svg width={size} height={size} viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16.731 18.0498H20.7808V18.9502H16.731V23H15.8306V18.9502H11.7808V18.0498H15.8306V14H16.731V18.0498ZM8.99951 11C10.3007 11.0001 11.5403 11.2906 12.6606 11.8076C12.2737 11.99 11.9026 12.2011 11.5503 12.4375C10.7471 12.1557 9.88893 12.0001 8.99951 12C4.49281 12 0.780709 15.9391 1.00928 20.5508L1.01025 20.5635C1.03042 20.5958 1.09754 20.6786 1.29443 20.8018C1.64264 21.0193 2.21053 21.2385 2.99072 21.4277C4.37577 21.7635 6.22142 21.9557 8.15283 21.9922C8.2584 22.3369 8.38701 22.6716 8.53369 22.9961C4.33845 22.9629 0.280074 22.2151 0.0239258 20.748L0.0112305 20.5996C-0.244646 15.4328 3.90558 11 8.99951 11ZM8.99951 0C11.7605 0.000527208 13.9995 2.2389 13.9995 5C13.9995 7.7611 11.7605 9.99947 8.99951 10C6.23809 10 3.99951 7.76142 3.99951 5C3.99951 2.23858 6.23809 4.81392e-07 8.99951 0ZM8.99951 1C6.79037 1 4.99951 2.79086 4.99951 5C4.99951 7.20914 6.79037 9 8.99951 9C11.2082 8.99947 12.9995 7.20881 12.9995 5C12.9995 2.79119 11.2082 1.00053 8.99951 1Z" fill={fullColor}/>
-    </svg>);
-}
-
-export function LanguageIcon({selected,color="black", size=24}: {selected: boolean, color?: string, size?: number}) {
-    const fullColor = `var(--color-${color})`;
-    const fullWhite = `var(--color-white)`;
-
-    if (selected) {
-        return (<svg width={size} height={size} viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="13.5" cy="13.5" r="13" fill={fullColor} stroke={fullColor}/>
-            <circle cx="13.3262" cy="13.5" r="11" stroke={fullWhite}/>
-            <path d="M13.3262 2.5C14.5418 2.5 15.7906 3.54737 16.7646 5.58398C17.7211 7.58399 18.3262 10.3822 18.3262 13.5C18.3262 16.6178 17.7211 19.416 16.7646 21.416C15.7906 23.4526 14.5418 24.5 13.3262 24.5C12.1105 24.5 10.8617 23.4526 9.8877 21.416C8.93121 19.416 8.32617 16.6178 8.32617 13.5C8.32617 10.3822 8.93121 7.58399 9.8877 5.58398C10.8617 3.54737 12.1105 2.5 13.3262 2.5Z" stroke={fullWhite}/>
-            <line x1="2.82617" y1="9.5" x2="24" y2="9.5" stroke={fullWhite}/>
-            <line x1="2.82617" y1="15.5" x2="24.8262" y2="15.5" stroke={fullWhite}/>
-        </svg>);
-    }
-    return (<svg width={size} height={size} viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="13.5" cy="13.5" r="13" fill={fullWhite} stroke={fullWhite}/>
-        <circle cx="13.3262" cy="13.5" r="11" stroke={fullColor}/>
-        <path d="M13.3262 2.5C14.5418 2.5 15.7906 3.54737 16.7646 5.58398C17.7211 7.58399 18.3262 10.3822 18.3262 13.5C18.3262 16.6178 17.7211 19.416 16.7646 21.416C15.7906 23.4526 14.5418 24.5 13.3262 24.5C12.1105 24.5 10.8617 23.4526 9.8877 21.416C8.93121 19.416 8.32617 16.6178 8.32617 13.5C8.32617 10.3822 8.93121 7.58399 9.8877 5.58398C10.8617 3.54737 12.1105 2.5 13.3262 2.5Z" stroke={fullColor}/>
-        <line x1="2.82617" y1="9.5" x2="24" y2="9.5" stroke={fullColor}/>
-        <line x1="2.82617" y1="15.5" x2="24.8262" y2="15.5" stroke={fullColor}/>
-    </svg>);
-}
-
-export function EyeIcon({color="black", size=24, crossed=false}: {color?: string, size?: number, crossed?: boolean}) {
+export function EyeIcon({color="dblack", size=24, crossed=false}: {color?: string, size?: number, crossed?: boolean}) {
     const fullColor = `var(--color-${color})`;
 
     if (crossed)
@@ -93,19 +78,19 @@ export function EyeIcon({color="black", size=24, crossed=false}: {color?: string
             <g clipPath="url(#clip0_2902_56205)">
                 <path
                     d="M12.0001 4.0645C9.61239 4.0645 7.67013 4.77712 6.12007 5.77699L18.4148 17.9851C21.6687 15.6147 23.0001 12.0645 23.0001 12.0645C23.0001 12.0645 20.0001 4.0645 12.0001 4.0645ZM12.0001 7.0645C14.7611 7.0645 17.0001 9.3035 17.0001 12.0645C17.0001 13.3004 16.5514 14.4318 15.8081 15.3045L8.64004 8.36201C9.52782 7.55584 10.7067 7.0645 12.0001 7.0645ZM12.0001 9.0645C11.5336 9.0645 11.0784 9.17312 10.6682 9.37635L14.6875 13.3979C14.8912 12.9873 15.0001 12.5315 15.0001 12.0645C15.0001 11.2688 14.684 10.5058 14.1214 9.94318C13.5588 9.38057 12.7957 9.0645 12.0001 9.0645Z"
-                    fill={fullColor} />
+                    fill={fullColor}/>
                 <path fillRule="evenodd" clipRule="evenodd"
                       d="M22.343 23.7651L0.28125 1.70335L1.6389 0.345703L23.7006 22.4074L22.343 23.7651Z"
-                      fill={fullColor} />
+                      fill={fullColor}/>
                 <path d="M11.8195 15.059C10.305 14.969 9.09286 13.7556 9.00513 12.2405L11.8195 15.059Z"
-                      fill={fullColor} />
+                      fill={fullColor}/>
                 <path
                     d="M6.99561 12.0645C6.99561 14.7894 9.21646 17.0688 12 17.0688C12.5652 17.0688 13.0909 16.9785 13.5982 16.8068L16.0873 19.2959C12.6987 20.6758 5.05674 21.1038 0.995605 12.0645C1.37115 11.13 2.38425 9.12997 4.13971 7.37451L7.25761 10.4924C6.99561 11.1736 6.99561 12.0645 6.99561 12.0645Z"
-                    fill={fullColor} />
+                    fill={fullColor}/>
             </g>
             <defs>
                 <clipPath id="clip0_2902_56205">
-                    <rect width="24" height="24" fill={fullColor} />
+                    <rect width="24" height="24" fill={fullColor}/>
                 </clipPath>
             </defs>
         </svg>);
@@ -113,11 +98,11 @@ export function EyeIcon({color="black", size=24, crossed=false}: {color?: string
     return (<svg height={size} width={size} viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
         <path
             d="M12 4.08398C4 4.08398 1 12.084 1 12.084C1 12.084 4 20.084 12 20.084C20 20.084 23 12.084 23 12.084C23 12.084 20 4.08398 12 4.08398ZM12 7.08398C14.761 7.08398 17 9.32298 17 12.084C17 14.845 14.761 17.084 12 17.084C9.239 17.084 7 14.845 7 12.084C7 9.32298 9.239 7.08398 12 7.08398ZM12 9.08398C11.2044 9.08398 10.4413 9.40005 9.87868 9.96266C9.31607 10.5253 9 11.2883 9 12.084C9 12.8796 9.31607 13.6427 9.87868 14.2053C10.4413 14.7679 11.2044 15.084 12 15.084C12.7956 15.084 13.5587 14.7679 14.1213 14.2053C14.6839 13.6427 15 12.8796 15 12.084C15 11.2883 14.6839 10.5253 14.1213 9.96266C13.5587 9.40005 12.7956 9.08398 12 9.08398Z"
-            fill={fullColor} />
+            fill={fullColor}/>
     </svg>);
 }
 
-export function HypertubResponsiveLogo({color="black", height=20}: {color?: string, height?: number, width?: number, className?: string}) {
+export function HypertubResponsiveLogo({color="dblack", height=20}: {color?: string, height?: number, width?: number, className?: string}) {
     const fullColor = `var(--color-${color})`;
     const defaultRecWidth = 266;
     const minWindowWidth = 640;
@@ -138,7 +123,7 @@ export function HypertubResponsiveLogo({color="black", height=20}: {color?: stri
         return () => window.removeEventListener("resize", handlWindowResize);
     }, []);
 
-    return (<svg className="h-3 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg">
+    return (<svg className="h-2 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg">
         {/*h*/} <path d="M590.15 30.5918C590.15 41.8558 595.142 48.1279 610.758 48.1279C611.645 48.1279 612.498 48.1057 613.317 48.0654V64.6094C612.48 64.6282 611.626 64.6396 610.758 64.6396C579.014 64.6396 567.75 52.0958 567.75 30.5918V0H590.15V30.5918Z" fill={fullColor}/>
         {/*y*/} <path d="M22.5283 23.4238H63.7441V0H86.2725V64H63.7441V40.0645H22.5283V64H0V0H22.5283V23.4238Z" fill={fullColor}/>
         {/*p*/} <path d="M143.669 25.0879L166.325 0H194.613L154.805 39.2959V64H132.277V39.2959L92.4688 0H120.757L143.669 25.0879Z" fill={fullColor}/>
@@ -153,7 +138,7 @@ export function HypertubResponsiveLogo({color="black", height=20}: {color?: stri
     </svg>);
 }
 
-export function HypertubeLogo({color="black", height=20, width, className}: {color?: string, height?: number, width?: number, className?: string}) {
+export function HypertubeLogo({color="dblack", height=20, width, className}: {color?: string, height?: number, width?: number, className?: string}) {
     const fullColor = `var(--color-${color})`;
     const preserveRatio = height && width ? "none" : "xMidYMid meet";
     if (!width)
@@ -174,7 +159,7 @@ export function HypertubeLogo({color="black", height=20, width, className}: {col
     </svg>);
 }
 
-export function ExitDoorIcon({selected, color="black", size=20}: {selected: boolean, color?: string, size?: number}) {
+export function ExitDoorIcon({selected, color="dblack", size=20}: {selected: boolean, color?: string, size?: number}) {
     const fullColor = `var(--color-${color})`;
 
     if (selected) {
@@ -188,7 +173,7 @@ export function ExitDoorIcon({selected, color="black", size=20}: {selected: bool
     </svg>);
 }
 
-export function CheckIcon({color="black", size=20, className="" }) {
+export function CheckIcon({color="dblack", size=20, className="" }) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg className={className} width={size} height={size} viewBox="0 0 18 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -196,84 +181,72 @@ export function CheckIcon({color="black", size=20, className="" }) {
     </svg>);
 }
 
-export function GridIcon({color="black", size=20}) {
+export function GridIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 15">
-        <path fill={fullColor} stroke={fullColor} strokeWidth="1.5" d="M1.252 1.697h4.5v4.5h-4.5zM8.752 1.697h4.5v4.5h-4.5zM16.252 1.697h4.5v4.5h-4.5zM1.252 9.197h4.5v4.5h-4.5zM8.752 9.197h4.5v4.5h-4.5zM16.252 9.197h4.5v4.5h-4.5z" />
+        <path fill={fullColor} stroke={fullColor} strokeWidth="1.5" d="M1.252 1.697h4.5v4.5h-4.5zM8.752 1.697h4.5v4.5h-4.5zM16.252 1.697h4.5v4.5h-4.5zM1.252 9.197h4.5v4.5h-4.5zM8.752 9.197h4.5v4.5h-4.5zM16.252 9.197h4.5v4.5h-4.5z"/>
     </svg>);
 }
 
-export function ListIcon({color="black", size=20}) {
+export function ListIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
         <path fillRule="evenodd" clipRule="evenodd" d="M21.499 3.33H5.719V.505h15.78V3.33ZM3.325 3.33H.5V.505h2.825V3.33ZM21.499 8.649H5.719V5.824h15.78v2.825ZM3.325 8.661H.5V5.836h2.825v2.825ZM21.499 13.966H5.719v-2.825h15.78v2.825ZM3.325 13.964H.5V11.14h2.825v2.825Z"
-              fill={fullColor} />
+              fill={fullColor}/>
     </svg>);
 }
 
-export function SortIcon({sideUp=true, color="black", size=15}) {
+export function SortIcon({sideUp=true, color="dblack", size=15}) {
     const fullColor = `var(--color-${color})`;
 
     return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 16">
         {sideUp ?
-            <path d="M5.95 4.68171e-06L4.13909 4.99834e-06L4.13909 11.74L1.30182 9.11728L-8.4212e-07 10.3827L5.04455 15.1991L9.62091 10.3827L8.32 9.11637L5.95 11.7391L5.95 4.68171e-06Z" fill={fullColor} /> :
-            <path d="M5.95 15.1991L4.13909 15.1991L4.13909 3.45909L1.30182 6.08182L-8.4212e-07 4.81636L5.04455 8.82016e-07L9.62091 4.81637L8.32 6.08273L5.95 3.46L5.95 15.1991Z" fill={fullColor} />}
+            <path d="M5.95 4.68171e-06L4.13909 4.99834e-06L4.13909 11.74L1.30182 9.11728L-8.4212e-07 10.3827L5.04455 15.1991L9.62091 10.3827L8.32 9.11637L5.95 11.7391L5.95 4.68171e-06Z" fill={fullColor}/> :
+            <path d="M5.95 15.1991L4.13909 15.1991L4.13909 3.45909L1.30182 6.08182L-8.4212e-07 4.81636L5.04455 8.82016e-07L9.62091 4.81637L8.32 6.08273L5.95 3.46L5.95 15.1991Z" fill={fullColor}/>}
     </svg>);
 }
 
-export function StarIcon({color="yellow", size=20}) {
+export function StarIcon({color="yellow", size=18}) {
     const fullColor = `var(--color-${color})`;
 
-    return (<svg height={size} width={size} fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 20">
-        <path d="M10.4617 0L12.9313 7.60081H20.9233L14.4577 12.2984L16.9273 19.8992L10.4617 15.2016L3.99603 19.8992L6.46569 12.2984L4.86374e-05 7.60081H7.99202L10.4617 0Z"
-            fill={fullColor}/>
+    return (<svg height={size} width={size} viewBox="0 0 55 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill={fullColor} d="M24.6816 2.22729C25.43 -0.0759635 28.6891 -0.0759652 29.4375 2.22729L33.7686 15.5574C34.2371 16.9995 35.5814 17.9763 37.0977 17.9763H51.1133C53.5351 17.9763 54.5423 21.0753 52.583 22.4988L41.2432 30.7371C40.0167 31.6283 39.5033 33.2082 39.9717 34.6501L44.3037 47.9802C45.0521 50.2835 42.4153 52.1996 40.4561 50.7761L29.1172 42.5369C27.8905 41.6456 26.2287 41.6456 25.002 42.5369L13.6631 50.7761C11.7038 52.1996 9.06705 50.2835 9.81543 47.9802L14.1475 34.6501C14.6158 33.2082 14.1025 31.6283 12.876 30.7371L1.53613 22.4988C-0.423148 21.0753 0.584047 17.9763 3.00586 17.9763H17.0215C18.5378 17.9763 19.882 16.9995 20.3506 15.5574L24.6816 2.22729Z"/>
     </svg>);
 }
 
-export function EditIcon({color="black", size=20}) {
+export function EditIcon({color="dblack", size=20}) {
     const fullColor = `var(--color-${color})`;
 
-    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <path fill={fullColor} d="M375.27,512H49.9c-26.35-7.32-45.43-27.75-49.9-54.89V142.72c6.12-32.56,30.14-53.9,63.33-55.94,55.32-3.39,114.07,2.67,169.75.01,26.7.78,30.92,36.54,4.71,42.71l-176.42.24c-8.55.96-14.91,7.3-17.99,14.95l-.03,310.48c1.52,7.16,10.42,14.94,17.98,14.96h302.49c10.43-.77,18.58-9.16,19.41-19.51l.12-174.54c4.86-26.51,41.1-23.67,42.79,2.9-2.45,55.73,3.32,114.31.06,169.7-1.86,31.63-20.1,55.28-50.95,63.33Z"/>
-        <path fill={fullColor} d="M367.92,69.94l74.78,75.77-168.3,168.11c-25.57,8.51-53.13,11.12-79.4,17.42-8.68,1.48-14.72-4.52-13.23-13.23,6.3-26.28,8.91-53.83,17.42-79.4l168.74-168.66Z"/>
-        <path fill={fullColor} d="M451.91,2.29c33.16-3.52,61.48,23.82,59.07,57.08-2.02,27.95-27.2,43.57-44.53,62.32l-75.14-74.42c-.23-1.21.82-1.64,1.39-2.39,5.72-7.45,27.47-28.58,35.15-33.72,6.99-4.68,15.64-7.98,24.06-8.87Z"/>
+    return (<svg height={size} width={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384.24 384.24">
+        <path fill={fullColor} d="M36.48,101.52v242.88h247.92v-147.24c0-2.47,2.35-7.1,3.96-9,10.13-12.03,29.21-5.61,30.57,9.75l.03,160.05c-.72,10.4-8.32,19.07-18.66,20.7-92.33.72-184.77.09-277.14.32-11.16-.52-20.35-9.38-21.24-20.52V87.47c.89-11.04,9.94-19.89,21.01-20.51l163.41.03c13.94,1.27,21.09,17.68,11.79,28.53-2.23,2.61-7.54,6-11.04,6H36.48Z"/>
+        <path fill={fullColor} d="M275.88,53.04l55.45,56.64-125.05,124.8c-14.41,4.97-29.59,7.1-44.53,9.95-4.34.83-14.3,3.7-18.05,3.18-4.28-.59-6.87-4.48-6.63-8.66.2-3.47,2.02-9.14,2.74-12.87,3.07-15.92,5.25-32.16,10.57-47.51l125.51-125.53Z"/>
+        <path fill={fullColor} d="M328.74,1.26c2.55-.35,4.91.09,7.1,1.42l44.44,44.12c3.6,3.75,4.02,9.1.72,13.21l-38.16,38.15-56.5-56.55L324.48,3.24c1.14-.92,2.81-1.78,4.26-1.98Z"/>
+    </svg>);
+}
+
+export function BookmarkIcon({color="dblack", size=20, filled=false}: {color?: string, size?: number, filled?: boolean}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill={filled ? fullColor : "none"} stroke={fullColor} strokeWidth={2} d="M6 3h12v18l-6-4.5L6 21V3Z"/>
+    </svg>);
+}
+
+export function RewatchIcon({color="dblack", size=16}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="390.14 200 12 12" fill="none">
+        <path stroke={fullColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" d="M400.112557,201 L400.112557,203.5 L397.615057,203.5 M391.5012,206.055 C391.5012,203.45 393.579117,201.335 396.141549,201.335 C397.510177,201.335 398.738945,201.935 399.593089,202.895 C399.757924,203.085 399.912769,203.29 400.052629,203.505 M392.120557,211 L392.120557,208.5 L394.618057,208.5 M400.786914,206.055 C400.786914,208.665 398.708997,210.78 396.14157,210.78 C394.777937,210.78 393.544174,210.175 392.695025,209.22 C392.53019,209.03 392.375346,208.825 392.235486,208.605"/>
     </svg>);
 }
 
 export function TrashIcon({color="red", size=20}) {
     const fullColor = `var(--color-${color})`;
 
-    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 384">
-        <path fill={fullColor} d="M92.82,384c-6.92-2.18-12.43-7.22-13.39-14.71l-15.8-239.54h256l-17.28,241.06c-1.47,7.36-6.61,11.03-13.41,13.19H92.82ZM160.68,167.5c-5.38-5.38-14.87-3.04-17.77,3.82l-.71,156.82c2.41,13.03,19.04,12.92,21.74,0l-.59-156.19c-.89-1.29-1.62-3.39-2.68-4.45ZM229.54,164.52c-4.01.16-8.59,3.45-9.71,7.36l-.51,156.25c1.96,13.36,20.26,12.83,21.71-.75l-.51-154.74c-1.49-4.8-5.87-8.33-10.98-8.12Z"/>
-        <path fill={fullColor} d="M247.02,0c2.48.69,8.23,5.37,8.23,7.88v28.88h-127.25V7.88c0-2.5,5.75-7.19,8.23-7.88h110.78Z"/>
-        <path fill={fullColor} d="M345.08,108H38.18v-26.62c0-11.62,13-22.83,24.34-22.86l256.77-.05c11.93-.61,25.79,10.7,25.79,22.91v26.62Z"/>
-    </svg>);
-}
-
-export function OAuthIcon({oauth, color="white", size=30}: {oauth: tOauthService, color?: string, size?: number}) {
-    const fullColor = `var(--color-${color})`;
-
-    if (oauth === "42") {
-        return (<svg width={size} height={size} viewBox="0 0 67 43" fill="none" xmlns="http://www.w3.org/2000/svg" className="pt-0.5">
-            <path d="M37.0271 0H24.6828L0 22.1433V31.1061H24.6828V42.1777H37.0271V22.1433H12.3385L37.0271 0Z" fill={fullColor}/>
-            <path d="M42.3171 11.0716L54.6556 0H42.3171V11.0716Z" fill={fullColor}/>
-            <path d="M66.9999 11.0716V0H54.6556V11.0716L42.3171 22.1433V33.2149H54.6556V22.1433L66.9999 11.0716Z" fill={fullColor}/>
-            <path d="M66.999 22.1435L54.655 33.2152H66.999V22.1435Z" fill={fullColor}/>
-        </svg>);
-    } else if (oauth === "gitlab") {
-        return (<svg width={size} height={size} className="tanuki-logo" viewBox="0 0 50 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path className="tanuki-shape tanuki" d="m49.014 19-.067-.18-6.784-17.696a1.792 1.792 0 0 0-3.389.182l-4.579 14.02H15.651l-4.58-14.02a1.795 1.795 0 0 0-3.388-.182l-6.78 17.7-.071.175A12.595 12.595 0 0 0 5.01 33.556l.026.02.057.044 10.32 7.734 5.12 3.87 3.11 2.351a2.102 2.102 0 0 0 2.535 0l3.11-2.352 5.12-3.869 10.394-7.779.029-.022a12.595 12.595 0 0 0 4.182-14.554Z" fill={fullColor}/>
-            <path className="tanuki-shape right-cheek" d="m49.014 19-.067-.18a22.88 22.88 0 0 0-9.12 4.103L24.931 34.187l9.485 7.167 10.393-7.779.03-.022a12.595 12.595 0 0 0 4.175-14.554Z" fill="var(--color-white-loading)"/>
-            <path className="tanuki-shape chin" d="m15.414 41.354 5.12 3.87 3.11 2.351a2.102 2.102 0 0 0 2.535 0l3.11-2.352 5.12-3.869-9.484-7.167-9.51 7.167Z" fill="var(--color-gray-loading)"/>
-            <path className="tanuki-shape left-cheek" d="M10.019 22.923a22.86 22.86 0 0 0-9.117-4.1L.832 19A12.595 12.595 0 0 0 5.01 33.556l.026.02.057.044 10.32 7.734 9.491-7.167L10.02 22.923Z" fill="var(--color-white-loading)"/>
-        </svg>);
-    }
-    return (<svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd"
-              d="M16 0C7.16 0 0 7.16 0 16C0 23.08 4.58 29.06 10.94 31.18C11.74 31.32 12.04 30.84 12.04 30.42C12.04 30.04 12.02 28.78 12.02 27.44C8 28.18 6.96 26.46 6.64 25.56C6.46 25.1 5.68 23.68 5 23.3C4.44 23 3.64 22.26 4.98 22.24C6.24 22.22 7.14 23.4 7.44 23.88C8.88 26.3 11.18 25.62 12.1 25.2C12.24 24.16 12.66 23.46 13.12 23.06C9.56 22.66 5.84 21.28 5.84 15.16C5.84 13.42 6.46 11.98 7.48 10.86C7.32 10.46 6.76 8.82 7.64 6.62C7.64 6.62 8.98 6.2 12.04 8.26C13.32 7.9 14.68 7.72 16.04 7.72C17.4 7.72 18.76 7.9 20.04 8.26C23.1 6.18 24.44 6.62 24.44 6.62C25.32 8.82 24.76 10.46 24.6 10.86C25.62 11.98 26.24 13.4 26.24 15.16C26.24 21.3 22.5 22.66 18.94 23.06C19.52 23.56 20.02 24.52 20.02 26.02C20.02 28.16 20 29.88 20 30.42C20 30.84 20.3 31.34 21.1 31.18C27.42 29.06 32 23.06 32 16C32 7.16 24.84 0 16 0V0Z"
-              fill={fullColor}/>
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1278 1598">
+        <path fill={fullColor} d="M1257.1000,454.005 L20.000,454.005 C8.954,454.005 -0.000,445.050 -0.000,434.005 L-0.000,263.995 C-0.000,252.950 8.954,243.995 20.000,243.995 L1257.1000,243.995 C1269.046,243.995 1278.000,252.950 1278.000,263.995 L1278.000,434.005 C1278.000,445.050 1269.046,454.005 1257.1000,454.005 ZM883.229,152.090 L395.273,152.090 C384.227,152.090 375.273,143.136 375.273,132.090 L375.273,20.638 C375.273,9.592 384.227,0.638 395.273,0.638 L883.229,0.638 C894.274,0.638 903.229,9.592 903.229,20.638 L903.229,132.090 C903.229,143.136 894.274,152.090 883.229,152.090 ZM131.273,545.638 L1159.229,545.638 C1170.274,545.638 1179.229,554.592 1179.229,565.638 L1179.229,1577.090 C1179.229,1588.136 1170.274,1597.090 1159.229,1597.090 L131.273,1597.090 C120.227,1597.090 111.273,1588.136 111.273,1577.090 L111.273,565.638 C111.273,554.592 120.227,545.638 131.273,545.638 ZM766.000,1421.005 C766.000,1432.050 774.954,1441.005 786.000,1441.005 L833.1000,1441.005 C845.046,1441.005 854.000,1432.050 854.000,1421.005 L854.000,720.995 C854.000,709.950 845.046,700.995 833.1000,700.995 L786.000,700.995 C774.954,700.995 766.000,709.950 766.000,720.995 L766.000,1421.005 ZM436.000,1421.005 C436.000,1432.050 444.954,1441.005 455.1000,1441.005 L503.1000,1441.005 C515.046,1441.005 524.000,1432.050 524.000,1421.005 L524.000,720.995 C524.000,709.950 515.046,700.995 503.1000,700.995 L455.1000,700.995 C444.954,700.995 436.000,709.950 436.000,720.995 L436.000,1421.005 Z"/>
     </svg>);
 }
 
@@ -282,10 +255,10 @@ export function PlayPauseIcon({color = "white", isPlaying = false, size=25}) {
 
     if (isPlaying)
         return (<svg width={size} height={size} viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 0C6.55228 0 7 0.447715 7 1V26C7 26.5523 6.55228 27 6 27H1C0.447715 27 4.02663e-09 26.5523 0 26V1C0 0.447715 0.447715 2.41595e-08 1 0H6ZM21 0C21.5523 0 22 0.447715 22 1V26C22 26.5523 21.5523 27 21 27H16C15.4477 27 15 26.5523 15 26V1C15 0.447715 15.4477 2.41595e-08 16 0H21Z" fill={fullColor} />
+            <path d="M6 0C6.55228 0 7 0.447715 7 1V26C7 26.5523 6.55228 27 6 27H1C0.447715 27 4.02663e-09 26.5523 0 26V1C0 0.447715 0.447715 2.41595e-08 1 0H6ZM21 0C21.5523 0 22 0.447715 22 1V26C22 26.5523 21.5523 27 21 27H16C15.4477 27 15 26.5523 15 26V1C15 0.447715 15.4477 2.41595e-08 16 0H21Z" fill={fullColor}/>
         </svg>);
     return (<svg width={size} height={size} viewBox="0 0 23 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21.6016 13.0769C21.9192 13.2721 21.9192 13.7333 21.6016 13.9285L1.26172 26.4294C0.928574 26.6342 0.499999 26.3947 0.499999 26.0037L0.5 1.00171C0.5 0.610677 0.928576 0.371177 1.26172 0.575927L21.6016 13.0769Z" fill={fullColor} />
+        <path d="M21.6016 13.0769C21.9192 13.2721 21.9192 13.7333 21.6016 13.9285L1.26172 26.4294C0.928574 26.6342 0.499999 26.3947 0.499999 26.0037L0.5 1.00171C0.5 0.610677 0.928576 0.371177 1.26172 0.575927L21.6016 13.0769Z" fill={fullColor}/>
     </svg>);
 }
 
@@ -293,26 +266,12 @@ export function FullScreenIcon({color="white", iFullScreen=false, size=21}) {
     const fullColor = `var(--color-${color})`;
 
     if (iFullScreen)
-        return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 384">
-            <path fill={fullColor} d="M0,356.3l6.35-12.73,90.21-90.56h-58.01c-.79,0-5.9-2.14-7.03-2.71-21.42-10.86-14.95-43.46,10.73-45.23,36.88-2.55,76.66,2,113.84,0,12.04.76,21.78,9.92,22.83,22.08,3.21,37.02-2.48,78.58,0,116.08-1.74,20.05-26.28,29.57-40.85,15.35-2.59-2.53-7.08-10.39-7.08-13.88v-57.26l-90.56,90.21-12.73,6.35h-7.49c-10.41-2.69-17.52-9.8-20.21-20.21v-7.49Z"/>
-            <path fill={fullColor} d="M286.69,131.74h57.26c3.49,0,11.35,4.49,13.88,7.08,14.22,14.57,4.7,39.11-15.35,40.85-37.49-2.48-79.06,3.21-116.08,0-12.17-1.05-21.32-10.79-22.08-22.83,1.99-37.18-2.56-76.96,0-113.84,1.78-25.68,34.38-32.16,45.23-10.73.57,1.12,2.71,6.24,2.71,7.03v58.01L343.64,6.43c22.46-17.08,50,8.39,35.42,31.68l-92.38,93.63Z"/>
+        return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1599 1598">
+            <path fillRule="evenodd" fill={fullColor} d="M1596.145,151.551 L1234.463,512.971 L1524.533,512.971 C1535.587,512.971 1544.549,521.927 1544.549,532.974 L1544.549,698.1000 C1544.549,710.047 1535.587,719.003 1524.533,719.003 L1063.160,719.003 L897.026,719.003 C885.972,719.003 877.010,710.047 877.010,698.1000 L877.010,532.974 L877.010,71.903 C877.010,60.856 885.972,51.900 897.026,51.900 L1063.160,51.900 C1074.215,51.900 1083.177,60.856 1083.177,71.903 L1083.177,372.785 L1450.363,5.865 C1458.180,-1.947 1470.853,-1.947 1478.670,5.865 L1596.145,123.263 C1603.962,131.074 1603.962,143.739 1596.145,151.551 ZM705.486,1549.129 L539.452,1549.129 C528.404,1549.129 519.448,1540.179 519.448,1529.138 L519.448,1228.425 L152.483,1595.139 C144.671,1602.946 132.005,1602.946 124.193,1595.139 L6.789,1477.807 C-1.023,1469.1000 -1.023,1457.342 6.789,1449.534 L368.253,1088.319 L78.358,1088.319 C67.310,1088.319 58.354,1079.368 58.354,1068.327 L58.354,902.395 C58.354,891.354 67.310,882.403 78.358,882.403 L539.452,882.403 L705.486,882.403 C716.534,882.403 725.490,891.354 725.490,902.395 L725.490,1068.327 L725.490,1529.138 C725.490,1540.179 716.534,1549.129 705.486,1549.129 Z"/>
         </svg>);
-    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 384">
-        <path fill={fullColor} d="M0,243.38c4.31-18.28,26.86-26.36,40.82-12.75,2.59,2.53,7.08,10.38,7.08,13.87v57.22l91.8-91.12c23.44-17.19,51.17,10.98,33.48,34.21l-90.86,91.32h58c.95,0,6.26,2.31,7.5,2.97,16.7,8.93,16.19,33.6-.48,42.19l-7.4,2.7H20.21c-10.55-2.42-17.19-9.17-20.21-19.45v-121.17Z"/>
-        <path fill={fullColor} d="M335.27,83.31l-91.37,90.81c-22.46,17.07-49.99-8.39-35.42-31.66l92.36-93.56h-57.25c-3.49,0-11.35-4.49-13.88-7.07-14.22-14.56-4.7-39.08,15.35-40.82,37.49,2.47,79.04-3.2,116.05,0,12.16,1.05,21.31,10.78,22.08,22.81-1.99,37.16,2.56,76.9,0,113.75-1.78,25.66-34.37,32.13-45.23,10.73-.57-1.12-2.71-6.24-2.71-7.02v-57.97Z"/>
-    </svg>);
-}
-
-export function SubDelayIcon({direction="left", color="white", size=20}) {
-    const fullColor = `var(--color-${color})`;
-
-    if (direction === "left")
-        return (<svg width={size} height={size} viewBox="0 0 30 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M30.0042 26.0039C30.0041 26.7859 29.147 27.2649 28.4808 26.8555L17.0042 19.8028L17.0042 25.6914C17.0042 26.5334 16.0269 26.9987 15.3733 26.4678L0.369424 14.2793C-0.123173 13.8792 -0.123101 13.1268 0.369424 12.7266L15.3733 0.538104C16.0269 0.00720582 17.0042 0.472477 17.0042 1.31447L17.0042 7.20314L28.4808 0.149431C29.147 -0.259802 30.0042 0.22 30.0042 1.00197L30.0042 26.0039Z" fill={fullColor}/>
-        </svg>);
-    return (<svg width={size} height={size} viewBox="0 0 30 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0 1.00122C0.00012226 0.219265 0.857203 -0.259781 1.52344 0.149658L13 7.20239V1.31372C13 0.471751 13.9773 0.00646258 14.6309 0.537354L29.6348 12.7258C30.1274 13.126 30.1273 13.8783 29.6348 14.2786L14.6309 26.467C13.9773 26.9979 13 26.5327 13 25.6907V19.802L1.52344 26.8557C0.857186 27.2649 -3.4181e-08 26.7851 0 26.0032V1.00122Z" fill={fullColor}/>
-    </svg>);
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1599 1598">
+        <path fillRule="evenodd" fill={fullColor} d="M1578.996,666.726 L1412.962,666.726 C1401.914,666.726 1392.958,657.776 1392.958,646.734 L1392.958,346.022 L983.567,755.162 C975.755,762.969 963.089,762.969 955.277,755.162 L837.873,637.830 C830.061,630.023 830.061,617.365 837.873,609.558 L1241.763,205.915 L951.868,205.915 C940.820,205.915 931.864,196.965 931.864,185.924 L931.864,19.992 C931.864,8.951 940.820,0.000 951.868,0.000 L1412.962,0.000 L1578.996,0.000 C1590.044,0.000 1598.1000,8.951 1598.1000,19.992 L1598.1000,185.924 L1598.1000,646.734 C1598.1000,657.776 1590.044,666.726 1578.996,666.726 ZM357.164,1394.1000 L646.1000,1394.1000 C658.046,1394.1000 666.1000,1403.954 666.1000,1414.1000 L666.1000,1580.1000 C666.1000,1592.046 658.046,1600.1000 646.1000,1600.1000 L186.000,1600.1000 L20.000,1600.1000 C8.954,1600.1000 0.000,1592.046 0.000,1580.1000 L0.000,1414.1000 L0.000,954.000 C0.000,942.954 8.954,933.1000 20.000,933.1000 L186.000,933.1000 C197.046,933.1000 206.000,942.954 206.000,954.000 L206.000,1254.836 L615.308,845.528 C623.118,837.718 635.782,837.718 643.592,845.528 L760.972,962.908 C768.782,970.718 768.782,983.382 760.972,991.192 L357.164,1394.1000 Z"/>
+    </svg>)
 }
 
 export function CopyIcon({color="white", size=15}) {
@@ -323,5 +282,14 @@ export function CopyIcon({color="white", size=15}) {
                  overflow="visible">
         <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" fill={fullColor}/>
         <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" fill={fullColor}/>
+    </svg>);
+}
+
+export function DownloadIcon({color="dblack", size=20}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} aria-hidden="true" focusable="false" viewBox="0 0 16 16">
+        <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z" fill={fullColor}/>
+        <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z" fill={fullColor}/>
     </svg>);
 }

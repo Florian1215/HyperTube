@@ -1,5 +1,5 @@
 import {iUser} from "@/types/user";
-import {iMovie} from "@/types/movie";
+import {iMedia} from "@/types/media";
 
 export interface iComment {
     id: number
@@ -10,5 +10,5 @@ export interface iComment {
 }
 
 export interface iCommentDetails extends iComment {
-    movie: iMovie
+    media: iMedia
 }

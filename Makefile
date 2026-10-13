@@ -1,7 +1,8 @@
 ####################################################### VARIABLE #######################################################
 NAME		:=	hypertube
 SRCS_D		:=	srcs
-DATA_DIR	:=	$(SRCS_D)/data
+TRANSCODE_D	:=	$(SRCS_D)/requirements/transcode/
+DATA_DIR	:=	medias
 COMPOSE_F	:=	$(SRCS_D)/docker-compose.yml
 SERVICE		?=	#Leave blank
 
@@ -18,16 +19,16 @@ all			:	$(NAME)
 
 $(NAME)		:
 			mkdir -p $(DATA_DIR)
+			mkdir -p $(DATA_DIR)/torrents
+			mkdir -p $(DATA_DIR)/streams
 			$(COMPOSE) $(FLAGS) up --build $(SERVICE)
 
 .PHONY: transcode
 transcode:
-			cd $(SRCS_D)/requirements/torrent-transcode && \
-            set -a && source srcs/.env && set +a && \
-            go build -o torrent-stream . && \
-            ./torrent-stream
+			cp srcs/.env $(TRANSCODE_D)
+			cd $(TRANSCODE_D) && source .venv/bin/activate && flask --app app run
 
-CMDS		:=	up build down ps ls images events top
+CMDS		:=	up build down ps ls images top
 .PHONY: $(CMDS)
 $(CMDS)		:
 			$(COMPOSE) $(FLAGS) $@ $(SERVICE)
@@ -48,49 +49,23 @@ exec		:
 clean		:
 			$(COMPOSE) $(FLAGS) down --rmi local --remove-orphans
 
-.PHONY: vclean
-vclean		:
-			$(COMPOSE) $(FLAGS) down -v --remove-orphans
-			rm -rf $(DATA_DIR)
-
 PHONY: fclean
-fclean		:
+fclean		: dusting
 			$(COMPOSE) $(FLAGS) down -v --rmi all --remove-orphans
 			rm -rf $(DATA_DIR)
 
-.PHONY: image-ls image-rm
-image-ls	:
-			docker image ls -a
-image-rm	:
-			docker image rm `docker image ls -qa`
-
-.PHONY: container-ls container-rm
-container-ls:
-			docker container ls -a
-container-rm:
-			docker container rm `docker container ls -qa`
-
-.PHONY: volume-ls volume-rm
-volume-ls	:
-			docker volume ls
-volume-rm	:
-			docker volume rm `docker volume ls -qa`
-
-.PHONY: network-ls network-rm
-network-ls	:
-			docker network ls
-network-rm	:
-			docker network rm `docker network ls -qa`
+.PHONY: dusting
+dusting		:
+			find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+			find . -path "*/__pycache__/*" -delete
+			find . -path "*/__pycache__" -delete
 
 .PHONY: prune
 prune		:
 			docker system prune -af
 
-.PHONY: sre
-sre			:	clean all
+.PHONY: re
+re			:	clean all
 
 .PHONY: vre
-vre			:	vclean all
-
-.PHONY: re
-re			:	fclean all
+vre			:	fclean all

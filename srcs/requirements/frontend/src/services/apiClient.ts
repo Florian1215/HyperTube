@@ -1,11 +1,15 @@
 import {refreshAccessToken} from "@/services/auth.service";
-import {ApiError} from "@/services/ApiError";
 
 type ApiOptions = RequestInit & {body?: unknown};
-export const API_URL = "/api/v1";
+export const API_URL = "http://192.168.1.30:8439/api/v1/";
+export const SESSION_EXPIRED_EVENT = "session-expired";
+
+export function getApiFileUrl(path: string) {
+    return new URL(path, API_URL).href;
+}
 
 export default async function apiClient<T>(endpoint: string, locale?: string, options?: ApiOptions): Promise<T> {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("access");
     if (!locale)
         locale = "en";
 
@@ -14,7 +18,7 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
         {
             ...options,
             headers: {
-                "Content-Type": "application/json",
+                ...(!(options?.body instanceof FormData) && {"Content-Type": "application/json"}),
                 "Accept-Language": locale,
                 ...(token && {
                     Authorization: `Bearer ${token}`,
@@ -27,11 +31,41 @@ export default async function apiClient<T>(endpoint: string, locale?: string, op
 
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-        if (response.status === 401 && data.error.code === "TOKEN_EXPIRED") {
-            await refreshAccessToken(locale);
+        if (data?.code === "token_not_valid" && endpoint !== 'auth/refresh/') {
+            try {
+                await refreshAccessToken(locale);
+            } catch (error) {
+                if (!(error instanceof ApiError) && localStorage.getItem("refresh"))
+                    throw new ApiError(response.status, data);
+                const notify = localStorage.getItem("access") !== null;
+                localStorage.removeItem("access");
+                localStorage.removeItem("refresh");
+                if (notify)
+                    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+            }
             return apiClient<T>(endpoint, locale, options);
         }
         throw new ApiError(response.status, data);
     } else
         return data;
+}
+
+export class ApiError extends Error {
+    status: number;
+    data?: Record<string, string>;
+
+    constructor(status: number, data?: Record<string, string>) {
+        let unknownErrorMessage = "Unknown error";
+        if (status === 401)
+            unknownErrorMessage = "Unauthorized";
+        else if (status === 403)
+            unknownErrorMessage = "Forbidden";
+        else if (status === 404)
+            unknownErrorMessage = "Not found";
+        super(`[${status}] ${data?.detail || data?.message || unknownErrorMessage}`);
+
+        this.name = "ApiError";
+        this.status = status;
+        this.data = data;
+    }
 }

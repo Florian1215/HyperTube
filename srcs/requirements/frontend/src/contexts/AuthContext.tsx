@@ -3,12 +3,15 @@
 import {createContext, useContext, useEffect, useState, ReactNode} from "react";
 import {iUser} from "@/types/user";
 import {usePathname, useRouter} from "@/i18n/navigation";
+import {getUser} from "@/services/users.service";
+import {useLocale} from "next-intl";
+import {tLocale} from "@/i18n/routing";
 
 interface AuthContextType {
     user?: iUser;
-    login: (user: iUser, token: string, refresh: string) => void;
+    loading?: boolean;
+    login: (token: string, refresh: string) => void;
     logout: () => void;
-    loading: boolean;
     updateUser: (patch: Partial<iUser>) => void;
     callbackUrl?: string
     setCallbackUrl: (callbackUrl?: string) => void;
@@ -18,40 +21,55 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({children}: {children: ReactNode}) {
     const [user, setUser] = useState<iUser>();
-    const [loading, setLoading] = useState(true);
     const [callbackUrl, setCallbackUrl] = useState<string>();
     const router = useRouter();
     const pathname = usePathname();
+    const locale = useLocale() as tLocale;
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const userData = localStorage.getItem("user");
+        const restoreSession = async () => {
+            const access = localStorage.getItem("access");
 
-        if (userData && userData !== "undefined" && userData !== "null") {
-            try {
-                const parsed = JSON.parse(userData);
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setUser(parsed);
-            } catch {
-                console.warn("Invalid user in localStorage:", userData);
-                localStorage.removeItem("user");
+            if (!access) {
+                setLoading(false);
+                return;
             }
-        }
 
-        setLoading(false);
+            try {
+                const data = await getUser(locale, 'me')
+                setUser(data);
+            } catch {
+
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        restoreSession().then(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const login = (user: iUser, token: string, refresh: string) => {
-        localStorage.setItem("token", token);
-        localStorage.setItem("refresh_token", refresh);
-        localStorage.setItem("user", JSON.stringify(user));
-        setUser(user);
+    useEffect(() => {
+        if (!user?.color)
+            return;
+        const root = document.documentElement;
+        root.style.setProperty("--accent", `var(--color-${user.color})`);
+        return () => {root.style.removeProperty("--accent");};
+    }, [user?.color]);
+
+    const login = async (access: string, refresh: string) => {
+        localStorage.setItem("access", access);
+        localStorage.setItem("refresh", refresh);
+        const data = await getUser(locale, 'me')
+        setUser(data);
     };
 
     const logout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
         setUser(undefined);
-        if (pathname !== "/" && pathname !== "/movies")
+        if (pathname === "/settings")
             router.push("/");
     };
 
@@ -59,15 +77,12 @@ export function AuthProvider({children}: {children: ReactNode}) {
         setUser((prev) => {
             if (!prev)
                 return prev;
-            const updatedUser = {...prev, ...patch};
-
-            localStorage.setItem("user", JSON.stringify(updatedUser));
-            return updatedUser;
+            return {...prev, ...patch};
         });
     };
 
     return (<AuthContext.Provider
-        value={{user, login, logout, loading, updateUser, callbackUrl, setCallbackUrl}}>
+        value={{user, loading, login, logout, updateUser, callbackUrl, setCallbackUrl}}>
         {children}
     </AuthContext.Provider>);
 }

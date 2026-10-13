@@ -1,15 +1,81 @@
-import {iUser, iUserToken} from "@/types/user";
+import {iUser} from "@/types/user";
 import useApiQuery from "@/hooks/useApiQuery";
-import {tResponse} from "@/types/api";
+import {tListResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
-import {iMovie} from "@/types/movie";
+import {iMedia, iMediaActivity} from "@/types/media";
+import {useDebounce} from "use-debounce";
+import {tMedia} from "@/types/utils";
 
-function getUser(locale: string, userId: string) {
-    return apiClient<tResponse<iUser>>(`/users/${userId}`, locale);
+export function getUser(locale: string, userId: string) {
+    return apiClient<iUser>(`users/${userId}/`, locale);
 }
 
-function getUserFilmHistory(locale: string, userId?: number) {
-    return apiClient<tResponse<iMovie[]>>(`/users/${userId}/movie-history`, locale);
+export function followUser(locale: string, userId: number, follow: boolean) {
+    return apiClient<iUser>(`users/${userId}/follow/`, locale, {method: follow ? "POST" : "DELETE"});
+}
+
+export function useUser(userId: string, enabled=true, viewerId?: number) {
+    return useApiQuery(
+        ["user", userId, viewerId],
+        (locale: string) => getUser(locale, userId),
+        enabled
+    );
+}
+
+export function useUsersSearch(search: string, enabled = true, viewerId?: number, page = 1) {
+    const [debouncedQuery] = useDebounce(search, 200);
+
+    return useApiQuery(
+        ["users", debouncedQuery, viewerId, page],
+        (locale, signal) => apiClient<tListResponse<iUser>>(`users/?search=${encodeURIComponent(debouncedQuery)}&page=${page}`, locale, {signal}),
+        enabled
+    );
+}
+
+export function useUserHistory(userId?: number, type?: tMedia, page = 1, group = false) {
+    const params = new URLSearchParams({page: String(page)});
+    if (type)
+        params.set("type", type);
+    if (group)
+        params.set("group", "true");
+
+    return useApiQuery(
+        ["user-media-history", userId, type, page, group],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/history/?${params.toString()}`, locale),
+        !!userId
+    );
+}
+
+export function useContinueWatching(userId?: number) {
+    return useApiQuery(
+        ["user-media-history", userId, "continue"],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/continue-watching/`, locale),
+        !!userId
+    );
+}
+
+export function useComingSoon(userId?: number) {
+    return useApiQuery(
+        ["user-watchlist", userId, "coming-soon"],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/coming-soon/`, locale),
+        !!userId
+    );
+}
+
+export function useUserWatchlist(userId?: number, page = 1) {
+    return useApiQuery(
+        ["user-watchlist", userId, page],
+        (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/watchlist/?page=${page}`, locale),
+        !!userId
+    );
+}
+
+export function useFollowingActivity(userId?: number, group = true) {
+    return useApiQuery(
+        ["user-media-history", "following", userId, group],
+        (locale: string) => apiClient<tListResponse<iMediaActivity>>(`users/following/activity/?group=${group}`, locale),
+        !!userId
+    );
 }
 
 export function patchUser(locale: string, data: string[], userId?: number | string) {
@@ -18,30 +84,29 @@ export function patchUser(locale: string, data: string[], userId?: number | stri
     if (data.length === 2) {
         updateData[data[0]] = data[1];
     } else {
-        ["email", "first_name", "last_name", "username"].forEach((field, index) => {
+        ["username"].forEach((field, index) => {
             const newValue = data[index].trim();
             if (newValue)
                 updateData[field] = newValue;
         })
     }
-    return apiClient<tResponse<iUserToken>>(`/users/${userId}`, locale, {method: "PATCH", body: JSON.stringify(updateData)});
+    return apiClient<iUser>(`users/${userId}/`, locale, {method: "PATCH", body: JSON.stringify(updateData)});
+}
+
+export const PICTURE_MAX_SIZE_MB = 5;
+export const PICTURE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export function uploadProfilePicture(locale: string, userId: number, file: File) {
+    const data = new FormData();
+
+    data.append("file", file);
+    return apiClient<iUser>(`users/${userId}/profile-picture/`, locale, {method: "POST", body: data});
 }
 
 export function postNewPassword(locale: string, data: string[]) {
-    return apiClient<tResponse<iUserToken>>(`/users/new-password`, locale, {method: "PATCH", body: JSON.stringify({current_password: data[0], new_password: data[1], new_password_confirm: data[2]})});
+    return apiClient(`users/new-password/`, locale, {method: "PATCH", body: JSON.stringify({current_password: data[0], new_password: data[1], new_password_confirm: data[2]})});
 }
 
-export function useUser(userId: string) {
-    return useApiQuery(
-        ["user", userId],
-        (locale: string) => getUser(locale, userId),
-    );
-}
-
-export function useUserFilmHistory(userId?: number) {
-    return useApiQuery(
-        ["user-movie-history", userId],
-        (locale: string) => getUserFilmHistory(locale, userId),
-        !!userId
-    );
+export function deleteUser(locale: string, userId: number) {
+    return apiClient<void>(`users/${userId}/`, locale, {method: "DELETE"});
 }

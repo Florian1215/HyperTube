@@ -1,0 +1,161 @@
+import useNotification from "@/contexts/NotificationContext";
+import {useLocale, useTranslations} from "next-intl";
+import {deleteComment, patchComment} from "@/services/comments.service";
+import Pagination from "@/components/ui/Pagination";
+import {iUser} from "@/types/user";
+import {iComment, iCommentDetails} from "@/types/comment";
+import dayjs from "dayjs";
+import SmallText from "@/components/ui/SmallText";
+import {useQueryClient} from "@tanstack/react-query";
+import {removeCommentCache, updateCommentCache} from "@/services/comments.service";
+import relativeTime from "dayjs/plugin/relativeTime";
+import {useEffect, useRef, useState} from "react";
+import useModal from "@/contexts/ModalContext";
+import MediaCard from "@/components/MediaCard";
+import Link from "next/link";
+import ProfilePicture from "@/components/ProfilePicture";
+import IconButton from "@/components/ui/Button/IconButton";
+import {EditIcon, TrashIcon} from "@/components/Icons";
+import ExpandableText from "@/components/ui/ExpandableText";
+import Button from "@/components/ui/Button/Button";
+
+export default function Comments({currentUser, comments, index, setIndex, totalPage, profilePage=false}: {currentUser?: iUser, comments: iComment[], index: number, setIndex: (newIndex: number) => void, totalPage: number, profilePage?: boolean}) {
+    const {addNotification} = useNotification();
+    const locale = useLocale();
+    const t = useTranslations("comments");
+    const queryClient = useQueryClient();
+    const changeIndex = (newIndex: number) => {setIndex(newIndex);}
+    const tSuccess = useTranslations("notifications.success");
+    dayjs.locale(locale);
+
+    const updateComment = (comment: iComment, newContent: string) => {
+        patchComment(locale, comment.id, newContent.replace("\n\n", "\n")).then((saved) => {
+            updateCommentCache(queryClient, saved);
+            addNotification(tSuccess("commentChange"), "success");
+        }).catch((e) => addNotification(e instanceof Error ? e.message : String(e), "error"));
+    }
+
+    const deleteDisplayComment = async (commentId: number) => {
+        deleteComment(locale, commentId).then(() => {
+            if (currentUser)
+                removeCommentCache(queryClient, commentId, currentUser.id);
+        });
+    };
+
+    if (!comments || comments.length === 0)
+        return (<SmallText className="whitespace-pre-line" italic={false}>{t(profilePage ? "noCommentsYet" : "noCommentsPrompt")}</SmallText>);
+
+    return (<Pagination currentIndex={index} totalPage={totalPage} onClick={changeIndex}>
+        <div className="flex flex-col gap-6">
+            {comments.map((comment, index) => {
+                const previousComment: iCommentDetails | null = (profilePage && index > 0) ? comments[index - 1] as iCommentDetails : null;
+                return (<Comment key={index} currentUser={currentUser} comment={comment} updateComment={updateComment}
+                         deleteComment={deleteDisplayComment} previousCommentMovieId={previousComment?.media.id}/>);
+            })}
+        </div>
+    </Pagination>);
+}
+
+dayjs.extend(relativeTime);
+
+function Comment({comment, currentUser, updateComment, deleteComment, previousCommentMovieId}: {comment: iComment | iCommentDetails, currentUser?: iUser, updateComment: (comment: iComment, newContent: string) => void, deleteComment: (commentId: number, movieId?: string) => Promise<void>, previousCommentMovieId?: string}) {
+    let user: iUser;
+    const [showSettingBtn, setShowSettingBtn] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const {openModal} = useModal();
+    const t = useTranslations("comments");
+    const displayMovie = "media" in comment;
+
+    if (currentUser && currentUser.id === comment.user.id)
+        user = currentUser;
+    else
+        user = comment.user;
+
+    return (<div className="w-full"
+                 onMouseEnter={() => setShowSettingBtn(true)}
+                 onMouseLeave={() => setShowSettingBtn(false)}>
+        {displayMovie && previousCommentMovieId != comment.media.id && <div className="flex justify-center mb-6">
+            <MediaCard user={currentUser} className="aspect-21/9" media={comment.media}/></div>}
+        <div className={`flex gap-2 sm:gap-4 ${(!updateComment) ? "flex-col sm:flex-row mx-4" : ""} ${displayMovie ? "px-4" : ""}`}>
+            <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
+            <div className="w-full">
+                <div className="flex justify-between w-full">
+                    <div>
+                        <Link href={`/users/${user.id}`} className="text-bold hover:text-dblack-light">{user.username}</Link>
+                        <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
+                    </div>
+                    {
+                        (currentUser && comment.user.id === currentUser.id && showSettingBtn) &&
+                        <div className="flex gap-1">
+                            <IconButton accent={true} onClick={() => setEditMode(true)} className="uppercase font-condensed text-2xl">
+                                <EditIcon color="current"/>
+                            </IconButton>
+                            <IconButton onClick={() => {
+                                setEditMode(false);
+                                openModal({type: "delete-confirmation", deleteObjId: comment.id, deleteFunc: () => deleteComment(comment.id, "media" in comment ? comment.media.id : undefined)});
+                            }} className="uppercase font-condensed text-2xl" hoverColor="red">
+                                <TrashIcon color="current"/>
+                            </IconButton>
+                        </div>
+                    }
+                </div>
+                <div className="leading-tight sm:leading-normal">
+                    {editMode && updateComment ?
+                        <CommentTextEdit comment={comment} setEditMode={setEditMode} updateComment={updateComment}/>
+                        : <ExpandableText className="whitespace-pre-line">{comment.content}</ExpandableText>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>);
+}
+
+function CommentTextEdit({comment, setEditMode, updateComment}: {comment: iComment | iCommentDetails, setEditMode: (newEditMode: boolean) => void, updateComment: (comment: iComment, newContent: string) => void}) {
+    const [newEditedComment, setNewEditedComment] = useState(comment.content);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const t = useTranslations("comments");
+
+    useEffect(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = el.scrollHeight + "px";
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+    }, [comment]);
+
+    const autoResize = () => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = el.scrollHeight + "px";
+    };
+
+    const saveChange = () => {
+        updateComment(comment, newEditedComment.trim());
+        setEditMode(false);
+    };
+
+    return (<div className="flex flex-col gap-3">
+        <textarea ref={textareaRef} value={newEditedComment}
+                  onInput={autoResize}
+                  className="w-full resize-none font-light"
+                  onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          if (newEditedComment.trim().length > 0 && newEditedComment.trim() !== comment.content)
+                              saveChange();
+                      }
+                  }}
+                  onChange={(e) => setNewEditedComment(e.target.value)} />
+        <div className="flex gap-2">
+            <Button className="xl:px-6"
+                    disabled={newEditedComment.trim().length <= 0 || newEditedComment.trim() === comment.content}
+                    onClick={saveChange}>{t("saveChange")}</Button>
+            <Button variant="secondary" className="w-30 xl:w-40" onClick={() => {
+                setEditMode(false);
+                setNewEditedComment(comment.content);
+            }}>{t("cancel")}</Button>
+        </div>
+    </div>);
+}

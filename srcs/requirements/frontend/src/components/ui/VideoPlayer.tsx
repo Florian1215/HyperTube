@@ -1,63 +1,97 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {FullScreenIcon, PlayPauseIcon, SubDelayIcon} from "@/components/Icons";
-import LanguageDropdown from "@/components/LanguageDropdown";
-import {tLocale} from "@/i18n/request";
+import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
 import Hls from "hls.js";
-import {useDownloadSubtitle, useLoginOpenSubtitles, useSubtitles} from "@/hooks/useSubtitles";
-import {useLocale, useTranslations} from "next-intl";
-import loadSRT from "@/utils/loadSRT";
-import useModal from "@/contexts/ModalContext";
-import {refreshAccessToken} from "@/services/auth.service";
-import {syncMovieProgress, updateMovieProgress} from "@/services/movies.service";
-import {iMovieDetails} from "@/types/movie";
-import useNotification from "@/contexts/NotificationContext";
+import loadVTT, {iSub} from "@/utils/loadVTT";
+import {useLocale} from "next-intl";
+import useAuth from "@/contexts/AuthContext";
+import {patchUser} from "@/services/users.service";
+import {syncMediaProgress, updateMediaProgress} from "@/services/medias.service";
+import {iMediaDetails} from "@/types/media";
 import IconButton from "@/components/ui/Button/IconButton";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
+import {tT} from "@/types/utils";
+import formatTime from "@/utils/formatTime";
+import EpisodeLabel from "@/components/EpisodeLabel";
 
-interface iSub{
-    start: number
-    end: number
-    text: string
+interface iAudioTrack {
+    id: number
+    language: string
+    title: string
 }
 
-export default function VideoPlayer({movie, src, user, setErrorAction, tAction}: {movie: iMovieDetails, src: string, user: iUser, setErrorAction: (e: string) => void, tAction: (label: string) => string}) {
+interface iSubtitleTrack {
+    language: string
+    title: string
+    forced: boolean
+    file: string
+}
+
+interface iStreamTracks {
+    audio: {title: string}[]
+    subtitles: iSubtitleTrack[]
+}
+
+const SUBTITLE_LANG_KEY = "playerSubtitleLang";
+const SUBTITLE_OFF = "off";
+const SUBTITLE_RELOAD_DELAY = 15000;
+
+function getSaved(key: string) {
+    try {
+        return localStorage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function setSaved(key: string, value: string) {
+    try {
+        localStorage.setItem(key, value);
+    } catch {}
+}
+
+export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction, nextEpisodeAction, endedAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, nextEpisodeAction?: () => void, endedAction?: () => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
     const [downloadDuration, setDownloadDuration] = useState(0);
-    const [fullDuration, setFullDuration] = useState(movie.runtime_minutes * 60);
+    const [fullDuration, setFullDuration] = useState(runtime * 60);
     const [durationString, setDurationString] = useState("");
     const [showControls, setShowControls] = useState(true);
     const resShowControl = useRef(showControls);
     const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
     const [showSubtitleMenu, setShowSubtitleMenu] = useState(false);
-    const [selectedSubtitle, setSelectedSubtitle] = useState<tLocale | undefined>();
+    const [selectedSubtitle, setSelectedSubtitle] = useState<number | undefined>();
+    const [subtitleTracks, setSubtitleTracks] = useState<iSubtitleTrack[]>([]);
+    const [audioTracks, setAudioTracks] = useState<iAudioTrack[]>([]);
+    const [selectedAudio, setSelectedAudio] = useState(-1);
+    const [showAudioMenu, setShowAudioMenu] = useState(false);
+    const hlsRef = useRef<Hls | null>(null);
+    const {updateUser} = useAuth();
+    const locale = useLocale();
+    const streamDir = src.slice(0, src.lastIndexOf("/") + 1);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const [isSeeking, setIsSeeking] = useState(false);
     const [seekTime, setSeekTime] = useState(0);
     const progressBarRef = useRef<HTMLDivElement>(null);
     const seekTimeRef = useRef(0);
-    const {data: getSubtitlesMovie} = useSubtitles(movie.imdb_id, selectedSubtitle);
-    const {data: loginOpenSubtitles} = useLoginOpenSubtitles();
-    const {data: downloadSubtitle} = useDownloadSubtitle(getSubtitlesMovie?.data[0]?.attributes.files[0]?.file_id, loginOpenSubtitles?.token);
     const [subs, setSubs] = useState<iSub[]>([]);
     const [currentText, setCurrentText] = useState("");
-    const locale = useLocale() as tLocale;
-    const {openModal} = useModal();
     const playStateBeforeSeeking = useRef(false);
     const lastSent = useRef(0);
     const setComplete = useRef(false);
     const min15 = 15 * 60;
+    const min5 = 5 * 60;
+    const min3 = 3 * 60;
     const isLiveRef = useRef(true);
-    const delaySubtitle = useRef(0);
-    const {addNotification} = useNotification();
-    const tError = useTranslations("notifications.error");
     const queryClient = useQueryClient();
+    const resumed = useRef(false);
+    const barDuration = Math.max(fullDuration, downloadDuration);
+    const completeBefore = episodeNumber === undefined ? min15 : min3;
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
     useEffect(() => {
@@ -66,55 +100,60 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
             return;
 
         if (Hls.isSupported()) {
-            const hls = new Hls({
-                startPosition: 0,
-                xhrSetup: (xhr) => {
-                    const token = localStorage.getItem("token");
-
-                    if (token)
-                        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-                },
-            });
-
-            const reload = async (currentTime?: number) => {
-                hls.loadSource(src);
-                hls.startLoad();
-                if (currentTime) {
-                    video.currentTime = currentTime;
-                    await video.play();
-                }
-            }
-
+            const hls = new Hls({startPosition: 0});
+            const controller = new AbortController();
+            hlsRef.current = hls;
             hls.loadSource(src);
             hls.attachMedia(video);
-            if (video && movie.progress)
-                video.currentTime = movie.progress;
+            const streamTracks: Promise<iStreamTracks | undefined> = fetch(`${streamDir}tracks.json`, {signal: controller.signal})
+                .then((res) => res.ok ? res.json() : undefined).catch(() => undefined);
+            streamTracks.then((tracks) => {
+                if (controller.signal.aborted || !tracks?.subtitles?.length)
+                    return;
+                setSubtitleTracks(tracks.subtitles);
+                const saved = getSaved(SUBTITLE_LANG_KEY);
+                if (!saved || saved === SUBTITLE_OFF)
+                    return;
+                const sameLanguage = tracks.subtitles.map((track, index) => ({track, index})).filter(({track}) => track.language === saved);
+                const subtitle = sameLanguage.find(({track}) => !track.forced) ?? sameLanguage[0];
+                if (subtitle)
+                    setSelectedSubtitle(subtitle.index);
+            });
+            hls.on(Hls.Events.MANIFEST_PARSED, async () => {
+                const titles = (await streamTracks)?.audio ?? [];
+                if (controller.signal.aborted)
+                    return;
+                const tracks = hls.audioTracks.map((track, index) => ({id: index, language: track.lang ?? "", title: titles[index]?.title ?? ""}));
+                setAudioTracks(tracks);
+                const preferred = user ? (user.preferred_language === "vf" ? "fr" : media.original_language) : undefined;
+                const wanted = tracks.find((track) => preferred && track.language === preferred);
+                if (wanted && wanted.id !== hls.audioTrack)
+                    hls.audioTrack = wanted.id;
+                setSelectedAudio(wanted?.id ?? hls.audioTrack);
+            });
+            hls.on(Hls.Events.AUDIO_TRACK_SWITCHING, (_, data) => setSelectedAudio(data.id));
             hls.on(Hls.Events.LEVEL_LOADED, (_, data) => {
                 if (data.details)
                     setDownloadDuration(data.details.totalduration);
-                if (!data.details.live) {
+                if (!resumed.current) {
+                    resumed.current = true;
+                    if (startAt > 0 && startAt < data.details.totalduration)
+                        video.currentTime = startAt;
+                }
+                if (!data.details.live && isLiveRef.current) {
                     isLiveRef.current = false;
                     setFullDuration(data.details.totalduration);
                 }
             });
             hls.on(Hls.Events.ERROR, async (_, data) => {
-                const status = data?.response?.code;
-
-                if (status === 401) {
-                    hls.stopLoad();
-                    try {
-                        await refreshAccessToken(locale);
-                        await reload();
-                    } catch {
-                        video.pause();
-                        openModal({type: "signin", noClose: true, reload: () => reload(video.currentTime)});
-                    } finally {
-
-                    }
-                } else if (data.fatal)
-                    setErrorAction(data.error.message)
+                if (data.fatal)
+                    setErrorAction(data.error.message);
             });
-            return () => {hls.destroy();};
+            return () => {
+                controller.abort();
+                hlsRef.current = null;
+                hls.destroy();
+            };
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [src]);
@@ -151,6 +190,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     const togglePlay = () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
+        setShowAudioMenu(false);
         const video = videoRef.current;
         if (!video)
             return;
@@ -174,22 +214,19 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
         if (!isSeeking)
             setSeekTime(video.currentTime);
 
-        if (!setComplete.current) {
+        if (user && !setComplete.current && fullDuration > 0) {
             const progress = Math.floor(video.currentTime);
-            if (isLiveRef && video.currentTime + min15 > fullDuration) {
-                updateMovieProgress(movie.imdb_id, progress, 100, true).then((data) => {
-                    syncMovieProgress(queryClient, user.id, movie, data.data);
-                    setComplete.current = true;
-                });
-            } else {
-                const second = Math.floor(video.currentTime % 60);
-                if (Math.abs(second - lastSent.current) >= 15) {
-                    const pourcent = Math.ceil((video.currentTime / fullDuration) * 100);
-                    updateMovieProgress(movie.imdb_id, progress, pourcent, false).then((data) => {
-                        syncMovieProgress(queryClient, user.id, movie, data.data);
-                        lastSent.current = second;
-                    });
-                }
+            if (video.currentTime + completeBefore > fullDuration) {
+                setComplete.current = true;
+                updateMediaProgress(media.id, media.type, progress, 100, true, true, seasonNumber, episodeNumber).then((data) => {
+                    syncMediaProgress(queryClient, user.id, media, data, episodeNumber);
+                }).catch(() => {setComplete.current = false;});
+            } else if (progress > min5 && Math.abs(progress - lastSent.current) >= 15) {
+                lastSent.current = progress;
+                const pourcent = Math.min(100, Math.ceil((video.currentTime / fullDuration) * 100));
+                updateMediaProgress(media.id, media.type, progress, pourcent, false, true, seasonNumber, episodeNumber).then((data) => {
+                    syncMediaProgress(queryClient, user.id, media, data, episodeNumber);
+                }).catch(() => {});
             }
         }
     };
@@ -254,6 +291,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     const toggleFullscreen = async () => {
         if (showSubtitleMenu)
             setShowSubtitleMenu(false);
+        setShowAudioMenu(false);
         setFullscreenEnabled(!fullscreenEnabled);
         const container = containerRef.current;
         if (!container)
@@ -266,51 +304,62 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
 
     /* ------------------------------------------------- SUBTITLES -------------------------------------------------- */
     useEffect(() => {
-        if (downloadSubtitle)
-            loadSRT(downloadSubtitle.link).then(setSubs);
-    }, [downloadSubtitle]);
+        const t = videoRef.current?.currentTime ?? 0;
+        setCurrentText(subs.filter(s => t >= s.start && t <= s.end).map(s => s.text).join("\n"));
+    }, [seekTime, subs]);
+
+    const subtitleFile = selectedSubtitle === undefined ? undefined : subtitleTracks[selectedSubtitle]?.file;
 
     useEffect(() => {
-        if (getSubtitlesMovie && (getSubtitlesMovie.data.length === 0 || getSubtitlesMovie.data[0].attributes.files.length === 0)) {
+        if (!subtitleFile) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setSelectedSubtitle(undefined);
-            addNotification(tError("subtitleNotFound"), "error");
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [getSubtitlesMovie]);
-
-    useEffect(() => {
-        delaySubtitle.current = 0;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCurrentText("");
-    }, [selectedSubtitle]);
-
-    const updateSubtitle = (delay?: number) => {
-        const video = videoRef.current;
-
-        if (selectedSubtitle && video && subs.length > 0) {
-            if (delay)
-                delaySubtitle.current += delay;
-            const t = video.currentTime + delaySubtitle.current;
-            const current = subs.find(s => t >= s.start && t <= s.end);
-            setCurrentText(current?.text ?? "");
-        }
-    }
-
-    useEffect(() => {
-        if (subs.length > 0)
-            updateSubtitle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [seekTime, subs.length, selectedSubtitle]);
-
-    const changeSubtitle = (lang: tLocale) => {
-        const video = videoRef.current;
-        if (!video)
+            setSubs([]);
             return;
+        }
+        const controller = new AbortController();
+        const load = () => loadVTT(`${streamDir}${subtitleFile}`, controller.signal).then((newSubs) => {
+            if (!controller.signal.aborted)
+                setSubs(newSubs);
+        }).catch(() => {});
+        load();
+        const interval = setInterval(() => {
+            if (isLiveRef.current)
+                load();
+        }, SUBTITLE_RELOAD_DELAY);
+        return () => {
+            controller.abort();
+            clearInterval(interval);
+        };
+    }, [subtitleFile, streamDir]);
 
-        const newLang = lang === selectedSubtitle ? undefined : lang;
-        setSelectedSubtitle(newLang);
+    const changeSubtitle = (index?: number) => {
+        setSelectedSubtitle(index);
+        setSaved(SUBTITLE_LANG_KEY, index === undefined ? SUBTITLE_OFF : (subtitleTracks[index]?.language || SUBTITLE_OFF));
         setShowSubtitleMenu(false);
+    };
+
+    const changeAudio = (track: iAudioTrack) => {
+        const hls = hlsRef.current;
+        if (!hls)
+            return;
+        hls.audioTrack = track.id;
+        setSelectedAudio(track.id);
+        setShowAudioMenu(false);
+        if (!user || media.original_language === "fr")
+            return;
+        const preferred = track.language === "fr" ? "vf" : (track.language === media.original_language ? "vo" : undefined);
+        if (preferred && preferred !== (user.preferred_language ?? "vo"))
+            patchUser(locale, ["preferred_language", preferred], user.id).then((data) => updateUser({preferred_language: data.preferred_language})).catch(() => {});
+    };
+
+    const getTrackLabel = (track: {language: string, title: string, forced?: boolean}, index: number) => {
+        let label = "";
+        try {
+            label = track.language ? (new Intl.DisplayNames([locale], {type: "language"}).of(track.language) ?? "") : "";
+        } catch {}
+        label = label ? label.charAt(0).toUpperCase() + label.slice(1) : `${tAction("track")} ${index + 1}`;
+        const details = [track.title, track.forced ? tAction("forcedSubtitles") : ""].filter((detail) => detail && detail.toLowerCase() !== label.toLowerCase());
+        return details.length ? `${label} (${details.join(", ")})` : label;
     };
 
     /* ------------------------------------------------ HIDE CONTROL ------------------------------------------------ */
@@ -341,6 +390,7 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
                 return;
             if (showSubtitleMenu)
                 setShowSubtitleMenu(false);
+            setShowAudioMenu(false);
 
             switch (e.code) {
                 case "Space":
@@ -378,45 +428,61 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     }, []);
 
     /* ---------------------------------------------- REACT COMPONENT ----------------------------------------------- */
-    return (<div ref={containerRef} className={"absolute inset-0 size-full overflow-hidden z-10 " + (showControls ? "bg-black" : "bg-[#000000]") + ((isBuffering && seekTime === 0) ? "/10" : "")} onMouseMove={resetHideTimer} >
+    return (<div ref={containerRef} className={`absolute inset-0 size-full overflow-hidden z-10 ${showControls ? "bg-black" : "bg-[#000000]"}${(isBuffering && seekTime === 0) ? "/10" : ""}`} onMouseMove={resetHideTimer} >
         {isBuffering && seekTime != 0 && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="size-14 animate-spin border-10 rounded-full border-white border-t-transparent" />
         </div>)}
 
-        <video ref={videoRef} className={"size-full" +  (!isPlaying ? " custom-cursor-play" : (showControls ? "" : " cursor-none"))}
-            onClick={togglePlay} onTimeUpdate={handleTimeUpdate} controls={false}
+        <video ref={videoRef} className={`size-full ${!isPlaying ? "custom-cursor-play" : (showControls ? "" : "cursor-none")}`}
+            onClick={togglePlay} onTimeUpdate={handleTimeUpdate} onEnded={endedAction} controls={false}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className={"absolute bottom-3 sm:bottom-6 lg:bottom-10 w-full text-center text-lg sm:text-2xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow " + (isPlaying ? "z-10" : "")}>
+        {subs && <div className={`absolute bottom-3 sm:bottom-6 lg:bottom-10 w-full text-center text-lg sm:text-2xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow ${isPlaying ? "z-10" : ""}`}>
             <div className="max-w-2/3 sm:max-w-1/2 mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
         </div>}
-        <div className={"absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 " + (showControls ? "opacity-100" : "opacity-0")}>
+        <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
+            {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
+                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
-
+            {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
+                {episodeName && <p className="font-semibold uppercase truncate sm:text-lg">{episodeName}</p>}
+                <EpisodeLabel season={seasonNumber} episode={episodeNumber}/>
+            </div>}
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
                 <div className="mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
-                        <IconButton color={"white"} className="px-1 sm:px-3" onClick={togglePlay}>{(color: string) => <PlayPauseIcon isPlaying={isPlaying} color={color}/>}</IconButton>
+                        <IconButton accent={true} color="white" className="px-1 sm:px-3" onClick={togglePlay}><PlayPauseIcon isPlaying={isPlaying} color="current"/></IconButton>
                         <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
                     </div>
 
                     <div className="flex gap-2 sm:gap-4 items-center">
-                        {selectedSubtitle && <IconButton color="white" title={tAction("decreaseSubDelay")} onClick={() => updateSubtitle(0.5)}>{(color: string) => <SubDelayIcon direction={"left"} color={color}/>}</IconButton>}
-                        {loginOpenSubtitles && <button onClick={() => setShowSubtitleMenu((prev) => !prev)} className={"px-2 font-wide border " + (selectedSubtitle ? "text-black bg-white hover:bg-white-loading" : "border-white hover:bg-black-hover")}>CC</button>}
-                        {selectedSubtitle && <IconButton color="white" title={tAction("increaseSubDelay")} onClick={() => updateSubtitle(-0.5)}>{(color: string) => <SubDelayIcon direction={"right"} color={color}/>}</IconButton>}
-                        {showSubtitleMenu && <LanguageDropdown handleSwitchLanguage={changeSubtitle} selected={selectedSubtitle} className="bottom-12 right-8" strikethrough={true} />}
+                        {audioTracks.length > 1 && <button title={tAction("audio")} onClick={() => {
+                            setShowSubtitleMenu(false);
+                            setShowAudioMenu((prev) => !prev);
+                        }} className="px-2 font-wide border hover:text-accent uppercase">{audioTracks.find((track) => track.id === selectedAudio)?.language || tAction("audio")}</button>}
+                        {showAudioMenu && <TracksMenu>
+                            {audioTracks.map((track, index) => <TrackButton key={track.id} selected={track.id === selectedAudio} onClick={() => changeAudio(track)}>{getTrackLabel(track, index)}</TrackButton>)}
+                        </TracksMenu>}
+                        {<button title={tAction("subtitles")} onClick={() => {
+                            setShowAudioMenu(false);
+                            setShowSubtitleMenu((prev) => !prev);
+                        }} className={`px-2 font-wide border ${selectedSubtitle !== undefined ? "text-black bg-white hover:bg-accent" : "hover:text-accent"}`}>CC</button>}
+                        {showSubtitleMenu && <TracksMenu>
+                            <TrackButton selected={selectedSubtitle === undefined} onClick={() => changeSubtitle()}>{tAction("subtitlesOff")}</TrackButton>
+                            {subtitleTracks.map((track, index) => <TrackButton key={index} selected={index === selectedSubtitle} onClick={() => changeSubtitle(index)}>{getTrackLabel(track, index)}</TrackButton>)}
+                        </TracksMenu>}
 
-                        <IconButton color="white" className="px-1 sm:px-3" onClick={toggleFullscreen}>{(color: string) => <FullScreenIcon iFullScreen={fullscreenEnabled} color={color}/>}</IconButton>
+                        <IconButton accent={true} color="white" className="px-1 sm:px-3" onClick={toggleFullscreen}><FullScreenIcon iFullScreen={fullscreenEnabled} color="current"/></IconButton>
                     </div>
                 </div>
 
-                <div className="w-full h-4 bg-black-hover border-t-black">
-                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${(downloadDuration / fullDuration) * 100}%`}}>
-                        <div className={`pointer-events-none h-full bg-${user.color}`} style={{width: `${(seekTime / downloadDuration) * 100}%`}} />
+                <div className="w-full h-4 bg-black-light border-t-black">
+                    <div ref={progressBarRef} className="h-full bg-gray cursor-pointer select-none" onMouseDown={handleSeekStart} style={{width: `${barDuration ? (downloadDuration / barDuration) * 100 : 0}%`}}>
+                        <div className="pointer-events-none h-full bg-accent" style={{width: `${downloadDuration ? (seekTime / downloadDuration) * 100 : 0}%`}} />
                     </div>
                 </div>
             </div>
@@ -424,18 +490,14 @@ export default function VideoPlayer({movie, src, user, setErrorAction, tAction}:
     </div>);
 }
 
-function formatTime(time: number) {
-    if (!time || isNaN(time))
-        return "0h0m";
+function TracksMenu({children}: {children: React.ReactNode}) {
+    return (<div className="absolute z-50 py-6 px-8 bottom-12 right-8">
+        <div className="flex flex-col gap-1 items-start bg-white py-4 px-5 custom-shadow-m border border-black text-black text-left max-h-[60vh] overflow-y-auto">
+            {children}
+        </div>
+    </div>);
+}
 
-    const hours = Math.floor(time / 3600);
-    const minutes = Math.floor((time % 3600) / 60);
-    const seconds = Math.floor(time % 60);
-
-    let result = `${minutes}m`;
-    if (hours > 0)
-        result = `${hours}h${result}`;
-    if (seconds > 0)
-        result += seconds.toString().padStart(2, "0");
-    return result;
+function TrackButton({selected, onClick, children}: {selected: boolean, onClick: () => void, children: React.ReactNode}) {
+    return (<button className={`text-lg text-left text-nowrap ${selected ? "font-base font-light" : "font-hairline hover:text-accent"}`} onClick={onClick}>{children}</button>);
 }
