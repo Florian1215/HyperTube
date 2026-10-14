@@ -54,7 +54,7 @@
     body { @apply font-body bg-dwhite text-dblack }
     h1, h2, h3, h4, h5, h6, .custom-condensed { @apply uppercase font-condensed tracking-wide hover:cursor-default; }
     h1 { @apply text-4xl sm:text-5xl md:text-6xl xl:text-8xl 2xl:text-9xl; }
-    h2 { @apply text-3xl sm:text-4xl md:text-5xl xl:text-7xl 2xl:text-8xl; }
+    h2 { @apply text-4xl md:text-5xl xl:text-7xl 2xl:text-8xl; }
     h3 { @apply text-4xl sm:text-6xl; }
     h4 { @apply text-5xl; }
     p { @apply font-light text-sm sm:text-base; }
@@ -127,8 +127,8 @@
 
 @layer utilities {
     .custom-text-shadow {
-        text-shadow: 0 0 8px var(--color-black);
-        -webkit-text-stroke: 0.07rem var(--color-black);
+        -webkit-text-stroke: 0.16em var(--color-black);
+        paint-order: stroke fill;
     }
     .custom-shadow-m { box-shadow: 8px 7px 0 var(--color-cblack); }
     .custom-shadow-m-black { box-shadow: 8px 7px 0 var(--color-black); }

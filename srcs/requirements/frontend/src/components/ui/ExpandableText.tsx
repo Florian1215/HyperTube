@@ -73,6 +73,6 @@ export default function ExpandableText({children, lines=3, className, showBtn=tr
                 {children}
             </p>
         </div>
-        {overflowing && showBtn && <TextButton onClick={toggle} className="">{t(expanded ? "seeLess" : "seeMore")}</TextButton>}
+        {overflowing && showBtn && <TextButton onClick={toggle} className="text-xs sm:text-sm">{t(expanded ? "seeLess" : "seeMore")}</TextButton>}
     </div>);
 }

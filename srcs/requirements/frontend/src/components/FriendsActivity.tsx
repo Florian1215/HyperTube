@@ -22,34 +22,38 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
     const locale = useLocale();
     const {onContextMenu, menu} = useMediaRightClick(activity);
 
-    return (<div className="flex flex-wrap items-center gap-x-4 gap-y-1 p-3 lg:grid lg:grid-cols-subgrid lg:col-span-full">
-        <div className="flex gap-4" onContextMenu={onContextMenu}>
-            <Link href={formatURL(activity)} title={activity.title} className="relative w-38 aspect-3/2 shrink-0 overflow-hidden border">
+    return (<div className="flex items-center gap-3 p-3 lg:grid lg:grid-cols-subgrid lg:col-span-full lg:gap-x-4 lg:gap-y-1">
+        <div className="flex shrink-0 gap-4" onContextMenu={onContextMenu}>
+            <Link href={formatURL(activity)} title={activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0 overflow-hidden border">
                 <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.title})}/>
                 <div className="custom-noise opacity-30"/>
             </Link>
-            {activity.episode?.poster_url && <Link href={formatURL(activity)} title={activity.episode.name} className="relative w-38 aspect-3/2 shrink-0 overflow-hidden border">
+            {activity.episode?.poster_url && <Link href={formatURL(activity)} title={activity.episode.name} className="relative hidden sm:block w-38 aspect-3/2 shrink-0 overflow-hidden border">
                 <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.episode.poster_url} alt={tMedia("posterAlt", {title: activity.episode.name ?? activity.title})}/>
                 <div className="custom-noise opacity-30"/>
             </Link>}
         </div>
-        <Link href={formatURL(activity)} className="flex flex-wrap items-baseline gap-x-2 min-w-0 lg:max-w-md group" onContextMenu={onContextMenu}>
-            <span className="font-semibold uppercase group-hover:text-accent">{activity.title}</span>
-            {activity.episode && <div className="flex items-baseline gap-2 text-sm text-gray">
-                <EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number}/>
-                {activity.episode.name}
-            </div>}
-        </Link>
-        <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 ml-4">
-            <ProfilePicture size={3} user={activity.user}/>
-            <span className="font-semibold truncate">{activity.user.username}</span>
-        </Link>
-        <div className="flex items-center justify-end gap-4 ml-auto">
-            {activity.rewatch && <span title={tMedia("rewatch")} className="flex items-center gap-1 text-sm">
-                <RewatchIcon/>
-                {tMedia("rewatch")}
-            </span>}
-            {activity.watched_at && <SmallText>{new Date(activity.watched_at).toLocaleDateString(locale, {day: "numeric", month: "long", year: "numeric"})}</SmallText>}
+        <div className="flex flex-col flex-1 gap-1.5 min-w-0 lg:contents">
+            <Link href={formatURL(activity)} className="flex flex-col lg:flex-row lg:flex-wrap lg:items-baseline gap-x-2 min-w-0 lg:max-w-md group" onContextMenu={onContextMenu}>
+                <span className="font-semibold uppercase line-clamp-2 lg:line-clamp-none group-hover:text-accent truncate">{activity.title}</span>
+                {activity.episode && <div className="flex items-baseline gap-2 min-w-0 text-sm text-gray">
+                    <span className="shrink-0"><EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number}/></span>
+                    <span className="truncate lg:whitespace-normal">{activity.episode.name}</span>
+                </div>}
+            </Link>
+            <div className="flex items-center gap-3 min-w-0 lg:contents">
+                <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 lg:ml-4">
+                    <ProfilePicture size={3} user={activity.user}/>
+                    <span className="hidden sm:block font-semibold truncate">{activity.user.username}</span>
+                </Link>
+                <div className="flex items-center justify-end gap-2 sm:gap-4 ml-auto shrink-0">
+                    {activity.rewatch && <span title={tMedia("rewatch")} className="flex items-center gap-1 text-sm">
+                        <RewatchIcon/>
+                        <span className="hidden sm:inline">{tMedia("rewatch")}</span>
+                    </span>}
+                    {activity.watched_at && <SmallText>{new Date(activity.watched_at).toLocaleDateString(locale, {day: "numeric", month: "long", year: "numeric"})}</SmallText>}
+                </div>
+            </div>
         </div>
         {menu}
     </div>);

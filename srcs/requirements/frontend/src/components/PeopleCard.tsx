@@ -12,7 +12,7 @@ export default function PeopleCard({people}: {people: iPeople}) {
     const href = `/people/${people.id}`;
 
     return (<div className="flex gap-3 items-center min-w-0 p-3">
-        <Link href={href} className="relative border w-64 shrink-0 overflow-hidden aspect-3/2">
+        <Link href={href} className="relative border w-32 sm:w-64 shrink-0 overflow-hidden aspect-2/3 sm:aspect-3/2">
             <div className="custom-noise opacity-30"/>
             {
                 people.picture ?

@@ -25,7 +25,7 @@ import MovieCollectionSection from "@/app/[type]/[id]/MovieCollectionSection";
 import {useSeason} from "@/services/series.service";
 import {iMovieDetails} from "@/types/movie";
 import useWatchlist from "@/hooks/useWatchlist";
-import {BookmarkIcon, PlayPauseIcon} from "@/components/Icons";
+import {BookmarkIcon, PlayPauseIcon, StarIcon} from "@/components/Icons";
 import {useQueryClient} from "@tanstack/react-query";
 import PageMeta from "@/components/PageMeta";
 
@@ -178,7 +178,7 @@ export default function MediaPage() {
     const runtime = media?.type === "series" ? episodeDetails?.runtime : (media as iMovieDetails | undefined)?.runtime;
     const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
 
-    return (<div className="flex flex-col gap-8 xl:gap-10">
+    return (<div className="flex flex-col gap-6 xl:gap-10">
         {meta}
         <MediaHero media={media} childrenAction={() => {
             if (errorStr || !media)
@@ -192,19 +192,19 @@ export default function MediaPage() {
             }
             return <div className={`size-full z-10 absolute ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}/>;}
         } actionButton={() => {
-            const className = "my-2 xl:my-4 font-bold md:h-12";
-            const classNameFlex = `${className} flex items-center gap-3.5`;
+            const className = "sm:my-2 xl:my-4 font-bold md:h-12";
+            const classNameFlex = `${className} flex items-center gap-1 sm:gap-3.5`;
 
             if (startVideo || torrentId)
                 return undefined;
             return (<div className="relative flex flex-col z-30 items-center">
                 {media?.type === "series" && <EpisodeLabel season={watchedEpisode.season} episode={watchedEpisode.episode}/>}
-                <div className="flex gap-2">
-                    <Button variant="secondary" darkMode={false} className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></Button>
-                    {featureBtn && <Button variant="secondary" darkMode={false} className={className} onClick={featureBtn}>{t("setFeature")}</Button>}
-                    {user && media && <Button variant="outline" darkMode={false} className={classNameFlex} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span>{t("watchlist")}</span></Button>}
+                <div className="flex gap-2 justify-center my-1">
+                    <Button variant="secondary" darkMode={false} className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} className="size-3.5 sm:size-5" color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></Button>
+                    {featureBtn && <Button variant="secondary" darkMode={false} className={`${className} px-2! sm:px-4!`} onClick={featureBtn}><span className="hidden sm:block">{t("setFeature")}</span><span className="block sm:hidden"><StarIcon size={19} color="black"/></span></Button>}
+                    {user && media && <Button variant="outline" darkMode={false} className={`${classNameFlex} px-2! sm:px-4!`} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span className="hidden sm:block">{t("watchlist")}</span></Button>}
                 </div>
-                {unavailable && <SmallText italic={false} className="mb-2 text-white">
+                {unavailable && <SmallText italic={false} className="mb-0 sm:mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
                     {torrentRequest && <TextButton className="ml-2 text-white italic hover:text-accent" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
                 </SmallText>}

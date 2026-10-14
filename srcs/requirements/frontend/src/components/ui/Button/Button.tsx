@@ -30,7 +30,7 @@ export default function Button({children, onClick, onContextMenu, className, var
 
     return (<button
         disabled={isDisabled} onClick={onClick} onContextMenu={onContextMenu} type="button"
-        className={`uppercase text-nowrap px-3 sm:px-5 h-8 sm:h-10 text-sm sm:text-base xl:text-lg ${colorClass} ${className ?? ""}`}>
+        className={`uppercase text-nowrap px-3 sm:px-5 h-7 sm:h-10 text-xs sm:text-base xl:text-lg ${colorClass} ${className ?? ""}`}>
         {children}
     </button>);
 }

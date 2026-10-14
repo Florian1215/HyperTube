@@ -64,7 +64,7 @@ export default function Page() {
         }
     }
 
-    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-12">
+    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-8 sm:mt-12">
         {meta}
         <div className="flex flex-col gap-4 items-center mb-6">
             <div className="flex items-center gap-4 justify-center">

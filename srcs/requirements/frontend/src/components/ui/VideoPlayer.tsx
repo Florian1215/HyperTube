@@ -2,6 +2,7 @@
 
 import React, {useEffect, useRef, useState} from "react";
 import {FullScreenIcon, PlayPauseIcon} from "@/components/Icons";
+import CloseButton from "@/components/ui/Button/CloseButton";
 import Hls from "hls.js";
 import loadVTT, {iSub} from "@/utils/loadVTT";
 import {useLocale} from "next-intl";
@@ -91,6 +92,8 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const queryClient = useQueryClient();
     const resumed = useRef(false);
     const barDuration = Math.max(fullDuration, downloadDuration);
+    // Touch screens never trigger mousemove, so the controls must stay visible while a menu is open
+    const controlsVisible = showControls || showAudioMenu || showSubtitleMenu;
     const completeBefore = episodeNumber === undefined ? min15 : min3;
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
@@ -440,10 +443,10 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className={`absolute bottom-3 sm:bottom-6 lg:bottom-10 w-full text-center text-lg sm:text-2xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow ${isPlaying ? "z-10" : ""}`}>
-            <div className="max-w-2/3 sm:max-w-1/2 mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
+        {subs && <div className={`absolute bottom-3 sm:bottom-8 xl:bottom-10 w-full text-center text-lg sm:text-xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow ${isPlaying ? "z-10" : ""}`}>
+            <div className="mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
         </div>}
-        <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}>
+        <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
             {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
                 <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
@@ -453,7 +456,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                 <EpisodeLabel season={seasonNumber} episode={episodeNumber}/>
             </div>}
             <div className="flex flex-col w-full z-20 pointer-events-auto gap-4 text-white">
-                <div className="mx-4 flex justify-between items-center">
+                <div className="mx-3 sm:mx-4 flex justify-between items-center">
                     <div className="flex gap-2 sm:gap-4 items-center">
                         <IconButton accent={true} color="white" className="px-1 sm:px-3" onClick={togglePlay}><PlayPauseIcon isPlaying={isPlaying} color="current"/></IconButton>
                         <p>{isSeeking ? formatTime(seekTime) : currentTime} / {durationString}</p>
@@ -464,14 +467,14 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                             setShowSubtitleMenu(false);
                             setShowAudioMenu((prev) => !prev);
                         }} className="px-2 font-wide border hover:text-accent uppercase">{audioTracks.find((track) => track.id === selectedAudio)?.language || tAction("audio")}</button>}
-                        {showAudioMenu && <TracksMenu>
+                        {showAudioMenu && <TracksMenu title={tAction("audio")} onClose={() => setShowAudioMenu(false)}>
                             {audioTracks.map((track, index) => <TrackButton key={track.id} selected={track.id === selectedAudio} onClick={() => changeAudio(track)}>{getTrackLabel(track, index)}</TrackButton>)}
                         </TracksMenu>}
                         {<button title={tAction("subtitles")} onClick={() => {
                             setShowAudioMenu(false);
                             setShowSubtitleMenu((prev) => !prev);
                         }} className={`px-2 font-wide border ${selectedSubtitle !== undefined ? "text-black bg-white hover:bg-accent" : "hover:text-accent"}`}>CC</button>}
-                        {showSubtitleMenu && <TracksMenu>
+                        {showSubtitleMenu && <TracksMenu title={tAction("subtitles")} onClose={() => setShowSubtitleMenu(false)}>
                             <TrackButton selected={selectedSubtitle === undefined} onClick={() => changeSubtitle()}>{tAction("subtitlesOff")}</TrackButton>
                             {subtitleTracks.map((track, index) => <TrackButton key={index} selected={index === selectedSubtitle} onClick={() => changeSubtitle(index)}>{getTrackLabel(track, index)}</TrackButton>)}
                         </TracksMenu>}
@@ -490,14 +493,25 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     </div>);
 }
 
-function TracksMenu({children}: {children: React.ReactNode}) {
-    return (<div className="absolute z-50 py-6 px-8 bottom-12 right-8">
-        <div className="flex flex-col gap-1 items-start bg-white py-4 px-5 custom-shadow-m border border-black text-black text-left max-h-[60vh] overflow-y-auto">
-            {children}
+// Bottom panel over the player on mobile, popover above the controls from sm
+function TracksMenu({title, onClose, children}: {title: string, onClose: () => void, children: React.ReactNode}) {
+    // On mobile, a click on the dark background (outside the bottom panel) closes the menu
+    return (<div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 text-white sm:inset-auto sm:bottom-12 sm:right-8 sm:block sm:bg-transparent sm:py-6 sm:px-8" onClick={onClose}>
+        <div className="flex flex-col max-h-[75%] bg-black border-t border-white/30 sm:max-h-none sm:bg-transparent sm:border-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex shrink-0 items-center justify-between px-4 py-2 border-b border-white/30 sm:hidden">
+                <p className="font-wide uppercase">{title}</p>
+                <CloseButton size={24} color="white" onClickAction={onClose}/>
+            </div>
+            <div className="flex min-h-0 flex-col overflow-y-auto overscroll-contain sm:gap-1 sm:items-start sm:bg-white sm:py-4 sm:px-5 sm:shadow-[8px_7px_0_var(--color-cblack)] sm:border sm:border-black sm:text-black sm:text-left sm:max-h-[60vh]">
+                {children}
+            </div>
         </div>
     </div>);
 }
 
 function TrackButton({selected, onClick, children}: {selected: boolean, onClick: () => void, children: React.ReactNode}) {
-    return (<button className={`text-lg text-left text-nowrap ${selected ? "font-base font-light" : "font-hairline hover:text-accent"}`} onClick={onClick}>{children}</button>);
+    return (<button className={`flex items-center gap-3 w-full px-4 py-3 border-b border-white/15 text-base text-left wrap-break-word sm:w-auto sm:p-0 sm:border-0 sm:text-lg sm:text-nowrap ${selected ? "font-base font-light text-accent sm:text-black" : "font-hairline hover:text-accent"}`} onClick={onClick}>
+        <span className={`size-2 shrink-0 rounded-full bg-accent sm:hidden ${selected ? "" : "invisible"}`}/>
+        {children}
+    </button>);
 }

@@ -25,7 +25,7 @@ type tMediaRow = {
 
 export default function MediaRow({number, title, subtitle, overview, image, alt, progress, user, isSelected, href, onClick, menu, onContextMenu}: tMediaRow) {
     const clickable = href !== undefined || onClick !== undefined;
-    const titleClassName = `block max-w-full font-semibold text-lg uppercase truncate text-left ${clickable ? "hover:text-accent" : ""}`;
+    const titleClassName = `block max-w-full font-semibold text-sm sm:text-lg uppercase truncate text-left ${clickable ? "hover:text-accent" : ""}`;
     const withLink = (children: React.ReactNode) => href !== undefined ? <Link href={href}>{children}</Link> : children;
 
     return (<tr>
@@ -41,14 +41,14 @@ export default function MediaRow({number, title, subtitle, overview, image, alt,
                 {progress.complete && <div className="custom-complete-media"/>}
             </div>)}
         </td>
-        <td className="align-top pt-3 sm:pt-5 pb-2">
+        <td className="align-top pt-5 pb-2">
             {href !== undefined ?
                 <Link href={href} title={title} className={titleClassName}>{title}</Link> :
                 onClick ?
                 <button onClick={onClick} title={title} className={titleClassName}>{title}</button> :
                 <span title={title} className={titleClassName}>{title}</span>}
             <SmallText className="text-left">{subtitle}</SmallText>
-            <ExpandableText className="text-sm text-gray leading-tight" lines={2} showBtn={false}>{overview}</ExpandableText>
+            <ExpandableText className="text-xs sm:text-sm text-gray leading-tight" lines={2} showBtn={false}>{overview}</ExpandableText>
         </td>
     </tr>);
 }

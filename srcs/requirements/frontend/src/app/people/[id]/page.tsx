@@ -64,7 +64,7 @@ export default function Page() {
         setIndex(1);
     }
 
-    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-12">
+    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-8 sm:mt-12">
         {meta}
         {person ? <PersonInfo person={person}/> : <LoadingText center={true}/>}
         {counts && roles.length > 0 && <Tabs tabs={roles.map((role) => t(role))} counts={roles.map((role) => counts[role])} activeTab={roles.indexOf(activeRole)} onChange={switchTab}/>}
@@ -103,7 +103,7 @@ function PersonInfo({person}: {person: iPerson}) {
             }
             <div className="custom-noise"/>
         </div>
-        <div className="flex flex-col gap-2 xl:gap-4 min-w-0 items-center sm:items-start text-center sm:text-left mt-8">
+        <div className="flex flex-col gap-2 xl:gap-4 min-w-0 items-center sm:items-start text-center sm:text-left mt-4 sm:mt-8 max-w-9/10">
             <div>
                 <h3>{person.name}</h3>
                 <div className="flex items-center justify-center sm:justify-start gap-3">
@@ -111,7 +111,7 @@ function PersonInfo({person}: {person: iPerson}) {
                     {user && <PeopleWatchedCount user={user} people={person} total={person.medias_count} size={20}/>}
                 </div>
             </div>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-left">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-left overflow-x-auto">
                 {rows.filter(([, value]) => value).map(([name, value]) => (<React.Fragment key={name}>
                     <dt><Label>{t(name as string)}</Label></dt>
                     <dd><p>{value}</p></dd>

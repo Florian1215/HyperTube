@@ -250,14 +250,14 @@ export function TrashIcon({color="red", size=20}) {
     </svg>);
 }
 
-export function PlayPauseIcon({color = "white", isPlaying = false, size=25}) {
+export function PlayPauseIcon({color = "white", isPlaying = false, size=25, className}: {color?: string, isPlaying?: boolean, size?: number, className?: string}) {
     const fullColor = `var(--color-${color})`;
 
     if (isPlaying)
-        return (<svg width={size} height={size} viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+        return (<svg className={className} width={size} height={size} viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6 0C6.55228 0 7 0.447715 7 1V26C7 26.5523 6.55228 27 6 27H1C0.447715 27 4.02663e-09 26.5523 0 26V1C0 0.447715 0.447715 2.41595e-08 1 0H6ZM21 0C21.5523 0 22 0.447715 22 1V26C22 26.5523 21.5523 27 21 27H16C15.4477 27 15 26.5523 15 26V1C15 0.447715 15.4477 2.41595e-08 16 0H21Z" fill={fullColor}/>
         </svg>);
-    return (<svg width={size} height={size} viewBox="0 0 23 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+    return (<svg className={className} width={size} height={size} viewBox="0 0 23 27" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M21.6016 13.0769C21.9192 13.2721 21.9192 13.7333 21.6016 13.9285L1.26172 26.4294C0.928574 26.6342 0.499999 26.3947 0.499999 26.0037L0.5 1.00171C0.5 0.610677 0.928576 0.371177 1.26172 0.575927L21.6016 13.0769Z" fill={fullColor}/>
     </svg>);
 }

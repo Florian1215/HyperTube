@@ -3,7 +3,7 @@ import IconButton from "@/components/ui/Button/IconButton";
 import smoothScrollTo from "@/utils/smoothScrollTo";
 import {LeftArrowIcon, RightArrowIcon} from "@/components/Icons";
 
-export default function HorizontalScroll({children, className}: {children: React.ReactNode, className?: string}) {
+export default function HorizontalScroll({children, className, borderB=false}: {children: React.ReactNode, className?: string, borderB?: boolean}) {
     const rowRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
@@ -33,16 +33,21 @@ export default function HorizontalScroll({children, className}: {children: React
     };
 
     const showArrows = canScrollLeft || canScrollRight;
+    const arrowClassName = borderB ? "self-stretch flex items-center border-b border-b-cblack" : "";
 
-    return (<div className="flex items-center gap-2">
-        {showArrows && <IconButton disabled={!canScrollLeft} onClick={() => scroll(-1)} color="dblack" disabledColor="gray">
-            <LeftArrowIcon color="current"/>
-        </IconButton>}
+    return (<div className={`flex items-center ${borderB ? "" : "gap-2"}`}>
+        {showArrows && <div className={`${arrowClassName} ${borderB ? "pr-2" : ""}`}>
+            <IconButton disabled={!canScrollLeft} onClick={() => scroll(-1)} color="dblack" disabledColor="gray">
+                <LeftArrowIcon color="current"/>
+            </IconButton>
+        </div>}
         <div ref={rowRef} className={`flex min-w-0 flex-1 overflow-x-auto scrollbar-hide ${className ?? ""} ${canScrollRight ? "border-r" : ""} ${canScrollLeft ? "border-l" : ""}`}>
             {children}
         </div>
-        {showArrows && <IconButton disabled={!canScrollRight} onClick={() => scroll(1)} color="dblack" disabledColor="gray">
-            <RightArrowIcon color="current"/>
-        </IconButton>}
+        {showArrows && <div className={`${arrowClassName} ${borderB ? "pl-2" : ""}`}>
+            <IconButton disabled={!canScrollRight} onClick={() => scroll(1)} color="dblack" disabledColor="gray">
+                <RightArrowIcon color="current"/>
+            </IconButton>
+        </div>}
     </div>);
 }

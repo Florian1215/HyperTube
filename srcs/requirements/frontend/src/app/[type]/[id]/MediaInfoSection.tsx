@@ -45,7 +45,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
     const status = media.status === "Released" ? undefined : (tStatus.has(statusKey) ? tStatus(statusKey) : media.status);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
-        <TitleMedia media={media}/>
+        <TitleMedia media={media} className="justify-center pb-4"/>
         {
             releaseDate > today &&
             <InfoMedia name={t("release")}>
@@ -94,8 +94,8 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
 
 
 function InfoMedia({children, name, center=true, onClick}: {children: React.ReactNode, name: string, center?: boolean, onClick?: () => void}) {
-    return (<div className={`flex gap-4 ${center ? "items-center" : "items-start"}`}>
-        <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2">
+    return (<div className={`flex gap-3 sm:gap-4 ${center ? "items-center" : "items-start"}`}>
+        <div className="flex justify-end w-1/4 md:w-1/3 xl:w-1/2 text-nowrap overflow-x-hidden">
             {onClick ? <button className="hover:text-accent text-right" onClick={onClick}><Label>{name}</Label></button> : <Label>{name}</Label>}
         </div>
         <div className="w-3/4 md:w-2/3 xl:w-1/2">
