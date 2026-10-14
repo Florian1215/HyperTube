@@ -14,7 +14,7 @@ import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
 import {useComingSoon, useContinueWatching, useFollowingActivity} from "@/services/users.service";
-import {iMedia} from "@/types/media";
+import {iMedia, iMediaDetails} from "@/types/media";
 import {Link} from "@/i18n/navigation";
 import MediaHero from "@/components/MediaHero";
 import formatURL from "@/utils/formatURL";
@@ -44,12 +44,12 @@ export default function HomePage() {
 
     const {data: featuredMovies} = useItems("movies", "featured");
     const {data: featuredSeries} = useItems("series", "featured");
-    const shuffledFeatured = useMemo(() => {
+    const sortedFeatured = useMemo(() => {
         const featured = [
             ...filterAlreadyWatch(featuredMovies?.results),
             ...filterAlreadyWatch(featuredSeries?.results),
-        ];
-        return shuffleArray(featured);
+        ] as iMediaDetails[];
+        return featured.sort((a, b) => (b.feature_at ?? "").localeCompare(a.feature_at ?? ""));
     }, [featuredMovies?.results, featuredSeries?.results]);
 
     const {data: mostRatedMovies} = useItems("movies", "top-rated");
@@ -68,7 +68,7 @@ export default function HomePage() {
     return (<div>
         <PageMeta title={tMeta("home")} description={tMeta("homeDescription")}/>
         <AnimateLogo maxHeight={heightAnimationLogo} />
-        <SliderHero medias={(shuffledFeatured).slice(0, 5)}/>
+        <SliderHero medias={sortedFeatured.slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
         <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
@@ -83,9 +83,9 @@ export default function HomePage() {
             </Section>}
 
             {
-                (shuffledFeatured === undefined || shuffledFeatured.length > 0) &&
+                (sortedFeatured === undefined || sortedFeatured.length > 0) &&
                 <Section title={t("featured")} href="/search?type=movies&q=featured">
-                    <MediasGrid mediaSets={shuffledFeatured ?? undefined} setLimit={true}/>
+                    <MediasGrid mediaSets={sortedFeatured ?? undefined} setLimit={true}/>
                 </Section>
             }
 

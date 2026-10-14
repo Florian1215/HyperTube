@@ -39,6 +39,7 @@ export interface iMediaDetails extends iMedia{
     cast: iPeople[]
     backdrops_url: string[]
     feature: boolean
+    feature_at: string | null
     watched_by: (iUser & {watch_count: number, views: (string | null)[]})[]
 }
 

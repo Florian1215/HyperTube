@@ -132,6 +132,7 @@ class MediaDetailSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistM
             'status',
             'release_date',
             'feature',
+            'feature_at',
             'cast',
             'crew',
             'genres',
