@@ -35,6 +35,8 @@ services:
       context: "requirements/frontend"
       target: production
     restart: unless-stopped
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-localhost}
     expose:
       - "4200"
     networks:
