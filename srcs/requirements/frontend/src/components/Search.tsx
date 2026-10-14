@@ -7,7 +7,7 @@ import {useLocale, useTranslations} from "next-intl";
 import {useDebounce} from "use-debounce";
 import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/routing";
-import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
+import {SEARCH_CONTINUE, SEARCH_DIRECTSTREAM, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
 import {FriendsActivityList} from "@/components/FriendsActivity";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import CloseButton from "@/components/ui/Button/CloseButton";
@@ -242,6 +242,8 @@ function Results({t, medias, search, viewType, sort, changeSort, genre}: {t: tT,
         return (<div className="px-6"><FriendsActivityList activities={medias as iMediaActivity[] | undefined}/></div>);
     if (search === SEARCH_CONTINUE)
         return (<MediasGrid mediaSets={medias} showEpisode={true}/>);
+    if (search === SEARCH_DIRECTSTREAM)
+        return (<MediasGrid mediaSets={medias}/>);
 
     const today = new Date();
     if (medias)

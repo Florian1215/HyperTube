@@ -28,6 +28,7 @@ export function useCollection(media?: iMedia) {
 export const SEARCH_UPCOMING = "upcoming";
 export const SEARCH_CONTINUE = "continue to watch";
 export const SEARCH_FRIENDS = "friends activity";
+export const SEARCH_DIRECTSTREAM = "directstream";
 
 export function useItems(type: tSearch, search_title?: string, page?: number, enabled = true) {
     const [debouncedQuery] = useDebounce(search_title ?? "", 200);
@@ -37,7 +38,7 @@ export function useItems(type: tSearch, search_title?: string, page?: number, en
         (locale, signal) => {
             let endpoint = `${type}/`;
 
-            if (search_title === "directstream")
+            if (search_title === SEARCH_DIRECTSTREAM)
                 endpoint += "directstream/"
             else if (search_title === "featured")
                 endpoint += "featured/"

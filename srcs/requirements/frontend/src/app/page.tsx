@@ -6,7 +6,7 @@ import {useLocale, useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
 import useAuth from "@/contexts/AuthContext";
 import useResponsiveSize from "@/hooks/useResponsiveSize";
-import {SEARCH_CONTINUE, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
+import {SEARCH_CONTINUE, SEARCH_DIRECTSTREAM, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import GenreTags from "@/components/GenreTags";
 import {FriendActivityCard, groupActivities} from "@/components/FriendsActivity";
@@ -58,7 +58,7 @@ export default function HomePage() {
 
     const continueWatching = continueWatchingData?.results ?? [];
 
-    const {data: dirctedWatchMovies} = useItems("movies", "directstream");
+    const {data: dirctedWatchMovies} = useItems("movies", SEARCH_DIRECTSTREAM);
     const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
 
     const groupSeries = user?.group_series ?? true;
@@ -105,7 +105,7 @@ export default function HomePage() {
                     <MediasGrid mediaSets={comingSoon.results} setLimit={true} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>
                 </Section>}
 
-            {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href="/search?type=movies&q=directstream">
+            {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href={`/search?type=movies&q=${SEARCH_DIRECTSTREAM}`}>
                 <MediasGrid mediaSets={filterDirectedWatchMovies} setLimit={true}/>
             </Section>}
         </div>
