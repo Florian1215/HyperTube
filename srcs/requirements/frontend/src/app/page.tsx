@@ -73,7 +73,7 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
             {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
-                <div className="flex gap-x-2 sm:gap-x-4 overflow-hidden">
+                <div className="flex gap-x-2 sm:gap-x-4 overflow-x-auto">
                     {groupActivities(activities).map((group) => <FriendActivityCard key={`${group[0].type}-${group[0].id}`} activities={group}/>)}
                 </div>
             </Section>}
@@ -116,7 +116,7 @@ export default function HomePage() {
 
 function Section({children, title, href}: {children: React.ReactNode, title: string, href: string}) {
     return (<section className="flex flex-col">
-        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit p-2" href={href}>{`${title} >`}</Link>
+        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit p-2 overflow-x-hidden text-nowrap" href={href}>{`${title} >`}</Link>
         {children}
     </section>);
 }

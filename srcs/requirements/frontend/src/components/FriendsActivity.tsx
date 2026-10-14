@@ -91,7 +91,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     const {onContextMenu, menu} = useMediaRightClick(media);
     const hidden = activities.length - MAX_USERS;
 
-    return (<div className="relative min-w-0 w-48" onContextMenu={onContextMenu}>
+    return (<div className="relative min-w-48" onContextMenu={onContextMenu}>
         {menu}
         <Link href={formatURL(media)} title={media.title} className="block relative aspect-3/2 overflow-hidden border">
             <LoadingImage className="size-full object-cover" width={400} height={225} src={media.backdrop_url} alt={tMedia("posterAlt", {title: media.title})}/>

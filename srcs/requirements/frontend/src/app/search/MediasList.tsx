@@ -27,17 +27,17 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
         {type: "grade", label: t("sort.rating")},
     ];
 
-    let sortedMedias = mediaSets;
+    let sortedMedias = mediaSets && [...mediaSets];
     if (sortedMedias) {
         if (sort.type === "grade")
-            sortedMedias = sortedMedias.sort((a, b) => a.rating - b.rating);
+            sortedMedias.sort((a, b) => a.rating - b.rating);
         else if (sort.type === "year")
-            sortedMedias = sortedMedias.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+            sortedMedias.sort((a, b) => parseInt(a.year) - parseInt(b.year));
         else if (sort.type === "title")
-            sortedMedias = sortedMedias.sort((a, b) => b.title.localeCompare(a.title));
+            sortedMedias.sort((a, b) => b.title.localeCompare(a.title));
 
-        if (sort.side)
-            sortedMedias = sortedMedias.reverse();
+        if (sort.type && sort.side)
+            sortedMedias.reverse();
 
         if (filterGenre.length > 0 && size === "xl")
             sortedMedias = sortedMedias.filter(m => {
@@ -75,7 +75,7 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <col className="w-0" />
                 <col className="w-1/5 hidden lg:table-column" />
                 <col className="w-20 hidden sm:table-column" />
-                <col className="w-32" />
+                <col className="w-30" />
             </colgroup>
 
             <thead>

@@ -31,7 +31,6 @@ export default function Navbar() {
 
     const menuItems: iMenuItem[] = user ? [
         {name: t("profile"), href: `/users/${user.id}`},
-        // Served by Django, outside the Next.js router
         ...(hasPerm(user, "admin") ? [{name: t("admin"), href: "/admin/", external: true}] : []),
         {name: t("settings"), href: "/settings"},
         {name: t("logout"), action: logout, danger: true, icon: (selected) => <ExitDoorIcon selected={selected} color="current"/>},
@@ -93,7 +92,7 @@ function AccountMenu({label, items, onClick, hasMenu, children}: {label: string,
         }}>
             {children(isOpen)}
         </button>
-        {isOpen && <div className="absolute z-50 top-full right-0 pt-4" role="menu">
+        {isOpen && <div className="absolute z-50 top-full right-0 pt-2 sm:pt-4" role="menu">
             <div className="flex flex-col gap-1 items-start bg-dwhite py-4 px-5 custom-shadow-m border border-dblack">
                 {items.map((item) => item.href && item.external ?
                     <a key={item.name} role="menuitem" className={`${itemClassName} hover:text-accent`} href={item.href} target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>{item.name}</a> :

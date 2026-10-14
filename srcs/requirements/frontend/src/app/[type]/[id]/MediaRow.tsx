@@ -29,10 +29,10 @@ export default function MediaRow({number, title, subtitle, overview, image, alt,
     const withLink = (children: React.ReactNode) => href !== undefined ? <Link href={href}>{children}</Link> : children;
 
     return (<tr>
-        <td onClick={onClick} className={`font-bold text-2xl font-wide text-right pr-1 pl-4 w-14 ${clickable ? "hover:cursor-pointer hover:text-accent" : ""} ${isSelected ? "border-l-5 border-accent hover:cursor-default" : ""}`}>
+        <td onClick={onClick} className={`font-bold text-xl sm:text-2xl font-wide text-right pr-1 pl-0 sm:pl-4 w-9 sm:w-14 ${clickable ? "hover:cursor-pointer hover:text-accent" : ""} ${isSelected ? "border-l-5 border-accent hover:cursor-default" : ""}`}>
             {withLink(<span>{number}</span>)}
         </td>
-        <td className={`px-4 w-36 sm:w-50 py-2 align-top ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}>
+        <td className={`px-2 sm:px-4 w-36 sm:w-50 py-2 align-top ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}>
             {menu}
             {withLink(<div className="relative border aspect-10/7 overflow-hidden" onContextMenu={onContextMenu}>
                 {image && <LoadingImage className="size-full object-cover" width={200} height={200} src={image} alt={alt}/>}
@@ -41,7 +41,7 @@ export default function MediaRow({number, title, subtitle, overview, image, alt,
                 {progress.complete && <div className="custom-complete-media"/>}
             </div>)}
         </td>
-        <td className="align-top pt-5 pb-2">
+        <td className="align-top pt-3 sm:pt-5 pb-2">
             {href !== undefined ?
                 <Link href={href} title={title} className={titleClassName}>{title}</Link> :
                 onClick ?

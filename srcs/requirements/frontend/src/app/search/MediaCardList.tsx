@@ -60,7 +60,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
         <td className="hidden sm:table-cell">
             <Rating media={media} className="font-medium"/>
         </td>
-        <td className="text-right">
+        <td className="text-right pr-2 xl:pr-4 ">
             <Button className="px-3" onClick={() => media && router.push(formatURL(media))}>{t("watch")}</Button>
         </td>
     </tr>);
