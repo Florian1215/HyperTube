@@ -293,5 +293,20 @@
       "failedChangeProgression": "Impossible de mettre à jour la progression: {error}",
       "failedChangeWatchlist": "Impossible de mettre à jour la watchlist: {error}"
     }
+  },
+  "meta": {
+    "defaultDescription": "Hypertube : regardez des films et des séries, suivez vos amis et partagez vos avis.",
+    "home": "Accueil",
+    "homeDescription": "Découvrez les films et séries à la une, populaires et les mieux notés, reprenez où vous en étiez et voyez ce que regardent vos amis.",
+    "search": "Recherche",
+    "searchDescription": "Recherchez des films, séries, personnes et utilisateurs, et filtrez-les par genre, année ou note.",
+    "settings": "Paramètres",
+    "settingsDescription": "Gérez votre profil, votre mot de passe et les paramètres de votre compte.",
+    "media": "{type, select, series {Série} other {Film}}",
+    "mediaDescription": "Regardez {title} sur Hypertube.",
+    "person": "Personne",
+    "personDescription": "Films et séries avec {name}.",
+    "user": "Profil",
+    "userDescription": "Films, séries, watchlist et commentaires de {username}."
   }
 }

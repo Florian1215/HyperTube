@@ -19,6 +19,7 @@ import Pagination from "@/components/ui/Pagination";
 import PeopleWatchedCount from "@/components/PeopleWatchedCount";
 import SmallText from "@/components/ui/SmallText";
 import Tabs from "@/components/ui/Tabs";
+import PageMeta from "@/components/PageMeta";
 
 const DEPARTMENT_ROLES: Record<string, tPersonRole> = {Acting: "cast", Directing: "directing", Writing: "writing", Creator: "writing"};
 
@@ -28,6 +29,8 @@ export default function Page() {
     const {user} = useAuth();
     const t = useTranslations("people");
     const {data: person, error} = usePerson(id);
+    const tMeta = useTranslations("meta");
+    const meta = <PageMeta title={person?.name ?? tMeta("person")} description={person ? (person.biography || tMeta("personDescription", {name: person.name})) : undefined}/>;
     const [errorNode, setErrorNode] = useState<React.ReactNode>(null);
     const handleError = useHandleError();
     const [selectedRole, setSelectedRole] = useState<tPersonRole>();
@@ -54,7 +57,7 @@ export default function Page() {
     }, [error]);
 
     if (errorNode)
-        return (errorNode);
+        return (<>{meta}{errorNode}</>);
 
     const switchTab = (tab: number) => {
         setSelectedRole(roles[tab]);
@@ -62,6 +65,7 @@ export default function Page() {
     }
 
     return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-12">
+        {meta}
         {person ? <PersonInfo person={person}/> : <LoadingText center={true}/>}
         {counts && roles.length > 0 && <Tabs tabs={roles.map((role) => t(role))} counts={roles.map((role) => counts[role])} activeTab={roles.indexOf(activeRole)} onChange={switchTab}/>}
         {medias && medias.results.length === 0 ?

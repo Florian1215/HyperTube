@@ -27,6 +27,7 @@ import {iMovieDetails} from "@/types/movie";
 import useWatchlist from "@/hooks/useWatchlist";
 import {BookmarkIcon, PlayPauseIcon} from "@/components/Icons";
 import {useQueryClient} from "@tanstack/react-query";
+import PageMeta from "@/components/PageMeta";
 
 export default function MediaPage() {
     const params = useParams();
@@ -44,6 +45,8 @@ export default function MediaPage() {
     const tError = useTranslations("notifications.error");
     const {openModal} = useModal();
     const t = useTranslations("media");
+    const tMeta = useTranslations("meta");
+    const meta = <PageMeta title={media?.title ?? tMeta("media", {type})} description={media ? (media.summary || tMeta("mediaDescription", {title: media.title})) : undefined}/>;
     const toggleWatchlist = useWatchlist();
     const featureBtn= (media && hasPerm(user, "medias.can_recommend_medias")) ? () => openModal({type: "set-feature", media: media}) : undefined;
     const [selectedEpisode, setSelectedEpisode] = useState<iWatchEpisode>();
@@ -104,7 +107,7 @@ export default function MediaPage() {
     }, [torrentId]);
 
     if (errorNode)
-        return (errorNode);
+        return (<>{meta}{errorNode}</>);
 
     const closePlayer = () => {
         setStartVideo(false);
@@ -176,6 +179,7 @@ export default function MediaPage() {
     const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
 
     return (<div className="flex flex-col gap-8 xl:gap-10">
+        {meta}
         <MediaHero media={media} childrenAction={() => {
             if (errorStr || !media)
                 return undefined;

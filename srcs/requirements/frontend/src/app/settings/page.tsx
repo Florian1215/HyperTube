@@ -13,11 +13,14 @@ import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
 import Toggle from "@/components/ui/Toggle";
+import PageMeta from "@/components/PageMeta";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
     const router = useRouter();
     const t = useTranslations("settings");
+    const tMeta = useTranslations("meta");
+    const meta = <PageMeta title={tMeta("settings")} description={tMeta("settingsDescription")}/>;
 
     useEffect(() => {
         if (!user && !loading)
@@ -26,9 +29,10 @@ export default function Page() {
     }, [user, loading]);
 
     if (!user)
-        return null;
+        return meta;
 
     return (<div className="flex flex-col items-center mt-12 pb-16 px-4">
+        {meta}
         <h2 className="text-center">{t("title")}</h2>
         <div className="flex flex-col items-center gap-16 sm:gap-24 w-full max-w-64 mt-12 sm:mt-16 [&_form>button]:w-full">
             <AvatarSection user={user} updateUser={updateUser}/>

@@ -15,6 +15,7 @@ import TabComments from "@/app/users/[id]/TabComments";
 import ProfilePicture from "@/components/ProfilePicture";
 import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
+import PageMeta from "@/components/PageMeta";
 
 const tabs: tTab = [{name: "movies", comp: TabMovies}, {name: "series", comp: TabSeries}, {name: "watchlist", comp: TabWatchlist}, {name: "comments", comp: TabComments}];
 
@@ -29,9 +30,11 @@ export default function Page() {
     const handleError = useHandleError();
     const t = useTranslations("profile.tabs");
     const tProfile = useTranslations("profile");
+    const tMeta = useTranslations("meta");
     const locale = useLocale();
     const {user: authUser, loading} = useAuth();
     const {data: user, error} = useUser(userId, !loading, authUser?.id);
+    const meta = <PageMeta title={user?.username ?? tMeta("user")} description={user ? tMeta("userDescription", {username: user.username}) : undefined}/>;
     const {data: movies} = useUserHistory(user?.id, "movies");
     const {data: series} = useUserHistory(user?.id, "series", 1, authUser?.group_series ?? true);
     const {data: watchlist} = useUserWatchlist(user?.id);
@@ -47,7 +50,7 @@ export default function Page() {
     }, [error, handleError]);
 
     if (errorNode || !user)
-        return (errorNode);
+        return (<>{meta}{errorNode}</>);
 
     const ActiveTab = tabs[activeTab].comp;
     const memberSince = new Intl.DateTimeFormat(locale, {day: "2-digit", month: "2-digit", year: "numeric"}).format(new Date(user.created_at)).replace(/[\/-]/g, ".");
@@ -62,6 +65,7 @@ export default function Page() {
     }
 
     return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-12">
+        {meta}
         <div className="flex flex-col gap-4 items-center mb-6">
             <div className="flex items-center gap-4 justify-center">
                 <ProfilePicture user={user} size={1}/>

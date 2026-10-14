@@ -19,10 +19,12 @@ import {Link} from "@/i18n/navigation";
 import MediaHero from "@/components/MediaHero";
 import formatURL from "@/utils/formatURL";
 import {TitleMedia} from "@/components/Title";
+import PageMeta from "@/components/PageMeta";
 
 export default function HomePage() {
     const {user} = useAuth();
     const t = useTranslations("home");
+    const tMeta = useTranslations("meta");
     const size = useResponsiveSize();
     const genreCount = {xs: 3, md: 4, lg: 6, xl: 8}[size];
     const heightAnimationLogo = {xs: 100, md: 200, lg: 250, xl: 300}[size];
@@ -64,6 +66,7 @@ export default function HomePage() {
     const activities = (friendAct?.results ?? []).filter((activity) => activity.backdrop_url);
 
     return (<div>
+        <PageMeta title={tMeta("home")} description={tMeta("homeDescription")}/>
         <AnimateLogo maxHeight={heightAnimationLogo} />
         <SliderHero medias={(shuffledFeatured).slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
