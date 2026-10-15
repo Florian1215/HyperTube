@@ -40,8 +40,8 @@ export default function Navbar() {
     ];
 
     return (<nav className="flex justify-between items-center gap-3 px-6 sm:px-10 xl:px-16 py-4 sm:py-10">
-        <Link className="flex items-center" href="/">
-            <HypertubResponsiveLogo/>
+        <Link className="flex items-center text-dblack hover:text-accent" href="/">
+            <HypertubResponsiveLogo color="current"/>
         </Link>
         <NavLink href="/search" name={t("search")} selected={searchType === null || searchOpen} icon={<SearchIcon selected={searchType === null || searchOpen} color="current"/>} onClick={(e) => {
             if (pathname === "/search" || e.metaKey || e.ctrlKey || e.shiftKey)
