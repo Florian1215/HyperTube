@@ -70,6 +70,7 @@ function NavLink({href, name, selected, icon, onClick}: {href: string, name: str
 function AccountMenu({label, items, onClick, hasMenu, children}: {label: string, items: iMenuItem[], onClick: () => void, hasMenu: boolean, children: (selected: boolean) => React.ReactNode}) {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const pointerType = useRef<string | null>(null);
     const itemClassName = "uppercase text-xl font-hairline text-nowrap";
 
     useEffect(() => {
@@ -83,11 +84,21 @@ function AccountMenu({label, items, onClick, hasMenu, children}: {label: string,
         return () => document.removeEventListener("pointerdown", closeMenu);
     }, [isOpen]);
 
-    return (<div ref={ref} className="relative flex items-center" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-        <button className="flex items-center" aria-label={label} aria-haspopup="menu" aria-expanded={isOpen} onClick={(e) => {
-            const openMenu = hasMenu && (e.nativeEvent as PointerEvent).pointerType !== "mouse";
-            setIsOpen(openMenu);
-            if (!openMenu)
+    return (<div ref={ref} className="relative flex items-center" onPointerEnter={(e) => {
+        if (e.pointerType === "mouse")
+            setIsOpen(true);
+    }} onPointerLeave={(e) => {
+        if (e.pointerType === "mouse")
+            setIsOpen(false);
+    }}>
+        <button className="flex items-center" aria-label={label} aria-haspopup="menu" aria-expanded={isOpen} onPointerDown={(e) => {
+            pointerType.current = e.pointerType;
+        }} onClick={() => {
+            const isMouse = pointerType.current === "mouse";
+            pointerType.current = null;
+            if (hasMenu && !isMouse)
+                setIsOpen((open) => !open);
+            else
                 onClick();
         }}>
             {children(isOpen)}
