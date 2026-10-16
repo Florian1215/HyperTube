@@ -60,7 +60,8 @@ export default function MediaPage() {
     const {data: season} = useSeason(id, watchedEpisode.season, type === "series");
     const episodeDetails = season?.episodes.find((e) => e.episode_number === watchedEpisode.episode);
     const queryClient = useQueryClient();
-    const unavailable = !!media && !torrentsLoading && !getBestTorrent(torrents?.results);
+    const bestTorrent = getBestTorrent(torrents?.results, type === "series", season?.episodes.length);
+    const unavailable = !!media && !torrentsLoading && !bestTorrent;
     const {data: torrentRequest} = useTorrentRequest(media, watchedEpisode.season, watchedEpisode.episode, !!user && unavailable);
 
     useEffect(() => {
@@ -150,16 +151,15 @@ export default function MediaPage() {
     }
 
     const handleTorrent = async () => {
-        const selectedTorrent = getBestTorrent(torrents?.results);
-        if (torrents && selectedTorrent)
-            startTorrent(selectedTorrent.id);
+        if (torrents && bestTorrent)
+            startTorrent(bestTorrent.id);
         else
             addNotification(tError("torrentNotFound"), "error");
     }
 
     const handleRightClick = (e?: React.MouseEvent) => {
         e?.preventDefault();
-        openModal({type: "select-torrent", torrents: torrents?.results, setTorrentId: startTorrent});
+        openModal({type: "select-torrent", torrents: torrents?.results, bestTorrentId: bestTorrent?.id, setTorrentId: startTorrent});
     };
 
     const toggleTorrentRequest = async () => {
@@ -174,7 +174,7 @@ export default function MediaPage() {
         }
     }
 
-    const onClick = !torrentsLoading && getBestTorrent(torrents?.results) ? handleTorrent : undefined;
+    const onClick = !torrentsLoading && bestTorrent ? handleTorrent : undefined;
     const runtime = media?.type === "series" ? episodeDetails?.runtime : (media as iMovieDetails | undefined)?.runtime;
     const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
 

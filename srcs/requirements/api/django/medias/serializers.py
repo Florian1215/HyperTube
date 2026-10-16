@@ -283,7 +283,8 @@ class MediaTorrentSerializer(serializers.ModelSerializer):
             'peers',
             'quality',
             'language',
-            'published_at'
+            'published_at',
+            'is_season_pack',
         ]
 
     def get_status(self, obj):

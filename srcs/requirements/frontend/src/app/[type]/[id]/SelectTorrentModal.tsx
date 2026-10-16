@@ -11,7 +11,6 @@ import {DownloadIcon, SortIcon} from "@/components/Icons";
 import IconButton from "@/components/ui/Button/IconButton";
 import {API_URL} from "@/services/apiClient";
 import {tT} from "@/types/utils";
-import getBestTorrent from "@/utils/getBestTorrent";
 
 type SortKey = "title" | "status" | "quality" | "size" | "language" | "seeders";
 type SortDir = "asc" | "desc";
@@ -29,7 +28,7 @@ export default function SelectTorrentModal() {
         return activeModal.torrents ?? [];
     }, [activeModal.torrents]);
 
-    const bestTorrentId = useMemo(() => getBestTorrent(torrents)?.id, [torrents]);
+    const bestTorrentId = activeModal.bestTorrentId;
 
     const totalPage = useMemo(() => {
         return Math.ceil(torrents.length / itemPerPage);

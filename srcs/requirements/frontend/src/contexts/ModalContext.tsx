@@ -15,6 +15,7 @@ export interface ModalState {
     deleteFunc?: (objId: number) => Promise<void>;
     token?: string
     torrents?: iTorrent[]
+    bestTorrentId?: string
     setTorrentId?: (selectTorrentId: string) => void
     noClose?: boolean
     reload?: () => void

@@ -16,7 +16,7 @@ class Torrent(models.Model):
     episode_number = models.IntegerField(default=None, null=True)
     title = models.CharField()
     url = models.URLField()
-    size = models.IntegerField()
+    size = models.FloatField()
     seeders = models.IntegerField()
     peers = models.IntegerField()
     quality = models.CharField()

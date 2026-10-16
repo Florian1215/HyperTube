@@ -91,11 +91,10 @@ export interface iTorrent {
     seeders: number
     peers: number
     created_at: string
+    is_season_pack: boolean
 }
 
 export interface iProgress {
-    // progress: number
-    // progress: number
     progress: number
     complete: boolean
     pourcent: number
