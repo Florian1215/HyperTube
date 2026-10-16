@@ -82,6 +82,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const seekTimeRef = useRef(0);
     const [subs, setSubs] = useState<iSub[]>([]);
     const [currentText, setCurrentText] = useState("");
+    const [pictureRect, setPictureRect] = useState<{top: number, left: number, width: number, height: number}>();
     const playStateBeforeSeeking = useRef(false);
     const lastSent = useRef(0);
     const setComplete = useRef(false);
@@ -92,7 +93,6 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const queryClient = useQueryClient();
     const resumed = useRef(false);
     const barDuration = Math.max(fullDuration, downloadDuration);
-    // Touch screens never trigger mousemove, so the controls must stay visible while a menu is open
     const controlsVisible = showControls || showAudioMenu || showSubtitleMenu;
     const completeBefore = episodeNumber === undefined ? min15 : min3;
 
@@ -290,6 +290,36 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         video.pause();
     };
 
+    /* ----------------------------------------------- PICTURE AREA ------------------------------------------------- */
+    useEffect(() => {
+        const video = videoRef.current;
+        const container = containerRef.current;
+        if (!video || !container)
+            return;
+
+        const update = () => {
+            const {clientWidth: width, clientHeight: height} = container;
+            if (!video.videoWidth || !video.videoHeight) {
+                setPictureRect(undefined);
+                return;
+            }
+            const scale = Math.min(width / video.videoWidth, height / video.videoHeight);
+            const pictureWidth = video.videoWidth * scale;
+            const pictureHeight = video.videoHeight * scale;
+            setPictureRect({top: (height - pictureHeight) / 2, left: (width - pictureWidth) / 2, width: pictureWidth, height: pictureHeight});
+        };
+
+        const observer = new ResizeObserver(update);
+        observer.observe(container);
+        video.addEventListener("loadedmetadata", update);
+        video.addEventListener("resize", update);
+        return () => {
+            observer.disconnect();
+            video.removeEventListener("loadedmetadata", update);
+            video.removeEventListener("resize", update);
+        };
+    }, []);
+
     /* ------------------------------------------------ FULL SCREEN ------------------------------------------------- */
     const toggleFullscreen = async () => {
         if (showSubtitleMenu)
@@ -443,8 +473,10 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             onCanPlay={() => setIsBuffering(false)}>
         </video>
 
-        {subs && <div className={`absolute bottom-3 sm:bottom-8 xl:bottom-10 w-full text-center text-lg sm:text-xl lg:text-3xl pointer-events-none text-white font-bold custom-text-shadow ${isPlaying ? "z-10" : ""}`}>
-            <div className="mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
+        {subs && <div className={`absolute flex items-end pointer-events-none ${pictureRect ? "" : "inset-0"} ${isPlaying ? "z-10" : ""}`} style={pictureRect}>
+            <div className="w-full px-2 pb-4 sm:pb-10 xl:pb-12 text-center text-lg sm:text-xl lg:text-3xl xl:text-4xl 2xl:text-5xl text-white font-bold custom-text-shadow">
+                <div className="mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
+            </div>
         </div>}
         <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
             {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
@@ -493,9 +525,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     </div>);
 }
 
-// Bottom panel over the player on mobile, popover above the controls from sm
 function TracksMenu({title, onClose, children}: {title: string, onClose: () => void, children: React.ReactNode}) {
-    // On mobile, a click on the dark background (outside the bottom panel) closes the menu
     return (<div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 text-white sm:inset-auto sm:bottom-12 sm:right-8 sm:block sm:bg-transparent sm:py-6 sm:px-8" onClick={onClose}>
         <div className="flex flex-col max-h-[75%] bg-black border-t border-white/30 sm:max-h-none sm:bg-transparent sm:border-0" onClick={(e) => e.stopPropagation()}>
             <div className="flex shrink-0 items-center justify-between px-4 py-2 border-b border-white/30 sm:hidden">
