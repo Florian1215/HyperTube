@@ -474,8 +474,8 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         </video>
 
         {subs && <div className={`absolute flex items-end pointer-events-none ${pictureRect ? "" : "inset-0"} ${isPlaying ? "z-10" : ""}`} style={pictureRect}>
-            <div className="w-full px-2 pb-4 sm:pb-10 xl:pb-12 text-center text-lg sm:text-xl lg:text-3xl xl:text-4xl 2xl:text-5xl text-white font-bold custom-text-shadow">
-                <div className="mx-auto whitespace-pre-line wrap-break-word leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
+            <div className="w-full flex justify-center px-2 pb-3 sm:pb-8 xl:pb-10 text-center text-lg sm:text-xl lg:text-3xl xl:text-4xl 2xl:text-5xl text-white font-bold custom-text-shadow">
+                <div className="shrink-0 whitespace-pre leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
             </div>
         </div>}
         <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
