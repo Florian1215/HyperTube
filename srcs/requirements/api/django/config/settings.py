@@ -33,6 +33,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'torrents.tasks.check_requested_torrents',
         'schedule': crontab(hour=5, minute=0),
     },
+    'rotate-featured-medias': {
+        'task': 'medias.tasks.rotate_featured_medias',
+        'schedule': crontab(hour=6, minute=0),
+    },
 }
 
 DOWNLOAD_RETENTION = timedelta(days=30)
