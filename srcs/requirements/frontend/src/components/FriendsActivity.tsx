@@ -68,8 +68,6 @@ function formatRelativeDate(date: string, locale: string) {
     return formatter.format(Math.round(days / 365), "year");
 }
 
-const MAX_USERS = 6;
-
 export function getActivityKey(activity: iMediaActivity) {
     return `${activity.type}-${activity.id}` + (activity.episode ? `-${activity.episode.id}` : "");
 }
@@ -93,25 +91,23 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     const locale = useLocale();
     const media = activities[0];
     const {onContextMenu, menu} = useMediaRightClick(media);
-    const hidden = activities.length - MAX_USERS;
 
-    return (<div className="group relative min-w-36 max-w-md" onContextMenu={onContextMenu}>
+    return (<div className="group relative min-w-28 max-w-md w-full" onContextMenu={onContextMenu}>
         {menu}
-        <Link href={formatURL(media)} title={media.episode?.name || media.title} className="block relative aspect-3/2 overflow-hidden border">
+        <Link href={formatURL(media)} title={media.episode?.name || media.title} className="block relative aspect-5/6 sm:aspect-3/2 overflow-hidden border">
             <LoadingImage className="size-full object-cover" width={400} height={225} src={media.episode?.poster_url || media.backdrop_url} alt={tMedia("posterAlt", {title: media.episode?.name || media.title})}/>
             <div className="custom-noise opacity-30"/>
-            {media.episode && <div className="opacity-0 group-hover:opacity-100 flex absolute inset-0 p-2 items-end justify-center transition-opacity duration-200">
+            {media.episode && <div className="z-10 opacity-0 group-hover:opacity-100 hidden sm:flex absolute inset-0 p-2 items-end justify-center transition-opacity duration-200">
                 <div className="bg-gradient"/>
                 <EpisodeLabel season={media.episode.season_number} episode={media.episode.episode_number} className="z-10 text-white"/>
             </div>}
         </Link>
-        <div className="absolute bottom-1.5 left-1.5 flex items-center -space-x-2">
-            {activities.slice(0, MAX_USERS).map((activity) =>
-                <Link key={activity.user.id} href={`/users/${activity.user.id}`} className="hover:z-10"
+        <div className="absolute bottom-1.5 left-1.5 max-w-[calc(100%-0.50rem)] flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
+            {activities.map((activity) =>
+                <Link key={activity.user.id} href={`/users/${activity.user.id}`} className="shrink-0 hover:z-10"
                       title={activity.user.username + (activity.watched_at ? ` · ${formatRelativeDate(activity.watched_at, locale)}` : "")}>
                     <ProfilePicture size={3} user={activity.user}/>
                 </Link>)}
-            {hidden > 0 && <span className="relative flex items-center justify-center size-8 rounded-full border border-black bg-white text-black text-xs font-semibold">{`+${hidden}`}</span>}
         </div>
     </div>);
 }
