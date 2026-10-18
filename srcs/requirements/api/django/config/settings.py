@@ -54,7 +54,7 @@ def env_list(name, default=''):
 
 
 SERVER_URLS = [urlsplit(value) for value in env_list('SERVER_NAME')]
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', *(url.hostname if url.scheme else url.path for url in SERVER_URLS)]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.30', *(url.hostname if url.scheme else url.path for url in SERVER_URLS)]
 CSRF_TRUSTED_ORIGINS = [f'{url.scheme}://{url.netloc}' for url in SERVER_URLS if url.scheme]
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS')

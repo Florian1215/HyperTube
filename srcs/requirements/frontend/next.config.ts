@@ -4,7 +4,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const serverName = process.env.SERVER_NAME?.replace(/^\w+:\/\//, "").replace(/[:/].*$/, "");
 
 const nextConfig: NextConfig = {
-    allowedDevOrigins: serverName ? [serverName] : [],
+    allowedDevOrigins: ["192.168.1.30", ...(serverName ? [serverName] : [])],
     images: {
         remotePatterns: [
             {
