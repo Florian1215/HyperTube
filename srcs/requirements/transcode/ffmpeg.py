@@ -163,7 +163,7 @@ def video_args(video_codec: str) -> List[str]:
 
 
 AUDIO_ARGS = ['-c:a', 'aac', '-b:a', '256k', '-ac', '2']
-HLS_ARGS = ['-avoid_negative_ts', 'make_zero', '-hls_time', '5', '-hls_list_size', '0', '-hls_flags', 'append_list']
+HLS_ARGS = ['-avoid_negative_ts', 'make_zero', '-hls_time', '5', '-hls_list_size', '0', '-hls_flags', 'append_list+temp_file']
 
 
 def build_args(input_path: str, output_dir: Path, video_codec: str, tracks: dict) -> List[str]:
