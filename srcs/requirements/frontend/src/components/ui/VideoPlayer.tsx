@@ -56,6 +56,7 @@ function setSaved(key: string, value: string) {
 export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction, nextEpisodeAction, endedAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, nextEpisodeAction?: () => void, endedAction?: () => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const pauseCanvasRef = useRef<HTMLCanvasElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isBuffering, setIsBuffering] = useState(false);
     const [currentTime, setCurrentTime] = useState(formatTime(0));
@@ -179,14 +180,29 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
 
         if (!video)
             return;
+        const drawPausedFrame = () => {
+            const canvas = pauseCanvasRef.current;
+            const context = canvas?.getContext("2d");
+
+            if (!canvas || !context || !video.paused || !video.videoWidth)
+                return;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        };
         const onPlay = () => setIsPlaying(true);
-        const onPause = () => setIsPlaying(false);
+        const onPause = () => {
+            drawPausedFrame();
+            setIsPlaying(false);
+        };
 
         video.addEventListener("play", onPlay);
         video.addEventListener("pause", onPause);
+        video.addEventListener("seeked", drawPausedFrame);
         return () => {
             video.removeEventListener("play", onPlay);
             video.removeEventListener("pause", onPause);
+            video.removeEventListener("seeked", drawPausedFrame);
         };
     }, []);
 
@@ -472,6 +488,8 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
         </video>
+        <canvas ref={pauseCanvasRef} className={`absolute inset-0 size-full object-contain pointer-events-none ${isPlaying ? "invisible" : ""}`}/>
+        <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
 
         {subs && <div className={`absolute flex items-end pointer-events-none ${pictureRect ? "" : "inset-0"} ${isPlaying ? "z-10" : ""}`} style={pictureRect}>
             <div className="w-full flex justify-center px-2 pb-3 sm:pb-8 xl:pb-10 text-center text-lg sm:text-xl lg:text-3xl xl:text-4xl 2xl:text-5xl text-white font-bold custom-text-shadow">
@@ -481,7 +499,6 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
             {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
                 <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
-            <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
             <div className="bg-gradient" />
             {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
                 {episodeName && <p className="font-semibold uppercase truncate sm:text-lg">{episodeName}</p>}
