@@ -2,6 +2,7 @@ import Navbar from "@/components/layout/Navbar";
 import "./fonts.css";
 import "./globals.css";
 import React from "react";
+import type {Metadata, Viewport} from "next";
 import {NextIntlClientProvider} from "next-intl";
 import {getLocale, getMessages} from "next-intl/server";
 import Providers from "@/app/providers";
@@ -23,7 +24,25 @@ import FilterGenreModal from "@/app/search/FilterGenreModal";
 import AuthModalLayout from "@/components/layout/AuthModalLayout";
 import NotificationList from "@/components/ui/Notifications";
 
-const ACCENT_COLORS = ["yellow", "pink", "green", "purple", "blue", "red"];
+export const metadata: Metadata = {
+    icons: {
+        icon: [
+            {url: "/favicon.ico", sizes: "32x32"},
+            {url: "/favicon-96.png", sizes: "96x96", type: "image/png"},
+        ],
+        apple: {url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png"},
+    },
+    manifest: "/site.webmanifest",
+};
+
+export const viewport: Viewport = {
+    themeColor: [
+        {media: "(prefers-color-scheme: light)", color: "#FFFFFF"},
+        {media: "(prefers-color-scheme: dark)", color: "#191919"},
+    ],
+};
+
+const ACCENT_COLORS =["yellow", "pink", "green", "purple", "blue", "red"];
 
 function getRandomAccent() {
     return ACCENT_COLORS[Math.floor(Math.random() * ACCENT_COLORS.length)];
