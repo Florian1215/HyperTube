@@ -225,7 +225,7 @@ export default function MediaPage() {
                 <SmallText className="my-2 xl:my-4 text-white">{t("mediaDownloading", {type})}</SmallText>
             </div>}
         </MediaHero>
-        <MediaInfoSection media={media}/>
+        <MediaInfoSection media={media} watchedBy={(media?.type === "series" ? episodeDetails?.watched_by : media?.watched_by) ?? []}/>
         {media && media.type === "series" && "next_episode" in media && <SerieSeasonsSection serie={media} watchedEpisode={watchedEpisode} setWatchedEpisode={selectEpisode}/>}
         {media && media.type === "movies" && <MovieCollectionSection key={media.id} media={media}/>}
         {media ? <CommentsSection media={media}/> : <div/>}

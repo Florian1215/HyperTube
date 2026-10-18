@@ -23,6 +23,8 @@ export interface iMedia {
     rewatch?: boolean
 }
 
+export type iWatchedBy = iUser & {watch_count: number, views: (string | null)[]};
+
 export interface iMediaActivity extends iMedia {
     user: iUser
 }
@@ -40,7 +42,7 @@ export interface iMediaDetails extends iMedia{
     backdrops_url: string[]
     feature: boolean
     feature_at: string | null
-    watched_by: (iUser & {watch_count: number, views: (string | null)[]})[]
+    watched_by: iWatchedBy[]
 }
 
 export interface iCollectionPart extends iMedia {

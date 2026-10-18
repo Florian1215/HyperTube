@@ -2,7 +2,7 @@
 
 import React, {createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
-import {iMediaDetails, iPeople, iTorrent} from "@/types/media";
+import {iMediaDetails, iPeople, iTorrent, iWatchedBy} from "@/types/media";
 
 type ModalType = "signin" | "register" | "genre" | "filter-genre" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | null;
 
@@ -24,6 +24,7 @@ export interface ModalState {
     cast?: iPeople[]
     crew?: iPeople[]
     media?: iMediaDetails
+    watchedBy?: iWatchedBy[]
     tab?: "info" | "cast" | "crew"
 }
 

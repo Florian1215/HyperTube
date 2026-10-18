@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Exists, Max, OuterRef, Q, Subquery, Value
+from django.db.models import Exists, Max, OuterRef, Q, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -108,23 +108,22 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
     queryset = UserHistory.objects.all()
     serializer_class = MediaHistorySerializer
 
-    def is_grouped(self):
-        params = self.request.query_params
-        return params.get('type') == 'series' and params.get('group') == 'true'
+    def is_series(self):
+        return self.request.query_params.get('type') == 'series'
 
     def get_serializer_class(self):
-        if self.is_grouped():
+        if self.is_series():
             return SmallMediaSerializer
         return super().get_serializer_class()
 
     def filter_queryset(self, queryset):
-        if self.is_grouped():
+        if self.is_series():
             return Media.objects.filter(type='series', history__user=self.kwargs['user_id']).annotate(
                 last_watch=Max('history__updated_at')
             ).order_by('-last_watch')
         queryset = queryset.filter(user=self.kwargs['user_id'])
         media_type = self.request.query_params.get('type')
-        if media_type in ('movies', 'series'):
+        if media_type == 'movies':
             queryset = queryset.filter(media__type=media_type)
         return annotate_rewatch(queryset).order_by('-updated_at')
 
@@ -173,14 +172,8 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def filter_queryset(self, queryset):
-        filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=7)}
+        filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=14)}
         queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
         if 'type' in self.kwargs:
             queryset = queryset.filter(media__type=self.kwargs['type'])
-        group = self.request.query_params.get('group', str(self.request.user.group_series).lower())
-        if group == 'true':
-            last_watch = UserHistory.objects.filter(
-                user=OuterRef('user'), media=OuterRef('media'), **filters
-            ).order_by('-watched_at', '-id').values('id')[:1]
-            queryset = queryset.filter(id=Subquery(last_watch))
         return annotate_rewatch(queryset).order_by('-watched_at')

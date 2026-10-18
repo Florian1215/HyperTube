@@ -7,15 +7,12 @@ import {useUserHistory, useUserWatchlist} from "@/services/users.service";
 import {iUser} from "@/types/user";
 import {tMedia} from "@/types/utils";
 import SmallText from "@/components/ui/SmallText";
-import useAuth from "@/contexts/AuthContext";
 
 export default function TabMediaHistory({user, type}: {user: iUser, type: tMedia}) {
     const [index, setIndex] = useState(1);
     const changeIndex = (newIndex: number) => {setIndex(newIndex);}
     const t = useTranslations("profile");
-    const {user: authUser} = useAuth();
-    const grouped = type === "series" && (authUser?.group_series ?? true);
-    const {data: watchMedias} = useUserHistory(user.id, type, index, grouped);
+    const {data: watchMedias} = useUserHistory(user.id, type, index);
     const totalPage = computeTotalPage(watchMedias);
 
     if (watchMedias && watchMedias.results.length === 0)

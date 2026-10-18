@@ -1,8 +1,10 @@
+from django.db.models import Q
 from rest_framework import serializers
 
 from medias.models import Media
 from series.models import Episode
-from users.models import UserHistory, UserWatchlist
+from users.models import User, UserFollow, UserHistory, UserWatchlist
+from users.serializers import UserSerializer
 
 
 def get_progress_ratio(watched, total):
@@ -27,6 +29,32 @@ def get_views(media, user):
     count = min(len(dates) for dates in episodes.values())
     views = [max((dates[i] for dates in episodes.values() if dates[i]), default=None) for i in range(count)]
     return views[::-1]
+
+
+def get_watched_by(viewer, media):
+    if not viewer.is_authenticated:
+        return []
+    users = User.objects.filter(Q(id=viewer.id) | Q(followers__follower=viewer), history__media=media,
+                                history__complete=True).distinct().order_by('username')
+    res = []
+    for watcher in users:
+        views = get_views(media, watcher)
+        res.append({**UserSerializer(watcher).data, 'watch_count': len(views), 'views': views})
+    return res
+
+
+def get_season_watched_by(viewer, season):
+    if not viewer.is_authenticated:
+        return {}
+    followed = UserFollow.objects.filter(follower=viewer).values('followed')
+    history = UserHistory.objects.filter(
+        Q(user=viewer) | Q(user__in=followed), episode__season=season, complete=True
+    ).select_related('user').order_by('user__username', '-id')
+    views = {}
+    for h in history:
+        views.setdefault(h.episode_id, {}).setdefault(h.user, []).append(h.watched_at)
+    return {episode_id: [{**UserSerializer(user).data, 'watch_count': len(dates), 'views': dates}
+                         for user, dates in users.items()] for episode_id, users in views.items()}
 
 
 def get_season_progress(season, user):

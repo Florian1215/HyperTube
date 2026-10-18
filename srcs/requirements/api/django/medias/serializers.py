@@ -1,4 +1,3 @@
-from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -7,8 +6,8 @@ from series.serializers import SmallEpisodeSerializer
 from torrents.models import DownloadMedia, Torrent
 from medias.fetch import get_or_fetch_media_lang
 from medias.models import Media, Cast, Crew
-from medias.progress import get_views, MediaProgressMixin, MediaWatchlistMixin, get_next_episode, remove_watched_from_watchlist
-from users.models import User, UserHistory
+from medias.progress import get_watched_by, MediaProgressMixin, MediaWatchlistMixin, get_next_episode, remove_watched_from_watchlist
+from users.models import UserHistory
 from users.serializers import UserSerializer
 
 
@@ -167,19 +166,9 @@ class MediaDetailSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistM
         return get_next_episode(obj, self.context.get('user_history'))
 
     def get_watched_by(self, obj):
-        user = self.context['request'].user
-        if not user.is_authenticated:
+        if obj.type == 'series':
             return []
-        users = User.objects.filter(
-            Q(id=user.id) | Q(followers__follower=user),
-            history__media=obj,
-            history__complete=True
-        ).distinct().order_by('username')
-        res = []
-        for watcher in users:
-            views = get_views(obj, watcher)
-            res.append({**UserSerializer(watcher).data, 'watch_count': len(views), 'views': views})
-        return res
+        return get_watched_by(self.context['request'].user, obj)
 
 
 class MediaFeatureSerializer(serializers.ModelSerializer):

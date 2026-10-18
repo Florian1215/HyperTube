@@ -22,6 +22,5 @@ export interface iUser {
     created_at: string
     perm?: string
     is_following?: boolean
-    group_series?: boolean
     preferred_language?: tPreferredLanguage
 }

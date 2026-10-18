@@ -12,7 +12,6 @@ import useModal from "@/contexts/ModalContext";
 import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
-import Toggle from "@/components/ui/Toggle";
 import PageMeta from "@/components/PageMeta";
 
 export default function Page() {
@@ -46,9 +45,7 @@ export default function Page() {
 function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
     const {addNotification} = useNotification();
     const t = useTranslations("profile.fields");
-    const tProfile = useTranslations("profile");
     const tSuccess = useTranslations("notifications.success");
-    const {execute} = useApiMutation();
 
     const handleUpdateUser = (data: iToken | iUser) => {
         if ("username" in data) {
@@ -58,19 +55,9 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: P
         }
     };
 
-    const handleGroupSeries = async (groupSeries: boolean) => {
-        const data = await execute((locale) => patchUser(locale, ["group_series", String(groupSeries)], user.id));
-        if (data && updateUser)
-            updateUser({group_series: data.group_series});
-    };
-
     return (<div className="flex flex-col gap-8 w-full">
         <Form formType="update" request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={user.id}
               fields={["username"]} />
-        <div className="flex items-end justify-between gap-3 w-full">
-            <p className="text-sm leading-5 text-left">{tProfile("groupBySeries")}</p>
-            <Toggle val={user.group_series ?? true} setter={handleGroupSeries}/>
-        </div>
     </div>);
 }
 

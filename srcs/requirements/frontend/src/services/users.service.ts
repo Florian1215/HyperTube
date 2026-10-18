@@ -32,15 +32,13 @@ export function useUsersSearch(search: string, enabled = true, viewerId?: number
     );
 }
 
-export function useUserHistory(userId?: number, type?: tMedia, page = 1, group = false) {
+export function useUserHistory(userId?: number, type?: tMedia, page = 1) {
     const params = new URLSearchParams({page: String(page)});
     if (type)
         params.set("type", type);
-    if (group)
-        params.set("group", "true");
 
     return useApiQuery(
-        ["user-media-history", userId, type, page, group],
+        ["user-media-history", userId, type, page],
         (locale: string) => apiClient<tListResponse<iMedia>>(`users/${userId}/history/?${params.toString()}`, locale),
         !!userId
     );
@@ -70,10 +68,10 @@ export function useUserWatchlist(userId?: number, page = 1) {
     );
 }
 
-export function useFollowingActivity(userId?: number, group = true) {
+export function useFollowingActivity(userId?: number) {
     return useApiQuery(
-        ["user-media-history", "following", userId, group],
-        (locale: string) => apiClient<tListResponse<iMediaActivity>>(`users/following/activity/?group=${group}`, locale),
+        ["user-media-history", "following", userId],
+        (locale: string) => apiClient<tListResponse<iMediaActivity>>("users/following/activity/", locale),
         !!userId
     );
 }

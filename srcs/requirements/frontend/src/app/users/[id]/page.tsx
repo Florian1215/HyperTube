@@ -36,7 +36,7 @@ export default function Page() {
     const {data: user, error} = useUser(userId, !loading, authUser?.id);
     const meta = <PageMeta title={user?.username ?? tMeta("user")} description={user ? tMeta("userDescription", {username: user.username}) : undefined}/>;
     const {data: movies} = useUserHistory(user?.id, "movies");
-    const {data: series} = useUserHistory(user?.id, "series", 1, authUser?.group_series ?? true);
+    const {data: series} = useUserHistory(user?.id, "series");
     const {data: watchlist} = useUserWatchlist(user?.id);
     const {data: comments} = useProfileComments(user?.id, 1);
     const counts: Record<string, number | undefined> = {movies: movies?.count, series: series?.count, watchlist: watchlist?.count, comments: comments?.count};

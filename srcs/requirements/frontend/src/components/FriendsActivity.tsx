@@ -24,14 +24,10 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
 
     return (<div className="flex items-center gap-3 p-3 lg:grid lg:grid-cols-subgrid lg:col-span-full lg:gap-x-4 lg:gap-y-1">
         <div className="flex shrink-0 gap-4" onContextMenu={onContextMenu}>
-            <Link href={formatURL(activity)} title={activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0 overflow-hidden border">
-                <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.title})}/>
+            <Link href={formatURL(activity)} title={activity.episode?.name || activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0 overflow-hidden border">
+                <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.episode?.poster_url || activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.episode?.name || activity.title})}/>
                 <div className="custom-noise opacity-30"/>
             </Link>
-            {activity.episode?.poster_url && <Link href={formatURL(activity)} title={activity.episode.name} className="relative hidden sm:block w-38 aspect-3/2 shrink-0 overflow-hidden border">
-                <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.episode.poster_url} alt={tMedia("posterAlt", {title: activity.episode.name ?? activity.title})}/>
-                <div className="custom-noise opacity-30"/>
-            </Link>}
         </div>
         <div className="flex flex-col flex-1 gap-1.5 min-w-0 lg:contents">
             <Link href={formatURL(activity)} className="flex flex-col lg:flex-row lg:flex-wrap lg:items-baseline gap-x-2 min-w-0 lg:max-w-md group" onContextMenu={onContextMenu}>
@@ -74,11 +70,15 @@ function formatRelativeDate(date: string, locale: string) {
 
 const MAX_USERS = 6;
 
+export function getActivityKey(activity: iMediaActivity) {
+    return `${activity.type}-${activity.id}` + (activity.episode ? `-${activity.episode.id}` : "");
+}
+
 export function groupActivities(activities: iMediaActivity[]) {
     const groups = new Map<string, iMediaActivity[]>();
 
     activities.forEach((activity) => {
-        const key = `${activity.type}-${activity.id}`;
+        const key = getActivityKey(activity);
         const group = groups.get(key) ?? [];
 
         if (!group.some((other) => other.user.id === activity.user.id))
@@ -95,12 +95,15 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     const {onContextMenu, menu} = useMediaRightClick(media);
     const hidden = activities.length - MAX_USERS;
 
-    return (<div className="relative min-w-48" onContextMenu={onContextMenu}>
+    return (<div className="group relative min-w-36 max-w-md" onContextMenu={onContextMenu}>
         {menu}
-        <Link href={formatURL(media)} title={media.title} className="block relative aspect-3/2 overflow-hidden border">
-            <LoadingImage className="size-full object-cover" width={400} height={225} src={media.backdrop_url} alt={tMedia("posterAlt", {title: media.title})}/>
+        <Link href={formatURL(media)} title={media.episode?.name || media.title} className="block relative aspect-3/2 overflow-hidden border">
+            <LoadingImage className="size-full object-cover" width={400} height={225} src={media.episode?.poster_url || media.backdrop_url} alt={tMedia("posterAlt", {title: media.episode?.name || media.title})}/>
             <div className="custom-noise opacity-30"/>
-            <div className="bg-gradient"/>
+            {media.episode && <div className="opacity-0 group-hover:opacity-100 flex absolute inset-0 p-2 items-end justify-center transition-opacity duration-200">
+                <div className="bg-gradient"/>
+                <EpisodeLabel season={media.episode.season_number} episode={media.episode.episode_number} className="z-10 text-white"/>
+            </div>}
         </Link>
         <div className="absolute bottom-1.5 left-1.5 flex items-center -space-x-2">
             {activities.slice(0, MAX_USERS).map((activity) =>

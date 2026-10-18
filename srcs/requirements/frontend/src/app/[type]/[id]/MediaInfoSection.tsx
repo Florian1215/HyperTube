@@ -1,5 +1,5 @@
 import {iMovieDetails} from "@/types/movie";
-import {iPeople} from "@/types/media";
+import {iPeople, iWatchedBy} from "@/types/media";
 import React from "react";
 import {useTranslations} from "next-intl";
 import LoadingText from "@/components/LoadingText";
@@ -16,7 +16,7 @@ import Rating from "@/components/Rating";
 
 const MAX_WATCHED_BY = 10;
 
-export default function MediaInfoSection({media} : {media?: iMovieDetails | iSerieDetails}) {
+export default function MediaInfoSection({media, watchedBy} : {media?: iMovieDetails | iSerieDetails, watchedBy: iWatchedBy[]}) {
     const t = useTranslations("media");
     const tSerie = useTranslations("serie");
     const {openModal} = useModal();
@@ -41,7 +41,7 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
     const tStatus = media.type === "series" ? tSerie : t;
     const statusKey = `statuses.${media.status}`;
     const openCredits = (tab: "info" | "cast" | "crew") => openModal({type: "credits", cast: media.cast, crew: media.crew, media: media, tab});
-    const openWatchedBy = () => openModal({type: "watched-by", media: media});
+    const openWatchedBy = () => openModal({type: "watched-by", watchedBy});
     const status = media.status === "Released" ? undefined : (tStatus.has(statusKey) ? tStatus(statusKey) : media.status);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
@@ -56,10 +56,10 @@ export default function MediaInfoSection({media} : {media?: iMovieDetails | iSer
             <Rating media={media} after={true}/>
         </InfoMedia>}
         {
-            media.watched_by.length > 0 &&
+            watchedBy.length > 0 &&
             <InfoMedia name={t("watchedBy")} onClick={openWatchedBy}>
                 <div className="flex flex-wrap items-center gap-1.5">
-                    {media.watched_by.slice(0, MAX_WATCHED_BY).map((user) => (<Link key={user.id} href={`/users/${user.id}`} title={user.username} className="flex isolate">
+                    {watchedBy.slice(0, MAX_WATCHED_BY).map((user) => (<Link key={user.id} href={`/users/${user.id}`} title={user.username} className="flex isolate">
                         {Array.from({length: Math.min(Math.max(user.watch_count, 1), 15)}, (_, i) => (<div key={i} className={i > 0 ? "-ml-6.5" : ""} style={{zIndex: 5 - i}}>
                             <ProfilePicture size={3} user={user}/>
                         </div>))}

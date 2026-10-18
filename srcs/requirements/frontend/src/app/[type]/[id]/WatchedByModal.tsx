@@ -14,10 +14,10 @@ export default function WatchedByModal() {
     const t = useTranslations("media");
     const locale = useLocale();
 
-    if (activeModal.type !== "watched-by" || activeModal.media === undefined)
+    if (activeModal.type !== "watched-by" || activeModal.watchedBy === undefined)
         return null;
 
-    const views = activeModal.media.watched_by
+    const views = activeModal.watchedBy
         .flatMap((user) => user.views.map((date, i) => ({user, date, rewatch: i < user.views.length - 1})))
         .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 

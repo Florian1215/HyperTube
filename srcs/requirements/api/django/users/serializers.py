@@ -34,7 +34,7 @@ class UserProfileSerializer(UserSerializer):
 
 class UserSettingsSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['group_series', 'preferred_language']
+        fields = UserSerializer.Meta.fields + ['preferred_language']
 
     @staticmethod
     def validate_profile_picture(value):
@@ -59,7 +59,6 @@ class UserMeSerializer(serializers.ModelSerializer):
             'color',
             'profile_picture',
             'perm',
-            'group_series',
             'preferred_language',
             'created_at'
         ]

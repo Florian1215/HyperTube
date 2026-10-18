@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from medias.progress import MediaProgressMixin, get_season_progress
+from medias.progress import MediaProgressMixin, get_season_progress, get_season_watched_by
 from series.fetch import get_or_fetch_season_lang
 from series.models import Season, Episode, EpisodeLanguage
 
@@ -8,6 +8,7 @@ from series.models import Season, Episode, EpisodeLanguage
 class EpisodeSerializer(MediaProgressMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     overview = serializers.SerializerMethodField()
+    watched_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Episode
@@ -21,6 +22,12 @@ class EpisodeSerializer(MediaProgressMixin, serializers.ModelSerializer):
 
     def get_overview(self, obj):
         return self.get_obj(obj).overview
+
+    def get_watched_by(self, obj):
+        seasons = self.context.setdefault('season_watched_by', {})
+        if obj.season_id not in seasons:
+            seasons[obj.season_id] = get_season_watched_by(self.context['request'].user, obj.season)
+        return seasons[obj.season_id].get(obj.id, [])
 
 
 class SeasonSerializer(serializers.ModelSerializer):

@@ -9,7 +9,7 @@ import useResponsiveSize from "@/hooks/useResponsiveSize";
 import {SEARCH_CONTINUE, SEARCH_DIRECTSTREAM, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import GenreTags from "@/components/GenreTags";
-import {FriendActivityCard, groupActivities} from "@/components/FriendsActivity";
+import {FriendActivityCard, getActivityKey, groupActivities} from "@/components/FriendsActivity";
 import MediasGrid from "@/components/MediasGrid";
 import useModal from "@/contexts/ModalContext";
 import shuffleArray from "@/utils/shuffleArray";
@@ -61,8 +61,7 @@ export default function HomePage() {
     const {data: dirctedWatchMovies} = useItems("movies", SEARCH_DIRECTSTREAM);
     const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
 
-    const groupSeries = user?.group_series ?? true;
-    const {data: friendAct} = useFollowingActivity(user?.id, groupSeries);
+    const {data: friendAct} = useFollowingActivity(user?.id);
     const activities = (friendAct?.results ?? []).filter((activity) => activity.backdrop_url);
 
     return (<div>
@@ -73,8 +72,8 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
             {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
-                <div className="flex gap-x-2 sm:gap-x-4 overflow-x-auto">
-                    {groupActivities(activities).map((group) => <FriendActivityCard key={`${group[0].type}-${group[0].id}`} activities={group}/>)}
+                <div className="flex gap-x-2 sm:gap-x-4 overflow-x-auto scrollbar-hide">
+                    {groupActivities(activities).map((group) => <FriendActivityCard key={getActivityKey(group[0])} activities={group}/>)}
                 </div>
             </Section>}
             {(continueWatching.length > 0) &&

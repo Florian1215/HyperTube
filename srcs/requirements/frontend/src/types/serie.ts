@@ -1,4 +1,4 @@
-import {iMedia, iMediaDetails, iProgress} from "@/types/media";
+import {iMedia, iMediaDetails, iProgress, iWatchedBy} from "@/types/media";
 
 export interface iSerie extends iMedia {
     end_date: string | null
@@ -41,6 +41,7 @@ export interface iEpisode extends iProgress {
     rating: number
     release_date: string
     poster_url: string
+    watched_by: iWatchedBy[]
 }
 
 export interface iSmallEpisode {
