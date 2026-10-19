@@ -39,9 +39,9 @@ export function useItems(type: tSearch, search_title?: string, page?: number, en
             let endpoint = `${type}/`;
 
             if (search_title === SEARCH_DIRECTSTREAM)
-                endpoint += "directstream/"
+                endpoint += `directstream/?page=${page ?? 1}`
             else if (search_title === "featured")
-                endpoint += "featured/"
+                endpoint += `featured/?page=${page ?? 1}`
             else if (search_title === SEARCH_UPCOMING)
                 endpoint += `upcoming/?page=${page ?? 1}`
             else if (search_title === SEARCH_CONTINUE)
