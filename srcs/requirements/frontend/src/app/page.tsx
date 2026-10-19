@@ -35,11 +35,11 @@ export default function HomePage() {
     const {data: movies} = useItems("movies");
     const {data: series} = useItems("series");
     const shuffledPopular = useMemo(() => {
-        const featured = [
+        const popular = [
             ...filterAlreadyWatch(movies?.results),
             ...filterAlreadyWatch(series?.results),
         ];
-        return shuffleArray(featured);
+        return shuffleArray(popular);
     }, [movies?.results, series?.results]);
 
     const {data: featuredMovies} = useItems("movies", "featured");
@@ -200,7 +200,6 @@ function SliderHero({medias}: {medias: iMedia[]}) {
             startInterval();
     };
 
-    // The automatic slide stops while a hero is hovered
     useEffect(() => {
         if (!medias.length || paused)
             return;
@@ -208,7 +207,6 @@ function SliderHero({medias}: {medias: iMedia[]}) {
         return () => clearInterval(intervalRef.current);
     }, [medias.length, startInterval, paused]);
 
-    // Clipped horizontally only, so the hovered hero can grow above and below
     return (<div className="overflow-x-clip w-full">
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
@@ -230,5 +228,5 @@ function SliderHero({medias}: {medias: iMedia[]}) {
 function filterAlreadyWatch(movies?: iMedia[]) {
     if (!movies)
         return [];
-    return movies.filter(m => !m.complete);
+    return movies.filter(m => !m.complete && m.backdrop_url);
 }
