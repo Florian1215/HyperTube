@@ -93,6 +93,10 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const isLiveRef = useRef(true);
     const queryClient = useQueryClient();
     const resumed = useRef(false);
+    const pointerTypeRef = useRef("mouse");
+    const tapRef = useRef<{time: number, timeout?: ReturnType<typeof setTimeout>}>({time: 0});
+    const seekFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const [seekFeedback, setSeekFeedback] = useState<{side: "left" | "right", amount: number}>();
     const barDuration = Math.max(fullDuration, downloadDuration);
     const controlsVisible = showControls || showAudioMenu || showSubtitleMenu;
     const showNextEpisode = !!nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration;
@@ -229,6 +233,42 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             video.pause();
             setShowControls(true);
         }
+    };
+
+    /* ------------------------------------------------- DOUBLE TAP ------------------------------------------------- */
+    const seekBy = (side: "left" | "right") => {
+        const video = videoRef.current;
+        if (!video)
+            return;
+        const delta = side === "left" ? -10 : 10;
+        video.currentTime = Math.min(Math.max(0, video.currentTime + delta), video.duration || Infinity);
+
+        setSeekFeedback((prev) => ({side, amount: prev?.side === side ? prev.amount + 10 : 10}));
+        clearTimeout(seekFeedbackTimeoutRef.current);
+        seekFeedbackTimeoutRef.current = setTimeout(() => setSeekFeedback(undefined), 700);
+    };
+
+    const handleVideoClick = (e: React.MouseEvent<HTMLVideoElement>) => {
+        if (pointerTypeRef.current !== "touch")
+            return togglePlay();
+
+        const tap = tapRef.current;
+        const now = e.timeStamp;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const side = e.clientX - rect.left < rect.width / 2 ? "left" : "right";
+
+        clearTimeout(tap.timeout);
+        tap.timeout = undefined;
+        if (now - tap.time < 300) {
+            tap.time = now;
+            seekBy(side);
+            return;
+        }
+        tap.time = now;
+        tap.timeout = setTimeout(() => {
+            tap.timeout = undefined;
+            togglePlay();
+        }, 300);
     };
 
     /* --------------------------------------------------- PROGRESS ------------------------------------------------- */
@@ -490,13 +530,16 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         </div>)}
 
         <video ref={videoRef} className={`size-full ${!isPlaying ? "custom-cursor-play" : (showControls ? "" : "cursor-none")}`}
-            onClick={togglePlay} onTimeUpdate={handleTimeUpdate} onEnded={endedAction} controls={false}
+            onPointerDown={(e) => pointerTypeRef.current = e.pointerType} onClick={handleVideoClick} onTimeUpdate={handleTimeUpdate} onEnded={endedAction} controls={false}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
             onCanPlay={() => setIsBuffering(false)}>
         </video>
         <canvas ref={pauseCanvasRef} className={`absolute inset-0 size-full object-contain pointer-events-none ${isPlaying ? "invisible" : ""}`}/>
         <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
+        {seekFeedback && <div className={`absolute inset-y-0 w-1/2 flex items-center justify-center pointer-events-none bg-white/10 z-20 ${seekFeedback.side === "left" ? "left-0 rounded-r-[50%]" : "right-0 rounded-l-[50%]"}`}>
+            <p className="text-white font-bold tracking-widest text-xs font-wide">{seekFeedback.side === "left" ? `-${seekFeedback.amount}s` : `+${seekFeedback.amount}s`}</p>
+        </div>}
 
         {currentText && <div className={`absolute flex items-end pointer-events-none ${pictureRect ? "" : "inset-0"} ${isPlaying ? "z-10" : ""}`} style={pictureRect}>
             <div className="w-full flex justify-center px-2 pb-3 sm:pb-8 xl:pb-10 text-center text-base sm:text-xl md:text-2xl xl:text-3xl 2xl:text-4xl text-white font-bold custom-text-shadow">
