@@ -498,8 +498,8 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         <canvas ref={pauseCanvasRef} className={`absolute inset-0 size-full object-contain pointer-events-none ${isPlaying ? "invisible" : ""}`}/>
         <div style={{opacity: !isPlaying ? 0.5 : 0}} className="custom-noise transition-opacity duration-300"/>
 
-        {subs && <div className={`absolute flex items-end pointer-events-none ${pictureRect ? "" : "inset-0"} ${isPlaying ? "z-10" : ""}`} style={pictureRect}>
-            <div className="w-full flex justify-center px-2 pb-3 sm:pb-8 xl:pb-10 text-center text-lg sm:text-xl lg:text-3xl xl:text-4xl 2xl:text-5xl text-white font-bold custom-text-shadow">
+        {currentText && <div className={`absolute flex items-end pointer-events-none ${pictureRect ? "" : "inset-0"} ${isPlaying ? "z-10" : ""}`} style={pictureRect}>
+            <div className="w-full flex justify-center px-2 pb-3 sm:pb-8 xl:pb-10 text-center text-base sm:text-xl md:text-2xl xl:text-3xl 2xl:text-4xl text-white font-bold custom-text-shadow">
                 <div className="shrink-0 whitespace-pre leading-tight" dangerouslySetInnerHTML={{ __html: currentText }}/>
             </div>
         </div>}
@@ -526,7 +526,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                         {showAudioMenu && <TracksMenu title={tAction("audio")} onClose={() => setShowAudioMenu(false)}>
                             {audioTracks.map((track, index) => <TrackButton key={track.id} selected={track.id === selectedAudio} onClick={() => changeAudio(track)}>{getTrackLabel(track, index)}</TrackButton>)}
                         </TracksMenu>}
-                        {<button title={tAction("subtitles")} onClick={() => {
+                        {subtitleTracks.length > 0 && <button title={tAction("subtitles")} onClick={() => {
                             setShowAudioMenu(false);
                             setShowSubtitleMenu((prev) => !prev);
                         }} className={`px-2 font-wide border ${selectedSubtitle !== undefined ? "text-black bg-white hover:bg-accent" : "hover:text-accent"}`}>CC</button>}
