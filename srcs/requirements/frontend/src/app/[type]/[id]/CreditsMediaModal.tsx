@@ -12,6 +12,7 @@ import Link from "next/link";
 import LoadingImage from "@/components/ui/LoadingImage";
 import Tabs from "@/components/ui/Tabs";
 import SmallText from "@/components/ui/SmallText";
+import {CURRENT_COLOR_HIGHLIGHT, useHoverEffect} from "@/components/ui/HoverEffect";
 
 
 const TABS = ["info", "cast", "crew"] as const;
@@ -91,8 +92,10 @@ function MediaInfo({media}: {media: iMediaDetails}) {
 }
 
 function People({p, closeModal}: {p: iPeople, closeModal: () => void}) {
-    return (<Link href={`/people/${p.id}`} className="w-full min-w-0 hover:bg-dwhite-light p-2" onClick={closeModal}>
-        <div className="flex gap-2 items-center">
+    const hover = useHoverEffect({shift: 6, highlightColor: CURRENT_COLOR_HIGHLIGHT});
+
+    return (<Link {...hover.handlers} href={`/people/${p.id}`} className={`group/hover w-full min-w-0 ${hover.hoverClassName}`} onClick={closeModal}>
+        <div {...hover.moveProps} className={`relative flex gap-2 items-center p-2 group-hover/hover:bg-dwhite-light ${hover.moveClassName}`}>
             <div className="relative border size-20 shrink-0 overflow-hidden">
                 <div className="custom-noise opacity-25"/>
                 {
@@ -106,6 +109,7 @@ function People({p, closeModal}: {p: iPeople, closeModal: () => void}) {
                 {p.job && <SmallText className="truncate max-w-full">{p.job}</SmallText>}
                 {p.character && <SmallText className="truncate max-w-full">{p.character}</SmallText>}
             </div>
+            {hover.highlight}
         </div>
     </Link>);
 }
