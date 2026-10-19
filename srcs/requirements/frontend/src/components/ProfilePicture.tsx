@@ -3,10 +3,12 @@ import React from "react";
 import LoadingImage from "@/components/ui/LoadingImage";
 import {useTranslations} from "next-intl";
 import {getApiFileUrl} from "@/services/apiClient";
+import {useHoverEffect} from "@/components/ui/HoverEffect";
 
 export default function ProfilePicture({user, size = 0, color, className}: {user: iUser, size?: 0 | 1 | 2 | 3, color?: string, className?: string}) {
     const sizes = ["size-10", "size-18 sm:size-24", "size-38 sm:size-45", "size-8"];
     const t = useTranslations("common");
+    const hover = useHoverEffect({shift: 4, scale: 1.08});
     let children;
 
     if (user.profile_picture)
@@ -25,8 +27,9 @@ export default function ProfilePicture({user, size = 0, color, className}: {user
             children = <h1 className="text-6xl">{initial}</h1>;
     }
 
-    return (<div className={`text-black relative overflow-hidden rounded-full bg-${color} hover:bg-${color}-hover ${sizes[size]} flex items-center justify-center border shrink-0 hover:cursor-pointer ${className}`}>
+    return (<div {...hover.handlers} {...hover.moveProps} className={`group/hover ${hover.hoverClassName} ${hover.moveClassName} text-black relative overflow-hidden rounded-full bg-${color} hover:bg-${color}-hover ${sizes[size]} flex items-center justify-center border shrink-0 motion-reduce:hover:cursor-pointer ${className}`}>
         <div className="custom-noise opacity-30"/>
         {children}
+        {hover.highlight}
     </div>);
 }

@@ -1,4 +1,5 @@
 import React from "react";
+import {CURRENT_COLOR_HIGHLIGHT, useHoverEffect} from "@/components/ui/HoverEffect";
 
 export type tButtonVariant = "primary" | "secondary" | "outline";
 
@@ -27,10 +28,12 @@ export default function Button({children, onClick, onContextMenu, className, var
     const isDisabled = disabled || !onClick;
     const colors = VARIANTS[variant];
     const colorClass = isDisabled ? (darkMode ? colors.disabled : colors.disabledFixed) : (darkMode ? colors.themed : colors.fixed);
+    const hover = useHoverEffect({disabled: isDisabled, shift: 6, scale: 1.05, highlightColor: CURRENT_COLOR_HIGHLIGHT});
 
-    return (<button
+    return (<button {...hover.handlers} {...hover.moveProps}
         disabled={isDisabled} onClick={onClick} onContextMenu={onContextMenu} type="button"
-        className={`uppercase text-nowrap px-3 sm:px-5 h-7 sm:h-10 text-xs sm:text-base xl:text-lg ${colorClass} ${className ?? ""}`}>
+        className={`group/hover relative uppercase text-nowrap px-3 sm:px-5 h-7 sm:h-10 text-xs sm:text-base xl:text-lg ${hover.hoverClassName} ${hover.moveClassName} ${colorClass} ${className ?? ""}`}>
         {children}
+        {hover.highlight}
     </button>);
 }

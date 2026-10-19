@@ -6,6 +6,7 @@ import {Link, usePathname, useRouter} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";
 import {useTranslations} from "next-intl";
 import ProfilePicture from "@/components/ProfilePicture";
+import {useHoverEffect} from "@/components/ui/HoverEffect";
 import useAuth from "@/contexts/AuthContext";
 import useModal from "@/contexts/ModalContext";
 import IconButton from "@/components/ui/Button/IconButton";
@@ -28,6 +29,7 @@ export default function Navbar() {
     const searchParams = useSearchParams();
     const t = useTranslations("nav");
     const searchType = pathname === "/search" ? searchParams.get("type") : undefined;
+    const logoHover = useHoverEffect({shift: 6, scale: 1.03});
 
     const menuItems: iMenuItem[] = user ? [
         {name: t("profile"), href: `/users/${user.id}`},
@@ -40,7 +42,7 @@ export default function Navbar() {
     ];
 
     return (<nav className="flex justify-between items-center gap-3 px-6 sm:px-10 xl:px-16 py-4 sm:py-10">
-        <Link className="flex items-center text-dblack hover:text-accent" href="/">
+        <Link {...logoHover.handlers} {...logoHover.moveProps} className={`group/hover ${logoHover.hoverClassName} ${logoHover.moveClassName} flex items-center text-dblack hover:text-accent`} href="/">
             <HypertubResponsiveLogo color="current"/>
         </Link>
         <NavLink href="/search" name={t("search")} selected={searchType === null || searchOpen} icon={<SearchIcon selected={searchType === null || searchOpen} color="current"/>} onClick={(e) => {

@@ -75,7 +75,7 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <col className="w-0" />
                 <col className="w-1/5 hidden lg:table-column" />
                 <col className="w-20 hidden sm:table-column" />
-                <col className="w-30" />
+                <col className="w-34 xl:w-44" />
             </colgroup>
 
             <thead>

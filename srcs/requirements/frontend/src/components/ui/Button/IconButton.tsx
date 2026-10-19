@@ -1,4 +1,5 @@
 import React from "react";
+import {useHoverEffect} from "@/components/ui/HoverEffect";
 
 export type tIconColor = "dblack" | "dwhite" | "black" | "white" | "gray" | "red";
 export type tIconHoverColor = tIconColor | "accent" | "dblack-light" | "dwhite-light" | "black-light" | "white-light" | "red-hover";
@@ -47,9 +48,11 @@ const defaultHoverColors: Record<tIconColor, tIconHoverColor> = {
 
 export default function IconButton({children, disabled, color="dblack", hoverColor, disabledColor, className="", title, role, onClick, accent=false}: {children: React.ReactNode, disabled?: boolean, color?: tIconColor, hoverColor?: tIconHoverColor, disabledColor?: tIconColor, className?: string, title?: string, role?: string, onClick?: () => void, accent?: boolean}) {
     const usedHoverColor = accent ? "accent" : hoverColor ?? defaultHoverColors[color];
+    const iconOnly = !React.Children.toArray(children).some((child) => typeof child === "string" || typeof child === "number");
+    const hover = useHoverEffect({disabled: disabled || !iconOnly, shift: 4, scale: 1.15});
 
-    return (<button type="button" disabled={disabled} title={title} role={role} onClick={onClick}
-                    className={`group ${colorClassNames[color]} ${hoverClassNames[usedHoverColor]} ${disabledColor ? disabledClassNames[disabledColor] : ""} ${className}`}>
+    return (<button type="button" disabled={disabled} title={title} role={role} onClick={onClick} {...hover.handlers} {...hover.moveProps}
+                    className={`group group/hover ${hover.hoverClassName} ${hover.moveClassName} ${colorClassNames[color]} ${hoverClassNames[usedHoverColor]} ${disabledColor ? disabledClassNames[disabledColor] : ""} ${className}`}>
         {children}
     </button>)
 }

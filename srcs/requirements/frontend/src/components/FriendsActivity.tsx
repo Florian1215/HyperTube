@@ -107,7 +107,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                 </div>}
             </HoverEffect>
         </Link>
-        <div className="absolute bottom-1.5 left-1.5 max-w-[calc(100%-0.50rem)] flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
+        <div className="absolute bottom-0.5 left-0.5 max-w-[calc(100%-0.25rem)] p-1 flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
             {activities.map((activity) =>
                 <Link key={activity.user.id} href={`/users/${activity.user.id}`} className="shrink-0 hover:z-10"
                       title={activity.user.username + (activity.watched_at ? ` · ${formatRelativeDate(activity.watched_at, locale)}` : "")}>
