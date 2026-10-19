@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import {torrentStreaming, torrentStreamStatus, updateTorrentRequest, useMedia, useTorrentRequest, useTorrents} from "@/services/medias.service";
 import useHandleError from "@/hooks/useHandleError";
@@ -64,6 +64,51 @@ export default function MediaPage() {
     const unavailable = !!media && !torrentsLoading && !bestTorrent;
     const {data: torrentRequest} = useTorrentRequest(media, watchedEpisode.season, watchedEpisode.episode, !!user && unavailable);
 
+    const getFollowingEpisode = (): iWatchEpisode | undefined => {
+        if (media?.type !== "series" || !season)
+            return undefined;
+        const next = season.episodes.filter((e) => e.episode_number > watchedEpisode.episode).sort((a, b) => a.episode_number - b.episode_number)[0];
+        if (next) {
+            if (next.release_date && next.release_date > new Date().toISOString().slice(0, 10))
+                return undefined;
+            return {runtime: next.complete ? 0 : next.progress, episode: next.episode_number, season: watchedEpisode.season};
+        }
+        if ("number_of_seasons" in media && watchedEpisode.season < media.number_of_seasons)
+            return {runtime: 0, episode: 1, season: watchedEpisode.season + 1};
+        return undefined;
+    }
+    const followingEpisode = getFollowingEpisode();
+
+    const [preloadFollowing, setPreloadFollowing] = useState(false);
+    const preloadedTorrent = useRef<string | undefined>(undefined);
+    const followingSeasonNumber = followingEpisode?.season ?? watchedEpisode.season;
+    const {data: followingTorrents} = useTorrents(preloadFollowing ? media : undefined, followingSeasonNumber, followingEpisode?.episode);
+    const {data: followingSeason} = useSeason(id, followingSeasonNumber, preloadFollowing && followingSeasonNumber !== watchedEpisode.season);
+    const followingEpisodeCount = (followingSeasonNumber === watchedEpisode.season ? season : followingSeason)?.episodes.length;
+    const followingTorrent = getBestTorrent(followingTorrents?.results, true, followingEpisodeCount);
+
+    useEffect(() => {
+        if (!preloadFollowing || !followingEpisode || !followingTorrent)
+            return;
+        const key = `${followingTorrent.id}-${followingEpisode.season}-${followingEpisode.episode}`;
+
+        if (preloadedTorrent.current === key)
+            return;
+        preloadedTorrent.current = key;
+        torrentStreaming(followingTorrent.id, followingEpisode.episode).catch(() => {});
+    }, [preloadFollowing, followingEpisode, followingTorrent]);
+
+    const [autoPlay, setAutoPlay] = useState(false);
+
+    useEffect(() => {
+        if (!autoPlay || torrentsLoading)
+            return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAutoPlay(false);
+        if (bestTorrent)
+            setTorrentId(bestTorrent.id);
+    }, [autoPlay, torrentsLoading, bestTorrent]);
+
     useEffect(() => {
         if (error) {
             const node = handleError(error as ApiError, type === "series" ? "Serie" : "Film");
@@ -115,6 +160,7 @@ export default function MediaPage() {
         setTorrentId(undefined);
         setStreamPath(undefined);
         setError(undefined);
+        setPreloadFollowing(false);
     }
 
     const startTorrent = (selectTorrentId: string) => {
@@ -128,25 +174,11 @@ export default function MediaPage() {
         setSelectedEpisode(episode);
     }
 
-    const getFollowingEpisode = (): iWatchEpisode | undefined => {
-        if (media?.type !== "series" || !season)
-            return undefined;
-        const next = season.episodes.filter((e) => e.episode_number > watchedEpisode.episode).sort((a, b) => a.episode_number - b.episode_number)[0];
-        if (next) {
-            if (next.release_date && next.release_date > new Date().toISOString().slice(0, 10))
-                return undefined;
-            return {runtime: next.complete ? 0 : next.progress, episode: next.episode_number, season: watchedEpisode.season};
-        }
-        if ("number_of_seasons" in media && watchedEpisode.season < media.number_of_seasons)
-            return {runtime: 0, episode: 1, season: watchedEpisode.season + 1};
-        return undefined;
-    }
-    const followingEpisode = getFollowingEpisode();
-
     const showFollowingEpisode = () => {
-        if (followingEpisode)
+        if (followingEpisode) {
             selectEpisode(followingEpisode);
-        else
+            setAutoPlay(true);
+        } else
             closePlayer();
     }
 
@@ -188,7 +220,7 @@ export default function MediaPage() {
                 return <VideoPlayer key={streamPath} media={media} user={user} src={`${API_URL}${streamPath}`} runtime={runtime ?? 0}
                                     startAt={resumeAt}
                                     seasonNumber={isSerie ? watchedEpisode.season : undefined} episodeNumber={isSerie ? watchedEpisode.episode : undefined} episodeName={isSerie ? episodeDetails?.name : undefined}
-                                    setErrorAction={setError} tAction={t} nextEpisodeAction={followingEpisode ? showFollowingEpisode : undefined} endedAction={isSerie ? showFollowingEpisode : undefined}/>;
+                                    setErrorAction={setError} tAction={t} nextEpisodeAction={followingEpisode ? showFollowingEpisode : undefined} nextEpisodeShownAction={() => setPreloadFollowing(true)} endedAction={isSerie ? showFollowingEpisode : undefined}/>;
             }
             return <div className={`size-full z-10 absolute ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}/>;}
         } actionButton={() => {

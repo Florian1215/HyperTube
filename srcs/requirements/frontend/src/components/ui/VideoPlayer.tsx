@@ -53,7 +53,7 @@ function setSaved(key: string, value: string) {
     } catch {}
 }
 
-export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction, nextEpisodeAction, endedAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, nextEpisodeAction?: () => void, endedAction?: () => void}) {
+export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumber, episodeNumber, episodeName, user, setErrorAction, tAction, nextEpisodeAction, nextEpisodeShownAction, endedAction}: {media: iMediaDetails, src: string, runtime: number, startAt?: number, seasonNumber?: number, episodeNumber?: number, episodeName?: string, user?: iUser, setErrorAction: (e: string) => void, tAction: tT, nextEpisodeAction?: () => void, nextEpisodeShownAction?: () => void, endedAction?: () => void}) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const pauseCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -95,6 +95,13 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const resumed = useRef(false);
     const barDuration = Math.max(fullDuration, downloadDuration);
     const controlsVisible = showControls || showAudioMenu || showSubtitleMenu;
+    const showNextEpisode = !!nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration;
+
+    useEffect(() => {
+        if (showNextEpisode)
+            nextEpisodeShownAction?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showNextEpisode]);
     const completeBefore = episodeNumber === undefined ? min15 : min3;
 
     /* ---------------------------------------------------- INIT ---------------------------------------------------- */
@@ -497,7 +504,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
             </div>
         </div>}
         <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
-            {nextEpisodeAction && fullDuration > 0 && seekTime + min5 > fullDuration &&
+            {showNextEpisode &&
                 <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div className="bg-gradient" />
             {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
