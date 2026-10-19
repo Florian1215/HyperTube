@@ -6,6 +6,7 @@
     <string name="nav_movies">Movies</string>
     <string name="nav_series">Series</string>
     <string name="nav_signin">Sign in</string>
+    <string name="nav_profile">Profile</string>
     <string name="nav_logout">Log out</string>
 
     <string name="home_friends_activity">Friends activity</string>
@@ -94,11 +95,7 @@
     <string name="login_step_scan">1. Scan the QR code with your phone</string>
     <string name="login_step_signin">2. Sign in to HyperTube on your phone</string>
     <string name="login_step_confirm">3. Confirm to connect this TV</string>
-    <string name="login_code">Or go to %1$s and enter the code</string>
-    <string name="login_expires">The code expires in %1$s</string>
-    <string name="login_waiting">Waiting for confirmation…</string>
     <string name="login_success">Connected!</string>
-    <string name="login_new_code">New code</string>
 
     <string name="follow">Follow</string>
     <string name="unfollow">Unfollow</string>
@@ -140,5 +137,6 @@
     <string name="error_progress">Unable to update the progress: %1$s</string>
     <string name="error_watchlist">Unable to update the watchlist: %1$s</string>
     <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
     <string name="retry">Retry</string>
 </resources>

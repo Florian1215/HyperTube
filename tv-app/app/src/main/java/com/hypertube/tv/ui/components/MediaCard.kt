@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -50,6 +51,7 @@ import com.hypertube.tv.ui.theme.HtColors
 import com.hypertube.tv.ui.theme.HtText
 import com.hypertube.tv.ui.theme.LocalAccent
 import kotlinx.coroutines.launch
+import com.hypertube.tv.util.formatDate
 
 val CARD_WIDTH: Dp = 280.dp
 
@@ -68,21 +70,38 @@ fun MediaCard(
     showProgress: Boolean = true,
     label: String? = null,
     titleStyle: TextStyle = CardTitle,
+    // Title and episode only while the card has the focus (stacks of the friends activity)
+    textOnFocus: Boolean = false,
+    // Watched date (and rewatch icon) in the top right corner while focused, like the history of the website
+    inHistory: Boolean = false,
 ) {
     if (media == null) {
         Placeholder(modifier.aspectRatio(10f / 7f))
         return
     }
     val episode = if (showEpisode) media.episode else null
+    var focused by remember { mutableStateOf(false) }
+    val watchedAt = if (inHistory && focused) formatDate(media.watchedAt) else null
 
-    FocusSurface(onClick = onClick, onLongClick = onLongClick, modifier = modifier.aspectRatio(10f / 7f), border = BorderStroke(1.dp, HtColors.White), focusedBorderColor = LocalAccent.current) {
+    FocusSurface(onClick = onClick, onLongClick = onLongClick, modifier = modifier.aspectRatio(10f / 7f).onFocusChanged { focused = it.isFocused }, border = BorderStroke(1.dp, HtColors.White), focusedBorderColor = LocalAccent.current) {
         NetworkImage(episode?.posterUrl ?: media.backdropUrl, Modifier.fillMaxSize(), contentDescription = media.title)
         Box(Modifier.fillMaxSize().background(BottomGradient))
         if (showProgress && media.complete)
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f))) {
-                HtIcon(HtIcons.Eye, size = 22.dp, modifier = Modifier.align(Alignment.TopEnd).padding(10.dp))
+                // In the history the eye only comes with the watched date, on focus
+                if (!inHistory)
+                    HtIcon(HtIcons.Eye, size = 22.dp, modifier = Modifier.align(Alignment.TopEnd).padding(10.dp))
             }
-        Column(
+        if (watchedAt != null)
+            Row(
+                Modifier.align(Alignment.TopEnd).padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                HtIcon(if (media.rewatch == true) HtIcons.Rewatch else HtIcons.Eye, size = 20.dp, tint = HtColors.White)
+                Text(watchedAt, style = HtText.Bold.copy(fontSize = 14.sp, lineHeight = 18.sp), color = HtColors.White)
+            }
+        if (!textOnFocus || focused) Column(
             modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

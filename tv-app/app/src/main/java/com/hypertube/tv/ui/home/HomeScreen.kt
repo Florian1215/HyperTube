@@ -322,7 +322,7 @@ private fun FriendStack(stack: List<Media>, onOpen: (Media) -> Unit, onLongClick
                             focused = -1
                     },
             ) {
-                MediaCard(episode, onClick = { onOpen(episode) }, onLongClick = { onLongClick(episode) }, showEpisode = true, showProgress = false)
+                MediaCard(episode, onClick = { onOpen(episode) }, onLongClick = { onLongClick(episode) }, showEpisode = true, showProgress = false, textOnFocus = true)
                 if (index == 0)
                     AvatarStack(users.take(6), Modifier.align(Alignment.BottomStart).padding(8.dp), size = 28.dp)
             }

@@ -3,6 +3,23 @@
 package com.hypertube.tv.ui
 
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import com.hypertube.tv.data.User
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,7 +35,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -45,11 +63,9 @@ import com.hypertube.tv.R
 import com.hypertube.tv.data.MOVIES
 import com.hypertube.tv.data.SERIES
 import com.hypertube.tv.ui.auth.LoginScreen
-import com.hypertube.tv.ui.components.ActionMenu
 import com.hypertube.tv.ui.components.FocusSurface
 import com.hypertube.tv.ui.components.HtIcon
 import com.hypertube.tv.ui.components.Logo
-import com.hypertube.tv.ui.components.MenuAction
 import com.hypertube.tv.ui.components.ProfilePicture
 import com.hypertube.tv.ui.home.HomeScreen
 import com.hypertube.tv.ui.details.MediaScreen
@@ -135,9 +151,7 @@ fun AppNavigation() {
 // Navbar of the website, part of each screen so it scrolls away with the content
 @Composable
 fun TopBar(nav: Navigator, selected: TopBarItem, modifier: Modifier = Modifier, horizontalPadding: Dp = 48.dp) {
-    val container = LocalAppContainer.current
     val user by currentUser()
-    var showAccount by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = horizontalPadding, vertical = 20.dp),
@@ -151,21 +165,91 @@ fun TopBar(nav: Navigator, selected: TopBarItem, modifier: Modifier = Modifier, 
         NavItem(stringResource(R.string.nav_movies), selected == TopBarItem.Movies) { nav.search(MOVIES, topLevel = true) }
         NavItem(stringResource(R.string.nav_series), selected == TopBarItem.Series) { nav.search(SERIES, topLevel = true) }
         val current = user
-        // Account icon to sign in, the profile picture once signed in
-        FocusSurface(onClick = { if (current == null) nav.login() else showAccount = true }, shape = CircleShape, focusedContentColor = LocalAccent.current) {
-            if (current == null)
+        // Account icon to sign in, the profile picture with its menu once signed in
+        if (current == null)
+            FocusSurface(onClick = nav::login, shape = CircleShape, focusedContentColor = LocalAccent.current) {
                 HtIcon(Icons.Default.AccountCircle, size = 36.dp, modifier = Modifier.padding(4.dp), contentDescription = stringResource(R.string.nav_signin))
-            else
-                ProfilePicture(current, size = 36.dp, modifier = Modifier.padding(4.dp))
-        }
+            }
+        else
+            AccountButton(current, onProfile = { nav.user(current.id) })
     }
+}
 
-    if (showAccount)
-        ActionMenu(
-            title = user?.username,
-            actions = listOf(MenuAction(stringResource(R.string.nav_logout), Icons.Default.ExitToApp) { container.session.logout() }),
-            onDismiss = { showAccount = false },
-        )
+// Dropdown of the website navbar: shown while the profile picture has the focus, down/up select an action, OK runs it.
+// The focus stays on the picture so the popup does not need its own focus window
+@Composable
+private fun AccountButton(user: User, onProfile: () -> Unit) {
+    val container = LocalAppContainer.current
+    val accent = LocalAccent.current
+    val density = LocalDensity.current
+    var focused by remember { mutableStateOf(false) }
+    // -1: the picture itself (OK opens the profile), then the actions of the popup
+    var selected by remember { mutableIntStateOf(-1) }
+    var height by remember { mutableIntStateOf(0) }
+    val actions = listOf(
+        Triple(stringResource(R.string.nav_profile), Icons.Default.Person, onProfile),
+        Triple(stringResource(R.string.nav_logout), Icons.AutoMirrored.Filled.ExitToApp) { container.session.logout() },
+    )
+
+    Box(Modifier.onSizeChanged { height = it.height }) {
+        FocusSurface(
+            onClick = onProfile,
+            shape = CircleShape,
+            border = BorderStroke(2.dp, Color.Transparent),
+            focusedBorderColor = accent,
+            modifier = Modifier
+                .onFocusChanged {
+                    focused = it.isFocused
+                    if (!it.isFocused)
+                        selected = -1
+                }
+                .onPreviewKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyDown)
+                        return@onPreviewKeyEvent false
+                    when (event.key) {
+                        // Past the last action, the focus leaves the menu to the page
+                        Key.DirectionDown -> if (selected < actions.lastIndex) selected++ else {
+                            selected = -1
+                            return@onPreviewKeyEvent false
+                        }
+                        Key.DirectionUp -> if (selected >= 0) selected-- else return@onPreviewKeyEvent false
+                        Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
+                            if (selected < 0)
+                                return@onPreviewKeyEvent false
+                            actions[selected].third()
+                        }
+                        else -> {
+                            selected = -1
+                            return@onPreviewKeyEvent false
+                        }
+                    }
+                    true
+                },
+        ) {
+            ProfilePicture(user, size = 36.dp, modifier = Modifier.padding(4.dp))
+        }
+        if (focused)
+            Popup(
+                alignment = Alignment.TopEnd,
+                offset = IntOffset(0, height + with(density) { 8.dp.roundToPx() }),
+                properties = PopupProperties(focusable = false),
+            ) {
+                Column(Modifier.width(220.dp).background(HtColors.Black).border(1.dp, HtColors.White)) {
+                    Text(user.username, style = HtText.Small, color = HtColors.Gray, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
+                    actions.forEachIndexed { index, (name, icon, _) ->
+                        val color = if (index == selected) accent else HtColors.White
+                        Row(
+                            Modifier.fillMaxWidth().background(if (index == selected) HtColors.BlackLight else Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            HtIcon(icon, size = 18.dp, tint = color)
+                            Text(name.uppercase(), style = HtText.Bold, color = color)
+                        }
+                    }
+                }
+            }
+    }
 }
 
 @Composable

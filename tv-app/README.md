@@ -41,28 +41,15 @@ Left out to keep the TV app simple: comments, sorting the search results, the cr
 | Up / Down | Show the controls |
 | Back | Hide the controls, then close the player |
 
-## Sign in with a phone (backend to do)
+## Sign in with a phone
 
-The TV only shows a code and waits, the phone does the actual sign in on the website.
+The TV only shows a QR code and waits, the phone does the actual sign in on the website (`src/app/tv/page.tsx`).
 
-1. `POST /api/v1/auth/tv/` (no auth) creates a pending code.
+1. `POST /api/v1/auth/tv/` (no auth) creates a pending code: `{"code": "K7QM2XPA", "url": "http://<host>/tv?code=K7QM2XPA"}`.
+   `url` is what the QR code contains, built from the host the TV used to reach the API.
+2. On `/tv`, the signed in user confirms the code: `POST /api/v1/auth/tv/<code>/approve/` (authenticated).
+3. The TV polls `GET /api/v1/auth/tv/<code>/` every 3 seconds: `{"status": "pending"}`,
+   then `{"status": "approved", "access": "<jwt>", "refresh": "<jwt>"}` once (the code is deleted), or `{"status": "expired"}`.
 
-   ```json
-   {"code": "K7QM2XPA", "url": "https://hypertube.example/tv?code=K7QM2XPA", "expires_in": 300}
-   ```
-
-   `url` is what the QR code contains: a page of the website where the signed in user confirms the code
-   (`/tv?code=...`, with a field to type the code when opened without it).
-2. The website calls an authenticated endpoint (for example `POST /api/v1/auth/tv/<code>/approve/`) when the user confirms.
-3. The TV polls `GET /api/v1/auth/tv/<code>/` every 3 seconds:
-
-   ```json
-   {"status": "pending"}
-   {"status": "approved", "access": "<jwt>", "refresh": "<jwt>"}
-   {"status": "expired"}
-   ```
-
-   The tokens are the same as `auth/login/`; once they are returned the code must not be usable anymore.
-
-Until this exists, the TV generates the code itself, shows `<server>/tv?code=<code>` in the QR code and keeps polling,
-so it signs in as soon as the backend answers.
+The code does not expire while the TV polls it; a code not polled for 2 minutes is forgotten and the TV silently asks for a new one.
+Backend: `users/tv_login.py` and the `TvLogin` model (migration `users/0008_tvlogin`).

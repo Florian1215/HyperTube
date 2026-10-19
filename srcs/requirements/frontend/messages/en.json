@@ -275,7 +275,8 @@
       "infoChanged": "Your profile information has been updated.",
       "login": "You are now successfully signed in.",
       "commentChange": "Your comment has been updated.",
-      "accountCreatedSuccess": "Account successfully created!"
+      "accountCreatedSuccess": "Account successfully created!",
+      "tvConnected": "The TV is connected."
     },
     "error": {
       "unknown": "An error occurred. Please try again later.",
@@ -306,6 +307,15 @@
     "person": "Person",
     "personDescription": "Movies and series featuring {name}.",
     "user": "Profile",
-    "userDescription": "Movies, series, watchlist and comments of {username}."
+    "userDescription": "Movies, series, watchlist and comments of {username}.",
+    "tv": "TV",
+    "tvDescription": "Connect the HyperTube TV app to your account."
+  },
+  "tv": {
+    "title": "Connect a TV",
+    "code": "Code",
+    "connect": "Connect",
+    "signinRequired": "Sign in to connect the TV to your account.",
+    "signin": "Sign in"
   }
 }

@@ -299,8 +299,8 @@ data class SubtitleTrack(
 @Serializable
 data class TvLoginSession(
     val code: String,
-    val url: String? = null,
-    @SerialName("expires_in") val expiresIn: Int = 300,
+    // Page of the website opened on the phone by the QR code
+    val url: String,
 )
 
 @Serializable

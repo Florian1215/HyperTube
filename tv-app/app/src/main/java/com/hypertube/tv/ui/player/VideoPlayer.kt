@@ -14,7 +14,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -291,15 +291,23 @@ fun VideoPlayer(
         runCatching { if (controlsVisible) playFocus.requestFocus() else rootFocus.requestFocus() }
     }
 
-    BackHandler {
-        if (controlsVisible && isPlaying) controlsVisible = false else onClose()
-    }
+    // Back from the controls goes back to the video (handled with the keys below), back again closes the player
+    BackHandler { onClose() }
 
     Box(
         Modifier
             .fillMaxSize()
             .background(Color.Black)
             .onPreviewKeyEvent { event ->
+                // Before Compose uses the back key to clear the focus of the controls, so one press goes back to the video
+                if (event.key == Key.Back && controlsVisible) {
+                    if (event.type == KeyEventType.KeyUp) {
+                        controlsVisible = false
+                        if (!player.isPlaying)
+                            player.play()
+                    }
+                    return@onPreviewKeyEvent true
+                }
                 if (event.type != KeyEventType.KeyDown)
                     return@onPreviewKeyEvent false
                 when (event.key) {
@@ -321,7 +329,8 @@ fun VideoPlayer(
                     return@onPreviewKeyEvent false
                 }
                 when (event.key) {
-                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> togglePlay()
+                    // OK only shows the controls, the play/pause button in the middle then has the focus
+                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> controlsVisible = true
                     Key.DirectionLeft -> seekBy(-SEEK_STEP_MS)
                     Key.DirectionRight -> seekBy(SEEK_STEP_MS)
                     Key.DirectionUp, Key.DirectionDown -> controlsVisible = true
@@ -389,6 +398,19 @@ fun VideoPlayer(
                             }
                     }
                 }
+                // Play/pause in the middle of the screen, only the icon (accent when focused), hidden behind the spinner while buffering
+                FocusSurface(
+                    onClick = ::togglePlay,
+                    shape = CircleShape,
+                    focusedScale = 1.15f,
+                    focusedContentColor = LocalAccent.current,
+                    modifier = Modifier.align(Alignment.Center).focusRequester(playFocus),
+                ) {
+                    if (!buffering)
+                        HtIcon(if (isPlaying) HtIcons.Pause else HtIcons.Play, size = 64.dp, modifier = Modifier.padding(20.dp))
+                    else
+                        Spacer(Modifier.size(104.dp))
+                }
                 if (showNext)
                     HtButton(stringResource(R.string.media_next_episode), onClick = onNext, icon = HtIcons.Next, modifier = Modifier.align(Alignment.TopEnd).padding(40.dp))
 
@@ -401,18 +423,6 @@ fun VideoPlayer(
                         onToggle = ::togglePlay,
                     )
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // Stays white when focused, only the icon and the outline take the accent color
-                        FocusSurface(
-                            onClick = ::togglePlay,
-                            containerColor = HtColors.White,
-                            contentColor = HtColors.Black,
-                            focusedContentColor = LocalAccent.current,
-                            border = BorderStroke(2.dp, HtColors.White),
-                            focusedBorderColor = LocalAccent.current,
-                            modifier = Modifier.focusRequester(playFocus),
-                        ) {
-                            HtIcon(if (isPlaying) HtIcons.Pause else HtIcons.Play, size = 18.dp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp))
-                        }
                         Text("${formatTime(position.toLong())} / ${formatTime(fullDuration.toLong())}", style = HtText.Bold, color = HtColors.White)
                         Spacer(Modifier.weight(1f))
                         if (audioOptions.size > 1)

@@ -275,7 +275,8 @@
       "infoChanged": "Ihre Profilinformationen wurden aktualisiert.",
       "login": "Sie sind jetzt erfolgreich angemeldet.",
       "commentChange": "Ihr Kommentar wurde aktualisiert.",
-      "accountCreatedSuccess": "Konto erfolgreich erstellt!"
+      "accountCreatedSuccess": "Konto erfolgreich erstellt!",
+      "tvConnected": "Der Fernseher ist verbunden."
     },
     "error": {
       "unknown": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
@@ -306,6 +307,15 @@
     "person": "Person",
     "personDescription": "Filme und Serien mit {name}.",
     "user": "Profil",
-    "userDescription": "Filme, Serien, Merkliste und Kommentare von {username}."
+    "userDescription": "Filme, Serien, Merkliste und Kommentare von {username}.",
+    "tv": "TV",
+    "tvDescription": "Verbinden Sie die HyperTube-TV-App mit Ihrem Konto."
+  },
+  "tv": {
+    "title": "Fernseher verbinden",
+    "code": "Code",
+    "connect": "Verbinden",
+    "signinRequired": "Melden Sie sich an, um den Fernseher mit Ihrem Konto zu verbinden.",
+    "signin": "Anmelden"
   }
 }

@@ -4,10 +4,15 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from users.tv_login import TvLoginApproveView, TvLoginStartView, TvLoginStatusView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/auth/tv/', TvLoginStartView.as_view(), name='tv_login'),
+    path('api/v1/auth/tv/<str:code>/', TvLoginStatusView.as_view(), name='tv_login_status'),
+    path('api/v1/auth/tv/<str:code>/approve/', TvLoginApproveView.as_view(), name='tv_login_approve'),
     path('api/v1/', include('medias.urls')),
     path('api/v1/', include('series.urls')),
     path('api/v1/', include('comments.urls')),

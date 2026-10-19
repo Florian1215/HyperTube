@@ -121,7 +121,8 @@ fun PeopleScreen(nav: Navigator, id: String) {
                         CenteredMessage(stringResource(R.string.error_network)) { HtButton(stringResource(R.string.retry), onClick = viewModel::load) }
                     }
                     state.medias.isEmpty() -> fullLine("empty") { SmallText(stringResource(R.string.people_no_medias)) }
-                    else -> items(state.medias, key = { "${it.type}-${it.id}" }) { media ->
+                    // No key: a media can come back on the next page when the order of the API changes
+                    else -> items(state.medias) { media ->
                         MediaCard(
                             media,
                             onClick = { nav.media(media.type, media.id) },

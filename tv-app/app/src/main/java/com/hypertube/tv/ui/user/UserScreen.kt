@@ -42,7 +42,7 @@ import com.hypertube.tv.ui.TopBarItem
 import com.hypertube.tv.ui.components.ButtonVariant
 import com.hypertube.tv.ui.components.CenteredMessage
 import com.hypertube.tv.ui.components.HtButton
-import com.hypertube.tv.ui.components.HtTabs
+import com.hypertube.tv.ui.components.FolderTabs
 import com.hypertube.tv.ui.components.MediaCard
 import com.hypertube.tv.ui.components.MediaMenu
 import com.hypertube.tv.ui.components.MenuTarget
@@ -104,13 +104,11 @@ fun UserScreen(nav: Navigator, id: String) {
                     UserInfo(user, canFollow = me != null && me?.id != user.id, pending = state.following, onFollow = viewModel::toggleFollow)
                 }
                 fullLine("tabs") {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        HtTabs(
-                            tabs = tabs.map { Tab(tabName(it), state.counts[it]) },
-                            active = tabs.indexOf(state.tab),
-                            onChange = { viewModel.setTab(tabs[it]) },
-                        )
-                    }
+                    FolderTabs(
+                        tabs = tabs.map { Tab(tabName(it), state.counts[it]) },
+                        active = tabs.indexOf(state.tab),
+                        onChange = { viewModel.setTab(tabs[it]) },
+                    )
                 }
                 when {
                     state.medias.isEmpty() && state.loading -> items(3) { Placeholder(Modifier.aspectRatio(10f / 7f)) }
@@ -122,11 +120,13 @@ fun UserScreen(nav: Navigator, id: String) {
                             SmallText(stringResource(if (state.tab == UserTab.Watchlist) R.string.profile_no_watchlist else R.string.profile_no_medias))
                         }
                     }
-                    else -> items(state.medias, key = { "${it.type}-${it.id}-${it.episode?.id}" }) { media ->
+                    // No key: the history has the same movie several times when it was watched again
+                    else -> items(state.medias) { media ->
                         MediaCard(
                             media,
                             onClick = { nav.media(media.type, media.id) },
                             onLongClick = { menu = media.menuTarget() },
+                            inHistory = state.tab != UserTab.Watchlist,
                         )
                     }
                 }

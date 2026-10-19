@@ -12,9 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,9 +26,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -38,7 +35,6 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.hypertube.tv.R
-import com.hypertube.tv.data.ServerConfig
 import com.hypertube.tv.ui.LocalAppContainer
 import com.hypertube.tv.ui.Navigator
 import com.hypertube.tv.ui.components.ButtonVariant
@@ -46,9 +42,7 @@ import com.hypertube.tv.ui.components.ColorsBar
 import com.hypertube.tv.ui.components.HtButton
 import com.hypertube.tv.ui.components.Logo
 import com.hypertube.tv.ui.theme.HtColors
-import com.hypertube.tv.ui.theme.HtFonts
 import com.hypertube.tv.ui.theme.HtText
-import com.hypertube.tv.util.formatTime
 import kotlinx.coroutines.delay
 
 @Composable
@@ -66,6 +60,7 @@ fun LoginScreen(nav: Navigator) {
     }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
 
+    // Steps on the left, QR code on the right, the only action is going back
     Column(Modifier.fillMaxSize().background(HtColors.Black)) {
         ColorsBar()
         Row(
@@ -79,27 +74,20 @@ fun LoginScreen(nav: Navigator) {
                 Text(stringResource(R.string.login_step_scan), style = HtText.Body)
                 Text(stringResource(R.string.login_step_signin), style = HtText.Body)
                 Text(stringResource(R.string.login_step_confirm), style = HtText.Body)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 16.dp)) {
-                    HtButton(stringResource(R.string.login_new_code), icon = Icons.Default.Refresh, onClick = viewModel::newCode, modifier = Modifier.focusRequester(focus))
-                    HtButton(stringResource(R.string.cancel), variant = ButtonVariant.Outline, onClick = { nav.back() })
-                }
+                HtButton(
+                    stringResource(R.string.back),
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    variant = ButtonVariant.Outline,
+                    onClick = { nav.back() },
+                    modifier = Modifier.padding(top = 16.dp).focusRequester(focus),
+                )
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(Modifier.size(320.dp).background(HtColors.White).padding(16.dp), contentAlignment = Alignment.Center) {
                 val url = state.url
-                Box(Modifier.size(320.dp).background(HtColors.White).padding(16.dp), contentAlignment = Alignment.Center) {
-                    if (url != null) {
-                        val qr = remember(url) { qrCode(url) }
-                        Image(qr, contentDescription = url, filterQuality = FilterQuality.None, modifier = Modifier.size(288.dp))
-                    }
+                if (url != null) {
+                    val qr = remember(url) { qrCode(url) }
+                    Image(qr, contentDescription = null, filterQuality = FilterQuality.None, modifier = Modifier.size(288.dp))
                 }
-                Text(stringResource(R.string.login_code, ServerConfig.SERVER_URL.removePrefix("https://").removePrefix("http://") + "/tv"), style = HtText.Small, color = HtColors.Gray, modifier = Modifier.widthIn(max = 320.dp))
-                Text(state.code.orEmpty(), style = TextStyle(fontFamily = HtFonts.Wide, fontSize = 40.sp, letterSpacing = 6.sp), color = HtColors.White)
-                if (!state.success && state.code != null)
-                    Text(
-                        stringResource(R.string.login_expires, formatTime(state.secondsLeft.toLong())) + "  ·  " + stringResource(R.string.login_waiting),
-                        style = HtText.Small,
-                        color = HtColors.Gray,
-                    )
             }
         }
         ColorsBar()

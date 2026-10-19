@@ -31,3 +31,7 @@ export function refreshAccessToken(locale: string) {
         return refreshPromise;
     }
 }
+
+export function approveTvLogin(locale: string, code: string) {
+    return apiClient<{status: string}>(`auth/tv/${encodeURIComponent(code)}/approve/`, locale, {method: "POST"});
+}

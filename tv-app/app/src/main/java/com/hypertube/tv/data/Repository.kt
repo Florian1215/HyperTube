@@ -44,8 +44,8 @@ class Repository(private val api: HyperTubeApi, private val http: OkHttpClient, 
 
     /* ----------------------------------------------- MEDIAS ----------------------------------------------- */
     suspend fun medias(type: String, query: String?, page: Int = 1): Page<Media> = when (query) {
-        SEARCH_DIRECTSTREAM -> api.mediaList(type, "directstream")
-        SEARCH_FEATURED -> api.mediaList(type, "featured")
+        SEARCH_DIRECTSTREAM -> api.mediaList(type, "directstream", page)
+        SEARCH_FEATURED -> api.mediaList(type, "featured", page)
         SEARCH_UPCOMING -> api.mediaList(type, "upcoming", page)
         SEARCH_CONTINUE -> api.mediaList(type, "continue-watching", page)
         SEARCH_FRIENDS -> api.mediaList(type, "friends-activity", page)
