@@ -1,5 +1,6 @@
 import React from "react";
 import LoadingImage from "@/components/ui/LoadingImage";
+import HoverEffect from "@/components/ui/HoverEffect";
 import SmallText from "@/components/ui/SmallText";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
 import ExpandableText from "@/components/ui/ExpandableText";
@@ -32,13 +33,15 @@ export default function MediaRow({number, title, subtitle, overview, image, alt,
         <td onClick={onClick} className={`font-bold text-xl sm:text-2xl font-wide text-right pr-1 pl-0 sm:pl-4 w-9 sm:w-14 ${clickable ? "hover:cursor-pointer hover:text-accent" : ""} ${isSelected ? "border-l-5 border-accent hover:cursor-default" : ""}`}>
             {withLink(<span>{number}</span>)}
         </td>
-        <td className={`px-2 sm:px-4 w-36 sm:w-50 py-2 align-top ${onClick ? "custom-cursor-play" : ""}`} onClick={onClick}>
+        <td className="px-2 sm:px-4 w-36 sm:w-50 py-2 align-top" onClick={onClick}>
             {menu}
-            {withLink(<div className="relative border aspect-10/7 overflow-hidden" onContextMenu={onContextMenu}>
-                {image && <LoadingImage className="size-full object-cover" width={200} height={200} src={image} alt={alt}/>}
-                <MediaWatchProgress user={user} media={progress}/>
-                <div className="custom-noise opacity-30"/>
-                {progress.complete && <div className="custom-complete-media"/>}
+            {withLink(<div className="relative aspect-10/7" onContextMenu={onContextMenu}>
+                <HoverEffect className="absolute inset-0" innerClassName="border overflow-hidden" scale={1.05}>
+                    {image && <LoadingImage className="size-full object-cover" width={200} height={200} src={image} alt={alt}/>}
+                    <MediaWatchProgress user={user} media={progress}/>
+                    <div className="custom-noise opacity-30"/>
+                    {progress.complete && <div className="custom-complete-media"/>}
+                </HoverEffect>
             </div>)}
         </td>
         <td className="align-top pt-5 pb-2">

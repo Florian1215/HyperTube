@@ -5,6 +5,7 @@ import LoadingText from "@/components/LoadingText";
 import {iGenre} from "@/types/genre";
 import Button from "@/components/ui/Button/Button";
 import LoadingImage from "@/components/ui/LoadingImage";
+import HoverEffect from "@/components/ui/HoverEffect";
 import {iUser} from "@/types/user";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
 import GenreTags from "@/components/GenreTags";
@@ -33,7 +34,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
     return (<tr onContextMenu={handleContextMenu}>
         <td className="p-2 xl:p-4">
             {user && media && <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
-            <div className="border overflow-hidden aspect-3/2 relative">
+            <HoverEffect className="aspect-3/2 relative" innerClassName="border overflow-hidden" disabled={!media || !!contextMenu}>
                 <div className="custom-noise"/>
                 {!media && (<div className="custom-loading"/>)}
                 {media && <Link href={formatURL(media)}>
@@ -45,7 +46,7 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
                     />
                     {media.complete && <div className="custom-complete-media"/>}
                 </Link>}
-            </div>
+            </HoverEffect>
         </td>
         <td className="sm:px-3">
             {media ? <Link href={formatURL(media)}>

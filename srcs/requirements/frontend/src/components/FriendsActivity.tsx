@@ -5,6 +5,7 @@ import SmallText from "@/components/ui/SmallText";
 import {Link} from "@/i18n/navigation";
 import formatURL from "@/utils/formatURL";
 import LoadingImage from "@/components/ui/LoadingImage";
+import HoverEffect from "@/components/ui/HoverEffect";
 import ProfilePicture from "@/components/ProfilePicture";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {iMediaActivity} from "@/types/media";
@@ -24,9 +25,11 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
 
     return (<div className="flex items-center gap-3 p-3 lg:grid lg:grid-cols-subgrid lg:col-span-full lg:gap-x-4 lg:gap-y-1">
         <div className="flex shrink-0 gap-4" onContextMenu={onContextMenu}>
-            <Link href={formatURL(activity)} title={activity.episode?.name || activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0 overflow-hidden border">
-                <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.episode?.poster_url || activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.episode?.name || activity.title})}/>
-                <div className="custom-noise opacity-30"/>
+            <Link href={formatURL(activity)} title={activity.episode?.name || activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0">
+                <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border">
+                    <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.episode?.poster_url || activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.episode?.name || activity.title})}/>
+                    <div className="custom-noise opacity-30"/>
+                </HoverEffect>
             </Link>
         </div>
         <div className="flex flex-col flex-1 gap-1.5 min-w-0 lg:contents">
@@ -94,13 +97,15 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
 
     return (<div className="group relative min-w-28 max-w-md w-full" onContextMenu={onContextMenu}>
         {menu}
-        <Link href={formatURL(media)} title={media.episode?.name || media.title} className="block relative aspect-5/6 sm:aspect-3/2 overflow-hidden border">
-            <LoadingImage className="size-full object-cover" width={400} height={225} src={media.episode?.poster_url || media.backdrop_url} alt={tMedia("posterAlt", {title: media.episode?.name || media.title})}/>
-            <div className="custom-noise opacity-30"/>
-            {media.episode && <div className="z-10 opacity-0 group-hover:opacity-100 hidden sm:flex absolute inset-0 p-2 items-end justify-center transition-opacity duration-200">
-                <div className="bg-gradient"/>
-                <EpisodeLabel season={media.episode.season_number} episode={media.episode.episode_number} className="z-10 text-white"/>
-            </div>}
+        <Link href={formatURL(media)} title={media.episode?.name || media.title} className="block relative aspect-5/6 sm:aspect-3/2">
+            <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border">
+                <LoadingImage className="size-full object-cover" width={400} height={225} src={media.episode?.poster_url || media.backdrop_url} alt={tMedia("posterAlt", {title: media.episode?.name || media.title})}/>
+                <div className="custom-noise opacity-30"/>
+                {media.episode && <div className="z-10 opacity-0 group-hover:opacity-100 hidden sm:flex absolute inset-0 p-2 items-end justify-center transition-opacity duration-200">
+                    <div className="bg-gradient"/>
+                    <EpisodeLabel season={media.episode.season_number} episode={media.episode.episode_number} className="z-10 text-white"/>
+                </div>}
+            </HoverEffect>
         </Link>
         <div className="absolute bottom-1.5 left-1.5 max-w-[calc(100%-0.50rem)] flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
             {activities.map((activity) =>

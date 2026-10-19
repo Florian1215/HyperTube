@@ -76,7 +76,7 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
             {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
-                <div className="flex gap-x-2 sm:gap-x-4 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-x-2 sm:gap-x-4 overflow-x-auto scrollbar-hide p-3 -m-3">
                     {groupActivities(activities).map((group) => <FriendActivityCard key={getActivityKey(group[0])} activities={group}/>)}
                 </div>
             </Section>}
@@ -179,6 +179,7 @@ function AnimateLogo({maxHeight}: {maxHeight: number}) {
 
 function SliderHero({medias}: {medias: iMedia[]}) {
     const [index, setIndex] = useState(0);
+    const [paused, setPaused] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
     const startInterval = useCallback(() => {
@@ -195,21 +196,24 @@ function SliderHero({medias}: {medias: iMedia[]}) {
             setIndex((prev) => (prev + 1) % medias.length);
         else
             setIndex((prev) => (prev - 1 + medias.length) % medias.length);
-        startInterval();
+        if (!paused)
+            startInterval();
     };
 
+    // The automatic slide stops while a hero is hovered
     useEffect(() => {
-        if (!medias.length)
+        if (!medias.length || paused)
             return;
         startInterval();
         return () => clearInterval(intervalRef.current);
-    }, [medias.length, startInterval]);
+    }, [medias.length, startInterval, paused]);
 
-    return (<div className="overflow-hidden w-full">
+    // Clipped horizontally only, so the hovered hero can grow above and below
+    return (<div className="overflow-x-clip w-full">
         <div className="flex transition-transform duration-600 ease-out"
              style={{transform: `translateX(-${100 * index}%)`}}>
             {medias.length > 0 ?
-                medias.map((media, index) => (<MediaHero key={index} media={media} actionButton={
+                medias.map((media, index) => (<MediaHero key={index} media={media} onHoverChange={setPaused} actionButton={
                                                                                        () => <Link href={formatURL(media)}>
                                                                                            <TitleMedia media={media} clickable={true} white={true}/>
                                                                                        </Link>}>
