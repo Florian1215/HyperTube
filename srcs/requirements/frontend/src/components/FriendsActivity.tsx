@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {useLocale, useTranslations} from "next-intl";
 import SmallText from "@/components/ui/SmallText";
 import {Link} from "@/i18n/navigation";
@@ -75,44 +76,70 @@ export function getActivityKey(activity: iMediaActivity) {
     return `${activity.type}-${activity.id}` + (activity.episode ? `-${activity.episode.id}` : "");
 }
 
-export function groupActivities(activities: iMediaActivity[]) {
-    const groups = new Map<string, iMediaActivity[]>();
-
-    activities.forEach((activity) => {
-        const key = getActivityKey(activity);
-        const group = groups.get(key) ?? [];
-
-        if (!group.some((other) => other.user.id === activity.user.id))
-            group.push(activity);
-        groups.set(key, group);
-    });
-    return [...groups.values()];
+export function getMediaKey(activity: iMediaActivity) {
+    return `${activity.type}-${activity.id}`;
 }
 
+export function groupActivities(activities: iMediaActivity[]) {
+    const episodes = new Map<string, iMediaActivity[]>();
+
+    activities.forEach((activity) => {
+        const episode = episodes.get(getActivityKey(activity)) ?? [];
+
+        if (!episode.some((other) => other.user.id === activity.user.id))
+            episode.push(activity);
+        episodes.set(getActivityKey(activity), episode);
+    });
+
+    const stacks = new Map<string, iMediaActivity[]>();
+    episodes.forEach((episode) => {
+        const users = episode.map((activity) => activity.user.id).sort().join(",");
+        const key = `${getMediaKey(episode[0])}/${users}`;
+
+        stacks.set(key, [...(stacks.get(key) ?? []), ...episode]);
+    });
+    return [...stacks.values()];
+}
+
+const STACK_OFFSET = 28;
+
 export function FriendActivityCard({activities}: {activities: iMediaActivity[]}) {
+    const episodes = [...new Set(activities.map(getActivityKey))]
+        .map((key) => activities.filter((activity) => getActivityKey(activity) === key));
+    const users = activities.filter((activity, index) => activities.findIndex((other) => other.user.id === activity.user.id) === index);
+
+    return (<div className="contents sm:block sm:relative sm:isolate sm:min-w-28 sm:max-w-md sm:w-full sm:mr-(--stack-margin)" style={{"--stack-margin": `${(episodes.length - 1) * STACK_OFFSET}px`} as React.CSSProperties}>
+        {episodes.map((group, index) =>
+            <FriendActivityLayer key={getActivityKey(group[0])} activities={group} users={index === 0 ? users : []}
+                                 className={`relative min-w-28 max-w-md w-full ${index === 0 ? "" : "sm:absolute sm:inset-0 sm:translate-x-(--stack-offset)"}`}
+                                 style={{"--stack-offset": `${index * STACK_OFFSET}px`, zIndex: episodes.length - index} as React.CSSProperties}/>)}
+    </div>);
+}
+
+function FriendActivityLayer({activities, users, className, style}: {activities: iMediaActivity[], users: iMediaActivity[], className: string, style: React.CSSProperties}) {
     const tMedia = useTranslations("media");
     const locale = useLocale();
     const media = activities[0];
     const {onContextMenu, menu} = useMediaRightClick(media);
 
-    return (<div className="group relative min-w-28 max-w-md w-full" onContextMenu={onContextMenu}>
+    return (<div className={`group hover:z-50! ${className}`} style={style} onContextMenu={onContextMenu}>
         {menu}
         <Link href={formatURL(media)} title={media.episode?.name || media.title} className="block relative aspect-5/6 sm:aspect-3/2">
             <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border">
                 <LoadingImage className="size-full object-cover" width={400} height={225} src={media.episode?.poster_url || media.backdrop_url} alt={tMedia("posterAlt", {title: media.episode?.name || media.title})}/>
                 <div className="custom-noise opacity-30"/>
-                {media.episode && <div className="z-10 opacity-0 group-hover:opacity-100 hidden sm:flex absolute inset-0 p-2 items-end justify-center transition-opacity duration-200">
-                    <div className="bg-gradient"/>
+                {media.episode && <div className="z-10 sm:opacity-0 sm:group-hover:opacity-100 flex absolute inset-0 p-2 items-start justify-center transition-opacity duration-200">
+                    <div className="bg-gradient from-transparent via-transparent via-40% to-black"/>
                     <EpisodeLabel season={media.episode.season_number} episode={media.episode.episode_number} className="z-10 text-white"/>
                 </div>}
             </HoverEffect>
         </Link>
-        <div className="absolute bottom-0.5 left-0.5 max-w-[calc(100%-0.25rem)] p-1 flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
-            {activities.map((activity) =>
+        {users.length > 0 && <div className="absolute bottom-0.5 left-0.5 max-w-[calc(100%-0.25rem)] p-1 flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
+            {users.map((activity) =>
                 <Link key={activity.user.id} href={`/users/${activity.user.id}`} className="shrink-0 hover:z-10"
                       title={activity.user.username + (activity.watched_at ? ` · ${formatRelativeDate(activity.watched_at, locale)}` : "")}>
                     <ProfilePicture size={3} user={activity.user}/>
                 </Link>)}
-        </div>
+        </div>}
     </div>);
 }
