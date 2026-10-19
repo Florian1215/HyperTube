@@ -86,7 +86,7 @@ export default function HomePage() {
             </Section>}
 
             {
-                (sortedFeatured === undefined || sortedFeatured.length > 0) &&
+                (sortedFeatured === undefined || sortedFeatured.length > 5) &&
                 <Section title={t("featured")} href="/search?type=movies&q=featured">
                     <MediasGrid mediaSets={sortedFeatured.slice(5, 10) ?? undefined} setLimit={true}/>
                 </Section>
