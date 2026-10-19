@@ -172,7 +172,7 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def filter_queryset(self, queryset):
-        filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=14)}
+        filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=7)}
         queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
         if 'type' in self.kwargs:
             queryset = queryset.filter(media__type=self.kwargs['type'])
