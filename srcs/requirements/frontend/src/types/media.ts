@@ -21,6 +21,7 @@ export interface iMedia {
     in_watchlist?: boolean
     episode?: iSmallEpisode
     rewatch?: boolean
+    last_watched_at?: string | null
 }
 
 export type iWatchedBy = iUser & {watch_count: number, views: (string | null)[]};

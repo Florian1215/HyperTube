@@ -58,8 +58,12 @@ export default function HomePage() {
 
     const continueWatching = continueWatchingData?.results ?? [];
 
-    const {data: dirctedWatchMovies} = useItems("movies", SEARCH_DIRECTSTREAM);
-    const filterDirectedWatchMovies = filterAlreadyWatch(dirctedWatchMovies?.results);
+    const {data: directStreamMovies} = useItems("movies", SEARCH_DIRECTSTREAM);
+    const {data: directStreamSeries} = useItems("series", SEARCH_DIRECTSTREAM);
+    const directStream = useMemo(() => [
+        ...filterAlreadyWatch(directStreamMovies?.results),
+        ...filterAlreadyWatch(directStreamSeries?.results),
+    ].sort((a, b) => (b.last_watched_at ?? "").localeCompare(a.last_watched_at ?? "")), [directStreamMovies?.results, directStreamSeries?.results]);
 
     const {data: friendAct} = useFollowingActivity(user?.id);
     const activities = (friendAct?.results ?? []).filter((activity) => activity.backdrop_url);
@@ -104,8 +108,8 @@ export default function HomePage() {
                     <MediasGrid mediaSets={comingSoon.results} setLimit={true} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>
                 </Section>}
 
-            {filterDirectedWatchMovies.length > 0 && <Section title={t("directStream")} href={`/search?type=movies&q=${SEARCH_DIRECTSTREAM}`}>
-                <MediasGrid mediaSets={filterDirectedWatchMovies} setLimit={true}/>
+            {directStream.length > 0 && <Section title={t("directStream")} href={`/search?type=${directStream[0].type}&q=${SEARCH_DIRECTSTREAM}`}>
+                <MediasGrid mediaSets={directStream} setLimit={true}/>
             </Section>}
         </div>
 

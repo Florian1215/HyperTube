@@ -14,7 +14,7 @@ from medias.models import Media
 from medias.pagination import TMDBPagination
 from medias.permissions import CanRecommendMedia
 from medias.serializers import MediaDetailSerializer, MediaSerializer, MediaFeatureSerializer, MediaProgressSerializer, \
-    MediaTorrentSerializer, SmallMediaSerializer, CollectionPartSerializer
+    MediaTorrentSerializer, MediaDirectStreamSerializer, CollectionPartSerializer
 from series.fetch import get_or_fetch_season
 from series.models import Episode
 from torrents.fetch import get_or_fetch_torrent, to_int
@@ -165,8 +165,8 @@ class MediaCollectionApiView(LangHistoryContext, generics.GenericAPIView):
 
 
 class MediasDirectStreamApiView(LangHistoryContext, generics.ListAPIView):
-    serializer_class = SmallMediaSerializer
+    serializer_class = MediaDirectStreamSerializer
 
     def get_queryset(self):
-        return Media.objects.filter(torrents__downloaded__status='completed').annotate(
+        return Media.objects.filter(type=self.kwargs['type'], torrents__downloaded__status='completed').annotate(
             last_watched_at=Max('torrents__downloaded__last_watched_at')).order_by('-last_watched_at')

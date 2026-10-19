@@ -43,6 +43,13 @@ class SmallMediaSerializer(MediaTitleMixin, MediaProgressMixin, MediaWatchlistMi
         fields = SMALL_MEDIA_FIELDS
 
 
+class MediaDirectStreamSerializer(SmallMediaSerializer):
+    last_watched_at = serializers.DateTimeField(read_only=True)
+
+    class Meta(SmallMediaSerializer.Meta):
+        fields = SMALL_MEDIA_FIELDS + ['last_watched_at']
+
+
 class MediaComingSoonSerializer(SmallMediaSerializer):
     release_date = serializers.CharField(source='coming_date')
     episode = SmallEpisodeSerializer(source='coming_episode')
