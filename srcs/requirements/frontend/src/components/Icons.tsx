@@ -107,6 +107,9 @@ export function HypertubResponsiveLogo({color="dblack", height=20}: {color?: str
     const defaultRecWidth = 266;
     const minWindowWidth = 640;
     const [recWidth, setRecWidth] = useState(defaultRecWidth);
+    const [squeezed, setSqueezed] = useState(false);
+    const squeeze = squeezed ? recWidth * 0.15 : 0;
+    const squeezeTransition = squeezed ? "transform 100ms ease-out cubic-bezier(0.34, 1.4, 0.64, 1)" : "transform 500ms cubic-bezier(0.34, 1.8, 0.64, 1)";
 
     const handleResize = (value: number) => value - defaultRecWidth + recWidth;
 
@@ -123,7 +126,10 @@ export function HypertubResponsiveLogo({color="dblack", height=20}: {color?: str
         return () => window.removeEventListener("resize", handlWindowResize);
     }, []);
 
-    return (<svg className="h-2 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg">
+    return (<svg className="h-2 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg"
+                onPointerEnter={(e) => e.pointerType === "mouse" && setSqueezed(true)}
+                onPointerLeave={() => setSqueezed(false)}
+                onPointerDown={() => setSqueezed(false)}>
         {/*h*/} <path d="M590.15 30.5918C590.15 41.8558 595.142 48.1279 610.758 48.1279C611.645 48.1279 612.498 48.1057 613.317 48.0654V64.6094C612.48 64.6282 611.626 64.6396 610.758 64.6396C579.014 64.6396 567.75 52.0958 567.75 30.5918V0H590.15V30.5918Z" fill={fullColor}/>
         {/*y*/} <path d="M22.5283 23.4238H63.7441V0H86.2725V64H63.7441V40.0645H22.5283V64H0V0H22.5283V23.4238Z" fill={fullColor}/>
         {/*p*/} <path d="M143.669 25.0879L166.325 0H194.613L154.805 39.2959V64H132.277V39.2959L92.4688 0H120.757L143.669 25.0879Z" fill={fullColor}/>
@@ -131,10 +137,13 @@ export function HypertubResponsiveLogo({color="dblack", height=20}: {color?: str
         {/*r*/} <path d="M374.25 15.8721H316.778V23.9355H371.946V39.8076H316.778V48.1279H374.25V64H294.25V0H374.25V15.8721Z" fill={fullColor}/>
         {/*t*/} <path fillRule="evenodd" clipRule="evenodd" d="M440.483 0C460.451 5.76439e-05 472.098 4.35202 472.099 18.4316C472.099 28.6716 463.907 32.8956 454.179 34.5596C463.395 35.3276 467.747 38.2719 469.411 46.4639L471.331 55.9355C472.099 59.7752 472.483 61.5677 473.635 62.8477V64H451.363C449.571 61.8241 449.315 59.2642 448.547 56.3203L446.499 48.1279C445.219 42.6241 443.043 40.3204 434.979 40.3203H410.403V64H387.875V0H440.483ZM410.403 26.2402H438.819C445.987 26.2402 449.699 25.216 449.699 20.9922C449.699 16.6403 445.987 15.8721 438.819 15.8721H410.403V26.2402Z" fill={fullColor}/>
         {/*u 1/2*/} <path d="M558.469 16.6396H530.181V64H507.909V16.6396H479.621V0H558.469V16.6396Z" fill={fullColor}/>
-        {/*u 2/2*/} <path d={`M${handleResize(917.01)} 30.5918C${handleResize(917.01)} 52.0958 ${handleResize(905.874)} 64.6396 ${handleResize(874.258)} 64.6396C${handleResize(873.602)} 64.6396 ${handleResize(872.956)} 64.6318 ${handleResize(872.317)} 64.6211V48.0928C872.945 48.1155 ${handleResize(873.592)} 48.1279 ${handleResize(874.258)} 48.1279C${handleResize(889.874)} 48.1279 ${handleResize(894.866)} 41.8558 ${handleResize(894.866)} 30.5918V0H${handleResize(917.01)}V30.5918Z`} fill={fullColor}/>
-        {/*b*/} <path fillRule="evenodd" clipRule="evenodd" d={`M${handleResize(982.98)} 0C${handleResize(1001.54)} 6.95936e-05 ${handleResize(1013.96)} 4.09606 ${handleResize(1013.96)} 16.3838C${handleResize(1013.96)} 23.4238 ${handleResize(1008.71)} 27.2637 ${handleResize(1000.26)} 29.0557C${handleResize(1010.24)} 30.7196 ${handleResize(1016.64)} 34.9439 ${handleResize(1016.64)} 44.9277C${handleResize(1016.64)} 58.6237 ${handleResize(1003.33)} 64 ${handleResize(984.516)} 64H${handleResize(930.5)}V0H${handleResize(982.98)}ZM${handleResize(952.9)} 48.1279H${handleResize(984.26)}C${handleResize(990.532)} 48.1279 ${handleResize(994.244)} 47.3595 ${handleResize(994.244)} 43.5195C${handleResize(994.244)} 39.5519 ${handleResize(990.532)} 38.7842 ${handleResize(984.26)} 38.7842H${handleResize(952.9)}V48.1279ZM${handleResize(952.9)} 24.5762H${handleResize(983.492)}C${handleResize(989.38)} 24.5762 ${handleResize(993.22)} 23.9357 ${handleResize(993.22)} 20.0957C${handleResize(993.22)} 16.512 ${handleResize(989.38)} 15.8721 ${handleResize(983.492)} 15.8721H${handleResize(952.9)}V24.5762Z`} fill={fullColor}/>
-        {/*e*/} <path d={`M${handleResize(1109.12)} 15.8721H${handleResize(1051.65)}V23.9355H${handleResize(1106.82)}V39.8076H${handleResize(1051.65)}V48.1279H${handleResize(1109.12)}V64H${handleResize(1029.12)}V0H${handleResize(1109.12)}V15.8721Z`} fill={fullColor}/>
-        <rect x="608.317" y="48" width={recWidth} height="16.5" fill={fullColor}/>
+        <g style={{transform: `translateX(${-squeeze}px)`, transition: squeezeTransition}}>
+            {/*u 2/2*/} <path d={`M${handleResize(917.01)} 30.5918C${handleResize(917.01)} 52.0958 ${handleResize(905.874)} 64.6396 ${handleResize(874.258)} 64.6396C${handleResize(873.602)} 64.6396 ${handleResize(872.956)} 64.6318 ${handleResize(872.317)} 64.6211V48.0928C872.945 48.1155 ${handleResize(873.592)} 48.1279 ${handleResize(874.258)} 48.1279C${handleResize(889.874)} 48.1279 ${handleResize(894.866)} 41.8558 ${handleResize(894.866)} 30.5918V0H${handleResize(917.01)}V30.5918Z`} fill={fullColor}/>
+            {/*b*/} <path fillRule="evenodd" clipRule="evenodd" d={`M${handleResize(982.98)} 0C${handleResize(1001.54)} 6.95936e-05 ${handleResize(1013.96)} 4.09606 ${handleResize(1013.96)} 16.3838C${handleResize(1013.96)} 23.4238 ${handleResize(1008.71)} 27.2637 ${handleResize(1000.26)} 29.0557C${handleResize(1010.24)} 30.7196 ${handleResize(1016.64)} 34.9439 ${handleResize(1016.64)} 44.9277C${handleResize(1016.64)} 58.6237 ${handleResize(1003.33)} 64 ${handleResize(984.516)} 64H${handleResize(930.5)}V0H${handleResize(982.98)}ZM${handleResize(952.9)} 48.1279H${handleResize(984.26)}C${handleResize(990.532)} 48.1279 ${handleResize(994.244)} 47.3595 ${handleResize(994.244)} 43.5195C${handleResize(994.244)} 39.5519 ${handleResize(990.532)} 38.7842 ${handleResize(984.26)} 38.7842H${handleResize(952.9)}V48.1279ZM${handleResize(952.9)} 24.5762H${handleResize(983.492)}C${handleResize(989.38)} 24.5762 ${handleResize(993.22)} 23.9357 ${handleResize(993.22)} 20.0957C${handleResize(993.22)} 16.512 ${handleResize(989.38)} 15.8721 ${handleResize(983.492)} 15.8721H${handleResize(952.9)}V24.5762Z`} fill={fullColor}/>
+            {/*e*/} <path d={`M${handleResize(1109.12)} 15.8721H${handleResize(1051.65)}V23.9355H${handleResize(1106.82)}V39.8076H${handleResize(1051.65)}V48.1279H${handleResize(1109.12)}V64H${handleResize(1029.12)}V0H${handleResize(1109.12)}V15.8721Z`} fill={fullColor}/>
+        </g>
+        <rect x="608.317" y="48" width={recWidth} height="16.5" fill={fullColor}
+              style={{transform: `scaleX(${recWidth ? (recWidth - squeeze) / recWidth : 1})`, transformBox: "fill-box", transformOrigin: "left", transition: squeezeTransition}}/>
     </svg>);
 }
 
