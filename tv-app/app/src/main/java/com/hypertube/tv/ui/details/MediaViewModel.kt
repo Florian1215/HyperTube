@@ -192,6 +192,8 @@ class MediaViewModel(private val container: AppContainer, private val type: Stri
             } catch (error: Throwable) {
                 container.notify(repository.errorMessage(error) ?: context.getString(R.string.error_unknown))
                 _state.update { it.copy(starting = false) }
+                // The torrent may have been replaced by the API (removed from the tracker)
+                loadEpisodeData()
             }
         }
     }

@@ -16,12 +16,20 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -57,24 +65,37 @@ data class MenuAction(val label: String, val icon: ImageVector? = null, val onCl
 @Composable
 fun ActionMenu(title: String?, actions: List<MenuAction>, onDismiss: () -> Unit) {
     val first = remember { FocusRequester() }
+    // Opened by a long press on OK: the key is still held, its repeats and its release must not click the first action
+    var okPressed by remember { mutableStateOf(false) }
 
     HtDialog(onDismiss = onDismiss, title = title, maxWidth = 520.dp) {
-        actions.forEachIndexed { index, action ->
-            FocusSurface(
-                onClick = {
-                    action.onClick()
-                    onDismiss()
-                },
-                modifier = Modifier.fillMaxWidth().then(if (index == 0) Modifier.focusRequester(first) else Modifier),
-                focusedScale = 1.02f,
-                focusedContentColor = LocalAccent.current,
-            ) {
-                Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (action.icon != null) {
-                        HtIcon(action.icon)
-                        Spacer(Modifier.width(14.dp))
+        Column(
+            Modifier.onPreviewKeyEvent { event ->
+                if (event.key != Key.DirectionCenter && event.key != Key.Enter && event.key != Key.NumPadEnter)
+                    return@onPreviewKeyEvent false
+                if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.repeatCount == 0)
+                    okPressed = true
+                !okPressed
+            },
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            actions.forEachIndexed { index, action ->
+                FocusSurface(
+                    onClick = {
+                        action.onClick()
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth().then(if (index == 0) Modifier.focusRequester(first) else Modifier),
+                    focusedScale = 1.02f,
+                    focusedContentColor = LocalAccent.current,
+                ) {
+                    Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (action.icon != null) {
+                            HtIcon(action.icon)
+                            Spacer(Modifier.width(14.dp))
+                        }
+                        Text(action.label, style = HtText.Body)
                     }
-                    Text(action.label, style = HtText.Body)
                 }
             }
         }

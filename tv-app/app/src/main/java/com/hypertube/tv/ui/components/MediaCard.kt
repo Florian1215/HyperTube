@@ -143,7 +143,8 @@ fun MediaMenu(target: MenuTarget, onDismiss: () -> Unit, onChanged: () -> Unit =
     val container = LocalAppContainer.current
     val repository = container.repository
     val user by currentUser()
-    val scope = rememberCoroutineScope()
+    // Scope of the app: the menu closes right after the click, its own scope would cancel the request
+    val scope = container.scope
     val context = LocalContext.current
     var featureMedia by remember { mutableStateOf<Media?>(null) }
     val media = target.media

@@ -25,15 +25,18 @@ fun bestTorrent(torrents: List<Torrent>?, isSeries: Boolean, episodeCount: Int?)
     if (torrents.isNullOrEmpty())
         return null
 
-    return torrents.mapNotNull { torrent ->
+    fun rank(strictSize: Boolean) = torrents.mapNotNull { torrent ->
         val expected = expectedSize(torrent, isSeries, episodeCount)
         val status = STATUS_SCORE[torrent.status] ?: 0
-        if (expected != null && status == 0 && (torrent.size < expected.min || torrent.size > expected.max))
+        if (strictSize && expected != null && status == 0 && (torrent.size < expected.min || torrent.size > expected.max))
             return@mapNotNull null
 
         val sizeScore = expected?.let { 30 * (1 - min(1.0, abs(torrent.size - it.ideal) / (it.max - it.min))) } ?: 0.0
         val seedScore = log10(torrent.seeders + 1.0) * 30
         val score = status + (QUALITY_SCORE[torrent.quality] ?: 0) + (LANGUAGE_SCORE[torrent.language] ?: 0) + seedScore + sizeScore
         torrent to score
-    }.maxByOrNull { it.second }?.first
+    }
+
+    // When every torrent has an unexpected size (e.g. a finale only released in big files), still pick the best one
+    return rank(true).ifEmpty { rank(false) }.maxByOrNull { it.second }?.first
 }
