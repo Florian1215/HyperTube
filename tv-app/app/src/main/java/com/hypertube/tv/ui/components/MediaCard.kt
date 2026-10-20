@@ -83,14 +83,14 @@ fun MediaCard(
     var focused by remember { mutableStateOf(false) }
     val watchedAt = if (inHistory && focused) formatDate(media.watchedAt) else null
 
-    FocusSurface(onClick = onClick, onLongClick = onLongClick, modifier = modifier.aspectRatio(10f / 7f).onFocusChanged { focused = it.isFocused }, border = BorderStroke(1.dp, HtColors.White), focusedBorderColor = LocalAccent.current) {
+    FocusSurface(onClick = onClick, onLongClick = onLongClick, modifier = modifier.aspectRatio(10f / 7f).onFocusChanged { focused = it.isFocused }, border = BorderStroke(1.dp, HtColors.DBlack), focusedBorderColor = LocalAccent.current) {
         NetworkImage(episode?.posterUrl ?: media.backdropUrl, Modifier.fillMaxSize(), contentDescription = media.title)
         Box(Modifier.fillMaxSize().background(BottomGradient))
         if (showProgress && media.complete)
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f))) {
                 // In the history the eye only comes with the watched date, on focus
                 if (!inHistory)
-                    HtIcon(HtIcons.Eye, size = 22.dp, modifier = Modifier.align(Alignment.TopEnd).padding(10.dp))
+                    HtIcon(HtIcons.Eye, size = 22.dp, tint = HtColors.White, modifier = Modifier.align(Alignment.TopEnd).padding(10.dp))
             }
         if (watchedAt != null)
             Row(
@@ -239,7 +239,7 @@ fun FeatureDialog(media: Media, onDismiss: () -> Unit, details: MediaDetails? = 
                     FocusSurface(
                         onClick = { backdrop = url },
                         modifier = Modifier.width(240.dp).aspectRatio(16f / 9f),
-                        border = if (url == backdrop) BorderStroke(3.dp, HtColors.White) else BorderStroke(1.dp, HtColors.Gray),
+                        border = if (url == backdrop) BorderStroke(3.dp, HtColors.DBlack) else BorderStroke(1.dp, HtColors.Gray),
                         focusedBorderColor = LocalAccent.current,
                     ) {
                         NetworkImage(url, Modifier.fillMaxSize())

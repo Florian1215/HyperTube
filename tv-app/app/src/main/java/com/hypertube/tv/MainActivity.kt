@@ -3,6 +3,7 @@ package com.hypertube.tv
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,10 +19,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val user by container.session.user.collectAsState()
+            val dark by container.theme.dark.collectAsState()
 
-            // The accent is the color of the signed in user, like on the website
+            // The accent is the color of the signed in user and the mode the system one until chosen, like on the website
             CompositionLocalProvider(LocalAppContainer provides container) {
-                HyperTubeTheme(accent = HtColors.named(user?.color ?: container.session.defaultAccent)) {
+                HyperTubeTheme(accent = HtColors.named(user?.color ?: container.session.defaultAccent), dark = dark ?: isSystemInDarkTheme()) {
                     AppNavigation()
                 }
             }

@@ -47,8 +47,8 @@ fun HtDialog(onDismiss: () -> Unit, title: String?, maxWidth: Dp = 720.dp, conte
             modifier = Modifier
                 .widthIn(max = maxWidth)
                 .padding(32.dp)
-                .background(HtColors.Black)
-                .border(1.dp, HtColors.White)
+                .background(HtColors.DWhite)
+                .border(1.dp, HtColors.DBlack)
                 .padding(28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

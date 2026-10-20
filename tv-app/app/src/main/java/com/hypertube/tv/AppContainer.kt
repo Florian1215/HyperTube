@@ -6,6 +6,7 @@ import com.hypertube.tv.data.HyperTubeApi
 import com.hypertube.tv.data.Repository
 import com.hypertube.tv.data.ServerConfig
 import com.hypertube.tv.data.SessionManager
+import com.hypertube.tv.data.ThemeStore
 import com.hypertube.tv.data.TokenAuthenticator
 import com.hypertube.tv.data.TokenStore
 import kotlinx.coroutines.CoroutineScope
@@ -54,6 +55,8 @@ class AppContainer(val context: Context) {
     val repository = Repository(api, http, json)
 
     val session = SessionManager(repository, tokens, scope)
+
+    val theme = ThemeStore(context)
 
     private val _notices = MutableSharedFlow<Notice>(extraBufferCapacity = 4)
     val notices: SharedFlow<Notice> = _notices.asSharedFlow()

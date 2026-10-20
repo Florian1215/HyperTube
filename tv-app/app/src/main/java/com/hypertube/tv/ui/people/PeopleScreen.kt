@@ -149,7 +149,7 @@ private fun PersonInfo(person: Person) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
         NetworkImage(
             person.picture,
-            Modifier.width(240.dp).aspectRatio(5f / 6f).border(1.dp, HtColors.White),
+            Modifier.width(240.dp).aspectRatio(5f / 6f).border(1.dp, HtColors.DBlack),
             contentDescription = person.name,
         )
         Column(Modifier.weight(1f).padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -178,7 +178,7 @@ private fun PersonInfo(person: Person) {
                 FocusSurface(
                     onClick = { expanded = !expanded },
                     focusedScale = 1f,
-                    focusedContainerColor = HtColors.BlackLight,
+                    focusedContainerColor = HtColors.DWhiteLight,
                     border = BorderStroke(2.dp, Color.Transparent),
                     focusedBorderColor = LocalAccent.current,
                     modifier = Modifier.fillMaxWidth(),
@@ -186,7 +186,7 @@ private fun PersonInfo(person: Person) {
                     Text(
                         person.biography,
                         style = HtText.Body,
-                        color = HtColors.WhiteLight,
+                        color = HtColors.DBlackLight,
                         maxLines = if (expanded) Int.MAX_VALUE else 4,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(12.dp),

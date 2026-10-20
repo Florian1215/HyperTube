@@ -38,7 +38,7 @@ fun FocusSurface(
     shape: Shape = RectangleShape,
     focusedScale: Float = 1.05f,
     containerColor: Color = Color.Transparent,
-    contentColor: Color = HtColors.White,
+    contentColor: Color = HtColors.DBlack,
     focusedContainerColor: Color = containerColor,
     focusedContentColor: Color = contentColor,
     border: BorderStroke? = null,
@@ -93,9 +93,9 @@ fun HtButton(
 ) {
     val accent = LocalAccent.current
     val (container, content) = when (variant) {
-        ButtonVariant.Primary -> HtColors.White to HtColors.Black
-        ButtonVariant.Outline -> Color.Transparent to HtColors.White
-        ButtonVariant.Ghost -> Color.Transparent to HtColors.White
+        ButtonVariant.Primary -> HtColors.DBlack to HtColors.DWhite
+        ButtonVariant.Outline -> Color.Transparent to HtColors.DBlack
+        ButtonVariant.Ghost -> Color.Transparent to HtColors.DBlack
     }
 
     FocusSurface(
@@ -103,11 +103,11 @@ fun HtButton(
         onLongClick = onLongClick,
         enabled = enabled,
         modifier = modifier,
-        containerColor = if (enabled) container else HtColors.BlackLight,
+        containerColor = if (enabled) container else HtColors.DWhiteLight,
         contentColor = content,
         focusedContainerColor = if (variant == ButtonVariant.Primary) accent else container,
-        focusedContentColor = if (variant == ButtonVariant.Primary) HtColors.Black else accent,
-        border = if (variant == ButtonVariant.Outline) BorderStroke(1.dp, HtColors.White) else null,
+        focusedContentColor = if (variant == ButtonVariant.Primary) HtColors.DWhite else accent,
+        border = if (variant == ButtonVariant.Outline) BorderStroke(1.dp, HtColors.DBlack) else null,
         // The white outline takes the accent color with the text
         focusedBorderColor = accent,
     ) {
@@ -134,11 +134,11 @@ fun HtChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modif
         onClick = onClick,
         onLongClick = onLongClick,
         modifier = modifier,
-        containerColor = if (selected) HtColors.White else Color.Transparent,
-        contentColor = if (selected) HtColors.Black else HtColors.White,
+        containerColor = if (selected) HtColors.DBlack else Color.Transparent,
+        contentColor = if (selected) HtColors.DWhite else HtColors.DBlack,
         focusedContainerColor = if (selected) accent else Color.Transparent,
-        focusedContentColor = if (selected) HtColors.Black else accent,
-        border = BorderStroke(1.dp, HtColors.White),
+        focusedContentColor = if (selected) HtColors.DWhite else accent,
+        border = BorderStroke(1.dp, HtColors.DBlack),
         focusedBorderColor = accent,
         focusedScale = 1.08f,
     ) {

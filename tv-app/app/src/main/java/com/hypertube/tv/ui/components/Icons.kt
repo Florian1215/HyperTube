@@ -32,6 +32,8 @@ object HtIcons {
     val Rewatch = svgIcon("rewatch", 24f, 24f, "M20 4v5h-5M4 12a8 8 0 0 1 14.9-4M4 20v-5h5M20 12a8 8 0 0 1-14.9 4", stroke = 2f)
     val Subtitles = svgIcon("subtitles", 24f, 24f, "M3 5h18v14H3Z M6.5 13.5h4M12.5 13.5h5M6.5 16h7", stroke = 1.8f)
     val Audio = svgIcon("audio", 24f, 24f, "M4 9h4l5-4v14l-5-4H4Z M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11", stroke = 1.8f)
+    val Sun = svgIcon("sun", 24f, 24f, "M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8", stroke = 1.8f)
+    val Moon = svgIcon("moon", 24f, 24f, "M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7Z", stroke = 1.8f)
     val Next = svgIcon("next", 24f, 24f, "M4 4l11 8-11 8Z M17 4h3v16h-3Z")
 }
 

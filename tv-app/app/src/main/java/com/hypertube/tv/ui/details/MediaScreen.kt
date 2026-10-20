@@ -87,6 +87,7 @@ import com.hypertube.tv.ui.currentUser
 import com.hypertube.tv.ui.home.HERO_RATIO
 import com.hypertube.tv.ui.home.SCREEN_PADDING
 import com.hypertube.tv.ui.player.VideoPlayer
+import com.hypertube.tv.ui.theme.DarkMode
 import com.hypertube.tv.ui.theme.HtColors
 import com.hypertube.tv.ui.theme.HtText
 import com.hypertube.tv.ui.theme.LocalAccent
@@ -118,28 +119,31 @@ fun MediaScreen(nav: Navigator, type: String, id: String) {
 
     // Like the website, the player replaces the page while it plays
     if (media != null && streamUrl != null) {
-        Box(Modifier.fillMaxSize()) {
-            key(streamUrl, state.playerKey) {
-                VideoPlayer(
-                    url = streamUrl,
-                    startAt = state.resumeAt,
-                    runtimeMinutes = state.runtime ?: 0,
-                    title = media.title,
-                    seasonNumber = if (media.isSeries) state.watched.season else null,
-                    episodeNumber = if (media.isSeries) state.watched.episode else null,
-                    episodeName = state.episodeDetails?.name,
-                    preferredAudio = user?.let { if (it.preferredLanguage == "vf") "fr" else media.originalLanguage },
-                    trackProgress = user != null,
-                    hasNext = state.following != null,
-                    onProgress = viewModel::reportProgress,
-                    onNextShown = viewModel::preloadFollowing,
-                    onNext = viewModel::playFollowing,
-                    onEnded = { if (media.isSeries) viewModel.playFollowing() else viewModel.closePlayer() },
-                    onError = viewModel::onPlayerError,
-                    onClose = { viewModel.closePlayer() },
-                )
+        // The player stays dark in the light mode, like on the website
+        DarkMode {
+            Box(Modifier.fillMaxSize()) {
+                key(streamUrl, state.playerKey) {
+                    VideoPlayer(
+                        url = streamUrl,
+                        startAt = state.resumeAt,
+                        runtimeMinutes = state.runtime ?: 0,
+                        title = media.title,
+                        seasonNumber = if (media.isSeries) state.watched.season else null,
+                        episodeNumber = if (media.isSeries) state.watched.episode else null,
+                        episodeName = state.episodeDetails?.name,
+                        preferredAudio = user?.let { if (it.preferredLanguage == "vf") "fr" else media.originalLanguage },
+                        trackProgress = user != null,
+                        hasNext = state.following != null,
+                        onProgress = viewModel::reportProgress,
+                        onNextShown = viewModel::preloadFollowing,
+                        onNext = viewModel::playFollowing,
+                        onEnded = { if (media.isSeries) viewModel.playFollowing() else viewModel.closePlayer() },
+                        onError = viewModel::onPlayerError,
+                        onClose = { viewModel.closePlayer() },
+                    )
+                }
+                state.playerError?.let { error -> PlayerError(media, error, onReload = viewModel::reloadPlayer, onClose = { viewModel.closePlayer() }) }
             }
-            state.playerError?.let { error -> PlayerError(media, error, onReload = viewModel::reloadPlayer, onClose = { viewModel.closePlayer() }) }
         }
         return
     }
@@ -221,7 +225,7 @@ private fun MediaHero(media: MediaDetails, state: MediaState, playFocus: FocusRe
     FocusSurface(
         onClick = { if (!state.starting) onPlay() },
         focusedScale = 1.01f,
-        border = BorderStroke(1.dp, HtColors.White),
+        border = BorderStroke(1.dp, HtColors.DBlack),
         focusedBorderColor = LocalAccent.current,
         modifier = Modifier.fillMaxWidth().padding(horizontal = SCREEN_PADDING).aspectRatio(HERO_RATIO).focusRequester(playFocus),
     ) {
@@ -233,7 +237,7 @@ private fun MediaHero(media: MediaDetails, state: MediaState, playFocus: FocusRe
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (media.isSeries)
-                EpisodeLabel(state.watched.season, state.watched.episode)
+                EpisodeLabel(state.watched.season, state.watched.episode, color = HtColors.White)
             when {
                 state.starting -> Text(
                     stringResource(if (type == SERIES) R.string.media_downloading_series else R.string.media_downloading_movie),
@@ -332,7 +336,7 @@ private fun InfoSection(media: MediaDetails, watchedBy: List<com.hypertube.tv.da
                 .widthIn(max = CONTENT_WIDTH)
                 .onFocusChanged { focused = it.isFocused }
                 .focusable()
-                .background(if (focused) HtColors.BlackLight else Color.Transparent)
+                .background(if (focused) HtColors.DWhiteLight else Color.Transparent)
                 .padding(vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -386,7 +390,7 @@ private fun InfoRow(name: String, onClick: (() -> Unit)? = null, content: @Compo
     if (onClick == null)
         row()
     else
-        FocusSurface(onClick = onClick, focusedScale = 1.01f, focusedContainerColor = HtColors.BlackLight, modifier = Modifier.fillMaxWidth()) { row() }
+        FocusSurface(onClick = onClick, focusedScale = 1.01f, focusedContainerColor = HtColors.DWhiteLight, modifier = Modifier.fillMaxWidth()) { row() }
 }
 
 @Composable
@@ -443,7 +447,7 @@ private fun LazyListScope.seasonsSection(
     }
     item {
         CenteredColumn {
-            Box(Modifier.fillMaxWidth().height(200.dp).border(1.dp, HtColors.White)) {
+            Box(Modifier.fillMaxWidth().height(200.dp).border(1.dp, HtColors.DBlack)) {
                 NetworkImage(season.posterUrl, Modifier.fillMaxSize())
                 if (season.complete)
                     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
@@ -522,7 +526,7 @@ private fun MediaRowItem(
         onLongClick = onLongClick,
         modifier = Modifier.fillMaxWidth(),
         focusedScale = 1.02f,
-        focusedContainerColor = HtColors.BlackLight,
+        focusedContainerColor = HtColors.DWhiteLight,
         border = BorderStroke(2.dp, Color.Transparent),
         focusedBorderColor = accent,
     ) {
@@ -532,7 +536,7 @@ private fun MediaRowItem(
                 NetworkImage(image, Modifier.fillMaxSize(), contentDescription = title)
                 if (complete)
                     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f))) {
-                        HtIcon(HtIcons.Eye, size = 20.dp, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
+                        HtIcon(HtIcons.Eye, size = 20.dp, tint = HtColors.White, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
                     }
                 else if (pourcent > 0)
                     ProgressLine((pourcent / 100).toFloat(), Modifier.align(Alignment.BottomCenter))
@@ -542,7 +546,7 @@ private fun MediaRowItem(
                 if (subtitle.isNotBlank())
                     SmallText(subtitle)
                 if (!overview.isNullOrBlank())
-                    Text(overview, style = HtText.Small, color = HtColors.WhiteLight, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(overview, style = HtText.Small, color = HtColors.DBlackLight, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
     }

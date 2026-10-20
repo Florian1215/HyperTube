@@ -74,18 +74,18 @@ fun FolderTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: 
     Row(
         modifier.fillMaxWidth().height(64.dp).focusProperties { enter = { activeFocus } },
     ) {
-        Box(Modifier.width(48.dp).fillMaxHeight().borders(null, if (active == 0) accent else HtColors.White, accent))
+        Box(Modifier.width(48.dp).fillMaxHeight().borders(null, if (active == 0) accent else HtColors.DBlack, accent))
         tabs.forEachIndexed { index, tab ->
             val selected = index == active
-            val right = if (selected || active == index + 1) accent else HtColors.White
+            val right = if (selected || active == index + 1) accent else HtColors.DBlack
             FocusSurface(
                 onClick = { onChange(index) },
                 focusedScale = 1f,
-                focusedContainerColor = HtColors.BlackLight,
+                focusedContainerColor = HtColors.DWhiteLight,
                 focusedContentColor = accent,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .borders(if (selected) accent else HtColors.White, right, if (selected) null else accent)
+                    .borders(if (selected) accent else HtColors.DBlack, right, if (selected) null else accent)
                     .then(if (selected) Modifier.focusRequester(activeFocus) else Modifier),
             ) {
                 Row(Modifier.fillMaxHeight().padding(horizontal = 40.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -41,8 +41,8 @@ fun HtTextField(
 ) {
     var focused by remember { mutableStateOf(false) }
     val accent = LocalAccent.current
-    val borderColor = if (focused) accent else HtColors.White
-    val textStyle = style.copy(color = HtColors.White)
+    val borderColor = if (focused) accent else HtColors.DBlack
+    val textStyle = style.copy(color = HtColors.DBlack)
 
     BasicTextField(
         value = value,
@@ -67,7 +67,7 @@ fun HtTextField(
                     Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(if (focused) 3.dp else 1.dp).background(borderColor))
                 }
             else
-                Box(Modifier.background(HtColors.Black).border(if (focused) 3.dp else 1.dp, borderColor).padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Box(Modifier.background(HtColors.DWhite).border(if (focused) 3.dp else 1.dp, borderColor).padding(horizontal = 16.dp, vertical = 12.dp)) {
                     content()
                 }
         },

@@ -61,7 +61,7 @@ fun LoginScreen(nav: Navigator) {
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
 
     // Steps on the left, QR code on the right, the only action is going back
-    Column(Modifier.fillMaxSize().background(HtColors.Black)) {
+    Column(Modifier.fillMaxSize().background(HtColors.DWhite)) {
         ColorsBar()
         Row(
             Modifier.weight(1f).padding(horizontal = 96.dp),

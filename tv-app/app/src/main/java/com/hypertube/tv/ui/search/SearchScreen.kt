@@ -248,7 +248,7 @@ private fun ActivityRow(activity: Media, onClick: () -> Unit, onLongClick: () ->
             if (activity.rewatch == true)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     HtIcon(HtIcons.Rewatch, size = 16.dp)
-                    SmallText(stringResource(R.string.media_rewatch), color = HtColors.White)
+                    SmallText(stringResource(R.string.media_rewatch), color = HtColors.DBlack)
                 }
             formatDate(activity.watchedAt)?.let { SmallText(it) }
         }
@@ -262,7 +262,7 @@ private fun PersonCard(people: People, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         focusedScale = 1.03f,
-        focusedContainerColor = HtColors.BlackLight,
+        focusedContainerColor = HtColors.DWhiteLight,
         border = BorderStroke(2.dp, Color.Transparent),
         focusedBorderColor = LocalAccent.current,
     ) {
@@ -293,7 +293,7 @@ private fun UserRow(user: User, canFollow: Boolean, onClick: () -> Unit, onFollo
             onClick = onClick,
             modifier = Modifier.weight(1f),
             focusedScale = 1.01f,
-            focusedContainerColor = HtColors.BlackLight,
+            focusedContainerColor = HtColors.DWhiteLight,
             border = BorderStroke(2.dp, Color.Transparent),
             focusedBorderColor = LocalAccent.current,
         ) {

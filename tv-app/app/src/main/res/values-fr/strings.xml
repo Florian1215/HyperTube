@@ -5,6 +5,8 @@
     <string name="nav_series">Séries</string>
     <string name="nav_signin">Connexion</string>
     <string name="nav_add_account">Ajouter un profil</string>
+    <string name="nav_light_mode">Mode clair</string>
+    <string name="nav_dark_mode">Mode sombre</string>
     <string name="nav_logout">Déconnexion</string>
 
     <string name="home_friends_activity">Activité des amis</string>

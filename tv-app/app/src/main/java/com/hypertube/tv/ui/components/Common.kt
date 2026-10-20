@@ -57,7 +57,7 @@ import com.hypertube.tv.ui.theme.LocalAccent
 import java.util.Locale
 
 @Composable
-fun Logo(modifier: Modifier = Modifier, height: Dp = 20.dp, color: Color = HtColors.White) {
+fun Logo(modifier: Modifier = Modifier, height: Dp = 20.dp, color: Color = HtColors.DBlack) {
     Image(
         painter = painterResource(R.drawable.ic_logo),
         contentDescription = stringResource(R.string.app_name),
@@ -77,7 +77,7 @@ fun ColorsBar(modifier: Modifier = Modifier, height: Dp = 12.dp) {
 
 @Composable
 fun NetworkImage(url: String?, modifier: Modifier = Modifier, contentDescription: String? = null, contentScale: ContentScale = ContentScale.Crop, noise: Boolean = true) {
-    Box(modifier.background(HtColors.BlackLight).then(if (noise) Modifier.noise() else Modifier)) {
+    Box(modifier.background(HtColors.DWhiteLight).then(if (noise) Modifier.noise() else Modifier)) {
         val full = ServerConfig.fileUrl(url)
         if (full != null)
             AsyncImage(model = full, contentDescription = contentDescription, contentScale = contentScale, modifier = Modifier.fillMaxSize())
@@ -135,7 +135,7 @@ fun AvatarStack(users: List<User>, modifier: Modifier = Modifier, size: Dp = 32.
 }
 
 @Composable
-fun EpisodeLabel(season: Int, episode: Int, modifier: Modifier = Modifier, color: Color = HtColors.White) {
+fun EpisodeLabel(season: Int, episode: Int, modifier: Modifier = Modifier, color: Color = HtColors.DBlack) {
     Text(stringResource(R.string.serie_season_episode, season, episode), style = HtText.Small, color = color, modifier = modifier)
 }
 
@@ -171,7 +171,7 @@ val BottomGradient = Brush.verticalGradient(listOf(Color.Transparent, Color.Blac
 
 @Composable
 fun Placeholder(modifier: Modifier = Modifier) {
-    Box(modifier.background(HtColors.BlackLight))
+    Box(modifier.background(HtColors.DWhiteLight))
 }
 
 @Composable

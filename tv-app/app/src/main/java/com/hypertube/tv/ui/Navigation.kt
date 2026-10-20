@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -68,6 +69,7 @@ import com.hypertube.tv.data.SERIES
 import com.hypertube.tv.ui.auth.LoginScreen
 import com.hypertube.tv.ui.components.FocusSurface
 import com.hypertube.tv.ui.components.HtIcon
+import com.hypertube.tv.ui.components.HtIcons
 import com.hypertube.tv.ui.components.Logo
 import com.hypertube.tv.ui.components.ProfilePicture
 import com.hypertube.tv.ui.home.HomeScreen
@@ -78,6 +80,7 @@ import com.hypertube.tv.ui.user.UserScreen
 import com.hypertube.tv.ui.theme.HtColors
 import com.hypertube.tv.ui.theme.HtText
 import com.hypertube.tv.ui.theme.LocalAccent
+import com.hypertube.tv.ui.theme.LocalDarkMode
 import kotlinx.coroutines.delay
 
 private const val HOME = "home"
@@ -130,8 +133,8 @@ fun AppNavigation() {
     }
 
     // Without a Surface the texts of tv-material are black, so the screens default to white
-    Box(Modifier.fillMaxSize().background(HtColors.Black)) {
-        CompositionLocalProvider(LocalContentColor provides HtColors.White) {
+    Box(Modifier.fillMaxSize().background(HtColors.DWhite)) {
+        CompositionLocalProvider(LocalContentColor provides HtColors.DBlack) {
             NavHost(navController = controller, startDestination = HOME, modifier = Modifier.fillMaxSize()) {
                 composable(HOME) { HomeScreen(nav) }
                 composable(SEARCH, arguments = listOf(optional("type"), optional("q"))) { entry ->
@@ -183,7 +186,7 @@ private const val GRID_COLUMNS = 3
 
 // Dropdown of the website navbar: shown while the profile picture has the focus, the arrows move in the popup, OK runs the selection.
 // The signed in accounts are a grid of pictures (OK on the current one opens its profile, on another switches to it),
-// the last circle adds an account while there is room, then comes the logout.
+// the last circle adds an account while there is room, then come the switch of the mode and the logout.
 // The focus stays on the picture so the popup does not need its own focus window
 @Composable
 private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () -> Unit) {
@@ -192,18 +195,21 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
     val accent = LocalAccent.current
     val density = LocalDensity.current
     var focused by remember { mutableStateOf(false) }
-    // -1: the picture itself (OK opens the profile), then the cells of the grid, then the logout
+    // -1: the picture itself (OK opens the profile), then the cells of the grid, the mode and the logout
     var selected by remember { mutableIntStateOf(-1) }
     var height by remember { mutableIntStateOf(0) }
     // OK pressed on the selection, which runs on the release
     var pressed by remember { mutableStateOf(false) }
     // null: the button to add an account
     val cells: List<User?> = accounts.take(MAX_ACCOUNTS).let { if (it.size < MAX_ACCOUNTS) it + null else it }
-    val logout = cells.size
+    val dark = LocalDarkMode.current
+    val mode = cells.size
+    val logout = mode + 1
     val lastRow = cells.lastIndex / GRID_COLUMNS
 
     fun run(index: Int) {
         when {
+            index == mode -> container.theme.setDark(!dark)
             index == logout -> container.session.logout()
             index !in cells.indices -> Unit
             cells[index] == null -> onAddAccount()
@@ -251,23 +257,25 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
                                 selected = -1
                                 return@onPreviewKeyEvent false
                             }
+                            selected == mode -> logout
                             row < lastRow -> minOf(selected + GRID_COLUMNS, cells.lastIndex)
-                            else -> logout
+                            else -> mode
                         }
                         Key.DirectionUp -> selected = when {
                             selected < 0 -> return@onPreviewKeyEvent false
-                            selected == logout -> lastRow * GRID_COLUMNS
+                            selected == logout -> mode
+                            selected == mode -> lastRow * GRID_COLUMNS
                             row > 0 -> selected - GRID_COLUMNS
                             else -> -1
                         }
                         // In the popup the sides stay in the row, the focus does not move to the navbar
                         Key.DirectionLeft -> when {
                             selected < 0 -> return@onPreviewKeyEvent false
-                            selected < logout && column > 0 -> selected--
+                            selected < mode && column > 0 -> selected--
                         }
                         Key.DirectionRight -> when {
                             selected < 0 -> return@onPreviewKeyEvent false
-                            selected < logout && column < GRID_COLUMNS - 1 && selected < cells.lastIndex -> selected++
+                            selected < mode && column < GRID_COLUMNS - 1 && selected < cells.lastIndex -> selected++
                         }
                         in OK_KEYS -> {
                             if (selected < 0)
@@ -291,7 +299,7 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
                 offset = IntOffset(0, height + with(density) { 8.dp.roundToPx() }),
                 properties = PopupProperties(focusable = false),
             ) {
-                Column(Modifier.background(HtColors.Black).border(1.dp, HtColors.White)) {
+                Column(Modifier.background(HtColors.DWhite).border(1.dp, HtColors.DBlack)) {
                     // Name of the selected cell, the current account otherwise
                     val label = when {
                         selected in cells.indices -> cells[selected]?.username ?: stringResource(R.string.nav_add_account)
@@ -308,18 +316,26 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
                             }
                         }
                     }
-                    val color = if (selected == logout) accent else HtColors.White
-                    Row(
-                        Modifier.width(GRID_WIDTH).border(width = 1.dp, color = HtColors.BlackLight)
-                            .background(if (selected == logout) HtColors.BlackLight else Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        HtIcon(Icons.AutoMirrored.Filled.ExitToApp, size = 18.dp, tint = color)
-                        Text(stringResource(R.string.nav_logout).uppercase(), style = HtText.Bold, color = color)
-                    }
+                    // The mode shown is the one it switches to
+                    MenuRow(stringResource(if (dark) R.string.nav_light_mode else R.string.nav_dark_mode), if (dark) HtIcons.Sun else HtIcons.Moon, selected == mode)
+                    MenuRow(stringResource(R.string.nav_logout), Icons.AutoMirrored.Filled.ExitToApp, selected == logout)
                 }
             }
+    }
+}
+
+@Composable
+private fun MenuRow(name: String, icon: ImageVector, selected: Boolean) {
+    val color = if (selected) LocalAccent.current else HtColors.DBlack
+
+    Row(
+        Modifier.width(GRID_WIDTH).border(width = 1.dp, color = HtColors.DWhiteLight)
+            .background(if (selected) HtColors.DWhiteLight else Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        HtIcon(icon, size = 18.dp, tint = color)
+        Text(name.uppercase(), style = HtText.Bold, color = color)
     }
 }
 
@@ -333,7 +349,7 @@ private fun AccountCell(user: User?, selected: Boolean, current: Boolean) {
     val accent = LocalAccent.current
     val ring = when {
         selected -> accent
-        current -> HtColors.White
+        current -> HtColors.DBlack
         else -> Color.Transparent
     }
 
@@ -342,7 +358,7 @@ private fun AccountCell(user: User?, selected: Boolean, current: Boolean) {
             ProfilePicture(user, size = CELL_SIZE - 8.dp)
         else
             Box(Modifier.fillMaxSize().border(1.dp, if (selected) accent else HtColors.Gray, CircleShape), contentAlignment = Alignment.Center) {
-                HtIcon(Icons.Default.Add, size = 24.dp, tint = if (selected) accent else HtColors.White, contentDescription = stringResource(R.string.nav_add_account))
+                HtIcon(Icons.Default.Add, size = 24.dp, tint = if (selected) accent else HtColors.DBlack, contentDescription = stringResource(R.string.nav_add_account))
             }
     }
 }
@@ -351,7 +367,7 @@ private fun AccountCell(user: User?, selected: Boolean, current: Boolean) {
 private fun NavItem(name: String, selected: Boolean, icon: Boolean = false, onClick: () -> Unit) {
     val accent = LocalAccent.current
 
-    FocusSurface(onClick = onClick, contentColor = if (selected) accent else HtColors.White, focusedContentColor = accent) {
+    FocusSurface(onClick = onClick, contentColor = if (selected) accent else HtColors.DBlack, focusedContentColor = accent) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (icon)
                 HtIcon(Icons.Default.Search, size = 18.dp, modifier = Modifier.padding(end = 6.dp))
@@ -379,11 +395,11 @@ private fun NoticeHost(modifier: Modifier = Modifier) {
     AnimatedVisibility(visible = notice != null, enter = fadeIn(), exit = fadeOut(), modifier = modifier.padding(32.dp)) {
         val current = notice ?: return@AnimatedVisibility
         Box(
-            Modifier.widthIn(max = 520.dp).background(HtColors.Black)
+            Modifier.widthIn(max = 520.dp).background(HtColors.DWhite)
                 .border(2.dp, if (current.error) HtColors.Red else HtColors.Green)
                 .padding(horizontal = 20.dp, vertical = 14.dp),
         ) {
-            Text(current.text, style = HtText.Body, color = HtColors.White)
+            Text(current.text, style = HtText.Body, color = HtColors.DBlack)
         }
     }
 }

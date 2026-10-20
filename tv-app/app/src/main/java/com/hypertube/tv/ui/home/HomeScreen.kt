@@ -252,7 +252,7 @@ private fun Hero(medias: List<Media>?, onOpen: (Media) -> Unit, focusRequester: 
     FocusSurface(
         onClick = { onOpen(current) },
         focusedScale = 1.01f,
-        border = BorderStroke(1.dp, HtColors.White),
+        border = BorderStroke(1.dp, HtColors.DBlack),
         focusedBorderColor = LocalAccent.current,
         modifier = Modifier
             .fillMaxWidth()

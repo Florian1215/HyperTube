@@ -2,6 +2,7 @@ package com.hypertube.tv.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -10,12 +11,15 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Typography
 import androidx.tv.material3.darkColorScheme
+import androidx.tv.material3.lightColorScheme
 import com.hypertube.tv.R
 
-// Colors of the website (globals.css), the TV app always uses the dark mode
+// Colors of the website (globals.css). Black and White are fixed (over the images, in the player),
+// the d colors follow the mode like light-dark() on the website: DBlack is the text, DWhite the background
 object HtColors {
     val Black = Color(0xFF191919)
     val BlackLight = Color(0xFF292929)
@@ -29,6 +33,11 @@ object HtColors {
     val Purple = Color(0xFF747AF5)
     val Blue = Color(0xFFAEF0FF)
     val Red = Color(0xFFFF4742)
+
+    val DBlack: Color @Composable @ReadOnlyComposable get() = if (LocalDarkMode.current) White else Black
+    val DBlackLight: Color @Composable @ReadOnlyComposable get() = if (LocalDarkMode.current) WhiteLight else BlackLight
+    val DWhite: Color @Composable @ReadOnlyComposable get() = if (LocalDarkMode.current) Black else White
+    val DWhiteLight: Color @Composable @ReadOnlyComposable get() = if (LocalDarkMode.current) BlackLight else WhiteLight
 
     val stripes = listOf(Yellow, Pink, Green, Purple, Blue, Red)
 
@@ -66,21 +75,31 @@ object HtText {
 
 val LocalAccent = staticCompositionLocalOf { HtColors.Purple }
 
+val LocalDarkMode = staticCompositionLocalOf { true }
+
+// Dark whatever the mode, like the dark-mode class of the website (player)
+@Composable
+fun DarkMode(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalDarkMode provides true, LocalContentColor provides HtColors.White, content = content)
+}
+
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun HyperTubeTheme(accent: Color, content: @Composable () -> Unit) {
-    val colors = darkColorScheme(
+fun HyperTubeTheme(accent: Color, dark: Boolean, content: @Composable () -> Unit) {
+    val text = if (dark) HtColors.White else HtColors.Black
+    val background = if (dark) HtColors.Black else HtColors.White
+    val colors = (if (dark) darkColorScheme() else lightColorScheme()).copy(
         primary = accent,
         onPrimary = HtColors.Black,
-        secondary = HtColors.White,
-        onSecondary = HtColors.Black,
-        background = HtColors.Black,
-        onBackground = HtColors.White,
-        surface = HtColors.Black,
-        onSurface = HtColors.White,
-        surfaceVariant = HtColors.BlackLight,
-        onSurfaceVariant = HtColors.WhiteLight,
-        border = HtColors.White,
+        secondary = text,
+        onSecondary = background,
+        background = background,
+        onBackground = text,
+        surface = background,
+        onSurface = text,
+        surfaceVariant = if (dark) HtColors.BlackLight else HtColors.WhiteLight,
+        onSurfaceVariant = if (dark) HtColors.WhiteLight else HtColors.BlackLight,
+        border = text,
         error = HtColors.Red,
     )
     val body = HtText.Body
@@ -99,6 +118,6 @@ fun HyperTubeTheme(accent: Color, content: @Composable () -> Unit) {
             displayLarge = HtText.Hero,
         ),
     ) {
-        CompositionLocalProvider(LocalAccent provides accent, content = content)
+        CompositionLocalProvider(LocalAccent provides accent, LocalDarkMode provides dark, content = content)
     }
 }
