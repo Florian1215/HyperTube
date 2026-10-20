@@ -247,7 +247,7 @@ function Results({t, medias, search, viewType, sort, changeSort, genre}: {t: tT,
 
     const today = new Date();
     if (medias)
-        medias = medias.filter(m => m.poster_url?.length > 0 && m.backdrop_url?.length > 0 && (m.vote_count > 50 || !m.release_date || new Date(m.release_date) > today));
+        medias = medias.filter(m => m.poster_url?.length > 0 && m.backdrop_url?.length > 0 && (m.vote_count > 10 || !m.release_date || new Date(m.release_date) > today));
 
     if (medias && medias.length === 0)
         return (<SmallText>{t("emptyPage")}</SmallText>);
