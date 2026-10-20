@@ -29,6 +29,8 @@ import {BookmarkIcon, PlayPauseIcon, StarIcon} from "@/components/Icons";
 import {useQueryClient} from "@tanstack/react-query";
 import PageMeta from "@/components/PageMeta";
 
+const REQUESTABLE_DAYS = 365;
+
 export default function MediaPage() {
     const params = useParams();
     const id = params.id as string;
@@ -62,6 +64,10 @@ export default function MediaPage() {
     const queryClient = useQueryClient();
     const bestTorrent = getBestTorrent(torrents?.results, type === "series", season?.episodes.length);
     const unavailable = !!media && !torrentsLoading && !bestTorrent;
+    const releaseDate = media?.type === "series" ? episodeDetails?.release_date : media?.release_date;
+    const oldestRequestable = new Date();
+    oldestRequestable.setDate(oldestRequestable.getDate() - REQUESTABLE_DAYS);
+    const requestable = !releaseDate || releaseDate >= oldestRequestable.toISOString().slice(0, 10);
     const {data: torrentRequest} = useTorrentRequest(media, watchedEpisode.season, watchedEpisode.episode, !!user && unavailable);
 
     const getFollowingEpisode = (): iWatchEpisode | undefined => {
@@ -237,7 +243,7 @@ export default function MediaPage() {
                     {featureBtn && <Button variant="secondary" darkMode={false} className={`${className} px-2! sm:px-4!`} onClick={featureBtn}><span className="hidden sm:block">{t("setFeature")}</span><span className="block sm:hidden"><StarIcon size={19} color="black"/></span></Button>}
                     {user && media && <Button variant="outline" darkMode={false} className={`${classNameFlex} px-2! sm:px-4!`} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span className="hidden sm:block">{t("watchlist")}</span></Button>}
                 </div>
-                {unavailable && <SmallText italic={false} className="mb-0 sm:mb-2 text-white">
+                {unavailable && (requestable || torrentRequest?.requested) && <SmallText italic={false} className="mb-0 sm:mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
                     {torrentRequest && <TextButton className="ml-2 text-white italic hover:text-accent" onClick={() => void toggleTorrentRequest()}>{t(torrentRequest.requested ? "cancelTorrentRequest" : "requestTorrent")}</TextButton>}
                 </SmallText>}

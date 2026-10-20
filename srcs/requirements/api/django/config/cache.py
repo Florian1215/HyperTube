@@ -12,6 +12,7 @@ LIFETIME_RECENT = timedelta(days=3)
 LIFETIME_STABLE = timedelta(days=30)
 
 RECENT_DAYS = 60
+REQUESTABLE_DAYS = 365
 
 
 def is_outdated(obj, lifetime):
@@ -20,6 +21,10 @@ def is_outdated(obj, lifetime):
 
 def is_released(release_date):
     return bool(release_date) and release_date <= date.today().isoformat()
+
+
+def is_requestable(release_date):
+    return not release_date or release_date >= (date.today() - timedelta(days=REQUESTABLE_DAYS)).isoformat()
 
 
 def is_recent(release_date):
