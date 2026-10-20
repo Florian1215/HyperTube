@@ -1,13 +1,13 @@
 "use client";
 
 import {iGenre} from "@/types/genre";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {GridIcon, ListIcon} from "@/components/Icons";
 import {useLocale, useTranslations} from "next-intl";
 import {useDebounce} from "use-debounce";
 import useGenres from "@/hooks/useGenres";
 import {tLocale} from "@/i18n/routing";
-import {SEARCH_CONTINUE, SEARCH_DIRECTSTREAM, SEARCH_FRIENDS, SEARCH_UPCOMING, useItems} from "@/services/medias.service";
+import {SEARCH_CONTINUE, SEARCH_DIRECTSTREAM, SEARCH_FRIENDS, SEARCH_UPCOMING, useInfiniteItems} from "@/services/medias.service";
 import {FriendsActivityList} from "@/components/FriendsActivity";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import CloseButton from "@/components/ui/Button/CloseButton";
@@ -25,6 +25,8 @@ import {useUsersSearch} from "@/services/users.service";
 import {usePeopleSearch} from "@/services/people.service";
 import PeopleCard from "@/components/PeopleCard";
 import Pagination from "@/components/ui/Pagination";
+import InfiniteScroll from "@/components/ui/InfiniteScroll";
+import LoadingText from "@/components/LoadingText";
 import computeTotalPage from "@/utils/computeTotalPage";
 import {iUser} from "@/types/user";
 import ProfilePicture from "@/components/ProfilePicture";
@@ -62,10 +64,20 @@ export default function Search({modal = false}: {modal?: boolean}) {
     const isPeopleSearch = typeSearch === "people";
     const [page, setPage] = useState(1);
     const hasResults = !modal || searchValue.trim().length > 0;
-    const {data: medias, isError} = useItems(typeSearch, searchValue.trim(), page, hasResults && !isUsersSearch && !isPeopleSearch);
+    const {data: mediasPages, isError, hasNextPage, isFetchingNextPage, fetchNextPage} = useInfiniteItems(typeSearch, searchValue.trim(), hasResults && !isUsersSearch && !isPeopleSearch);
+    const medias = useMemo(() => {
+        if (!mediasPages)
+            return undefined;
+        const ids = new Set<string>();
+        return mediasPages.pages.flatMap((p) => p.results).filter((m) => {
+            const id = `${m.type}-${m.id}`;
+            return !ids.has(id) && !!ids.add(id);
+        });
+    }, [mediasPages]);
+    const loadMore = useCallback(() => void fetchNextPage({cancelRefetch: false}), [fetchNextPage]);
     const {data: people, isError: isPeopleError} = usePeopleSearch(searchValue.trim(), hasResults && isPeopleSearch, page);
     const {data: users, isError: isUsersError} = useUsersSearch(searchValue.trim(), hasResults && isUsersSearch, authUser?.id, page);
-    const found = isUsersSearch ? users : isPeopleSearch ? people : medias;
+    const found = isUsersSearch ? users : people;
     const [debouncedSearch] = useDebounce(searchValue.trim(), 200);
     const t = useTranslations("search");
     const inputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +137,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
             params.delete("q");
         router.push(`${pathname}?${params.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [medias, users, people]);
+    }, [mediasPages?.pages[0], users, people]);
 
     const handleSearchChange = (e?: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e?.target.value.toLowerCase() ?? "";
@@ -176,16 +188,20 @@ export default function Search({modal = false}: {modal?: boolean}) {
             }
         </div>
 
-        {hasResults && <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(found)} variableMT={true}>
+        {hasResults && (isUsersSearch || isPeopleSearch) && <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(found)} variableMT={true}>
             <div ref={resultsRef}>
             {isUsersSearch ?
                 <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
-                isPeopleSearch ?
-                <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/> :
-                <Results t={t} medias={isError ? [] : medias?.results} search={debouncedSearch} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre}/>
+                <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/>
             }
             </div>
         </Pagination>}
+        {hasResults && !isUsersSearch && !isPeopleSearch && <InfiniteScroll hasMore={!isError && hasNextPage} loading={isFetchingNextPage} onLoadMore={loadMore}
+                loader={viewType === "grid" && debouncedSearch !== SEARCH_FRIENDS ? <MediasGrid className="mt-2 sm:mt-4"/> : <div className="px-6"><LoadingText/></div>}>
+            <div ref={resultsRef}>
+                <Results t={t} medias={isError ? [] : medias} search={debouncedSearch} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre} hasMore={!isError && hasNextPage}/>
+            </div>
+        </InfiniteScroll>}
     </>);
 
     if (modal)
@@ -230,7 +246,7 @@ function PeopleResults({t, people}: {t: tT, people?: iPeople[]}) {
     </div>);
 }
 
-function Results({t, medias, search, viewType, sort, changeSort, genre}: {t: tT, medias?: iMedia[], search: string, viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre}) {
+function Results({t, medias, search, viewType, sort, changeSort, genre, hasMore}: {t: tT, medias?: iMedia[], search: string, viewType: tViewType, sort: iSort, changeSort: (type: tSort, side: boolean) => void, genre: undefined | iGenre, hasMore: boolean}) {
     const locale = useLocale();
 
     if (medias && medias.length === 0)
@@ -249,8 +265,9 @@ function Results({t, medias, search, viewType, sort, changeSort, genre}: {t: tT,
     if (medias)
         medias = medias.filter(m => m.poster_url?.length > 0 && m.backdrop_url?.length > 0 && (m.vote_count > 10 || !m.release_date || new Date(m.release_date) > today));
 
+    // the next sections are loaded while the filtered list is empty
     if (medias && medias.length === 0)
-        return (<SmallText>{t("emptyPage")}</SmallText>);
+        return hasMore ? null : (<SmallText>{t("noResults")}</SmallText>);
 
     if (viewType === "grid")
         return (<MediasGrid mediaSets={medias}/>);

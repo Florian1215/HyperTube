@@ -7,6 +7,8 @@ from config.settings import PER_PAGE
 from medias.services.tmdb import TMDBService
 
 TMDB_PER_PAGE = TMDBService.PER_PAGE
+TMDB_MAX_PAGE = 500
+TMDB_MAX_COUNT = TMDB_MAX_PAGE * TMDB_PER_PAGE
 
 
 class TMDBPagination(PageNumberPagination):
@@ -20,7 +22,7 @@ class TMDBPagination(PageNumberPagination):
         self.page = req['page']
         self.per_page = req['per_page']
         self.total_pages = req['total_pages']
-        self.total_count = min(req['total_results'], self.MAX_COUNT)
+        self.total_count = req['total_results']
         self.results = req['results']
         return self.results
 
@@ -48,18 +50,23 @@ class TMDBPagination(PageNumberPagination):
         return f'{url.split('?')[0]}?{query_params.urlencode()}'
 
 
-def fetch_tmdb_page(fetch, page, per_page=PER_PAGE):
-    start = (max(page, 1) - 1) * per_page
+def fetch_tmdb_page(fetch, page, per_page=PER_PAGE, max_count=TMDBPagination.MAX_COUNT):
+    page = max(page, 1)
+    start = (page - 1) * per_page
     first_page = start // TMDB_PER_PAGE + 1
-    res = fetch(first_page)
-    results = res['results']
-    if start + per_page > first_page * TMDB_PER_PAGE and first_page < res['total_pages']:
-        results = results + fetch(first_page + 1)['results']
-    offset = start - (first_page - 1) * TMDB_PER_PAGE
+    res = fetch(min(first_page, TMDB_MAX_PAGE))
+    total_results = min(res['total_results'], max_count, TMDB_MAX_COUNT)
+    results = []
+    if start < total_results:
+        results = res['results']
+        if start + per_page > first_page * TMDB_PER_PAGE and first_page < min(res['total_pages'], TMDB_MAX_PAGE):
+            results = results + fetch(first_page + 1)['results']
+        offset = start - (first_page - 1) * TMDB_PER_PAGE
+        results = results[offset:min(offset + per_page, total_results - start + offset)]
     return {
-        'results': results[offset:offset + per_page],
+        'results': results,
         'page': page,
         'per_page': per_page,
-        'total_pages': math.ceil(min(res['total_results'], TMDBPagination.MAX_COUNT) / per_page),
-        'total_results': res['total_results'],
+        'total_pages': math.ceil(total_results / per_page),
+        'total_results': total_results,
     }
