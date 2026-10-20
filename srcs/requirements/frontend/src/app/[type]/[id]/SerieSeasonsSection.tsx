@@ -4,7 +4,7 @@ import {iEpisode, iSerieDetails} from "@/types/serie";
 import {useSeason} from "@/services/series.service";
 import LoadingImage from "@/components/ui/LoadingImage";
 import LoadingText from "@/components/LoadingText";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import SmallText from "@/components/ui/SmallText";
 import useFormatDate from "@/utils/formatDate";
 import useAuth from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import ExpandableText from "@/components/ui/ExpandableText";
 import HorizontalScroll from "@/components/ui/HorizontalScroll";
 import RadioButton from "@/components/ui/Button/RadioButton";
 import MediaRow from "@/app/[type]/[id]/MediaRow";
+import formatReleaseDate from "@/utils/formatReleaseDate";
 
 export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEpisode}: {serie: iSerieDetails, watchedEpisode: iWatchEpisode, setWatchedEpisode: (val: iWatchEpisode) => void}) {
     const t = useTranslations("serie");
@@ -24,6 +25,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
     const sameDate = season && season.episodes.length > 1 ? season.episodes[0].release_date === season.episodes[season.episodes.length - 1].release_date : false;
     const {user} = useAuth();
     const [contextMenu, setContextMenu] = useState<iAxe>();
+    const locale = useLocale();
 
 
     const handleClick = (newVal: iWatchEpisode) => {
@@ -56,7 +58,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
                 </div>
                 <div className="flex items-end pb-2 pt-4 gap-4">
                     <h4>{t("episodesCount", {count: season.episodes.length})}</h4>
-                    <SmallText className="text-right">{season?.release_date.slice(0, 4)}</SmallText>
+                    <SmallText className="text-right">{sameDate ? formatReleaseDate(season, locale) : season?.release_date.slice(0, 4)}</SmallText>
                 </div>
                 <div className="mb-4">
                     <ExpandableText key={season.id} lines={2} className="text-sm text-gray"  showBtn={false}>{season.overview}</ExpandableText>
