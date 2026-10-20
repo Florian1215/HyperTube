@@ -143,6 +143,7 @@ export default function MediaPage() {
                     else
                         addNotification(tError("unknown"), "error");
                     setTorrentId(undefined);
+                    void queryClient.invalidateQueries({queryKey: ["torrents", media?.type ?? "", media?.id ?? ""]});
                 }
             }
         }

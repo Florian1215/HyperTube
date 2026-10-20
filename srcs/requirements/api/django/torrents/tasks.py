@@ -9,8 +9,9 @@ from django.utils import timezone
 import libtorrent as lt
 from rest_framework.exceptions import APIException
 
+from config.errors import TORRENT_NOT_FOUND
 from config.settings import DOWNLOAD_RETENTION, TORRENT_DIR, TRANSCODE_URL
-from torrents.fetch import get_or_fetch_torrent
+from torrents.fetch import fetch_torrents, get_or_fetch_torrent
 from torrents.models import DownloadMedia, Torrent, TorrentRequest
 
 
@@ -93,6 +94,10 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
         # -----------------------------
         torrent_path = download_dir / 'source.torrent'
         response = requests.get(torrent.url, timeout=30)
+        if response.status_code == 404:
+            set_status(torrent, stream_id, 'error', TORRENT_NOT_FOUND)
+            shutil.rmtree(download_dir, ignore_errors=True)
+            fetch_torrents(torrent.media, torrent.season_number)
         response.raise_for_status()
         torrent_path.write_bytes(response.content)
 
