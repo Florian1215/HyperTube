@@ -4,7 +4,7 @@
     <string name="nav_movies">Films</string>
     <string name="nav_series">Séries</string>
     <string name="nav_signin">Connexion</string>
-    <string name="nav_profile">Profil</string>
+    <string name="nav_add_account">Ajouter un profil</string>
     <string name="nav_logout">Déconnexion</string>
 
     <string name="home_friends_activity">Activité des amis</string>

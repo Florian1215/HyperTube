@@ -12,8 +12,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -31,6 +33,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -382,20 +385,26 @@ fun VideoPlayer(
         AnimatedVisibility(visible = controlsVisible, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent, Color.Black.copy(alpha = 0.85f))))) {
                 // The title is only shown with the controls, the video stays full screen.
-                // Reached going up from the progress bar, OK goes back to the page of the media
+                // Reached going up from the progress bar, OK goes back to the page of the media: an arrow shows it while focused
+                var titleFocused by remember { mutableStateOf(false) }
                 FocusSurface(
                     onClick = onClose,
                     focusedScale = 1f,
                     focusedContentColor = LocalAccent.current,
-                    modifier = Modifier.align(Alignment.TopStart).padding(28.dp),
+                    modifier = Modifier.align(Alignment.TopStart).padding(28.dp).onFocusChanged { titleFocused = it.isFocused },
                 ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(title.uppercase(), style = HtText.Title)
-                        if (seasonNumber != null && episodeNumber != null)
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                EpisodeLabel(seasonNumber, episodeNumber)
-                                episodeName?.let { Text(it, style = HtText.Small, color = HtColors.WhiteLight) }
-                            }
+                    Row(Modifier.padding(12.dp)) {
+                        AnimatedVisibility(visible = titleFocused, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally()) {
+                            HtIcon(Icons.AutoMirrored.Filled.ArrowBack, size = 28.dp, modifier = Modifier.padding(end = 12.dp))
+                        }
+                        Column {
+                            Text(title.uppercase(), style = HtText.Title)
+                            if (seasonNumber != null && episodeNumber != null)
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    EpisodeLabel(seasonNumber, episodeNumber)
+                                    episodeName?.let { Text(it, style = HtText.Small, color = HtColors.WhiteLight) }
+                                }
+                        }
                     }
                 }
                 // Play/pause in the middle of the screen, only the icon (accent when focused), hidden behind the spinner while buffering

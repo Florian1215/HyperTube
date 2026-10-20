@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import com.hypertube.tv.data.MAX_ACCOUNTS
 import com.hypertube.tv.data.User
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -31,16 +32,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -171,25 +174,43 @@ fun TopBar(nav: Navigator, selected: TopBarItem, modifier: Modifier = Modifier, 
                 HtIcon(Icons.Default.AccountCircle, size = 36.dp, modifier = Modifier.padding(4.dp), contentDescription = stringResource(R.string.nav_signin))
             }
         else
-            AccountButton(current, onProfile = { nav.user(current.id) })
+            AccountButton(current, onProfile = { nav.user(current.id) }, onAddAccount = nav::login)
     }
 }
 
-// Dropdown of the website navbar: shown while the profile picture has the focus, down/up select an action, OK runs it.
+private val OK_KEYS = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
+private const val GRID_COLUMNS = 3
+
+// Dropdown of the website navbar: shown while the profile picture has the focus, the arrows move in the popup, OK runs the selection.
+// The signed in accounts are a grid of pictures (OK on the current one opens its profile, on another switches to it),
+// the last circle adds an account while there is room, then comes the logout.
 // The focus stays on the picture so the popup does not need its own focus window
 @Composable
-private fun AccountButton(user: User, onProfile: () -> Unit) {
+private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () -> Unit) {
     val container = LocalAppContainer.current
+    val accounts by container.session.accounts.collectAsState()
     val accent = LocalAccent.current
     val density = LocalDensity.current
     var focused by remember { mutableStateOf(false) }
-    // -1: the picture itself (OK opens the profile), then the actions of the popup
+    // -1: the picture itself (OK opens the profile), then the cells of the grid, then the logout
     var selected by remember { mutableIntStateOf(-1) }
     var height by remember { mutableIntStateOf(0) }
-    val actions = listOf(
-        Triple(stringResource(R.string.nav_profile), Icons.Default.Person, onProfile),
-        Triple(stringResource(R.string.nav_logout), Icons.AutoMirrored.Filled.ExitToApp) { container.session.logout() },
-    )
+    // OK pressed on the selection, which runs on the release
+    var pressed by remember { mutableStateOf(false) }
+    // null: the button to add an account
+    val cells: List<User?> = accounts.take(MAX_ACCOUNTS).let { if (it.size < MAX_ACCOUNTS) it + null else it }
+    val logout = cells.size
+    val lastRow = cells.lastIndex / GRID_COLUMNS
+
+    fun run(index: Int) {
+        when {
+            index == logout -> container.session.logout()
+            index !in cells.indices -> Unit
+            cells[index] == null -> onAddAccount()
+            cells[index]?.id == user.id -> onProfile()
+            else -> cells[index]?.let { container.session.switchTo(it.id) }
+        }
+    }
 
     Box(Modifier.onSizeChanged { height = it.height }) {
         FocusSurface(
@@ -200,26 +221,62 @@ private fun AccountButton(user: User, onProfile: () -> Unit) {
             modifier = Modifier
                 .onFocusChanged {
                     focused = it.isFocused
-                    if (!it.isFocused)
+                    if (!it.isFocused) {
                         selected = -1
+                        pressed = false
+                    }
                 }
                 .onPreviewKeyEvent { event ->
+                    // The surface clicks on the release of OK: the popup consumes it, or the profile would open too.
+                    // Running the selection on the release also keeps the release away from the next screen
+                    if (event.type == KeyEventType.KeyUp) {
+                        if (!pressed || event.key !in OK_KEYS)
+                            return@onPreviewKeyEvent false
+                        pressed = false
+                        val index = selected
+                        // Back on the picture, the grid changes with the account
+                        selected = -1
+                        run(index)
+                        return@onPreviewKeyEvent true
+                    }
                     if (event.type != KeyEventType.KeyDown)
                         return@onPreviewKeyEvent false
+                    val row = selected / GRID_COLUMNS
+                    val column = selected % GRID_COLUMNS
                     when (event.key) {
-                        // Past the last action, the focus leaves the menu to the page
-                        Key.DirectionDown -> if (selected < actions.lastIndex) selected++ else {
-                            selected = -1
-                            return@onPreviewKeyEvent false
+                        // Past the logout, the focus leaves the menu to the page
+                        Key.DirectionDown -> selected = when {
+                            selected < 0 -> 0
+                            selected == logout -> {
+                                selected = -1
+                                return@onPreviewKeyEvent false
+                            }
+                            row < lastRow -> minOf(selected + GRID_COLUMNS, cells.lastIndex)
+                            else -> logout
                         }
-                        Key.DirectionUp -> if (selected >= 0) selected-- else return@onPreviewKeyEvent false
-                        Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
+                        Key.DirectionUp -> selected = when {
+                            selected < 0 -> return@onPreviewKeyEvent false
+                            selected == logout -> lastRow * GRID_COLUMNS
+                            row > 0 -> selected - GRID_COLUMNS
+                            else -> -1
+                        }
+                        // In the popup the sides stay in the row, the focus does not move to the navbar
+                        Key.DirectionLeft -> when {
+                            selected < 0 -> return@onPreviewKeyEvent false
+                            selected < logout && column > 0 -> selected--
+                        }
+                        Key.DirectionRight -> when {
+                            selected < 0 -> return@onPreviewKeyEvent false
+                            selected < logout && column < GRID_COLUMNS - 1 && selected < cells.lastIndex -> selected++
+                        }
+                        in OK_KEYS -> {
                             if (selected < 0)
                                 return@onPreviewKeyEvent false
-                            actions[selected].third()
+                            pressed = true
                         }
                         else -> {
                             selected = -1
+                            pressed = false
                             return@onPreviewKeyEvent false
                         }
                     }
@@ -234,20 +291,58 @@ private fun AccountButton(user: User, onProfile: () -> Unit) {
                 offset = IntOffset(0, height + with(density) { 8.dp.roundToPx() }),
                 properties = PopupProperties(focusable = false),
             ) {
-                Column(Modifier.width(220.dp).background(HtColors.Black).border(1.dp, HtColors.White)) {
-                    Text(user.username, style = HtText.Small, color = HtColors.Gray, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
-                    actions.forEachIndexed { index, (name, icon, _) ->
-                        val color = if (index == selected) accent else HtColors.White
-                        Row(
-                            Modifier.fillMaxWidth().background(if (index == selected) HtColors.BlackLight else Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            HtIcon(icon, size = 18.dp, tint = color)
-                            Text(name.uppercase(), style = HtText.Bold, color = color)
+                Column(Modifier.background(HtColors.Black).border(1.dp, HtColors.White)) {
+                    // Name of the selected cell, the current account otherwise
+                    val label = when {
+                        selected in cells.indices -> cells[selected]?.username ?: stringResource(R.string.nav_add_account)
+                        else -> user.username
+                    }
+                    Text(label, style = HtText.Small, color = HtColors.Gray, maxLines = 1, modifier = Modifier.width(GRID_WIDTH).padding(start = 16.dp, end = 16.dp, top = 12.dp))
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        cells.chunked(GRID_COLUMNS).forEachIndexed { row, users ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                users.forEachIndexed { column, account ->
+                                    val index = row * GRID_COLUMNS + column
+                                    AccountCell(account, selected = index == selected, current = account?.id == user.id)
+                                }
+                            }
                         }
                     }
+                    val color = if (selected == logout) accent else HtColors.White
+                    Row(
+                        Modifier.width(GRID_WIDTH).border(width = 1.dp, color = HtColors.BlackLight)
+                            .background(if (selected == logout) HtColors.BlackLight else Color.Transparent).padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        HtIcon(Icons.AutoMirrored.Filled.ExitToApp, size = 18.dp, tint = color)
+                        Text(stringResource(R.string.nav_logout).uppercase(), style = HtText.Bold, color = color)
+                    }
                 }
+            }
+    }
+}
+
+private val CELL_SIZE = 56.dp
+private val GRID_WIDTH = CELL_SIZE * GRID_COLUMNS + 12.dp * (GRID_COLUMNS - 1) + 32.dp
+
+// Picture of a signed in account, or the + to add one when the user is null.
+// The selection has the accent ring, the current account a white one
+@Composable
+private fun AccountCell(user: User?, selected: Boolean, current: Boolean) {
+    val accent = LocalAccent.current
+    val ring = when {
+        selected -> accent
+        current -> HtColors.White
+        else -> Color.Transparent
+    }
+
+    Box(Modifier.size(CELL_SIZE).border(2.dp, ring, CircleShape).padding(4.dp), contentAlignment = Alignment.Center) {
+        if (user != null)
+            ProfilePicture(user, size = CELL_SIZE - 8.dp)
+        else
+            Box(Modifier.fillMaxSize().border(1.dp, if (selected) accent else HtColors.Gray, CircleShape), contentAlignment = Alignment.Center) {
+                HtIcon(Icons.Default.Add, size = 24.dp, tint = if (selected) accent else HtColors.White, contentDescription = stringResource(R.string.nav_add_account))
             }
     }
 }

@@ -31,7 +31,7 @@ class AppContainer(val context: Context) {
         isLenient = true
     }
 
-    val tokens = TokenStore(context)
+    val tokens = TokenStore(context, json)
 
     private val refreshClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
