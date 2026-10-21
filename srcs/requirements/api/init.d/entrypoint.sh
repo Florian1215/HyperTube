@@ -4,13 +4,21 @@ BOLD="\001\033[001m\002"
 RESET="\001\033[000m\002"
 
 
+if [[ $MAKEMIGRATIONS = true ]]; then
+    echo -e $BOLD$RED"- Making migrations"$RESET
+    python manage.py makemigrations
+fi
+
 if [[ $MIGRATION = true ]]; then
     echo -e $BOLD$RED"- API migrations processing"$RESET
 
-    echo -e $BOLD$RED"- Making migrations"$RESET
-    python manage.py makemigrations
+    echo -e $BOLD$RED"- Checking migrations are up to date"$RESET
+    if ! python manage.py makemigrations --check --dry-run; then
+        echo -e $BOLD$RED"- Models changed without migration: run makemigrations and commit the files"$RESET
+        exit 1
+    fi
     echo -e $BOLD$RED"- Migrating"$RESET
-    python manage.py migrate
+    python manage.py migrate --noinput
 fi
 
 if [[ $COLLECTSTATIC = true ]]; then

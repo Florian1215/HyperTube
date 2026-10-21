@@ -38,10 +38,10 @@ export default function getBestTorrent(torrents?: iTorrent[], isSerie = false, e
     if (!torrents || !torrents.length)
         return null;
 
-    const ranked = torrents.flatMap((torrent) => {
+    const rank = (strictSize: boolean) => torrents.flatMap((torrent) => {
         const expected = getExpectedSize(torrent, isSerie, episodeCount);
         const status = statusScore[torrent.status] || 0;
-        if (expected && !status && (torrent.size < expected.min || torrent.size > expected.max))
+        if (strictSize && expected && !status && (torrent.size < expected.min || torrent.size > expected.max))
             return [];
 
         const sizeScore = expected ? 30 * (1 - Math.min(1, Math.abs(torrent.size - expected.ideal) / (expected.max - expected.min))) : 0;
@@ -53,8 +53,9 @@ export default function getBestTorrent(torrents?: iTorrent[], isSerie = false, e
             sizeScore;
         return [{torrent, score}];
     });
+    let ranked = rank(true);
     if (!ranked.length)
-        return null;
+        ranked = rank(false);
     ranked.sort((a, b) => b.score - a.score);
     return ranked[0].torrent;
 }

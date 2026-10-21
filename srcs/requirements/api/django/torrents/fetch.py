@@ -71,15 +71,24 @@ def get_or_fetch_torrent(request, media_id, type, season_number=None, episode_nu
     cached = get_cached()
     if cached:
         return cached
-    # nothing saved for what is asked, even if the rest of the season is: an episode is published after the others
+    fetch_torrents(media, season_number)
+    return get_cached()
+
+
+KEPT_STATUSES = ['downloading', 'transcoding', 'completed']
+
+
+def fetch_torrents(media, season_number=None):
     with external_service('C411', TORRENT_NOT_FOUND):
-        torrents_data = C411Client.search_medias(media_id, season_number)
+        torrents_data = C411Client.search_medias(media.tmdb_id, season_number)
+    found = []
     for t in torrents_data:
         torrent_episode = None
-        if type == 'series':
+        if media.type == 'series':
             torrent_season, torrent_episode = get_season_episode(t['title'])
             if torrent_season != season_number:
                 continue
+        found.append(t['guid'])
         with external_service('C411', TORRENT_NOT_FOUND):
             Torrent.objects.update_or_create(
                 id=t['guid'],
@@ -97,4 +106,4 @@ def get_or_fetch_torrent(request, media_id, type, season_number=None, episode_nu
                     'episode_number': torrent_episode,
                 }
             )
-    return get_cached()
+    Torrent.objects.filter(media=media, season_number=season_number).exclude(id__in=found).exclude(status__in=KEPT_STATUSES).delete()

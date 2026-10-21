@@ -33,7 +33,7 @@ export default function Page() {
     return (<div className="flex flex-col items-center mt-12 pb-16 px-4">
         {meta}
         <h2 className="text-center">{t("title")}</h2>
-        <div className="flex flex-col items-center gap-16 sm:gap-24 w-full max-w-64 mt-12 sm:mt-16 [&_form>button]:w-full">
+        <div className="flex flex-col items-center gap-12 sm:gap-24 w-full max-w-xs mt-12 sm:mt-16 [&_form>button]:w-full">
             <AvatarSection user={user} updateUser={updateUser}/>
             <ProfileSection user={user} updateUser={updateUser}/>
             <PasswordSection/>

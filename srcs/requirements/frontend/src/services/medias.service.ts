@@ -1,7 +1,7 @@
 import {iMediaDetails, iCollection} from "@/types/media";
 import {iMedia, iProgress, iTorrent} from "@/types/media";
 import {useDebounce} from "use-debounce";
-import useApiQuery from "@/hooks/useApiQuery";
+import useApiQuery, {mapListData, tListData, useApiInfiniteQuery} from "@/hooks/useApiQuery";
 import apiClient from "@/services/apiClient";
 import {tListResponse} from "@/types/api";
 import {Query, QueryClient} from "@tanstack/react-query";
@@ -30,32 +30,44 @@ export const SEARCH_CONTINUE = "continue to watch";
 export const SEARCH_FRIENDS = "friends activity";
 export const SEARCH_DIRECTSTREAM = "directstream";
 
+function itemsEndpoint(type: tSearch, search_title: string, page: number) {
+    let endpoint = `${type}/`;
+
+    if (search_title === SEARCH_DIRECTSTREAM)
+        endpoint += `directstream/?page=${page}`
+    else if (search_title === "featured")
+        endpoint += `featured/?page=${page}`
+    else if (search_title === SEARCH_UPCOMING)
+        endpoint += `upcoming/?page=${page}`
+    else if (search_title === SEARCH_CONTINUE)
+        endpoint += `continue-watching/?page=${page}`
+    else if (search_title === SEARCH_FRIENDS)
+        endpoint += `friends-activity/?page=${page}`
+    else if (search_title === "top-rated")
+        endpoint += `top-rated/?page=${page}`
+    else if (search_title)
+        endpoint += `?search=${search_title}&page=${page}`;
+    else
+        endpoint += `?page=${page}`;
+    return endpoint;
+}
+
 export function useItems(type: tSearch, search_title?: string, page?: number, enabled = true) {
     const [debouncedQuery] = useDebounce(search_title ?? "", 200);
 
     return useApiQuery(
         ["medias", type, debouncedQuery, page ?? 1],
-        (locale, signal) => {
-            let endpoint = `${type}/`;
+        (locale, signal) => apiClient<tListResponse<iMedia>>(itemsEndpoint(type, search_title ?? "", page ?? 1), locale, {signal}),
+        enabled
+    );
+}
 
-            if (search_title === SEARCH_DIRECTSTREAM)
-                endpoint += "directstream/"
-            else if (search_title === "featured")
-                endpoint += "featured/"
-            else if (search_title === SEARCH_UPCOMING)
-                endpoint += `upcoming/?page=${page ?? 1}`
-            else if (search_title === SEARCH_CONTINUE)
-                endpoint += `continue-watching/?page=${page ?? 1}`
-            else if (search_title === SEARCH_FRIENDS)
-                endpoint += `friends-activity/?page=${page ?? 1}`
-            else if (search_title === "top-rated")
-                endpoint += `top-rated/?page=${page ?? 1}`
-            else if (search_title)
-                endpoint += `?search=${search_title}&page=${page ?? 1}`;
-            else
-                endpoint += `?page=${page ?? 1}`;
-            return apiClient<tListResponse<iMedia>>(endpoint, locale, {signal});
-        },
+export function useInfiniteItems(type: tSearch, search_title?: string, enabled = true) {
+    const [debouncedQuery] = useDebounce(search_title ?? "", 200);
+
+    return useApiInfiniteQuery(
+        ["medias", type, debouncedQuery, "infinite"],
+        (locale, page, signal) => apiClient<tListResponse<iMedia>>(itemsEndpoint(type, search_title ?? "", page), locale, {signal}),
         enabled
     );
 }
@@ -98,7 +110,7 @@ export function syncMediaWatchlist(queryClient: QueryClient, media: Pick<iMedia,
         (String(item.id) === mediaId && item.type === media.type) ? {...item, in_watchlist: inWatchlist} : item;
 
     [{queryKey: ["medias", media.type]}, {queryKey: ["user-media-history"]}, {queryKey: ["person"], predicate: (query: Query) => query.queryKey[2] === "medias"}].forEach((filters) => {
-        queryClient.setQueriesData<tListResponse<iMedia>>(filters, (current) => current?.results && {...current, results: current.results.map(setWatchlist)});
+        queryClient.setQueriesData<tListData<iMedia>>(filters, (current) => current && mapListData(current, (list) => list.results ? {...list, results: list.results.map(setWatchlist)} : list));
     });
     queryClient.setQueriesData<iCollection>({queryKey: ["collection"]}, (current) => current?.parts && {...current, parts: current.parts.map(setWatchlist)});
     queryClient.setQueriesData<iMediaDetails>({queryKey: ["media", media.type, mediaId]}, (current) => current && {...current, in_watchlist: inWatchlist});
@@ -134,10 +146,10 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
     }
 
     const newProgress = progress ?? NO_PROGRESS;
-    queryClient.setQueriesData<tListResponse<iMedia>>({queryKey: ["medias", media.type]}, (current) => current && {
-        ...current,
-        results: current.results.map((item) => sameMedia(item) ? {...item, ...newProgress} : item),
-    });
+    queryClient.setQueriesData<tListData<iMedia>>({queryKey: ["medias", media.type]}, (current) => current && mapListData(current, (list) => ({
+        ...list,
+        results: list.results.map((item) => sameMedia(item) ? {...item, ...newProgress} : item),
+    })));
     queryClient.setQueriesData<tListResponse<iMedia>>({queryKey: ["person"], predicate: (query) => query.queryKey[2] === "medias"}, (current) => current && {
         ...current,
         results: current.results.map((item) => sameMedia(item) ? {...item, ...newProgress} : item),

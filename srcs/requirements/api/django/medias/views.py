@@ -7,7 +7,8 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from config.errors import MEDIA_NOT_FOUND, PROGRESS_NOT_FOUND
+from config.cache import is_requestable
+from config.errors import MEDIA_NOT_FOUND, PROGRESS_NOT_FOUND, TORRENT_NOT_REQUESTABLE
 from medias.context import LangHistoryContext
 from medias.fetch import get_media_collection, get_or_fetch_media, fetch_search, set_custom_backdrops
 from medias.models import Media
@@ -145,6 +146,8 @@ class MediaTorrentRequestApiView(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         target = self.get_target()
+        if not is_requestable((target['episode'] or target['media']).release_date):
+            raise ValidationError(TORRENT_NOT_REQUESTABLE.format(type='episode' if target['episode'] else 'movie'))
         if not TorrentRequest.objects.filter(**target).exists():
             TorrentRequest.objects.create(**target)
         return Response({'requested': True})

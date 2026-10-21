@@ -32,7 +32,6 @@
     "noResults": "No results found",
     "noPeople": "No one found",
     "noUsers": "No user found",
-    "emptyPage": "Nothing to show here.",
     "noResultsResetFilter": "Reset filters?",
     "sort": {
       "title": "Title",
@@ -82,6 +81,7 @@
     "removeFromWatchlist": "Remove from watchlist",
     "watchlist": "Watchlist",
     "setFeature": "Feature this movie",
+    "castToTv": "Watch on TV",
     "torrentUnavailable": "This {type, select, series {episode} other {movie}} is not available yet.",
     "torrentRequested": "This {type, select, series {episode} other {movie}} will show up in “Continue watching” as soon as it is available.",
     "requestTorrent": "Request",
@@ -275,7 +275,9 @@
       "infoChanged": "Your profile information has been updated.",
       "login": "You are now successfully signed in.",
       "commentChange": "Your comment has been updated.",
-      "accountCreatedSuccess": "Account successfully created!"
+      "accountCreatedSuccess": "Account successfully created!",
+      "castSent": "Playing on the TV.",
+      "tvConnected": "The TV is connected."
     },
     "error": {
       "unknown": "An error occurred. Please try again later.",
@@ -306,6 +308,15 @@
     "person": "Person",
     "personDescription": "Movies and series featuring {name}.",
     "user": "Profile",
-    "userDescription": "Movies, series, watchlist and comments of {username}."
+    "userDescription": "Movies, series, watchlist and comments of {username}.",
+    "tv": "TV",
+    "tvDescription": "Connect the HyperTube TV app to your account."
+  },
+  "tv": {
+    "title": "Connect a TV",
+    "code": "Code",
+    "connect": "Connect",
+    "signinRequired": "Sign in to connect the TV to your account.",
+    "signin": "Sign in"
   }
 }

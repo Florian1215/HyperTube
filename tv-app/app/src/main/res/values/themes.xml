@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#191919</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Window shown before the first frame, the dark one is in values-night -->
+    <style name="Theme.HyperTube" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:colorBackground">@color/white</item>
+    </style>
+</resources>

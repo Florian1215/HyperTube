@@ -10,7 +10,7 @@ from config.errors import MEDIA_NOT_FOUND
 from config.exceptions import external_service
 from config.tmdb_media import format_tmdb_image
 from medias.models import Media, Genre, MediaLanguage
-from medias.pagination import fetch_tmdb_page
+from medias.pagination import fetch_tmdb_page, TMDB_MAX_COUNT
 from medias.services.tmdb import TMDBService
 
 
@@ -61,7 +61,6 @@ def get_media_fields(type, media_data):
 
 
 def set_media_relations(media, media_data, image_data):
-    """The credits, the genres and the backdrops of the media, replacing the ones it had."""
     media.cast.all().delete()
     media.crew.all().delete()
     media.backdrops_url.all().delete()
@@ -89,7 +88,6 @@ def create_media(type, media_data, image_data):
 def get_media_lifetime(media):
     if not is_released(media.release_date):
         return LIFETIME_MOVING
-    # new episodes and seasons
     if media.type == 'series' and media.in_production:
         return LIFETIME_MOVING
     if is_recent(media.release_date):
@@ -98,8 +96,6 @@ def get_media_lifetime(media):
 
 
 def refresh_media(media, lang):
-    """Fetches again everything TMDB gives about the media. What the users did with it is kept: the backdrop
-    they chose, the feature, and all that is linked to it (history, comments, torrents...)."""
     with external_service('TMDB', MEDIA_NOT_FOUND.format(type=media.type)):
         tmdb = TMDBService(lang)
         media_data = tmdb.get_media(media.type, media.tmdb_id)
@@ -113,7 +109,6 @@ def refresh_media(media, lang):
             media.fetched_at = timezone.now()
             media.save()
             set_media_relations(media, media_data, image_data)
-            # the other languages are fetched again when they are asked
             media.languages.exclude(lang=lang).delete()
             media.languages.update_or_create(lang=lang, defaults={
                 'title': media_data['title'],
@@ -166,7 +161,8 @@ def get_media_collection(request, media):
 def fetch_search(type, query, lang, page):
     tmdb = TMDBService(lang)
     with external_service('TMDB', MEDIA_NOT_FOUND.format(type=type)):
-        return fetch_tmdb_page(lambda tmdb_page: tmdb.search_medias(type, query=query, page=tmdb_page), page)
+        return fetch_tmdb_page(lambda tmdb_page: tmdb.search_medias(type, query=query, page=tmdb_page), page,
+                               max_count=TMDB_MAX_COUNT)
 
 
 def set_custom_backdrops(medias_data, type):

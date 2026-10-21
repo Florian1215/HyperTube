@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">HyperTube</string>
+
+    <string name="nav_search">Search</string>
+    <string name="nav_movies">Movies</string>
+    <string name="nav_series">Series</string>
+    <string name="nav_signin">Sign in</string>
+    <string name="nav_add_account">Add profile</string>
+    <string name="nav_guest">Guest</string>
+    <string name="nav_light_mode">Light mode</string>
+    <string name="nav_dark_mode">Dark mode</string>
+    <string name="nav_logout">Log out</string>
+
+    <string name="home_friends_activity">Friends activity</string>
+    <string name="home_continue_watching">Continue watching</string>
+    <string name="home_featured">Featured</string>
+    <string name="home_popular">Popular</string>
+    <string name="home_most_rated">Top rated</string>
+    <string name="home_coming_soon">Coming soon</string>
+    <string name="home_direct_stream">Direct streaming</string>
+
+    <string name="search_placeholder_movies">Search a movie…</string>
+    <string name="search_placeholder_series">Search a series…</string>
+    <string name="search_placeholder_people">Search an actor, a director…</string>
+    <string name="search_placeholder_users">Search a user…</string>
+    <string name="search_type_movies">Movies</string>
+    <string name="search_type_series">Series</string>
+    <string name="search_type_people">Actors / Directors</string>
+    <string name="search_type_users">Users</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_no_people">No people found</string>
+    <string name="search_no_users">No users found</string>
+
+    <string name="media_watch">Watch</string>
+    <string name="media_resume">Resume</string>
+    <string name="media_next_episode">Next episode</string>
+    <string name="media_release">Release</string>
+    <string name="media_status">Status</string>
+    <string name="media_rating">Rating</string>
+    <string name="media_length">Length</string>
+    <string name="media_genre">Genre</string>
+    <string name="media_directors">Directors</string>
+    <string name="media_creators">Creators</string>
+    <string name="media_stars">Stars</string>
+    <string name="media_synopsis">Synopsis</string>
+    <string name="media_watched_by">Watched by</string>
+    <string name="media_watchlist">Watchlist</string>
+    <string name="media_add_watchlist">Add to watchlist</string>
+    <string name="media_remove_watchlist">Remove from watchlist</string>
+    <string name="media_set_watched">Mark as watched</string>
+    <string name="media_set_not_watched">Mark as not watched</string>
+    <string name="media_clear_progress">Clear progress</string>
+    <string name="media_set_feature">Feature</string>
+    <string name="media_rewatch">Rewatch</string>
+    <string name="media_downloading_movie">The movie is downloading. This can take up to 1 minute. Please wait…</string>
+    <string name="media_downloading_series">The series is downloading. This can take up to 1 minute. Please wait…</string>
+    <string name="media_error_movie">Error while playing the movie. Please try again later.</string>
+    <string name="media_error_series">Error while playing the series. Please try again later.</string>
+    <string name="media_reload_player">Reload the player</string>
+    <string name="torrent_unavailable_movie">This movie is not available yet.</string>
+    <string name="torrent_unavailable_series">This episode is not available yet.</string>
+    <string name="torrent_requested_movie">This movie will appear in “Continue watching” as soon as it is available.</string>
+    <string name="torrent_requested_series">This episode will appear in “Continue watching” as soon as it is available.</string>
+    <string name="torrent_request">Request</string>
+    <string name="torrent_cancel_request">Cancel request</string>
+
+    <string name="player_audio">Audio</string>
+    <string name="player_subtitles">Subtitles</string>
+    <string name="player_subtitles_off">Off</string>
+    <string name="player_track">Track %1$d</string>
+    <string name="player_forced">forced</string>
+
+    <string name="status_rumored">Rumored</string>
+    <string name="status_planned">Planned</string>
+    <string name="status_in_production">In production</string>
+    <string name="status_post_production">Post production</string>
+    <string name="status_canceled">Canceled</string>
+    <string name="status_returning">Returning series</string>
+    <string name="status_ended">Ended</string>
+    <string name="status_pilot">Pilot</string>
+
+    <string name="serie_seasons">Seasons</string>
+    <string name="serie_season_number">Season %1$d</string>
+    <string name="serie_season_episode">Season %1$d · Episode %2$d</string>
+    <string name="serie_minutes">%1$d min</string>
+    <plurals name="serie_episodes_count">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
+    </plurals>
+
+    <string name="feature_title">Feature this media</string>
+    <string name="feature_toggle">Show it in the featured medias of the home page</string>
+    <string name="feature_choose_backdrop">Choose a backdrop</string>
+    <string name="feature_save">Save</string>
+
+    <string name="login_title">Sign in with your phone</string>
+    <string name="login_step_scan">1. Scan the QR code with your phone</string>
+    <string name="login_step_signin">2. Sign in to HyperTube on your phone</string>
+    <string name="login_step_confirm">3. Confirm to connect this TV</string>
+    <string name="login_success">Connected!</string>
+
+    <string name="follow">Follow</string>
+    <string name="unfollow">Unfollow</string>
+
+    <string name="people_cast">Actor</string>
+    <string name="people_directing">Director</string>
+    <string name="people_writing">Writer</string>
+    <string name="people_crew">Crew</string>
+    <string name="people_born">Born</string>
+    <string name="people_died">Died</string>
+    <string name="people_no_medias">No movie or series to show.</string>
+    <string name="dept_Acting">Actor</string>
+    <string name="dept_Directing">Director</string>
+    <string name="dept_Writing">Writer</string>
+    <string name="dept_Production">Producer</string>
+    <string name="dept_Editing">Editor</string>
+    <string name="dept_Camera">Cinematographer</string>
+    <string name="dept_Sound">Sound engineer</string>
+    <string name="dept_Art">Production designer</string>
+    <string name="dept_Costume">Costume / Make-up artist</string>
+    <string name="dept_Visual_Effects">Visual effects artist</string>
+    <string name="dept_Lighting">Lighting technician</string>
+    <string name="dept_Crew">Crew member</string>
+    <string name="dept_Creator">Creator</string>
+    <string name="profile_member_since">Member since %1$s</string>
+    <string name="profile_tab_movies">Movies</string>
+    <string name="profile_tab_series">Series</string>
+    <string name="profile_tab_watchlist">Watchlist</string>
+    <string name="profile_no_medias">No movie or series watched yet.</string>
+    <string name="profile_no_watchlist">No movie or series in the watchlist.</string>
+
+    <string name="error_unknown">An error occurred. Please try again later.</string>
+    <string name="error_network">Unable to reach the server. Check your connection.</string>
+    <string name="error_server">The server ran into a problem. Please try again later.</string>
+    <string name="error_not_found_movie">Movie not found</string>
+    <string name="error_not_found_series">Series not found</string>
+    <string name="error_not_found_person">Person not found</string>
+    <string name="error_not_found_user">User not found</string>
+    <string name="error_torrent_not_found">Source not found. This media may not be available for streaming yet.</string>
+    <string name="error_progress">Unable to update the progress: %1$s</string>
+    <string name="error_watchlist">Unable to update the watchlist: %1$s</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="retry">Retry</string>
+</resources>

@@ -57,11 +57,16 @@ class DownloadMedia(models.Model):
     language = models.CharField(max_length=2, default='')
     status = models.CharField(max_length=20, choices=Torrent.STATUS_CHOICES, default='downloading')
     error = models.TextField(blank=True, null=True)
+    size = models.BigIntegerField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_watched_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.torrent.title
+
+    def compute_size(self):
+        stream_dir = settings.STREAM_DIR / self.id
+        return sum(f.stat().st_size for f in stream_dir.rglob('*') if f.is_file())
 
 
 class TorrentRequest(models.Model):

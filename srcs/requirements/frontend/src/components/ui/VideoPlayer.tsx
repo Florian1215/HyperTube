@@ -91,6 +91,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
     const min5 = 5 * 60;
     const min3 = 3 * 60;
     const isLiveRef = useRef(true);
+    const [streamEnded, setStreamEnded] = useState(false);
     const queryClient = useQueryClient();
     const resumed = useRef(false);
     const pointerTypeRef = useRef("mouse");
@@ -157,6 +158,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                 }
                 if (!data.details.live && isLiveRef.current) {
                     isLiveRef.current = false;
+                    setStreamEnded(true);
                     setFullDuration(data.details.totalduration);
                 }
             });
@@ -418,15 +420,12 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
                 setSubs(newSubs);
         }).catch(() => {});
         load();
-        const interval = setInterval(() => {
-            if (isLiveRef.current)
-                load();
-        }, SUBTITLE_RELOAD_DELAY);
+        const interval = streamEnded ? setTimeout(load, SUBTITLE_RELOAD_DELAY) : setInterval(load, SUBTITLE_RELOAD_DELAY);
         return () => {
             controller.abort();
             clearInterval(interval);
         };
-    }, [subtitleFile, streamDir]);
+    }, [subtitleFile, streamDir, streamEnded]);
 
     const changeSubtitle = (index?: number) => {
         setSelectedSubtitle(index);

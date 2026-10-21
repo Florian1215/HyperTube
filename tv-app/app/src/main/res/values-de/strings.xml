@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_search">Suchen</string>
+    <string name="nav_movies">Filme</string>
+    <string name="nav_series">Serien</string>
+    <string name="nav_signin">Anmelden</string>
+    <string name="nav_add_account">Profil hinzufügen</string>
+    <string name="nav_guest">Gast</string>
+    <string name="nav_light_mode">Heller Modus</string>
+    <string name="nav_dark_mode">Dunkler Modus</string>
+    <string name="nav_logout">Abmelden</string>
+
+    <string name="home_friends_activity">Aktivität der Freunde</string>
+    <string name="home_continue_watching">Weiterschauen</string>
+    <string name="home_featured">Entdecken</string>
+    <string name="home_popular">Beliebt</string>
+    <string name="home_most_rated">Am besten bewertet</string>
+    <string name="home_coming_soon">Demnächst</string>
+    <string name="home_direct_stream">Direktes Streaming</string>
+
+    <string name="search_placeholder_movies">Einen Film suchen…</string>
+    <string name="search_placeholder_series">Eine Serie suchen…</string>
+    <string name="search_placeholder_people">Einen Schauspieler, einen Regisseur suchen…</string>
+    <string name="search_placeholder_users">Einen Benutzer suchen…</string>
+    <string name="search_type_movies">Filme</string>
+    <string name="search_type_series">Serien</string>
+    <string name="search_type_people">Schauspieler / Regie</string>
+    <string name="search_type_users">Benutzer</string>
+    <string name="search_no_results">Keine Ergebnisse gefunden</string>
+    <string name="search_no_people">Keine Personen gefunden</string>
+    <string name="search_no_users">Keine Benutzer gefunden</string>
+
+    <string name="media_watch">Ansehen</string>
+    <string name="media_resume">Fortsetzen</string>
+    <string name="media_next_episode">Nächste Folge</string>
+    <string name="media_release">Erscheinung</string>
+    <string name="media_status">Status</string>
+    <string name="media_rating">Bewertung</string>
+    <string name="media_length">Dauer</string>
+    <string name="media_genre">Genre</string>
+    <string name="media_directors">Regie</string>
+    <string name="media_creators">Schöpfer</string>
+    <string name="media_stars">Besetzung</string>
+    <string name="media_synopsis">Handlung</string>
+    <string name="media_watched_by">Gesehen von</string>
+    <string name="media_watchlist">Merkliste</string>
+    <string name="media_add_watchlist">Zur Merkliste hinzufügen</string>
+    <string name="media_remove_watchlist">Von der Merkliste entfernen</string>
+    <string name="media_set_watched">Als gesehen markieren</string>
+    <string name="media_set_not_watched">Als nicht gesehen markieren</string>
+    <string name="media_clear_progress">Fortschritt löschen</string>
+    <string name="media_set_feature">Hervorheben</string>
+    <string name="media_rewatch">Erneut angesehen</string>
+    <string name="media_downloading_movie">Der Film wird heruntergeladen. Das kann bis zu 1 Minute dauern. Bitte warten…</string>
+    <string name="media_downloading_series">Die Serie wird heruntergeladen. Das kann bis zu 1 Minute dauern. Bitte warten…</string>
+    <string name="media_error_movie">Fehler beim Abspielen des Films. Bitte später erneut versuchen.</string>
+    <string name="media_error_series">Fehler beim Abspielen der Serie. Bitte später erneut versuchen.</string>
+    <string name="media_reload_player">Player neu laden</string>
+    <string name="torrent_unavailable_movie">Dieser Film ist noch nicht verfügbar.</string>
+    <string name="torrent_unavailable_series">Diese Folge ist noch nicht verfügbar.</string>
+    <string name="torrent_requested_movie">Dieser Film erscheint unter „Weiterschauen“, sobald er verfügbar ist.</string>
+    <string name="torrent_requested_series">Diese Folge erscheint unter „Weiterschauen“, sobald sie verfügbar ist.</string>
+    <string name="torrent_request">Anfragen</string>
+    <string name="torrent_cancel_request">Anfrage zurückziehen</string>
+
+    <string name="player_audio">Audio</string>
+    <string name="player_subtitles">Untertitel</string>
+    <string name="player_subtitles_off">Aus</string>
+    <string name="player_track">Spur %1$d</string>
+    <string name="player_forced">erzwungen</string>
+
+    <string name="status_rumored">Gerücht</string>
+    <string name="status_planned">Geplant</string>
+    <string name="status_in_production">In Produktion</string>
+    <string name="status_post_production">In Postproduktion</string>
+    <string name="status_canceled">Abgesagt</string>
+    <string name="status_returning">Laufend</string>
+    <string name="status_ended">Beendet</string>
+    <string name="status_pilot">Pilot</string>
+
+    <string name="serie_seasons">Staffeln</string>
+    <string name="serie_season_number">Staffel %1$d</string>
+    <string name="serie_season_episode">Staffel %1$d · Folge %2$d</string>
+    <string name="serie_minutes">%1$d Min.</string>
+    <plurals name="serie_episodes_count">
+        <item quantity="one">%d Folge</item>
+        <item quantity="other">%d Folgen</item>
+    </plurals>
+
+    <string name="feature_title">Hervorheben</string>
+    <string name="feature_toggle">Auf der Startseite unter den hervorgehobenen Medien anzeigen</string>
+    <string name="feature_choose_backdrop">Hintergrund wählen</string>
+    <string name="feature_save">Speichern</string>
+
+    <string name="login_title">Mit dem Handy anmelden</string>
+    <string name="login_step_scan">1. Scanne den QR-Code mit deinem Handy</string>
+    <string name="login_step_signin">2. Melde dich auf deinem Handy bei HyperTube an</string>
+    <string name="login_step_confirm">3. Bestätige, um diesen Fernseher zu verbinden</string>
+    <string name="login_success">Verbunden!</string>
+
+    <string name="follow">Folgen</string>
+    <string name="unfollow">Entfolgen</string>
+
+    <string name="people_cast">Schauspieler</string>
+    <string name="people_directing">Regisseur</string>
+    <string name="people_writing">Drehbuchautor</string>
+    <string name="people_crew">Crew</string>
+    <string name="people_born">Geboren</string>
+    <string name="people_died">Gestorben</string>
+    <string name="people_no_medias">Keine Filme oder Serien vorhanden.</string>
+    <string name="dept_Acting">Schauspieler</string>
+    <string name="dept_Directing">Regisseur</string>
+    <string name="dept_Writing">Drehbuchautor</string>
+    <string name="dept_Production">Produzent</string>
+    <string name="dept_Editing">Filmeditor</string>
+    <string name="dept_Camera">Kameramann</string>
+    <string name="dept_Sound">Tontechniker</string>
+    <string name="dept_Art">Szenenbildner</string>
+    <string name="dept_Costume">Kostüm- / Maskenbildner</string>
+    <string name="dept_Visual_Effects">VFX-Künstler</string>
+    <string name="dept_Lighting">Beleuchter</string>
+    <string name="dept_Crew">Crewmitglied</string>
+    <string name="dept_Creator">Schöpfer</string>
+    <string name="profile_member_since">Mitglied seit %1$s</string>
+    <string name="profile_tab_movies">Filme</string>
+    <string name="profile_tab_series">Serien</string>
+    <string name="profile_tab_watchlist">Watchlist</string>
+    <string name="profile_no_medias">Noch keine Filme oder Serien gesehen.</string>
+    <string name="profile_no_watchlist">Kein Film und keine Serie auf der Watchlist.</string>
+
+    <string name="error_unknown">Ein Fehler ist aufgetreten. Bitte später erneut versuchen.</string>
+    <string name="error_network">Server nicht erreichbar. Überprüfe deine Internetverbindung.</string>
+    <string name="error_server">Der Server hat ein Problem. Bitte versuche es später erneut.</string>
+    <string name="error_not_found_movie">Film nicht gefunden</string>
+    <string name="error_not_found_series">Serie nicht gefunden</string>
+    <string name="error_not_found_person">Person nicht gefunden</string>
+    <string name="error_not_found_user">Benutzer nicht gefunden</string>
+    <string name="error_torrent_not_found">Quelle nicht gefunden. Dieses Medium ist vielleicht noch nicht zum Streamen verfügbar.</string>
+    <string name="error_progress">Fortschritt konnte nicht aktualisiert werden: %1$s</string>
+    <string name="error_watchlist">Merkliste konnte nicht aktualisiert werden: %1$s</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="back">Zurück</string>
+    <string name="retry">Erneut versuchen</string>
+</resources>

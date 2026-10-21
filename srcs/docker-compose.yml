@@ -60,6 +60,7 @@ services:
       - stream-volume:/stream
     environment:
       <<: *api-environment
+      MAKEMIGRATIONS: "true" # true or false, dev only: generated files must be committed
       MIGRATION: "true" # true or false
     expose:
       - "8000"
