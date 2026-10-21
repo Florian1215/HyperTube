@@ -92,7 +92,10 @@ data class Media(
     val user: User? = null,
     // Jobs of the person on the people page ("Director", the character played...)
     val roles: List<String> = emptyList(),
-)
+) {
+    // A media in a list: the same media may come back for another episode, a rewatch or another friend
+    val listKey get() = "$type-$id-${episode?.id}-$watchedAt-${user?.id}"
+}
 
 @Serializable
 data class People(
@@ -295,7 +298,7 @@ data class SubtitleTrack(
     val file: String = "",
 )
 
-// TV sign-in with a phone: planned backend contract (see README)
+// TV sign-in with a phone (see README)
 @Serializable
 data class TvLoginSession(
     val code: String,

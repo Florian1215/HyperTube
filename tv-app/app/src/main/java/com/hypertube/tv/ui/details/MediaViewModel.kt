@@ -202,7 +202,7 @@ class MediaViewModel(
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Throwable) {
-                container.notify(repository.errorMessage(error) ?: context.getString(R.string.error_unknown))
+                container.notify(container.errorText(error))
                 _state.update { it.copy(starting = false) }
                 // The torrent may have been replaced by the API (removed from the tracker)
                 loadEpisodeData()
@@ -274,7 +274,7 @@ class MediaViewModel(
                     _state.update { it.copy(media = it.media?.copy(inWatchlist = inWatchlist)) }
                     repository.notifyChanged()
                 }
-                .onFailure { container.notify(context.getString(R.string.error_watchlist, repository.errorMessage(it) ?: it.message.orEmpty())) }
+                .onFailure { container.notify(context.getString(R.string.error_watchlist, container.errorText(it))) }
         }
     }
 
@@ -285,7 +285,7 @@ class MediaViewModel(
         viewModelScope.launch {
             runCatching { repository.setTorrentRequest(media, !request.requested, current.watched.season, current.watched.episode) }
                 .onSuccess { res -> _state.update { it.copy(torrentRequest = res) } }
-                .onFailure { container.notify(repository.errorMessage(it) ?: context.getString(R.string.error_unknown)) }
+                .onFailure { container.notify(container.errorText(it)) }
         }
     }
 }

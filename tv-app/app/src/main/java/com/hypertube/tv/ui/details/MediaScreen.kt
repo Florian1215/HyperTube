@@ -2,6 +2,8 @@
 
 package com.hypertube.tv.ui.details
 
+import com.hypertube.tv.ui.components.rememberFocusEntry
+import com.hypertube.tv.ui.components.focusEntry
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -422,10 +424,10 @@ private fun LazyListScope.seasonsSection(
     item {
         CenteredColumn {
             BigTitle(stringResource(R.string.serie_seasons), exponent = count.toString())
-            val active = remember { FocusRequester() }
-            // Coming from the infos or the episodes, the focus goes to the active season instead of the first one
+            val active = rememberFocusEntry()
+            // Coming from the infos or the episodes, the focus goes to the active season instead of the first one (when shown)
             LazyRow(
-                Modifier.focusProperties { enter = { active } },
+                Modifier.focusProperties { enter = { active.orDefault } },
                 state = rememberLazyListState(initialFirstVisibleItemIndex = (tab - 1).coerceAtLeast(0)),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp),
@@ -435,7 +437,7 @@ private fun LazyListScope.seasonsSection(
                         stringResource(R.string.serie_season_number, number),
                         selected = number == tab,
                         onClick = { onTab(number) },
-                        modifier = if (number == tab) Modifier.focusRequester(active) else Modifier,
+                        modifier = if (number == tab) Modifier.focusEntry(active) else Modifier,
                     )
                 }
             }

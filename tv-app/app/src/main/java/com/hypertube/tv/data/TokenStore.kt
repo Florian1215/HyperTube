@@ -22,8 +22,9 @@ class TokenStore(context: Context, private val json: Json) {
         @Synchronized get
         private set
 
-    private var currentId: Int? = prefs.getInt(CURRENT, -1).takeIf { id -> accounts.any { it.user.id == id } }
-        ?: accounts.firstOrNull()?.user?.id
+    // null with saved accounts: the guest, who watches without an account
+    private var currentId: Int? = if (prefs.getBoolean(GUEST, false)) null else
+        prefs.getInt(CURRENT, -1).takeIf { id -> accounts.any { it.user.id == id } } ?: accounts.firstOrNull()?.user?.id
 
     val current: Account? @Synchronized get() = accounts.find { it.user.id == currentId }
 
@@ -76,6 +77,15 @@ class TokenStore(context: Context, private val json: Json) {
         }
     }
 
+    // The accounts stay signed in, the requests are sent without tokens
+    @Synchronized
+    fun selectGuest() {
+        if (pending == null) {
+            currentId = null
+            persist()
+        }
+    }
+
     // Removes an account, the next one becomes the current account
     @Synchronized
     fun remove(id: Int) {
@@ -107,11 +117,13 @@ class TokenStore(context: Context, private val json: Json) {
         prefs.edit()
             .putString(ACCOUNTS, json.encodeToString(serializer, accounts))
             .putInt(CURRENT, currentId ?: -1)
+            .putBoolean(GUEST, currentId == null && accounts.isNotEmpty())
             .apply()
     }
 
     private companion object {
         const val ACCOUNTS = "accounts"
         const val CURRENT = "current"
+        const val GUEST = "guest"
     }
 }

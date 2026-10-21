@@ -2,6 +2,8 @@
 
 package com.hypertube.tv.ui.home
 
+import com.hypertube.tv.ui.components.rememberFocusEntry
+import com.hypertube.tv.ui.components.focusEntry
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -207,17 +209,18 @@ fun MediaSection(
     showProgress: Boolean = true,
     label: (Media) -> String? = { null },
 ) {
-    val first = remember { FocusRequester() }
+    val first = rememberFocusEntry()
 
     Section(title, onSeeAll) {
-        // The first media the first time, then the last focused one
-        LazyRow(Modifier.focusRestorer { first }, contentPadding = PaddingValues(horizontal = SCREEN_PADDING, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // The first media the first time, then the last focused one (the default while loading or scrolled away)
+        LazyRow(Modifier.focusRestorer { first.orDefault }, contentPadding = PaddingValues(horizontal = SCREEN_PADDING, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             if (medias == null)
                 items(5) { Placeholder(Modifier.width(CARD_WIDTH).height(CARD_WIDTH * 0.7f)) }
             else
-                itemsIndexed(medias, key = { _, it -> "${it.type}-${it.id}-${it.episode?.id}" }) { index, media ->
+                // A key used twice crashes the row
+                itemsIndexed(medias.distinctBy(Media::listKey), key = { _, it -> it.listKey }) { index, media ->
                     MediaCard(media, onClick = { onOpen(media) }, onLongClick = { onMenu(media) },
-                        modifier = Modifier.width(CARD_WIDTH).then(if (index == 0) Modifier.focusRequester(first) else Modifier),
+                        modifier = Modifier.width(CARD_WIDTH).then(if (index == 0) Modifier.focusEntry(first) else Modifier),
                         showEpisode = showEpisode, showProgress = showProgress, label = label(media))
                 }
         }

@@ -102,14 +102,14 @@ class SearchViewModel(private val container: AppContainer, type: String?, query:
         runCatching {
             when (current.type) {
                 PEOPLE -> repository.people(search, page).let { res ->
-                    _state.update { it.copy(people = (if (page == 1) emptyList() else it.people) + res.results, hasMore = res.next != null) }
+                    _state.update { it.copy(people = ((if (page == 1) emptyList() else it.people) + res.results).distinctBy(People::id), hasMore = res.next != null) }
                 }
                 USERS -> repository.users(search, page).let { res ->
-                    _state.update { it.copy(users = (if (page == 1) emptyList() else it.users) + res.results, hasMore = res.next != null) }
+                    _state.update { it.copy(users = ((if (page == 1) emptyList() else it.users) + res.results).distinctBy(User::id), hasMore = res.next != null) }
                 }
                 else -> repository.medias(current.type, search, page).let { res ->
                     val results = if (current.special == null) res.results.filter(::isRelevant) else res.results
-                    _state.update { it.copy(medias = (if (page == 1) emptyList() else it.medias) + results, hasMore = res.next != null) }
+                    _state.update { it.copy(medias = ((if (page == 1) emptyList() else it.medias) + results).distinctBy(Media::listKey), hasMore = res.next != null) }
                 }
             }
         }.onSuccess {
@@ -128,7 +128,7 @@ class SearchViewModel(private val container: AppContainer, type: String?, query:
                     _state.update { state -> state.copy(users = state.users.map { if (it.id == user.id) it.copy(isFollowing = updated.isFollowing ?: (user.isFollowing != true)) else it }) }
                     repository.notifyChanged()
                 }
-                .onFailure { container.notify(repository.errorMessage(it) ?: it.message.orEmpty()) }
+                .onFailure { container.notify(container.errorText(it)) }
         }
     }
 

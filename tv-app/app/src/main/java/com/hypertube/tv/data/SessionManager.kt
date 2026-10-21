@@ -9,8 +9,8 @@ import kotlinx.coroutines.launch
 
 val ACCENTS = listOf("yellow", "pink", "green", "purple", "blue", "red")
 
-// Accounts the menu has room for, 3 pictures on 2 rows
-const val MAX_ACCOUNTS = 6
+// Accounts the menu has room for: with the guest, 3 pictures on 2 rows
+const val MAX_ACCOUNTS = 5
 
 class SessionManager(private val repository: Repository, private val tokens: TokenStore, private val scope: CoroutineScope) {
     // The saved user is shown right away, then refreshed from the API
@@ -57,6 +57,15 @@ class SessionManager(private val repository: Repository, private val tokens: Tok
         publish()
         repository.notifyChanged()
         scope.launch { refreshUser() }
+    }
+
+    // Watches without an account while keeping the accounts signed in, like signed out
+    fun switchToGuest() {
+        if (_user.value == null)
+            return
+        tokens.selectGuest()
+        publish()
+        repository.notifyChanged()
     }
 
     // Signs out of the current account only, the next one takes its place

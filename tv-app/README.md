@@ -18,6 +18,29 @@ hypertube.serverUrl=http://10.0.2.2:8080
 
 It can also be overridden for one build: `./gradlew installDebug -Phypertube.serverUrl=http://192.168.1.30:8080`.
 
+## Release
+
+The release talks to the production, `https://hypertube.bajeanno.com` (fixed in `app/build.gradle.kts`), over https only.
+It is minified with R8 and signed with the key given in `keystore.properties` at the root of `tv-app/` (not committed):
+
+```properties
+storeFile=hypertube-release.jks
+storePassword=...
+keyAlias=hypertube
+keyPassword=...
+```
+
+Create the key once, then keep it (an update of the app must be signed with the same key):
+
+```sh
+keytool -genkeypair -v -keystore hypertube-release.jks -alias hypertube -keyalg RSA -keysize 4096 -validity 10000
+./gradlew assembleRelease
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+Without `keystore.properties` the build gives an unsigned `app-release-unsigned.apk`, which cannot be installed.
+Increase `versionCode` in `app/build.gradle.kts` for each new version.
+
 ## Screens
 
 | Website | TV app |
@@ -53,3 +76,16 @@ The TV only shows a QR code and waits, the phone does the actual sign in on the 
 
 The code does not expire while the TV polls it; a code not polled for 2 minutes is forgotten and the TV silently asks for a new one.
 Backend: `users/tv_login.py` and the `TvLogin` model (migration `users/0008_tvlogin`).
+
+## Cast from the website
+
+While the TV app is open in the foreground with an account, the media page of the website signed in with the same account
+shows a "Watch on TV" button. It opens the media on the TV and starts the playback, of the episode shown on the page for a series.
+
+1. The TV polls `GET /api/v1/tv/poll/?device=<id>` (authenticated) every 3 seconds, `<id>` is a UUID kept in the TV preferences.
+   It answers `{"cast": null}`, or `{"cast": {"type": "series", "id": "1399", "season": 2, "episode": 3}}` once after a cast.
+   The device belongs to the account used for its last poll, so switching account on the TV moves it.
+2. The website polls `GET /api/v1/tv/` every 10 seconds: `{"online": true}` while a TV of the user polled in the last 15 seconds.
+3. The button sends `POST /api/v1/tv/cast/` with `{"type", "id", "season"?, "episode"?}`, 404 when no TV is online.
+
+Backend: `users/tv_cast.py` and the `TvDevice` model (migration `users/0009_tvdevice`).

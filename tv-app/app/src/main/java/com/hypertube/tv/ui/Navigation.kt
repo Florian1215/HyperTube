@@ -38,6 +38,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Search
@@ -113,10 +115,13 @@ class Navigator(private val controller: NavHostController) {
 
     fun media(type: String, id: String) = controller.navigate("media/$type/$id")
 
-    // Media cast from the website: its page starts the playback, of the given episode for a series
+    // Media cast from the website: its page starts the playback, of the given episode for a series.
+    // It replaces the pages opened since the home, so back does not come back to a previous player
     fun cast(cast: TvCast) {
         val episode = if (cast.season != null && cast.episode != null) "season=${cast.season}&episode=${cast.episode}&" else ""
-        controller.navigate("media/${cast.type}/${cast.id}?${episode}play=true")
+        controller.navigate("media/${cast.type}/${cast.id}?${episode}play=true") {
+            popUpTo(HOME)
+        }
     }
 
     fun person(id: String) = controller.navigate("people/$id")
@@ -169,6 +174,21 @@ fun AppNavigation() {
         NoticeHost(Modifier.align(Alignment.BottomEnd))
     }
     CastHost(nav)
+    LinkHost(nav)
+}
+
+// Opens the medias of the links of the home screen (Watch Next), whoever is signed in
+@Composable
+private fun LinkHost(nav: Navigator) {
+    val container = LocalAppContainer.current
+    val link by container.links.collectAsState()
+
+    LaunchedEffect(link) {
+        link?.let {
+            container.consumeLink()
+            nav.cast(it)
+        }
+    }
 }
 
 // Opens the medias cast from the website while the app is in the foreground with an account
@@ -204,27 +224,35 @@ fun TopBar(nav: Navigator, selected: TopBarItem, modifier: Modifier = Modifier, 
         NavItem(stringResource(R.string.nav_movies), selected == TopBarItem.Movies) { nav.search(MOVIES, topLevel = true) }
         NavItem(stringResource(R.string.nav_series), selected == TopBarItem.Series) { nav.search(SERIES, topLevel = true) }
         val current = user
-        // Account icon to sign in, the profile picture with its menu once signed in
-        if (current == null)
+        val accounts by LocalAppContainer.current.session.accounts.collectAsState()
+        // Account icon to sign in, the profile picture with its menu once an account is signed in (the guest included)
+        if (current == null && accounts.isEmpty())
             FocusSurface(onClick = nav::login, shape = CircleShape, focusedContentColor = LocalAccent.current) {
                 HtIcon(Icons.Default.AccountCircle, size = 36.dp, modifier = Modifier.padding(4.dp), contentDescription = stringResource(R.string.nav_signin))
             }
         else
-            AccountButton(current, onProfile = { nav.user(current.id) }, onAddAccount = nav::login)
+            AccountButton(current, accounts, onProfile = { current?.let { nav.user(it.id) } }, onAddAccount = nav::login)
     }
 }
 
 private val OK_KEYS = setOf(Key.DirectionCenter, Key.Enter, Key.NumPadEnter)
 private const val GRID_COLUMNS = 3
 
+// Circle of the account menu: a signed in account, the guest or the button to add an account
+private sealed interface MenuCell {
+    data class Account(val user: User) : MenuCell
+    data object Guest : MenuCell
+    data object Add : MenuCell
+}
+
 // Dropdown of the website navbar: shown while the profile picture has the focus, the arrows move in the popup, OK runs the selection.
 // The signed in accounts are a grid of pictures (OK on the current one opens its profile, on another switches to it),
-// the last circle adds an account while there is room, then come the switch of the mode and the logout.
+// followed by the guest who watches without an account and the circle to add an account while there is room,
+// then come the switch of the mode and the logout (not for the guest).
 // The focus stays on the picture so the popup does not need its own focus window
 @Composable
-private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () -> Unit) {
+private fun AccountButton(user: User?, accounts: List<User>, onProfile: () -> Unit, onAddAccount: () -> Unit) {
     val container = LocalAppContainer.current
-    val accounts by container.session.accounts.collectAsState()
     val accent = LocalAccent.current
     val density = LocalDensity.current
     var focused by remember { mutableStateOf(false) }
@@ -233,11 +261,12 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
     var height by remember { mutableIntStateOf(0) }
     // OK pressed on the selection, which runs on the release
     var pressed by remember { mutableStateOf(false) }
-    // null: the button to add an account
-    val cells: List<User?> = accounts.take(MAX_ACCOUNTS).let { if (it.size < MAX_ACCOUNTS) it + null else it }
+    val cells = accounts.take(MAX_ACCOUNTS).map { MenuCell.Account(it) } + MenuCell.Guest +
+        (if (accounts.size < MAX_ACCOUNTS) listOf(MenuCell.Add) else emptyList())
     val dark = LocalDarkMode.current
     val mode = cells.size
-    val logout = mode + 1
+    // The guest has no account to log out of
+    val logout = if (user != null) mode + 1 else null
     val lastRow = cells.lastIndex / GRID_COLUMNS
 
     fun run(index: Int) {
@@ -245,9 +274,11 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
             index == mode -> container.theme.setDark(!dark)
             index == logout -> container.session.logout()
             index !in cells.indices -> Unit
-            cells[index] == null -> onAddAccount()
-            cells[index]?.id == user.id -> onProfile()
-            else -> cells[index]?.let { container.session.switchTo(it.id) }
+            else -> when (val cell = cells[index]) {
+                MenuCell.Add -> onAddAccount()
+                MenuCell.Guest -> container.session.switchToGuest()
+                is MenuCell.Account -> if (cell.user.id == user?.id) onProfile() else container.session.switchTo(cell.user.id)
+            }
         }
     }
 
@@ -283,14 +314,14 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
                     val row = selected / GRID_COLUMNS
                     val column = selected % GRID_COLUMNS
                     when (event.key) {
-                        // Past the logout, the focus leaves the menu to the page
+                        // Past the last row, the focus leaves the menu to the page
                         Key.DirectionDown -> selected = when {
                             selected < 0 -> 0
-                            selected == logout -> {
+                            selected == (logout ?: mode) -> {
                                 selected = -1
                                 return@onPreviewKeyEvent false
                             }
-                            selected == mode -> logout
+                            selected == mode -> logout ?: mode
                             row < lastRow -> minOf(selected + GRID_COLUMNS, cells.lastIndex)
                             else -> mode
                         }
@@ -324,7 +355,10 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
                     true
                 },
         ) {
-            ProfilePicture(user, size = 36.dp, modifier = Modifier.padding(4.dp))
+            if (user != null)
+                ProfilePicture(user, size = 36.dp, modifier = Modifier.padding(4.dp))
+            else
+                GuestPicture(size = 36.dp, modifier = Modifier.padding(4.dp))
         }
         if (focused)
             Popup(
@@ -334,24 +368,28 @@ private fun AccountButton(user: User, onProfile: () -> Unit, onAddAccount: () ->
             ) {
                 Column(Modifier.background(HtColors.DWhite).border(1.dp, HtColors.DBlack)) {
                     // Name of the selected cell, the current account otherwise
-                    val label = when {
-                        selected in cells.indices -> cells[selected]?.username ?: stringResource(R.string.nav_add_account)
-                        else -> user.username
+                    val label = when (val cell = cells.getOrNull(selected)) {
+                        is MenuCell.Account -> cell.user.username
+                        MenuCell.Guest -> stringResource(R.string.nav_guest)
+                        MenuCell.Add -> stringResource(R.string.nav_add_account)
+                        null -> user?.username ?: stringResource(R.string.nav_guest)
                     }
                     Text(label, style = HtText.Small, color = HtColors.Gray, maxLines = 1, modifier = Modifier.width(GRID_WIDTH).padding(start = 16.dp, end = 16.dp, top = 12.dp))
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         cells.chunked(GRID_COLUMNS).forEachIndexed { row, users ->
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                users.forEachIndexed { column, account ->
+                                users.forEachIndexed { column, cell ->
                                     val index = row * GRID_COLUMNS + column
-                                    AccountCell(account, selected = index == selected, current = account?.id == user.id)
+                                    val current = if (cell is MenuCell.Account) cell.user.id == user?.id else cell == MenuCell.Guest && user == null
+                                    AccountCell(cell, selected = index == selected, current = current)
                                 }
                             }
                         }
                     }
                     // The mode shown is the one it switches to
                     MenuRow(stringResource(if (dark) R.string.nav_light_mode else R.string.nav_dark_mode), if (dark) HtIcons.Sun else HtIcons.Moon, selected == mode)
-                    MenuRow(stringResource(R.string.nav_logout), Icons.AutoMirrored.Filled.ExitToApp, selected == logout)
+                    if (logout != null)
+                        MenuRow(stringResource(R.string.nav_logout), Icons.AutoMirrored.Filled.ExitToApp, selected == logout)
                 }
             }
     }
@@ -375,10 +413,10 @@ private fun MenuRow(name: String, icon: ImageVector, selected: Boolean) {
 private val CELL_SIZE = 56.dp
 private val GRID_WIDTH = CELL_SIZE * GRID_COLUMNS + 12.dp * (GRID_COLUMNS - 1) + 32.dp
 
-// Picture of a signed in account, or the + to add one when the user is null.
+// Picture of a signed in account, of the guest or the + to add an account.
 // The selection has the accent ring, the current account a white one
 @Composable
-private fun AccountCell(user: User?, selected: Boolean, current: Boolean) {
+private fun AccountCell(cell: MenuCell, selected: Boolean, current: Boolean) {
     val accent = LocalAccent.current
     val ring = when {
         selected -> accent
@@ -387,12 +425,21 @@ private fun AccountCell(user: User?, selected: Boolean, current: Boolean) {
     }
 
     Box(Modifier.size(CELL_SIZE).border(2.dp, ring, CircleShape).padding(4.dp), contentAlignment = Alignment.Center) {
-        if (user != null)
-            ProfilePicture(user, size = CELL_SIZE - 8.dp)
-        else
-            Box(Modifier.fillMaxSize().border(1.dp, if (selected) accent else HtColors.Gray, CircleShape), contentAlignment = Alignment.Center) {
+        when (cell) {
+            is MenuCell.Account -> ProfilePicture(cell.user, size = CELL_SIZE - 8.dp)
+            MenuCell.Guest -> GuestPicture(size = CELL_SIZE - 8.dp)
+            MenuCell.Add -> Box(Modifier.fillMaxSize().border(1.dp, if (selected) accent else HtColors.Gray, CircleShape), contentAlignment = Alignment.Center) {
                 HtIcon(Icons.Default.Add, size = 24.dp, tint = if (selected) accent else HtColors.DBlack, contentDescription = stringResource(R.string.nav_add_account))
             }
+        }
+    }
+}
+
+// The guest has no picture: a gray circle with the person icon
+@Composable
+private fun GuestPicture(size: Dp, modifier: Modifier = Modifier) {
+    Box(modifier.size(size).clip(CircleShape).background(HtColors.Gray), contentAlignment = Alignment.Center) {
+        HtIcon(Icons.Default.Person, size = size * 0.6f, tint = HtColors.White, contentDescription = stringResource(R.string.nav_guest))
     }
 }
 

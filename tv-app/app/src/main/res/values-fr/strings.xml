@@ -5,6 +5,7 @@
     <string name="nav_series">Séries</string>
     <string name="nav_signin">Connexion</string>
     <string name="nav_add_account">Ajouter un profil</string>
+    <string name="nav_guest">Invité</string>
     <string name="nav_light_mode">Mode clair</string>
     <string name="nav_dark_mode">Mode sombre</string>
     <string name="nav_logout">Déconnexion</string>
@@ -130,6 +131,7 @@
 
     <string name="error_unknown">Une erreur est survenue. Veuillez réessayer plus tard.</string>
     <string name="error_network">Impossible de contacter le serveur. Vérifiez votre connexion internet.</string>
+    <string name="error_server">Le serveur a rencontré un problème. Veuillez réessayer plus tard.</string>
     <string name="error_not_found_movie">Film introuvable</string>
     <string name="error_not_found_series">Série introuvable</string>
     <string name="error_not_found_person">Personne introuvable</string>

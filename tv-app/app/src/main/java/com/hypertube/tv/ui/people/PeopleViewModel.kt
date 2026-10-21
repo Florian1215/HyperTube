@@ -97,7 +97,7 @@ class PeopleViewModel(container: AppContainer, private val id: String) : ViewMod
             .onSuccess { res ->
                 _state.update {
                     it.copy(
-                        medias = (if (page == 1) emptyList() else it.medias) + res.results,
+                        medias = ((if (page == 1) emptyList() else it.medias) + res.results).distinctBy(Media::listKey),
                         counts = res.counts,
                         page = page,
                         hasMore = res.next != null,

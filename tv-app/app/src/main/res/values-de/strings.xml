@@ -5,6 +5,7 @@
     <string name="nav_series">Serien</string>
     <string name="nav_signin">Anmelden</string>
     <string name="nav_add_account">Profil hinzufügen</string>
+    <string name="nav_guest">Gast</string>
     <string name="nav_light_mode">Heller Modus</string>
     <string name="nav_dark_mode">Dunkler Modus</string>
     <string name="nav_logout">Abmelden</string>
@@ -129,6 +130,7 @@
 
     <string name="error_unknown">Ein Fehler ist aufgetreten. Bitte später erneut versuchen.</string>
     <string name="error_network">Server nicht erreichbar. Überprüfe deine Internetverbindung.</string>
+    <string name="error_server">Der Server hat ein Problem. Bitte versuche es später erneut.</string>
     <string name="error_not_found_movie">Film nicht gefunden</string>
     <string name="error_not_found_series">Serie nicht gefunden</string>
     <string name="error_not_found_person">Person nicht gefunden</string>

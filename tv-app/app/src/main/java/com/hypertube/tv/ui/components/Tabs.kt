@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,9 +21,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -38,10 +35,11 @@ data class Tab(val name: String, val count: Int? = null)
 // Tabs of the website with the number of items next to the name, the focus enters on the active one
 @Composable
 fun HtTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
-    val activeFocus = remember { FocusRequester() }
+    val activeFocus = rememberFocusEntry()
 
     LazyRow(
-        modifier.focusProperties { enter = { activeFocus } },
+        // The active tab may be scrolled out of the row
+        modifier.focusProperties { enter = { activeFocus.orDefault } },
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp),
     ) {
@@ -50,7 +48,7 @@ fun HtTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: Modi
                 listOfNotNull(tab.name, tab.count?.toString()).joinToString(" "),
                 selected = index == active,
                 onClick = { onChange(index) },
-                modifier = if (index == active) Modifier.focusRequester(activeFocus) else Modifier,
+                modifier = if (index == active) Modifier.focusEntry(activeFocus) else Modifier,
             )
         }
     }
@@ -61,7 +59,7 @@ fun HtTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: Modi
 @Composable
 fun FolderTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
     val accent = LocalAccent.current
-    val activeFocus = remember { FocusRequester() }
+    val activeFocus = rememberFocusEntry()
     // A segment of the tabs: its top, right and bottom borders (null: no border), over the focused background
     fun Modifier.borders(top: Color?, right: Color?, bottom: Color?) = drawWithContent {
         drawContent()
@@ -72,7 +70,7 @@ fun FolderTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: 
     }
 
     Row(
-        modifier.fillMaxWidth().height(64.dp).focusProperties { enter = { activeFocus } },
+        modifier.fillMaxWidth().height(64.dp).focusProperties { enter = { activeFocus.orDefault } },
     ) {
         Box(Modifier.width(48.dp).fillMaxHeight().borders(null, if (active == 0) accent else HtColors.DBlack, accent))
         tabs.forEachIndexed { index, tab ->
@@ -86,7 +84,7 @@ fun FolderTabs(tabs: List<Tab>, active: Int, onChange: (Int) -> Unit, modifier: 
                 modifier = Modifier
                     .fillMaxHeight()
                     .borders(if (selected) accent else HtColors.DBlack, right, if (selected) null else accent)
-                    .then(if (selected) Modifier.focusRequester(activeFocus) else Modifier),
+                    .then(if (selected) Modifier.focusEntry(activeFocus) else Modifier),
             ) {
                 Row(Modifier.fillMaxHeight().padding(horizontal = 40.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(tab.name.uppercase(), style = HtText.Title.copy(fontSize = 36.sp, lineHeight = 36.sp))

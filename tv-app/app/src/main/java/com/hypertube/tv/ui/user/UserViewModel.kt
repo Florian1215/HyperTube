@@ -108,7 +108,7 @@ class UserViewModel(private val container: AppContainer, private val id: String)
         runCatching { fetch(user.id, current.tab, page) }
             .onSuccess { res ->
                 _state.update {
-                    it.copy(medias = (if (page == 1) emptyList() else it.medias) + res.results, page = page, hasMore = res.next != null, loading = false)
+                    it.copy(medias = ((if (page == 1) emptyList() else it.medias) + res.results).distinctBy(Media::listKey), page = page, hasMore = res.next != null, loading = false)
                 }
             }
             .onFailure { error ->
@@ -135,7 +135,7 @@ class UserViewModel(private val container: AppContainer, private val id: String)
                     _state.update { it.copy(user = user.copy(isFollowing = updated.isFollowing ?: (user.isFollowing != true))) }
                     repository.notifyChanged()
                 }
-                .onFailure { container.notify(repository.errorMessage(it) ?: it.message.orEmpty()) }
+                .onFailure { container.notify(container.errorText(it)) }
             _state.update { it.copy(following = false) }
         }
     }

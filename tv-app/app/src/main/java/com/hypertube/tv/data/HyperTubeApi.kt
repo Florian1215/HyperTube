@@ -128,7 +128,7 @@ interface HyperTubeApi {
     suspend fun followingActivity(): Page<Media>
 
     /* ------------------------------------------- TV SIGN-IN ----------------------------------------------- */
-    // Not implemented on the backend yet, see README
+    // See README, backend in users/tv_login.py
     @POST("auth/tv/")
     suspend fun startTvLogin(): TvLoginSession
 

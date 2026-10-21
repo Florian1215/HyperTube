@@ -2,6 +2,10 @@
 
 package com.hypertube.tv.ui.components
 
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -149,4 +153,41 @@ fun HtChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modif
 @Composable
 fun CircleFocus(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     FocusSurface(onClick = onClick, modifier = modifier, shape = CircleShape, focusedScale = 1.1f, content = content)
+}
+
+// Requester of a custom focus target (focusProperties enter, focusRestorer fallback) that knows whether its element is shown.
+// The focus search crashes on a requester of an element not composed (still loading, scrolled out of a lazy row),
+// orDefault then lets the focus go to the default element
+class FocusEntry {
+    val requester = FocusRequester()
+    internal var attached = 0
+
+    val orDefault: FocusRequester get() = if (attached > 0) requester else FocusRequester.Default
+}
+
+@Composable
+fun rememberFocusEntry() = remember { FocusEntry() }
+
+fun Modifier.focusEntry(target: FocusEntry): Modifier = focusRequester(target.requester).then(FocusEntryElement(target))
+
+private data class FocusEntryElement(val target: FocusEntry) : ModifierNodeElement<FocusEntryNode>() {
+    override fun create() = FocusEntryNode(target)
+
+    override fun update(node: FocusEntryNode) {
+        if (node.target !== target) {
+            node.onDetach()
+            node.target = target
+            node.onAttach()
+        }
+    }
+}
+
+private class FocusEntryNode(var target: FocusEntry) : Modifier.Node() {
+    override fun onAttach() {
+        target.attached++
+    }
+
+    override fun onDetach() {
+        target.attached--
+    }
 }

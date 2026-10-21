@@ -5,6 +5,10 @@ TRANSCODE_D	:=	$(SRCS_D)/requirements/transcode/
 DATA_DIR	:=	medias
 COMPOSE_F	?=	$(SRCS_D)/docker-compose.prod.yml
 SERVICE		?=	#Leave blank
+TV_D		:=	tv-app
+TV_IP		?=	192.168.1.65:5555
+TV_PACKAGE	:=	com.hypertube.tv
+TV_APK		:=	$(TV_D)/app/build/outputs/apk/release/app-release.apk
 
 ######################################################## FLAGS #########################################################
 FLAGS		=	-f $(COMPOSE_F)
@@ -22,6 +26,14 @@ $(NAME)		:
 			mkdir -p $(DATA_DIR)/torrents
 			mkdir -p $(DATA_DIR)/streams
 			$(COMPOSE) $(FLAGS) up --build $(SERVICE)
+
+.PHONY: tv
+tv			:
+			@test -f $(TV_D)/keystore.properties || { echo "Missing $(TV_D)/keystore.properties, see $(TV_D)/README.md (Release)"; exit 1; }
+			adb connect $(TV_IP)
+			cd $(TV_D) && ./gradlew assembleRelease
+			adb -s $(TV_IP) install -r $(TV_APK)
+			adb -s $(TV_IP) shell monkey -p $(TV_PACKAGE) -c android.intent.category.LEANBACK_LAUNCHER 1 > /dev/null 2>&1
 
 .PHONY: transcode
 transcode:

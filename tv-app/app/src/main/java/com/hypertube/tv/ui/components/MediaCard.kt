@@ -169,7 +169,7 @@ fun MediaMenu(target: MenuTarget, onDismiss: () -> Unit, onChanged: () -> Unit =
                     repository.notifyChanged()
                     onChanged()
                 }
-                .onFailure { container.notify(context.getString(R.string.error_progress, repository.errorMessage(it) ?: it.message.orEmpty())) }
+                .onFailure { container.notify(context.getString(R.string.error_progress, container.errorText(it))) }
         }
     }
 
@@ -182,7 +182,7 @@ fun MediaMenu(target: MenuTarget, onDismiss: () -> Unit, onChanged: () -> Unit =
                         repository.notifyChanged()
                         onChanged()
                     }
-                    .onFailure { container.notify(context.getString(R.string.error_watchlist, repository.errorMessage(it) ?: it.message.orEmpty())) }
+                    .onFailure { container.notify(context.getString(R.string.error_watchlist, container.errorText(it))) }
             }
         })
         if (target.complete)
@@ -224,7 +224,7 @@ fun FeatureDialog(media: Media, onDismiss: () -> Unit, details: MediaDetails? = 
                 loaded = it
                 feature = it.feature
                 backdrop = it.backdropUrl
-            }.onFailure { container.notify(repository.errorMessage(it) ?: context.getString(R.string.error_unknown)) }
+            }.onFailure { container.notify(container.errorText(it)) }
     }
 
     HtDialog(onDismiss = onDismiss, title = stringResource(R.string.feature_title), maxWidth = 1100.dp) {
@@ -256,7 +256,7 @@ fun FeatureDialog(media: Media, onDismiss: () -> Unit, details: MediaDetails? = 
                             repository.notifyChanged()
                             onDismiss()
                         }
-                        .onFailure { container.notify(repository.errorMessage(it) ?: context.getString(R.string.error_unknown)) }
+                        .onFailure { container.notify(container.errorText(it)) }
                 }
             })
             HtButton(stringResource(R.string.cancel), onClick = onDismiss, variant = ButtonVariant.Outline)

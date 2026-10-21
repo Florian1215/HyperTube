@@ -7,6 +7,7 @@
     <string name="nav_series">Series</string>
     <string name="nav_signin">Sign in</string>
     <string name="nav_add_account">Add profile</string>
+    <string name="nav_guest">Guest</string>
     <string name="nav_light_mode">Light mode</string>
     <string name="nav_dark_mode">Dark mode</string>
     <string name="nav_logout">Log out</string>
@@ -131,6 +132,7 @@
 
     <string name="error_unknown">An error occurred. Please try again later.</string>
     <string name="error_network">Unable to reach the server. Check your connection.</string>
+    <string name="error_server">The server ran into a problem. Please try again later.</string>
     <string name="error_not_found_movie">Movie not found</string>
     <string name="error_not_found_series">Series not found</string>
     <string name="error_not_found_person">Person not found</string>
