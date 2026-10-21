@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Max, Value
+from django.db.models import Max, Value, Exists, OuterRef
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
