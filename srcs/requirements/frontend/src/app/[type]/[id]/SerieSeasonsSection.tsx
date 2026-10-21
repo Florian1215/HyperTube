@@ -8,7 +8,7 @@ import {useLocale, useTranslations} from "next-intl";
 import SmallText from "@/components/ui/SmallText";
 import useFormatDate from "@/utils/formatDate";
 import useAuth from "@/contexts/AuthContext";
-import MediaRightClick, {MenuTouchZone} from "@/components/MediaRightClick";
+import MediaRightClick from "@/components/MediaRightClick";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
 import {iAxe, iWatchEpisode} from "@/types/utils";
 import {iUser} from "@/types/user";
@@ -55,7 +55,6 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
                     <MediaWatchProgress user={user} media={season}/>
                     <div className="custom-noise"/>
                     {season.complete && <div className="custom-complete-media"/>}
-                    {user && <MenuTouchZone/>}
                 </div>
                 <div className="flex items-end pb-2 pt-4 gap-4">
                     <h4>{t("episodesCount", {count: season.episodes.length})}</h4>

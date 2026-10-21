@@ -9,7 +9,7 @@ import HoverEffect from "@/components/ui/HoverEffect";
 import {iUser} from "@/types/user";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
 import GenreTags from "@/components/GenreTags";
-import MediaRightClick, {MenuTouchZone} from "@/components/MediaRightClick";
+import MediaRightClick from "@/components/MediaRightClick";
 import {iAxe} from "@/types/utils";
 import {iMedia} from "@/types/media";
 import formatURL from "@/utils/formatURL";
@@ -46,7 +46,6 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
                     />
                     {media.complete && <div className="custom-complete-media"/>}
                 </Link>}
-                {user && media && <MenuTouchZone/>}
             </HoverEffect>
         </td>
         <td className="sm:px-3">

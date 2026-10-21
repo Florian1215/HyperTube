@@ -5,7 +5,7 @@ import LoadingImage from "@/components/ui/LoadingImage";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
 import {Link} from "@/i18n/navigation";
 import {EyeIcon, RewatchIcon} from "@/components/Icons";
-import MediaRightClick, {MenuTouchZone} from "@/components/MediaRightClick";
+import MediaRightClick from "@/components/MediaRightClick";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {TitleMedia} from "@/components/Title";
 import {iAxe} from "@/types/utils";
@@ -62,6 +62,5 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
                 <p className="text-white text-sm font-bold">{watchedAt}</p>
             </div>}
         </HoverEffect>
-        {user && <MenuTouchZone/>}
     </Link>);
 }

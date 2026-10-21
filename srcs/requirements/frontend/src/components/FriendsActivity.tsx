@@ -11,7 +11,7 @@ import ProfilePicture from "@/components/ProfilePicture";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {iMediaActivity} from "@/types/media";
 import {RewatchIcon} from "@/components/Icons";
-import {MenuTouchZone, useMediaRightClick} from "@/components/MediaRightClick";
+import {useMediaRightClick} from "@/components/MediaRightClick";
 
 export function FriendsActivityList({activities}: {activities?: iMediaActivity[]}) {
     return (<div className="divide-gray divide-y lg:grid lg:grid-cols-[auto_auto_auto_1fr]">
@@ -133,7 +133,6 @@ function FriendActivityLayer({activities, users, className, style}: {activities:
                     <EpisodeLabel season={media.episode.season_number} episode={media.episode.episode_number} className="z-10 text-white"/>
                 </div>}
             </HoverEffect>
-            {menu && <MenuTouchZone/>}
         </Link>
         {users.length > 0 && <div className="absolute bottom-0.5 left-0.5 max-w-[calc(100%-0.25rem)] p-1 flex items-center -space-x-2 overflow-x-auto scrollbar-hide">
             {users.map((activity) =>
