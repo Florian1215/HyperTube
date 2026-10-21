@@ -18,6 +18,7 @@ export type tContextMenuProps = {
     onTouchEnd?: () => void
     onTouchCancel?: () => void
     onClickCapture?: (e: React.MouseEvent) => void
+    onDoubleClickCapture?: (e: React.MouseEvent) => void
 };
 
 const inPopup = (target: EventTarget) => target instanceof Element && target.closest(`[${CONTEXT_MENU_POPUP}]`) !== null;
@@ -100,6 +101,17 @@ export default function useContextMenu(open: (position: iAxe) => void, enabled =
                 target.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, clientX: position.x, clientY: position.y}));
                 replaying.current = false;
             }, DOUBLE_TAP_MS)};
+        },
+        onDoubleClickCapture: (e) => {
+            const pending = pendingTap.current;
+            if (!pending)
+                return;
+            e.preventDefault();
+            e.stopPropagation();
+            window.clearTimeout(pending.timer);
+            pendingTap.current = null;
+            navigator.vibrate?.(10);
+            open({x: e.clientX, y: e.clientY});
         },
     };
 }
