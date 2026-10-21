@@ -56,9 +56,12 @@ fclean		: dusting
 
 .PHONY: dusting
 dusting		:
-			find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 			find . -path "*/__pycache__/*" -delete
 			find . -path "*/__pycache__" -delete
+
+.PHONY: dusting-migration
+dusting-migration:
+			find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 
 .PHONY: prune
 prune		:
@@ -68,4 +71,4 @@ prune		:
 re			:	clean all
 
 .PHONY: vre
-vre			:	fclean all
+vre			:	dusting-migration fclean all
