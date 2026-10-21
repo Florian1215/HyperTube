@@ -13,6 +13,7 @@ import useFormatDate from "@/utils/formatDate";
 import ExpandableText from "@/components/ui/ExpandableText";
 import ProfilePicture from "@/components/ProfilePicture";
 import Rating from "@/components/Rating";
+import {openMenuOnTouch, useMediaRightClick} from "@/components/MediaRightClick";
 
 const MAX_WATCHED_BY = 10;
 
@@ -21,6 +22,7 @@ export default function MediaInfoSection({media, watchedBy} : {media?: iMovieDet
     const tSerie = useTranslations("serie");
     const {openModal} = useModal();
     const formattedReleaseDate = useFormatDate(media?.release_date);
+    const {onContextMenu, menu} = useMediaRightClick(media);
 
     const getLenght = () => {
         if (media && "runtime" in media) {
@@ -45,7 +47,10 @@ export default function MediaInfoSection({media, watchedBy} : {media?: iMovieDet
     const status = media.status === "Released" ? undefined : (tStatus.has(statusKey) ? tStatus(statusKey) : media.status);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
-        <TitleMedia media={media} className="justify-center pb-4"/>
+        <div className="mx-auto pb-4" onContextMenu={onContextMenu} onClickCapture={openMenuOnTouch(menu ? onContextMenu : undefined)}>
+            {menu}
+            <TitleMedia media={media}/>
+        </div>
         {
             releaseDate > today &&
             <InfoMedia name={t("release")}>

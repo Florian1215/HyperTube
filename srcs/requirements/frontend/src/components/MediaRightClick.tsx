@@ -14,6 +14,8 @@ import useModal from "@/contexts/ModalContext";
 import hasPerm from "@/utils/hasPerm";
 
 
+const CLOSE_MENUS_EVENT = "close-media-menus";
+
 export default function MediaRightClick({user, media, contextMenu, setContextMenu, seasonNumber, episodeNumber, progress = media}: {user: iUser, media: iMedia, contextMenu?: iAxe, setContextMenu: (val?: iAxe) => void, seasonNumber?: number, episodeNumber?: number, progress?: Pick<iProgress, "complete" | "pourcent"> & {progress?: number}}) {
     const {addNotification} = useNotification();
     const t = useTranslations("media");
@@ -35,12 +37,14 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
         document.addEventListener("click", closeMenu);
         document.addEventListener("keydown", handleKeyDown);
         document.addEventListener("contextmenu", closeMenu, true);
+        document.addEventListener(CLOSE_MENUS_EVENT, closeMenu);
         window.addEventListener("scroll", closeMenu, true);
 
         return () => {
             document.removeEventListener("click", closeMenu);
             document.removeEventListener("keydown", handleKeyDown);
             document.removeEventListener("contextmenu", closeMenu, true);
+            document.removeEventListener(CLOSE_MENUS_EVENT, closeMenu);
             window.removeEventListener("scroll", closeMenu, true);
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,6 +91,21 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
             {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
         </div>);
     return null;
+}
+
+export function isTouchClick(e: React.MouseEvent) {
+    const type = (e.nativeEvent as PointerEvent).pointerType;
+    return type ? type !== "mouse" : window.matchMedia("(pointer: coarse)").matches;
+}
+
+export function openMenuOnTouch(onContextMenu?: (e: React.MouseEvent) => void) {
+    return (e: React.MouseEvent) => {
+        if (!onContextMenu || !isTouchClick(e))
+            return;
+        e.stopPropagation();
+        document.dispatchEvent(new Event(CLOSE_MENUS_EVENT));
+        onContextMenu(e);
+    };
 }
 
 export function useMediaRightClick(media?: iMedia) {

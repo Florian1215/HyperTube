@@ -90,7 +90,7 @@ function Episode({episode, serie, seasonNumber, user, altPoster, showDate, watch
     const [contextMenu, setContextMenu] = useState<iAxe>();
     const currentEpisode = {runtime: episode.complete ? 0 : episode.progress, episode: episode.episode_number, season: seasonNumber};
 
-    const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleContextMenu = (e: React.MouseEvent) => {
         e.preventDefault();
 
         setContextMenu({
