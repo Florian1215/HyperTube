@@ -76,6 +76,7 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -104,7 +105,9 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-private const val SEEK_STEP_MS = 60_000L
+// Left/right on the video seeks a little, on the progress bar and with the fast forward/rewind keys a lot
+private const val SEEK_STEP_MS = 15_000L
+private const val BAR_SEEK_STEP_MS = 60_000L
 private const val MIN_5 = 5 * 60
 private const val SUBTITLE_PREFIX = "hypertube-sub-"
 private const val PREFS = "player"
@@ -115,7 +118,7 @@ private data class TrackOption(val group: Tracks.Group, val index: Int, val labe
 
 private enum class PlayerMenu { Audio, Subtitles }
 
-// Port of the website VideoPlayer, driven by the remote: OK plays/pauses, left/right seeks 1 minute
+// Port of the website VideoPlayer, driven by the remote: OK plays/pauses, left/right seeks 15 seconds, 1 minute on the progress bar
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(
@@ -138,7 +141,11 @@ fun VideoPlayer(
 ) {
     val context = LocalContext.current
     val repository = LocalAppContainer.current.repository
-    val player = remember { ExoPlayer.Builder(context).build() }
+    // Tunneled playback: the device keeps the audio and the video in sync, the clock of the player drifts with some audio outputs (HDMI ARC)
+    val player = remember {
+        val trackSelector = DefaultTrackSelector(context).apply { setParameters(buildUponParameters().setTunnelingEnabled(true)) }
+        ExoPlayer.Builder(context).setTrackSelector(trackSelector).build()
+    }
     val streamDir = url.substringBeforeLast("/") + "/"
     var streamTracks by remember { mutableStateOf<StreamTracks?>(null) }
     var audioOptions by remember { mutableStateOf<List<TrackOption>>(emptyList()) }
@@ -153,7 +160,7 @@ fun VideoPlayer(
     var controlsVisible by remember { mutableStateOf(true) }
     var interaction by remember { mutableIntStateOf(0) }
     var menu by remember { mutableStateOf<PlayerMenu?>(null) }
-    // Total of the seeks in the same direction while the indicator is shown (+1min, +2min...)
+    // Total of the seeks in the same direction while the indicator is shown (+15s, +30s...)
     var seekFeedback by remember { mutableStateOf<Long?>(null) }
 
     val rootFocus = remember { FocusRequester() }
@@ -320,11 +327,11 @@ fun VideoPlayer(
                         return@onPreviewKeyEvent true
                     }
                     Key.MediaFastForward -> {
-                        seekBy(SEEK_STEP_MS)
+                        seekBy(BAR_SEEK_STEP_MS)
                         return@onPreviewKeyEvent true
                     }
                     Key.MediaRewind -> {
-                        seekBy(-SEEK_STEP_MS)
+                        seekBy(-BAR_SEEK_STEP_MS)
                         return@onPreviewKeyEvent true
                     }
                 }
@@ -489,8 +496,8 @@ private fun SeekBar(position: Double, available: Double, total: Double, onSeek: 
                 if (event.type != KeyEventType.KeyDown)
                     return@onKeyEvent false
                 when (event.key) {
-                    Key.DirectionLeft -> onSeek(-SEEK_STEP_MS)
-                    Key.DirectionRight -> onSeek(SEEK_STEP_MS)
+                    Key.DirectionLeft -> onSeek(-BAR_SEEK_STEP_MS)
+                    Key.DirectionRight -> onSeek(BAR_SEEK_STEP_MS)
                     Key.DirectionCenter, Key.Enter -> onToggle()
                     else -> return@onKeyEvent false
                 }
