@@ -79,6 +79,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
     const {data: users, isError: isUsersError} = useUsersSearch(searchValue.trim(), hasResults && isUsersSearch, authUser?.id, page);
     const found = isUsersSearch ? users : people;
     const [debouncedSearch] = useDebounce(searchValue.trim(), 200);
+    const showResults = !modal || (hasResults && debouncedSearch.length > 0);
     const t = useTranslations("search");
     const inputRef = useRef<HTMLInputElement>(null);
     const resultsRef = useRef<HTMLDivElement>(null);
@@ -180,7 +181,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
                 </HorizontalScroll>
             </div>
             {
-                hasResults && (typeSearch === "movies" || typeSearch === "series") && debouncedSearch !== SEARCH_UPCOMING && debouncedSearch !== SEARCH_FRIENDS &&
+                showResults && (typeSearch === "movies" || typeSearch === "series") && debouncedSearch !== SEARCH_UPCOMING && debouncedSearch !== SEARCH_FRIENDS &&
                 <div className="flex shrink-0 gap-4">
                     <IconButton color={viewType == "grid" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("grid")}><GridIcon color="current"/></IconButton>
                     <IconButton color={viewType == "list" ? "dblack" : "gray"} accent={true} onClick={() => handleSetViewType("list")}><ListIcon color="current"/></IconButton>
@@ -188,7 +189,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
             }
         </div>
 
-        {hasResults && (isUsersSearch || isPeopleSearch) && <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(found)} variableMT={true}>
+        {showResults && (isUsersSearch || isPeopleSearch) && <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(found)} variableMT={true}>
             <div ref={resultsRef}>
             {isUsersSearch ?
                 <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
@@ -196,7 +197,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
             }
             </div>
         </Pagination>}
-        {hasResults && !isUsersSearch && !isPeopleSearch && <InfiniteScroll hasMore={!isError && hasNextPage} loading={isFetchingNextPage} onLoadMore={loadMore}
+        {showResults && !isUsersSearch && !isPeopleSearch && <InfiniteScroll hasMore={!isError && hasNextPage} loading={isFetchingNextPage} onLoadMore={loadMore}
                 loader={viewType === "grid" && debouncedSearch !== SEARCH_FRIENDS ? <MediasGrid className="mt-2 sm:mt-4"/> : <div className="px-6"><LoadingText/></div>}>
             <div ref={resultsRef}>
                 <Results t={t} medias={isError ? [] : medias} search={debouncedSearch} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre} hasMore={!isError && hasNextPage}/>
