@@ -16,13 +16,15 @@ interface NotificationContextType {
     removeNotification: (id: string) => void;
 }
 
+let nextId = 0;
+
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider = ({children}: {children: ReactNode}) => {
     const [notifications, setNotifications] = useState<tNotification[]>([]);
 
     const addNotification = (message: string, type: tNotificationType = "info") => {
-        const id = crypto.randomUUID();
+        const id = String(nextId++);
         const notification: tNotification = {id, message, type};
 
         setNotifications((prev) => [...prev, notification,]);

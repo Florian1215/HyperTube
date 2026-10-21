@@ -93,8 +93,12 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     return null;
 }
 
+let lastPointerType: string | undefined;
+if (typeof window !== "undefined")
+    window.addEventListener("pointerdown", (e) => lastPointerType = e.pointerType, {capture: true, passive: true});
+
 export function isTouchClick(e: React.MouseEvent) {
-    const type = (e.nativeEvent as PointerEvent).pointerType;
+    const type = lastPointerType ?? (e.nativeEvent as PointerEvent).pointerType;
     return type ? type !== "mouse" : window.matchMedia("(pointer: coarse)").matches;
 }
 
