@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useLayoutEffect, useRef, useState} from "react";
 import useAuth from "@/contexts/AuthContext";
 import {deleteMediaProgress, syncMediaProgress, updateMediaProgress} from "@/services/medias.service";
 import {iMedia, iMediaDetails, iProgress} from "@/types/media";
@@ -22,6 +22,16 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     const toggleWatchlist = useWatchlist();
     const {openModal} = useModal();
     const locale = useLocale();
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        const element = menuRef.current;
+        if (!element || !contextMenu)
+            return;
+        const {width, height} = element.getBoundingClientRect();
+        element.style.left = `${Math.max(0, Math.min(contextMenu.x, window.innerWidth - width))}px`;
+        element.style.top = `${Math.max(0, Math.min(contextMenu.y, window.innerHeight - height))}px`;
+    }, [contextMenu]);
 
     useEffect(() => {
         const closeMenu = () => setContextMenu(undefined);
@@ -67,7 +77,7 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     };
 
     if (contextMenu)
-        return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
+        return (<div ref={menuRef} className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
              onClick={(e) => e.stopPropagation()}
              onPointerDown={(e) => e.stopPropagation()}
         >
@@ -102,6 +112,14 @@ export function useMediaRightClick(media?: iMedia) {
 
     const menu = user && media ? <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}/> : null;
     return {onContextMenu, menu};
+}
+
+export function MenuTouchZone() {
+    return (<span aria-hidden={true} className="hidden pointer-coarse:block absolute top-0 right-0 size-14 z-20" onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.dispatchEvent(new MouseEvent("contextmenu", {bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY}));
+    }}/>);
 }
 
 function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onClick: () => void, Icon?: React.ElementType}) {

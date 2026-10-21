@@ -3,6 +3,7 @@ import LoadingImage from "@/components/ui/LoadingImage";
 import HoverEffect from "@/components/ui/HoverEffect";
 import SmallText from "@/components/ui/SmallText";
 import MediaWatchProgress from "@/components/MediaWatchProgress";
+import {MenuTouchZone} from "@/components/MediaRightClick";
 import ExpandableText from "@/components/ui/ExpandableText";
 import {Link} from "@/i18n/navigation";
 import {iMedia} from "@/types/media";
@@ -42,6 +43,7 @@ export default function MediaRow({number, title, subtitle, overview, image, alt,
                     <div className="custom-noise opacity-30"/>
                     {progress.complete && <div className="custom-complete-media"/>}
                 </HoverEffect>
+                {menu && onContextMenu && <MenuTouchZone/>}
             </div>)}
         </td>
         <td className="align-top pt-5 pb-2">
