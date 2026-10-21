@@ -67,7 +67,7 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     };
 
     if (contextMenu)
-        return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
+        return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-red p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
              onClick={(e) => e.stopPropagation()}
              onPointerDown={(e) => e.stopPropagation()}
         >
