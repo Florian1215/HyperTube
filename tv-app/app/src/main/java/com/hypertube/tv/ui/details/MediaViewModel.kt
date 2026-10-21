@@ -84,7 +84,14 @@ data class MediaState(
 }
 
 @OptIn(FlowPreview::class)
-class MediaViewModel(private val container: AppContainer, private val type: String, private val id: String) : ViewModel() {
+// play starts the playback once loaded (media cast from the website), of playEpisode (season to episode) for a series
+class MediaViewModel(
+    private val container: AppContainer,
+    private val type: String,
+    private val id: String,
+    play: Boolean = false,
+    private var playEpisode: Pair<Int, Int>? = null,
+) : ViewModel() {
     private val repository = container.repository
     private val context get() = container.context
     private val _state = MutableStateFlow(MediaState())
@@ -92,7 +99,7 @@ class MediaViewModel(private val container: AppContainer, private val type: Stri
     private var streamJob: Job? = null
     private var episodeJob: Job? = null
     private var preloaded: String? = null
-    private var autoPlay = false
+    private var autoPlay = play
 
     init {
         load()
@@ -110,6 +117,11 @@ class MediaViewModel(private val container: AppContainer, private val type: Stri
             runCatching { repository.media(type, id) }
                 .onSuccess { media ->
                     _state.update { it.copy(media = media) }
+                    playEpisode?.takeIf { media.isSeries }?.let { (season, episode) ->
+                        val next = media.nextEpisode?.takeIf { it.seasonNumber == season && it.episodeNumber == episode }
+                        _state.update { it.copy(selected = WatchEpisode(season, episode, next?.progress ?: 0.0)) }
+                    }
+                    playEpisode = null
                     loadEpisodeData()
                     if (!media.isSeries)
                         launch { runCatching { repository.collection(media.id) }.onSuccess { c -> _state.update { it.copy(collection = c) } } }

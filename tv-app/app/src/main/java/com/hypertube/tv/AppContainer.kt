@@ -2,6 +2,7 @@ package com.hypertube.tv
 
 import android.content.Context
 import com.hypertube.tv.data.AuthInterceptor
+import com.hypertube.tv.data.CastReceiver
 import com.hypertube.tv.data.HyperTubeApi
 import com.hypertube.tv.data.Repository
 import com.hypertube.tv.data.ServerConfig
@@ -57,6 +58,8 @@ class AppContainer(val context: Context) {
     val session = SessionManager(repository, tokens, scope)
 
     val theme = ThemeStore(context)
+
+    val casts = CastReceiver(context, repository)
 
     private val _notices = MutableSharedFlow<Notice>(extraBufferCapacity = 4)
     val notices: SharedFlow<Notice> = _notices.asSharedFlow()

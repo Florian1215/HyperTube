@@ -243,6 +243,14 @@ export function BookmarkIcon({color="dblack", size=20, filled=false}: {color?: s
     </svg>);
 }
 
+export function TvIcon({color="dblack", size=20}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+        <path stroke={fullColor} strokeWidth={2} strokeLinejoin="round" d="M3 5h18v12H3Z M8 21h8M12 17v4"/>
+    </svg>);
+}
+
 export function RewatchIcon({color="dblack", size=16}) {
     const fullColor = `var(--color-${color})`;
 

@@ -62,6 +62,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -103,7 +104,7 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-private const val SEEK_STEP_MS = 10_000L
+private const val SEEK_STEP_MS = 60_000L
 private const val MIN_5 = 5 * 60
 private const val SUBTITLE_PREFIX = "hypertube-sub-"
 private const val PREFS = "player"
@@ -114,7 +115,7 @@ private data class TrackOption(val group: Tracks.Group, val index: Int, val labe
 
 private enum class PlayerMenu { Audio, Subtitles }
 
-// Port of the website VideoPlayer, driven by the remote: OK plays/pauses, left/right seeks 10 seconds
+// Port of the website VideoPlayer, driven by the remote: OK plays/pauses, left/right seeks 1 minute
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(
@@ -152,7 +153,7 @@ fun VideoPlayer(
     var controlsVisible by remember { mutableStateOf(true) }
     var interaction by remember { mutableIntStateOf(0) }
     var menu by remember { mutableStateOf<PlayerMenu?>(null) }
-    // Total of the seeks in the same direction while the indicator is shown (+10s, +20s...)
+    // Total of the seeks in the same direction while the indicator is shown (+1min, +2min...)
     var seekFeedback by remember { mutableStateOf<Long?>(null) }
 
     val rootFocus = remember { FocusRequester() }
@@ -373,7 +374,7 @@ fun VideoPlayer(
         seekFeedback?.let { total ->
             val forward = total > 0
             Text(
-                if (forward) "+${total / 1000}s »" else "« ${total / 1000}s",
+                if (forward) "+${seekLabel(total)} »" else "« -${seekLabel(total)}",
                 style = HtText.Title,
                 color = HtColors.White,
                 modifier = Modifier
@@ -395,7 +396,10 @@ fun VideoPlayer(
                 ) {
                     Row(Modifier.padding(12.dp)) {
                         AnimatedVisibility(visible = titleFocused, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally()) {
-                            HtIcon(Icons.AutoMirrored.Filled.ArrowBack, size = 28.dp, modifier = Modifier.padding(end = 12.dp))
+                            // Centered on the first line of the title so the arrow extends it
+                            Box(Modifier.height(with(LocalDensity.current) { HtText.Title.lineHeight.toDp() }), contentAlignment = Alignment.Center) {
+                                HtIcon(Icons.AutoMirrored.Filled.ArrowBack, size = 28.dp, modifier = Modifier.padding(end = 12.dp))
+                            }
                         }
                         Column {
                             Text(title.uppercase(), style = HtText.Title)
@@ -513,6 +517,15 @@ private fun Spinner(modifier: Modifier = Modifier) {
     Canvas(modifier.size(56.dp).rotate(rotation)) {
         drawArc(Color.White, startAngle = 0f, sweepAngle = 270f, useCenter = false, style = Stroke(width = 10.dp.toPx()), size = Size(size.width, size.height))
     }
+}
+
+// 30s, 1min, 1min 30s...
+private fun seekLabel(totalMs: Long): String {
+    val seconds = abs(totalMs) / 1000
+    if (seconds < 60)
+        return "${seconds}s"
+    val rest = seconds % 60
+    return if (rest == 0L) "${seconds / 60}min" else "${seconds / 60}min ${rest}s"
 }
 
 private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

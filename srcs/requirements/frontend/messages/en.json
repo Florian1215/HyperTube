@@ -81,6 +81,7 @@
     "removeFromWatchlist": "Remove from watchlist",
     "watchlist": "Watchlist",
     "setFeature": "Feature this movie",
+    "castToTv": "Watch on TV",
     "torrentUnavailable": "This {type, select, series {episode} other {movie}} is not available yet.",
     "torrentRequested": "This {type, select, series {episode} other {movie}} will show up in “Continue watching” as soon as it is available.",
     "requestTorrent": "Request",
@@ -275,6 +276,7 @@
       "login": "You are now successfully signed in.",
       "commentChange": "Your comment has been updated.",
       "accountCreatedSuccess": "Account successfully created!",
+      "castSent": "Playing on the TV.",
       "tvConnected": "The TV is connected."
     },
     "error": {

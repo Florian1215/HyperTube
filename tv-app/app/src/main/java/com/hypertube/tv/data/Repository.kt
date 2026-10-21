@@ -191,6 +191,8 @@ class Repository(private val api: HyperTubeApi, private val http: OkHttpClient, 
 
     suspend fun tvLoginStatus(code: String) = api.tvLoginStatus(code)
 
+    suspend fun tvPoll(device: String) = api.tvPoll(device)
+
     /* ----------------------------------------------- ERRORS ----------------------------------------------- */
     // Message of an API error ({"detail": ...}, {"message": ...} or {"field": ["..."]}), null when unknown
     fun errorMessage(error: Throwable): String? {

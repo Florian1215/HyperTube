@@ -4,6 +4,7 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from users.tv_cast import TvCastView, TvPollView, TvStatusView
 from users.tv_login import TvLoginApproveView, TvLoginStartView, TvLoginStatusView
 
 urlpatterns = [
@@ -13,6 +14,9 @@ urlpatterns = [
     path('api/v1/auth/tv/', TvLoginStartView.as_view(), name='tv_login'),
     path('api/v1/auth/tv/<str:code>/', TvLoginStatusView.as_view(), name='tv_login_status'),
     path('api/v1/auth/tv/<str:code>/approve/', TvLoginApproveView.as_view(), name='tv_login_approve'),
+    path('api/v1/tv/', TvStatusView.as_view(), name='tv_status'),
+    path('api/v1/tv/cast/', TvCastView.as_view(), name='tv_cast'),
+    path('api/v1/tv/poll/', TvPollView.as_view(), name='tv_poll'),
     path('api/v1/', include('medias.urls')),
     path('api/v1/', include('series.urls')),
     path('api/v1/', include('comments.urls')),

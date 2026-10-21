@@ -1,6 +1,6 @@
 "use client";
 
-import React, {Suspense, useState} from "react";
+import React, {Suspense, useEffect, useRef, useState} from "react";
 import {useSearchParams} from "next/navigation";
 import {useTranslations} from "next-intl";
 import {useRouter} from "@/i18n/navigation";
@@ -28,11 +28,20 @@ function TvLogin() {
     const tMeta = useTranslations("meta");
     const [code, setCode] = useState(searchParams.get("code")?.toUpperCase() ?? "");
     const [pending, setPending] = useState(false);
+    const autoOpened = useRef(false);
 
     const signin = () => {
         setCallbackUrl(`/tv${code ? `?code=${encodeURIComponent(code)}` : ""}`);
         openModal({type: "signin"});
     };
+
+    useEffect(() => {
+        if (loading || user || autoOpened.current)
+            return;
+        autoOpened.current = true;
+        signin();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, user]);
 
     const approve = async () => {
         if (!code.trim())

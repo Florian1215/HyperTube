@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.hypertube.tv.data.MAX_ACCOUNTS
+import com.hypertube.tv.data.TvCast
 import com.hypertube.tv.data.User
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -54,6 +55,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -85,7 +89,7 @@ import kotlinx.coroutines.delay
 
 private const val HOME = "home"
 private const val SEARCH = "search?type={type}&q={q}"
-private const val MEDIA = "media/{type}/{id}"
+private const val MEDIA = "media/{type}/{id}?season={season}&episode={episode}&play={play}"
 private const val LOGIN = "login"
 private const val PEOPLE = "people/{id}"
 private const val USER = "user/{id}"
@@ -108,6 +112,12 @@ class Navigator(private val controller: NavHostController) {
     }
 
     fun media(type: String, id: String) = controller.navigate("media/$type/$id")
+
+    // Media cast from the website: its page starts the playback, of the given episode for a series
+    fun cast(cast: TvCast) {
+        val episode = if (cast.season != null && cast.episode != null) "season=${cast.season}&episode=${cast.episode}&" else ""
+        controller.navigate("media/${cast.type}/${cast.id}?${episode}play=true")
+    }
 
     fun person(id: String) = controller.navigate("people/$id")
 
@@ -141,9 +151,15 @@ fun AppNavigation() {
                     val args = entry.arguments
                     SearchScreen(nav, args?.getString("type"), args?.getString("q"))
                 }
-                composable(MEDIA) { entry ->
+                composable(MEDIA, arguments = listOf(optional("season"), optional("episode"), optional("play"))) { entry ->
                     val args = entry.arguments
-                    MediaScreen(nav, args?.getString("type") ?: MOVIES, args?.getString("id").orEmpty())
+                    val season = args?.getString("season")?.toIntOrNull()
+                    val episode = args?.getString("episode")?.toIntOrNull()
+                    MediaScreen(
+                        nav, args?.getString("type") ?: MOVIES, args?.getString("id").orEmpty(),
+                        play = args?.getString("play") == "true",
+                        playEpisode = if (season != null && episode != null) season to episode else null,
+                    )
                 }
                 composable(PEOPLE) { entry -> PeopleScreen(nav, entry.arguments?.getString("id").orEmpty()) }
                 composable(USER) { entry -> UserScreen(nav, entry.arguments?.getString("id").orEmpty()) }
@@ -151,6 +167,23 @@ fun AppNavigation() {
             }
         }
         NoticeHost(Modifier.align(Alignment.BottomEnd))
+    }
+    CastHost(nav)
+}
+
+// Opens the medias cast from the website while the app is in the foreground with an account
+@Composable
+private fun CastHost(nav: Navigator) {
+    val container = LocalAppContainer.current
+    val user by currentUser()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val signedIn = user != null
+
+    LaunchedEffect(signedIn, lifecycle) {
+        if (signedIn)
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                container.casts.casts().collect { nav.cast(it) }
+            }
     }
 }
 

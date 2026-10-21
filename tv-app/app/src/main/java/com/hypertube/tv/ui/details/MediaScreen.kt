@@ -103,9 +103,9 @@ private enum class MediaDialog { WatchedBy, Feature }
 // Color of the info labels, accent while the info block is focused
 
 @Composable
-fun MediaScreen(nav: Navigator, type: String, id: String) {
+fun MediaScreen(nav: Navigator, type: String, id: String, play: Boolean = false, playEpisode: Pair<Int, Int>? = null) {
     val container = LocalAppContainer.current
-    val viewModel: MediaViewModel = viewModel { MediaViewModel(container, type, id) }
+    val viewModel: MediaViewModel = viewModel { MediaViewModel(container, type, id, play, playEpisode) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val user by currentUser()
     val listState = rememberLazyListState()

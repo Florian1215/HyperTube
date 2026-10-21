@@ -134,4 +134,8 @@ interface HyperTubeApi {
 
     @GET("auth/tv/{code}/")
     suspend fun tvLoginStatus(@Path("code") code: String): TvLoginStatus
+
+    /* ---------------------------------------------- TV CAST ----------------------------------------------- */
+    @GET("tv/poll/")
+    suspend fun tvPoll(@Query("device") device: String): TvPoll
 }

@@ -309,3 +309,15 @@ data class TvLoginStatus(
     val access: String? = null,
     val refresh: String? = null,
 )
+
+// Media sent by the website to open on the TV, the episode of a series is optional
+@Serializable
+data class TvCast(
+    val type: String,
+    val id: String,
+    val season: Int? = null,
+    val episode: Int? = null,
+)
+
+@Serializable
+data class TvPoll(val cast: TvCast? = null)

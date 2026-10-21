@@ -90,3 +90,10 @@ class TvLogin(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tv_logins', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     polled_at = models.DateTimeField(auto_now_add=True)
+
+
+class TvDevice(models.Model):
+    device = models.CharField(max_length=64, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tv_devices')
+    polled_at = models.DateTimeField(auto_now=True)
+    cast = models.JSONField(null=True, blank=True)

@@ -8,7 +8,7 @@ import MediaHero from "@/components/MediaHero";
 import getBestTorrent from "@/utils/getBestTorrent";
 import hasPerm from "@/utils/hasPerm";
 import useNotification from "@/contexts/NotificationContext";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import useAuth from "@/contexts/AuthContext";
 import {API_URL, ApiError} from "@/services/apiClient";
 import useModal from "@/contexts/ModalContext";
@@ -25,9 +25,10 @@ import MovieCollectionSection from "@/app/[type]/[id]/MovieCollectionSection";
 import {useSeason} from "@/services/series.service";
 import {iMovieDetails} from "@/types/movie";
 import useWatchlist from "@/hooks/useWatchlist";
-import {BookmarkIcon, PlayPauseIcon, StarIcon} from "@/components/Icons";
+import {BookmarkIcon, PlayPauseIcon, StarIcon, TvIcon} from "@/components/Icons";
 import {useQueryClient} from "@tanstack/react-query";
 import PageMeta from "@/components/PageMeta";
+import {castToTv, useTvStatus} from "@/services/tv.service";
 
 const REQUESTABLE_DAYS = 365;
 
@@ -45,6 +46,8 @@ export default function MediaPage() {
     const {addNotification} = useNotification();
     const [errorStr, setError] = useState<undefined | string>();
     const tError = useTranslations("notifications.error");
+    const tSuccess = useTranslations("notifications.success");
+    const locale = useLocale();
     const {openModal} = useModal();
     const t = useTranslations("media");
     const tMeta = useTranslations("meta");
@@ -69,6 +72,7 @@ export default function MediaPage() {
     oldestRequestable.setDate(oldestRequestable.getDate() - REQUESTABLE_DAYS);
     const requestable = !releaseDate || releaseDate >= oldestRequestable.toISOString().slice(0, 10);
     const {data: torrentRequest} = useTorrentRequest(media, watchedEpisode.season, watchedEpisode.episode, !!user && unavailable);
+    const {data: tvStatus} = useTvStatus(!!user);
 
     const getFollowingEpisode = (): iWatchEpisode | undefined => {
         if (media?.type !== "series" || !season)
@@ -213,6 +217,19 @@ export default function MediaPage() {
         }
     }
 
+    const castMedia = async () => {
+        if (!media)
+            return;
+        const isSerie = media.type === "series";
+        try {
+            await castToTv(locale, media.type, media.id, isSerie ? watchedEpisode.season : undefined, isSerie ? watchedEpisode.episode : undefined);
+            addNotification(tSuccess("castSent"), "success");
+        } catch (error) {
+            addNotification(error instanceof ApiError ? error.message : tError("unknown"), "error");
+            void queryClient.invalidateQueries({queryKey: ["tv-status"]});
+        }
+    }
+
     const onClick = !torrentsLoading && bestTorrent ? handleTorrent : undefined;
     const runtime = media?.type === "series" ? episodeDetails?.runtime : (media as iMovieDetails | undefined)?.runtime;
     const resumeAt = media?.type === "series" ? watchedEpisode.runtime : (media && !media.complete ? media.progress : 0);
@@ -242,6 +259,7 @@ export default function MediaPage() {
                     <Button variant="secondary" darkMode={false} className={classNameFlex} onClick={onClick} onContextMenu={handleRightClick}><PlayPauseIcon size={20} className="size-3.5 sm:size-5" color={onClick ? "black" : "gray"}/><span>{t(resumeAt > 0 ? "resume" : "watch")}</span></Button>
                     {featureBtn && <Button variant="secondary" darkMode={false} className={`${className} px-2! sm:px-4!`} onClick={featureBtn}><span className="hidden sm:block">{t("setFeature")}</span><span className="block sm:hidden"><StarIcon size={19} color="black"/></span></Button>}
                     {user && media && <Button variant="outline" darkMode={false} className={`${classNameFlex} px-2! sm:px-4!`} onClick={() => void toggleWatchlist(media)}><BookmarkIcon size={20} color="white" filled={media.in_watchlist}/><span className="hidden sm:block">{t("watchlist")}</span></Button>}
+                    {user && media && tvStatus?.online && <Button variant="outline" darkMode={false} className={`${classNameFlex} px-2! sm:px-4!`} onClick={() => void castMedia()}><TvIcon size={20} color="white"/><span className="hidden sm:block">{t("castToTv")}</span></Button>}
                 </div>
                 {unavailable && (requestable || torrentRequest?.requested) && <SmallText italic={false} className="mb-0 sm:mb-2 text-white">
                     {t(torrentRequest?.requested ? "torrentRequested" : "torrentUnavailable", {type})}
