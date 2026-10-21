@@ -106,7 +106,7 @@ function AvatarSection({user, updateUser}: {user: iUser, updateUser?: (patch: Pa
         {user.profile_picture && <TextButton className="text-red hover:text-red-hover"
             onClick={() => handleNewAvatar(["profile_picture", ""])}>{t("remove")}</TextButton>}
 
-        <div className="flex justify-between w-full mt-4">
+        <div className="flex justify-between gap-2 mt-4 mx-auto">
             {colors.map((color, index) => (
                 <button key={index} onClick={() => handleNewAvatar(["color", color])}>
                     <ProfilePicture user={{...user, profile_picture: null}} color={color} className={user.color === color ? "border-3" : ""}/>
