@@ -130,6 +130,7 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
         session.remove_torrent(handle)
         remove_source_video(torrent, stream_id, download_dir / video[1])
         set_status(torrent, stream_id, 'completed')
+        DownloadMedia.objects.filter(id=stream_id).update(size=DownloadMedia(id=stream_id).compute_size())
     except Exception as exc:
         set_status(torrent, stream_id, 'error', str(exc))
         raise

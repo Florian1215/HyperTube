@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib import admin
 
 from torrents.models import DownloadMedia, Torrent, TorrentRequest
@@ -40,17 +39,21 @@ class TorrentAdmin(admin.ModelAdmin):
 
 @admin.register(DownloadMedia)
 class DownloadMediaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'torrent', 'size', 'language', 'status', 'created_at', 'last_watched_at')
+    list_display = ('id', 'torrent', 'size_gb', 'language', 'status', 'created_at', 'last_watched_at')
     search_fields = ('id', 'torrent__title')
     autocomplete_fields = ('torrent',)
-    readonly_fields = ('size', 'created_at', 'last_watched_at')
+    readonly_fields = ('size_gb', 'created_at', 'last_watched_at')
+    exclude = ('size',)
     list_select_related = ('torrent',)
 
-    @admin.display(description='Size (GB)')
-    def size(self, obj):
-        stream_dir = settings.STREAM_DIR / obj.id
-        total = sum(f.stat().st_size for f in stream_dir.rglob('*') if f.is_file())
-        return f'{total / 1024 ** 3:.2f}'
+    @admin.display(description='Size (GB)', ordering='size')
+    def size_gb(self, obj):
+        size = obj.size
+        if size is None:
+            size = obj.compute_size()
+            if obj.status == 'completed':
+                DownloadMedia.objects.filter(id=obj.id).update(size=size)
+        return f'{size / 1024 ** 3:.2f}'
 
 
 @admin.register(TorrentRequest)
