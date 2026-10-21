@@ -84,6 +84,11 @@ export function updateMediaProgress(mediaId: string, mediaType: tMedia, progress
     return apiClient<iProgress>(`${mediaType}/${mediaId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify(data)});
 }
 
+export function logMediaProgress(mediaId: string, mediaType: tMedia, watchedAt: string, rewatch: boolean, season_number?: number, episode_number?: number) {
+    const data = {progress: 0, pourcent: 100, complete: true, watched_at: watchedAt, rewatch, season_number, episode_number};
+    return apiClient<iProgress>(`${mediaType}/${mediaId}/progress/`, undefined, {method: "PATCH", body: JSON.stringify(data)});
+}
+
 export function deleteMediaProgress(mediaId: string, mediaType: tMedia, season_number?: number, episode_number?: number) {
     let data;
     if (mediaType === "series" && episode_number === undefined) {

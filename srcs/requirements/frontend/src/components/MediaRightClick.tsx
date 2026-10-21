@@ -7,7 +7,7 @@ import useNotification from "@/contexts/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
 import {iUser} from "@/types/user";
-import {BookmarkIcon, EyeIcon, StarIcon, TrashIcon} from "@/components/Icons";
+import {BookmarkIcon, EditIcon, EyeIcon, StarIcon, TrashIcon} from "@/components/Icons";
 import {iAxe} from "@/types/utils";
 import useWatchlist from "@/hooks/useWatchlist";
 import useModal from "@/contexts/ModalContext";
@@ -79,6 +79,10 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
                 <MenuAction Icon={(size: number) => <EyeIcon size={size} crossed={true}/>} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("setAsNotWatched")}</MenuAction> :
                 <MenuAction Icon={EyeIcon} onClick={() => handleAction(() => updateMediaProgress(media?.id, media.type, 0, 100, true, (progress.progress ?? 0) > 0, seasonNumber, episodeNumber))}>{t("setAsWatched")}</MenuAction>
             }
+            {(media.type === "movies" || episodeNumber !== undefined) && <MenuAction Icon={EditIcon} onClick={() => {
+                setContextMenu(undefined);
+                openModal({type: "log-media", logMedia: {media, seasonNumber, episodeNumber, rewatch: progress.complete}});
+            }}>{t("logMedia", {type: episodeNumber !== undefined ? "episode" : "movie"})}</MenuAction>}
             {hasPerm(user, "medias.can_recommend_medias") && <MenuAction Icon={({size}: {size: number}) => <StarIcon size={size} color="dblack"/>} onClick={() => void openFeatureModal()}>{t("setFeature")}</MenuAction>}
             {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
         </div>);

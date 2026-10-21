@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Exists, Max, OuterRef, Q, Value
+from django.db.models import Max, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -19,14 +19,6 @@ from users.pictures import delete_profile_picture, save_profile_picture
 from users.watching import get_coming_soon, get_continue_watching
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
     UserSettingsSerializer
-
-
-def annotate_rewatch(queryset):
-    earlier = UserHistory.objects.filter(
-        Q(episode=OuterRef('episode')) | Q(episode__isnull=True),
-        user=OuterRef('user'), media=OuterRef('media'), complete=True, id__lt=OuterRef('id'),
-    )
-    return queryset.annotate(rewatch=Exists(earlier))
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -125,7 +117,7 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
         media_type = self.request.query_params.get('type')
         if media_type == 'movies':
             queryset = queryset.filter(media__type=media_type)
-        return annotate_rewatch(queryset).order_by('-updated_at')
+        return queryset.order_by('-updated_at')
 
 
 class UserMediasApiView(LangHistoryContext, generics.ListAPIView):
@@ -176,4 +168,4 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
         queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
         if 'type' in self.kwargs:
             queryset = queryset.filter(media__type=self.kwargs['type'])
-        return annotate_rewatch(queryset).order_by('-watched_at')
+        return queryset.order_by('-watched_at')

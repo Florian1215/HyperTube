@@ -2,9 +2,9 @@
 
 import React, {createContext, Dispatch, SetStateAction, useCallback, useContext, useEffect, useState} from "react";
 import {iGenre} from "@/types/genre";
-import {iMediaDetails, iPeople, iTorrent, iWatchedBy} from "@/types/media";
+import {iMedia, iMediaDetails, iPeople, iTorrent, iWatchedBy} from "@/types/media";
 
-type ModalType = "signin" | "register" | "genre" | "filter-genre" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | null;
+type ModalType = "signin" | "register" | "genre" | "filter-genre" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | "log-media" | null;
 
 export interface ModalState {
     type: ModalType;
@@ -26,6 +26,7 @@ export interface ModalState {
     media?: iMediaDetails
     watchedBy?: iWatchedBy[]
     tab?: "info" | "cast" | "crew"
+    logMedia?: {media: iMedia, seasonNumber?: number, episodeNumber?: number, rewatch: boolean}
 }
 
 interface ModalContextType {

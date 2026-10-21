@@ -18,6 +18,7 @@ import ScrollToTop from "@/components/layout/ScrollToTop";
 import CreditsMediaModal from "@/app/[type]/[id]/CreditsMediaModal";
 import WatchedByModal from "@/app/[type]/[id]/WatchedByModal";
 import SetFeatureModal from "@/app/[type]/[id]/SetFeatureModal";
+import LogMediaModal from "@/components/LogMediaModal";
 import SelectTorrentModal from "@/app/[type]/[id]/SelectTorrentModal";
 import ViewAllGenreModal from "@/app/search/ViewAllGenreModal";
 import FilterGenreModal from "@/app/search/FilterGenreModal";
@@ -78,6 +79,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <FilterGenreModal/>
                             <DeleteConfirmationModal/>
                             <SetFeatureModal/>
+                            <LogMediaModal/>
                             <CreditsMediaModal/>
                             <WatchedByModal/>
                             <SelectTorrentModal/>

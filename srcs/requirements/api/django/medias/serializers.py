@@ -199,6 +199,7 @@ class MediaProgressSerializer(serializers.ModelSerializer):
     pourcent = serializers.IntegerField(min_value=0, max_value=100)
     season_number = serializers.IntegerField(min_value=0, required=False)
     episode_number = serializers.IntegerField(min_value=0, required=False)
+    rewatch = serializers.BooleanField(required=False)
 
     class Meta:
         model = UserHistory
@@ -208,7 +209,8 @@ class MediaProgressSerializer(serializers.ModelSerializer):
             'pourcent',
             'season_number',
             'episode_number',
-            'watched_at'
+            'watched_at',
+            'rewatch'
         ]
         read_only_fields = [
             'season_number',
@@ -216,10 +218,13 @@ class MediaProgressSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
+        rewatch = validated_data.pop('rewatch', False)
         if validated_data.get('complete'):
             validated_data['pourcent'] = 100
             if 'watched_at' not in validated_data:
                 validated_data['watched_at'] = timezone.now()
+            if not instance.complete:
+                validated_data['rewatch'] = rewatch or instance.has_been_watched_before()
         instance = super().update(instance, validated_data)
         if instance.complete:
             remove_watched_from_watchlist(instance.user, instance.media)

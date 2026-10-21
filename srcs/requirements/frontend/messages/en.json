@@ -81,6 +81,7 @@
     "removeFromWatchlist": "Remove from watchlist",
     "watchlist": "Watchlist",
     "setFeature": "Feature this movie",
+    "logMedia": "Log this {type, select, episode {episode} other {movie}}",
     "castToTv": "Watch on TV",
     "torrentUnavailable": "This {type, select, series {episode} other {movie}} is not available yet.",
     "torrentRequested": "This {type, select, series {episode} other {movie}} will show up in “Continue watching” as soon as it is available.",
@@ -227,6 +228,12 @@
     }
   },
   "modal": {
+    "logMedia": {
+      "title": "Log a view",
+      "date": "Watched on",
+      "rewatch": "I've watched it before",
+      "save": "Save"
+    },
     "deleteConfirmation": {
       "title": "Are you sure?",
       "confirm": "Yes",

@@ -66,9 +66,14 @@ class UserHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     watched_at = models.DateTimeField(null=True, blank=True)
+    rewatch = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.user} - {self.media}[{self.pourcent}%]'
+
+    def has_been_watched_before(self):
+        return UserHistory.objects.filter(user=self.user_id, media=self.media_id, episode=self.episode_id,
+                                          complete=True).exclude(id=self.id).exists()
 
 
 class UserWatchlist(models.Model):

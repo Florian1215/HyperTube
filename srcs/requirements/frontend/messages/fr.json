@@ -81,6 +81,7 @@
     "removeFromWatchlist": "Retirer de la watchlist",
     "watchlist": "Watchlist",
     "setFeature": "Mettre en avant",
+    "logMedia": "Logger {type, select, episode {cet épisode} other {ce film}}",
     "castToTv": "Regarder sur la TV",
     "torrentUnavailable": "{type, select, series {Cet épisode} other {Ce film}} n'est pas encore disponible.",
     "torrentRequested": "{type, select, series {Cet épisode} other {Ce film}} apparaîtra dans « Continuer à regarder » dès qu'il sera disponible.",
@@ -227,6 +228,12 @@
     }
   },
   "modal": {
+    "logMedia": {
+      "title": "Logger un visionnage",
+      "date": "Date de visionnage",
+      "rewatch": "Déjà vu avant",
+      "save": "Enregistrer"
+    },
     "deleteConfirmation": {
       "title": "Etes-vous sûr de vouloir supprimer ?",
       "confirm": "Oui",
