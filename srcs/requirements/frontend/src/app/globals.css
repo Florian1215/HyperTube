@@ -139,8 +139,3 @@
 
     .custom-shadow-animation-s { transition: all 0.1s ease-out; transform: translate(var(--shadow-shift, 0px), var(--shadow-shift, 0px)); }
 }
-
-[data-context-menu] {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-}
