@@ -1,13 +1,15 @@
 import React from "react";
 import HorizontalScroll from "@/components/ui/HorizontalScroll";
 
+const SIDE_CLASSNAME = "border-b border-b-cblack flex-1 min-w-6 sm:min-w-8 md:min-w-10 lg:min-w-12";
+
 export default function Tabs({tabs, counts, activeTab, onChange}: {tabs: string[], counts?: (number | undefined)[], activeTab: number, onChange: (index: number) => void}) {
     return (<HorizontalScroll className="h-12 sm:h-16" borderB={true}>
-        <div className={`border-b border-b-cblack border-r w-12 ${activeTab === 0 ? "border-r-cblack" : ""}`} />
-        {tabs.map((tab, index) => (<button key={index} className={`custom-condensed text-2xl sm:text-3xl md:text-4xl tracking-wide sm:tracking-normal border-t border-r px-3 sm:px-12 xl:px-16 border-b text-nowrap ${activeTab === index ? "border-b-dwhite border-cblack" : "border-b-cblack hover:bg-dwhite-light"} ${activeTab === index + 1 ? "border-r-cblack" : ""}`} onClick={() => onChange(index)}>
+        <div className={`${SIDE_CLASSNAME} border-r ${activeTab === 0 ? "border-r-cblack" : ""}`} />
+        {tabs.map((tab, index) => (<button key={index} className={`custom-condensed text-2xl sm:text-3xl md:text-4xl tracking-wide sm:tracking-normal border-t border-r px-3 sm:px-12 xl:px-16 border-b whitespace-nowrap ${activeTab === index ? "border-b-dwhite border-cblack" : "border-b-cblack hover:bg-dwhite-light"} ${activeTab === index + 1 ? "border-r-cblack" : ""}`} onClick={() => onChange(index)}>
             {tab}
             {counts?.[index] !== undefined && <span className="font-hairline tracking-normal text-xs sm:text-sm md:text-base align-top ml-1">({counts[index]})</span>}
         </button>))}
-        <div className="border-b border-b-cblack flex-1 min-w-0" />
+        <div className={SIDE_CLASSNAME} />
     </HorizontalScroll>);
 }

@@ -98,7 +98,7 @@
         /*noinspection ALL*/
         background-image: url("/noise.png");
     }
-    .custom-noise-bg { @apply mix-blend-color-burn brightness-50; }
+    .custom-noise-bg { @apply mix-blend-color-burn brightness-50 hidden sm:block; }
 
     @keyframes marquee {
         from {transform: translateX(0);}

@@ -65,7 +65,7 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
         setFilterGenre(newGenre);
     }
 
-    const classNames = ["sm:pl-3", "", "hidden lg:table-cell", "hidden sm:table-cell"]
+    const classNames = ["sm:pl-3", "", "*:hidden lg:*:flex", "*:hidden sm:*:flex"]
 
     return (<div>
         <table className="table-fixed w-full overflow-hidden">
@@ -73,9 +73,9 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <col className="w-30 sm:w-55 xl:w-80" />
                 <col />
                 <col className="w-0" />
-                <col className="w-1/5 hidden lg:table-column" />
-                <col className="w-20 hidden sm:table-column" />
-                <col className="w-34 xl:w-44" />
+                <col className="w-0 lg:w-1/5" />
+                <col className="w-0 sm:w-20" />
+                <col className="w-0 sm:w-34 xl:w-44" />
             </colgroup>
 
             <thead>
@@ -83,7 +83,7 @@ export default function MediasList({mediaSets, sort, changeSort, genre} : {media
                 <th />
                 {sortOptions.map((sortOption, i) =>
                     <th key={sortOption.type} className={classNames[i]}>
-                        <IconButton accent={true} className={`relative gap-1 flex items-center capitalize text-nowrap font-normal text-xs sm:text-base ${sortOption.type === "year" ? " -left-4 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : ""}`}
+                        <IconButton accent={true} className={`relative gap-1 flex items-center capitalize whitespace-nowrap font-normal text-xs sm:text-base ${sortOption.type === "year" ? " -left-14 sm:-left-20 md:-left-30 xl:-left-45 2xl:-left-80" : ""}`}
                                 onClick={() => handleSort(sortOption.type)}>
                             {sortOption.label} {sortOption.type === sort.type && <SortIcon sideUp={sort.side} color="current"/>}
                         </IconButton>
@@ -113,7 +113,7 @@ function SelectedGenre({genres, deleteGenre, openGenreModal}: {genres: iGenre[],
     const t = useTranslations("search");
 
     const GenreTag = (id: number, name: string, onClick: () => void) => <button key={id} className="border flex items-center">
-        <span onClick={openGenreModal}  className="font-hairline tracking-wider text-sm px-2 text-nowrap">{name}</span>
+        <span onClick={openGenreModal}  className="font-hairline tracking-wider text-sm px-2 whitespace-nowrap">{name}</span>
         <CloseButton size={20} className="border-l px-1" onClickAction={onClick}/>
     </button>;
 

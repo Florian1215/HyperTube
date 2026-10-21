@@ -50,18 +50,18 @@ export default function MediaCardList({media, user, setFilterGenre} : {media?: i
         </td>
         <td className="sm:px-3">
             {media ? <Link href={formatURL(media)}>
-                    <TitleMedia media={media} clickable={true} className="sm:gap-2"/>
+                    <TitleMedia media={media} clickable={true} tightTruncate={true} className="sm:gap-2"/>
                 </Link> :
                 <LoadingText/>}
         </td>
         <td/>
-        <td className="hidden lg:table-cell">
+        <td className="*:hidden lg:*:flex">
             {media && <GenreTags genreIds={media.genres} limit={3} setFilterGenreAction={setFilterGenre}/>}
         </td>
-        <td className="hidden sm:table-cell">
+        <td className="*:hidden sm:*:flex">
             <Rating media={media} className="font-medium"/>
         </td>
-        <td className="text-right pr-2 xl:pr-4 ">
+        <td className="*:hidden sm:*:inline-block text-right sm:pr-2 xl:pr-4">
             <Button className="px-3" onClick={() => media && router.push(formatURL(media))}>{t("watch")}</Button>
         </td>
     </tr>);

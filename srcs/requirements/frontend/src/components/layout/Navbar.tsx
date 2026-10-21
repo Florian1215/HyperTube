@@ -65,7 +65,7 @@ export default function Navbar() {
 function NavLink({href, name, selected, icon, onClick}: {href: string, name: string, selected: boolean, icon?: React.ReactNode, onClick?: (e: React.MouseEvent) => void}) {
     return (<Link className="uppercase flex items-center hover:text-accent" href={href} title={name} onClick={onClick}>
         {icon}
-        <span style={{transform: "translateY(-1px)"}} className={`text-lg xl:text-2xl text-nowrap ${selected ? "font-base font-light" : "font-hairline"} ${icon ? "pl-1 xl:pl-2 hidden md:block" : ""}`}>{name}</span>
+        <span style={{transform: "translateY(-1px)"}} className={`text-lg xl:text-2xl whitespace-nowrap ${selected ? "font-base font-light" : "font-hairline"} ${icon ? "pl-1 xl:pl-2 hidden md:block" : ""}`}>{name}</span>
     </Link>);
 }
 
@@ -73,7 +73,7 @@ function AccountMenu({label, items, onClick, hasMenu, children}: {label: string,
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const pointerType = useRef<string | null>(null);
-    const itemClassName = "uppercase text-xl font-hairline text-nowrap";
+    const itemClassName = "uppercase text-xl font-hairline whitespace-nowrap";
 
     useEffect(() => {
         if (!isOpen)

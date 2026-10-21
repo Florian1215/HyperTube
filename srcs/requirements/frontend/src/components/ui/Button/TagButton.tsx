@@ -7,7 +7,7 @@ export default function TagButton({children, onClick, className, selected=false,
     return (<span {...hover.handlers} className={`group/hover relative inline-flex bg-cblack ${hover.hoverClassName} ${className ?? ""}`}>
         <button {...hover.moveProps}
             disabled={disabled} onClick={onClick} type="button"
-            className={`relative w-full text-nowrap px-3 custom-condensed spacin border tracking-wide text-2xl custom-shadow-animation-s leading-none py-1 group-hover/hover:[--shadow-shift:-3px] ${selected ? "text-white bg-black" : "bg-white text-black"}`}>
+            className={`relative w-full whitespace-nowrap px-3 custom-condensed spacin border tracking-wide text-2xl custom-shadow-animation-s leading-none py-1 group-hover/hover:[--shadow-shift:-3px] ${selected ? "text-white bg-black" : "bg-white text-black"}`}>
             {children}
             {hover.highlight}
         </button>

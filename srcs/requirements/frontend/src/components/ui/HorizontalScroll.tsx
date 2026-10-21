@@ -33,7 +33,7 @@ export default function HorizontalScroll({children, className, borderB=false}: {
     };
 
     const showArrows = canScrollLeft || canScrollRight;
-    const arrowClassName = borderB ? "self-stretch flex items-center border-b border-b-cblack" : "";
+    const arrowClassName = borderB ? "self-stretch flex items-center border-b border-b-cblack" : "flex items-center";
 
     return (<div className={`flex items-center ${borderB ? "" : "gap-2"}`}>
         {showArrows && <div className={`${arrowClassName} ${borderB ? `pr-2 ${canScrollLeft ? "border-r" : ""}` : ""}`}>
@@ -41,7 +41,7 @@ export default function HorizontalScroll({children, className, borderB=false}: {
                 <LeftArrowIcon color="current"/>
             </IconButton>
         </div>}
-        <div ref={rowRef} className={`flex min-w-0 flex-1 overflow-x-auto scrollbar-hide -my-1.5 ${borderB ? "py-1.5" : `p-1.5 ${canScrollRight ? "border-r" : ""} ${canScrollLeft ? "border-l" : ""}`} ${className ?? ""}`}>
+        <div ref={rowRef} className={`flex min-w-0 flex-1 overflow-x-auto scrollbar-hide -my-1.5 ${borderB ? "py-1" : `p-1 ${canScrollRight ? "border-r" : ""} ${canScrollLeft ? "border-l" : ""}`} ${className ?? ""}`}>
             {children}
         </div>
         {showArrows && <div className={`${arrowClassName} ${borderB ? `pl-2 ${canScrollRight ? "border-l" : ""}` : ""}`}>

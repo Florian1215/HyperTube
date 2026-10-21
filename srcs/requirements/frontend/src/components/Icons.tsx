@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import {useState, useSyncExternalStore} from "react";
 
 export function CrossIcon({color="dblack", size=30, className=""}) {
     const fullColor = `var(--color-${color})`;
@@ -106,27 +106,17 @@ export function HypertubResponsiveLogo({color="dblack", height=20}: {color?: str
     const fullColor = `var(--color-${color})`;
     const defaultRecWidth = 266;
     const minWindowWidth = 640;
-    const [recWidth, setRecWidth] = useState(defaultRecWidth);
+    const recWidth = useSyncExternalStore((onChange) => {
+        window.addEventListener("resize", onChange);
+        return () => window.removeEventListener("resize", onChange);
+    }, () => Math.max(0, (document.documentElement.clientWidth - minWindowWidth) / 3), () => defaultRecWidth);
     const [squeezed, setSqueezed] = useState(false);
     const squeeze = squeezed ? recWidth * 0.15 : 0;
     const squeezeTransition = squeezed ? "transform 100ms ease-out cubic-bezier(0.34, 1.4, 0.64, 1)" : "transform 500ms cubic-bezier(0.34, 1.8, 0.64, 1)";
 
     const handleResize = (value: number) => value - defaultRecWidth + recWidth;
 
-    useEffect(() => {
-        const handlWindowResize = () => {
-            let newRecWidth = (window.innerWidth - minWindowWidth) / 3;
-            if (newRecWidth < 0)
-                newRecWidth = 0;
-            setRecWidth(newRecWidth);
-        };
-        handlWindowResize();
-        window.addEventListener("resize", handlWindowResize);
-
-        return () => window.removeEventListener("resize", handlWindowResize);
-    }, []);
-
-    return (<svg className="h-2 sm:h-6 md:h-4 xl:h-6 w-auto" width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg"
+    return (<svg className="h-2 sm:h-6 md:h-4 xl:h-6 w-auto" style={{aspectRatio: `${handleResize(1110)} / 65`}} width={height * handleResize(1110) / 65} height={height} viewBox={`0 0 ${handleResize(1110)} 65`} fill="none" xmlns="http://www.w3.org/2000/svg"
                 onPointerEnter={(e) => e.pointerType === "mouse" && setSqueezed(true)}
                 onPointerLeave={() => setSqueezed(false)}
                 onPointerDown={() => setSqueezed(false)}>

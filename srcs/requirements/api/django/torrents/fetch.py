@@ -61,6 +61,8 @@ def get_or_fetch_torrent(request, media_id, type, season_number=None, episode_nu
         torrents = torrents.filter(season_number=season_number)
     else:
         season_number = None
+        if media.release_date and media.release_date > date.today().isoformat():
+            return []
 
     def get_cached():
         """The saved torrents answering the request: for an episode, its own torrents and the ones of the whole season."""

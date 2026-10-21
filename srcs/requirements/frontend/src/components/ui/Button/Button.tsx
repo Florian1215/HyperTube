@@ -32,7 +32,7 @@ export default function Button({children, onClick, onContextMenu, className, var
 
     return (<button {...hover.handlers} {...hover.moveProps}
         disabled={isDisabled} onClick={onClick} onContextMenu={onContextMenu} type="button"
-        className={`group/hover relative uppercase text-nowrap px-3 sm:px-5 h-7 sm:h-10 text-xs sm:text-base xl:text-lg ${hover.hoverClassName} ${hover.moveClassName} ${colorClass} ${className ?? ""}`}>
+        className={`group/hover relative uppercase whitespace-nowrap px-3 sm:px-5 h-7 sm:h-10 text-xs sm:text-base xl:text-lg ${hover.hoverClassName} ${hover.moveClassName} ${colorClass} ${className ?? ""}`}>
         {children}
         {hover.highlight}
     </button>);

@@ -104,7 +104,7 @@ export default function SelectTorrentModal() {
 }
 
 function TorrentRow({torrent, setTorrentId, closeModal, t, autoSelected}: {torrent: iTorrent; setTorrentId?: (id: string) => void; closeModal: () => void; t: tT, autoSelected: boolean}) {
-    const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-nowrap";
+    const className = "p-1 sm:px-3 sm:py-2 text-xs sm:text-sm whitespace-nowrap";
 
     return (<tr className={"border-t border-gray"}>
         <td className={`${className} max-w-60 sm:max-w-96`} title={torrent.title}>

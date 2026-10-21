@@ -44,7 +44,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
 
     return (<div className="mx-auto max-w-2xl w-9/10">
         <Title title={t("seasons")} tag="h2" exp={serie.number_of_seasons}/>
-        <HorizontalScroll className="gap-2 py-2">
+        <HorizontalScroll className="gap-2 my-2 sm:my-4">
             {Array.from({length: serie.number_of_seasons}, (_, i) => <RadioButton key={i} selected={selectedSeasonNB === i} onClick={() => setSelectedSeasonNB(i)}>{t("seasonNumber", {number: i + 1})}</RadioButton>)}
         </HorizontalScroll>
         {season ? <div>

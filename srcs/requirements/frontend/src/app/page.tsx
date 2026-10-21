@@ -119,7 +119,7 @@ export default function HomePage() {
 
 function Section({children, title, href}: {children: React.ReactNode, title: string, href: string}) {
     return (<section className="flex flex-col">
-        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit p-2 overflow-x-hidden text-nowrap" href={href}>{`${title} >`}</Link>
+        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit p-2 overflow-x-hidden whitespace-nowrap" href={href}>{`${title} >`}</Link>
         {children}
     </section>);
 }

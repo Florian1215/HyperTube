@@ -547,7 +547,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         </div>}
         <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
             {showNextEpisode &&
-                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold text-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
+                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold whitespace-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div className="bg-gradient" />
             {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
                 {episodeName && <p className="font-semibold uppercase truncate sm:text-lg">{episodeName}</p>}
@@ -606,7 +606,7 @@ function TracksMenu({title, onClose, children}: {title: string, onClose: () => v
 }
 
 function TrackButton({selected, onClick, children}: {selected: boolean, onClick: () => void, children: React.ReactNode}) {
-    return (<button className={`flex items-center gap-3 w-full px-4 py-3 border-b border-white/15 text-base text-left wrap-break-word sm:w-auto sm:p-0 sm:border-0 sm:text-lg sm:text-nowrap ${selected ? "font-base font-light text-accent sm:text-black" : "font-hairline hover:text-accent"}`} onClick={onClick}>
+    return (<button className={`flex items-center gap-3 w-full px-4 py-3 border-b border-white/15 text-base text-left wrap-break-word sm:w-auto sm:p-0 sm:border-0 sm:text-lg sm:whitespace-nowrap ${selected ? "font-base font-light text-accent sm:text-black" : "font-hairline hover:text-accent"}`} onClick={onClick}>
         <span className={`size-2 shrink-0 rounded-full bg-accent sm:hidden ${selected ? "" : "invisible"}`}/>
         {children}
     </button>);
