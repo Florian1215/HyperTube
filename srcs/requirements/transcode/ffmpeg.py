@@ -15,6 +15,8 @@ MAX_AUDIO_TRACKS = 8
 TEXT_SUBTITLE_CODECS = ('subrip', 'srt', 'ass', 'ssa', 'mov_text', 'webvtt', 'text')
 MASTER_PLAYLIST = 'stream.m3u8'
 TRACKS_FILE = 'tracks.json'
+SUBTITLE_PART_SUFFIX = '.part'
+SUBTITLE_PUBLISH_INTERVAL = 2
 
 ISO639_1_TO_2 = {
     'en': ['eng'],
@@ -186,7 +188,7 @@ def build_args(input_path: str, output_dir: Path, video_codec: str, tracks: dict
         str(output_dir / 'track_%v.m3u8'),
     ])
     for track in tracks['subtitles']:
-        args.extend(['-map', f'0:{track["stream"]}', '-c:s', 'webvtt', '-flush_packets', '1', '-f', 'webvtt', str(output_dir / track['file'])])
+        args.extend(['-map', f'0:{track["stream"]}', '-c:s', 'webvtt', '-flush_packets', '1', '-f', 'webvtt', str(output_dir / (track['file'] + SUBTITLE_PART_SUFFIX))])
     return args
 
 
@@ -233,6 +235,31 @@ def write_master_playlist(output_dir: Path, tracks: dict, process: subprocess.Po
             pass
 
 
+def publish_subtitles(output_dir: Path, tracks: dict, process: subprocess.Popen) -> None:
+    sizes = {}
+    while True:
+        ended = process.poll() is not None
+        for track in tracks['subtitles']:
+            part = output_dir / (track['file'] + SUBTITLE_PART_SUFFIX)
+            try:
+                content = part.read_bytes()
+            except FileNotFoundError:
+                continue
+            if sizes.get(track['file']) != len(content):
+                sizes[track['file']] = len(content)
+                tmp = output_dir / (track['file'] + '.tmp')
+                tmp.write_bytes(content)
+                os.replace(tmp, output_dir / track['file'])
+            if ended:
+                part.unlink(missing_ok=True)
+        if ended:
+            return
+        try:
+            process.wait(timeout=SUBTITLE_PUBLISH_INTERVAL)
+        except subprocess.TimeoutExpired:
+            pass
+
+
 def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '') -> dict:
     head = read_head(reader, PROBE_SIZE)
     tracks = {'audio': [], 'subtitles': []}
@@ -252,10 +279,12 @@ def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '
 
     with tempfile.TemporaryFile() as stderr:
         process = subprocess.Popen(['ffmpeg', *args], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=stderr)
-        master = None
+        threads = []
         if streams is not None:
-            master = threading.Thread(target=write_master_playlist, args=(output_dir, tracks, process), daemon=True)
-            master.start()
+            threads.append(threading.Thread(target=write_master_playlist, args=(output_dir, tracks, process), daemon=True))
+            threads.append(threading.Thread(target=publish_subtitles, args=(output_dir, tracks, process), daemon=True))
+        for thread in threads:
+            thread.start()
         try:
             process.stdin.write(head)
             shutil.copyfileobj(reader, process.stdin, 1024 * 1024)
@@ -267,8 +296,8 @@ def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '
             raise
         finally:
             process.wait()
-            if master:
-                master.join()
+            for thread in threads:
+                thread.join()
         if process.returncode != 0:
             stderr.seek(0)
             raise RuntimeError(f'ffmpeg: {process.returncode}\n{stderr.read().decode(errors="replace")}')
