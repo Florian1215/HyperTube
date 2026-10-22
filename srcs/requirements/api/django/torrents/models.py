@@ -54,6 +54,8 @@ class Torrent(models.Model):
 class DownloadMedia(models.Model):
     id = models.CharField(primary_key=True)
     torrent = models.ForeignKey(Torrent, on_delete=models.CASCADE, related_name='downloaded')
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='downloads', null=True, blank=True)
     language = models.CharField(max_length=2, default='')
     status = models.CharField(max_length=20, choices=Torrent.STATUS_CHOICES, default='downloading')
     error = models.TextField(blank=True, null=True)

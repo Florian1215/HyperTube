@@ -56,12 +56,13 @@ class TorrentsApiView(APIView):
             lang = 'fr'
         episode_number = self.get_episode_number(torrent, request.data)
         stream_id = torrent.get_stream_id(episode_number)
+        user = request.user if request.user.is_authenticated else None
         if not DownloadMedia.objects.filter(id=stream_id).exclude(status='error').exists():
             ensure_disk_space(torrent, episode_number)
-        download, start = DownloadMedia.objects.get_or_create(id=stream_id, defaults={'torrent': torrent, 'language': lang})
+        download, start = DownloadMedia.objects.get_or_create(id=stream_id, defaults={'torrent': torrent, 'language': lang, 'requested_by': user})
         if not start:
             start = DownloadMedia.objects.filter(id=stream_id, status='error').update(
-                status='downloading', language=lang, error=None) == 1
+                status='downloading', language=lang, error=None, requested_by=user) == 1
         if not start:
             return self.get_response(torrent, stream_id, download.status, status.HTTP_200_OK)
         (settings.STREAM_DIR / stream_id / 'stream.m3u8').unlink(missing_ok=True)

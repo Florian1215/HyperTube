@@ -39,12 +39,13 @@ class TorrentAdmin(admin.ModelAdmin):
 
 @admin.register(DownloadMedia)
 class DownloadMediaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'torrent', 'size_gb', 'language', 'status', 'created_at', 'last_watched_at')
-    search_fields = ('id', 'torrent__title')
-    autocomplete_fields = ('torrent',)
+    list_display = ('id', 'torrent', 'requested_by', 'size_gb', 'language', 'status', 'created_at', 'last_watched_at')
+    search_fields = ('id', 'torrent__title', 'requested_by__username')
+    autocomplete_fields = ('torrent', 'requested_by')
     readonly_fields = ('size_gb', 'created_at', 'last_watched_at')
     exclude = ('size',)
-    list_select_related = ('torrent',)
+    list_select_related = ('torrent', 'requested_by')
+    ordering = ('-created_at',)
 
     @admin.display(description='Size (GB)', ordering='size')
     def size_gb(self, obj):
