@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button/Button";
 import {logMediaProgress, syncMediaProgress} from "@/services/medias.service";
 import {ApiError} from "@/services/apiClient";
 import {RewatchIcon} from "@/components/Icons";
+import IconToggle from "@/components/ui/IconToggle";
 import {iUser} from "@/types/user";
 
 const toDateInput = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -56,11 +57,9 @@ function LogMediaForm({target, user, closeAction}: {target: NonNullable<ModalSta
                 <input type="date" value={date} max={today} required onChange={(e) => setDate(e.target.value)}
                        className="block w-full mt-2 py-1 bg-dwhite text-dblack border-b focus:border-b-2"/>
             </label>
-            <button type="button" aria-pressed={rewatch} onClick={() => setRewatch(!rewatch)}
-                    className={`flex items-center gap-2 font-normal text-lg transition-colors ${rewatch ? "text-dblack" : "text-gray"}`}>
-                <RewatchIcon size={24} color="current"/>
+            <IconToggle val={rewatch} setter={setRewatch} icon={<RewatchIcon size={24} color="current"/>}>
                 {t("rewatch")}
-            </button>
+            </IconToggle>
             <Button className="w-full" onClick={!saving && date ? () => void save() : undefined}>{t("save")}</Button>
         </div>
     </ModalLayout>);

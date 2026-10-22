@@ -112,7 +112,7 @@
       "save": "Enregistrer",
       "requestError": "Erreur lors de la requete: {error}",
       "chooseBackdrop": "Choisir un arrière-plan",
-      "feature": "Afficher ce film dans les films mis en avant sur la page d'accueil"
+      "feature": "Mettre en avant"
     }
   },
   "people": {

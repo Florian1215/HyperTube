@@ -7,13 +7,14 @@ import ModalLayout from "@/components/layout/ModalLayout";
 import Button from "@/components/ui/Button/Button";
 import {updateMediaFeature} from "@/services/medias.service";
 import LoadingImage from "@/components/ui/LoadingImage";
-import Toggle from "@/components/ui/Toggle";
 import useNotification from "@/contexts/NotificationContext";
 import {ApiError} from "@/services/apiClient";
 import {tLocale} from "@/i18n/routing";
 import {addQuery, removeQuery, updateMedia, updateMediaBackdrop} from "@/hooks/useApiQuery";
 import {useQueryClient} from "@tanstack/react-query";
 import {iMediaDetails} from "@/types/media";
+import {StarIcon} from "@/components/Icons";
+import IconToggle from "@/components/ui/IconToggle";
 
 export default function SetFeatureModal() {
     const {activeModal, closeModal} = useModal();
@@ -66,7 +67,7 @@ export default function SetFeatureModal() {
 
     const displayBackdrop = activeModal.media.backdrops_url.length > 1;
     return (<ModalLayout title={t("title")} onCloseAction={closeModal} addMaxWTitle={false}>
-        <div className={`space-y-6 text-center ${displayBackdrop ? "w-full md:w-2xl lg:w-4xl" : "w-full"}`}>
+        <div className={`flex flex-col justify-between gap-2 text-center ${displayBackdrop ? "w-full md:w-2xl lg:w-4xl" : "w-full"}`}>
             {
                 displayBackdrop &&
                 <div className="w-full text-left space-y-1">
@@ -79,11 +80,10 @@ export default function SetFeatureModal() {
                     </div>
                 </div>
             }
-            <div className="w-full text-left">
-                <p className="font-normal text-lg">{t("feature")}</p>
-                <Toggle val={feature} setter={setFeature}/>
-            </div>
-            <Button onClick={saveChange} disabled={disableBtn}>
+            <IconToggle val={feature} setter={setFeature} icon={<StarIcon size={24} color="current"/>} className="p-2">
+                {t("feature")}
+            </IconToggle>
+            <Button className="w-fit mx-auto" onClick={saveChange} disabled={disableBtn}>
                 {t("save")}
             </Button>
         </div>
