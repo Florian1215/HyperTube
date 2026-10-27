@@ -9,7 +9,7 @@ from config.cache import LIFETIME_MOVING, LIFETIME_RECENT, LIFETIME_STABLE, is_o
 from config.errors import MEDIA_NOT_FOUND
 from config.exceptions import external_service
 from config.tmdb_media import format_tmdb_image
-from medias.models import Media, Genre, MediaLanguage
+from medias.models import BackdropUrl, Media, Genre, MediaLanguage
 from medias.pagination import fetch_tmdb_page, TMDB_MAX_COUNT
 from medias.services.tmdb import TMDBService
 
@@ -63,7 +63,6 @@ def get_media_fields(type, media_data):
 def set_media_relations(media, media_data, image_data):
     media.cast.all().delete()
     media.crew.all().delete()
-    media.backdrops_url.all().delete()
     if media.type == 'series':
         for creator in media_data['created_by']:
             media.crew.create(crew_id=creator['id'], name=creator['name'], picture=format_tmdb_image(
@@ -75,8 +74,11 @@ def set_media_relations(media, media_data, image_data):
     for crew in media_data['credits']['crew']:
         media.crew.create(crew_id=crew['id'], name=crew['name'], picture=format_tmdb_image(crew['profile_path'],
                                                                                            'w300'), job=crew['job'])
-    for backdrop_data in image_data['backdrops'][:9]:
-        media.backdrops_url.get_or_create(url=format_tmdb_image(backdrop_data['file_path'], 'original'))
+    saved_backdrops = set(media.backdrops_url.values_list('url', flat=True))
+    new_backdrops = dict.fromkeys(format_tmdb_image(backdrop_data['file_path'], 'original')
+                                  for backdrop_data in image_data['backdrops'])
+    media.backdrops_url.bulk_create([BackdropUrl(media=media, url=url) for url in new_backdrops
+                                     if url not in saved_backdrops])
 
 
 def create_media(type, media_data, image_data):
