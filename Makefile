@@ -3,8 +3,10 @@ NAME		:=	hypertube
 SRCS_D		:=	srcs
 TRANSCODE_D	:=	$(SRCS_D)/requirements/transcode/
 DATA_DIR	:=	medias
+#COMPOSE_F	?=	$(SRCS_D)/docker-compose.yml
 COMPOSE_F	?=	$(SRCS_D)/docker-compose.prod.yml
 SERVICE		?=	#Leave blank
+TAIL		?=	100
 TV_D		:=	tv-app
 TV_IP		?=	192.168.1.65:5555
 TV_PACKAGE	:=	com.hypertube.tv
@@ -51,7 +53,7 @@ detach		:
 
 .PHONY: logs
 logs		:	build
-			$(COMPOSE) $(FLAGS) $@ -f $(SERVICE)
+			$(COMPOSE) $(FLAGS) $@ -f --tail=$(TAIL) $(SERVICE)
 
 .PHONY: exec
 exec		:
