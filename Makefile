@@ -14,7 +14,7 @@ TV_APK		:=	$(TV_D)/app/build/outputs/apk/release/app-release.apk
 
 ######################################################## FLAGS #########################################################
 FLAGS		=	-f $(COMPOSE_F)
-COMPOSE		=	docker compose
+COMPOSE		=	docker-compose
 DSHELL		=	/bin/sh
 
 ######################################################## RULES #########################################################
