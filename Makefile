@@ -3,8 +3,7 @@ NAME		:=	hypertube
 SRCS_D		:=	srcs
 TRANSCODE_D	:=	$(SRCS_D)/requirements/transcode/
 DATA_DIR	:=	medias
-#COMPOSE_F	?=	$(SRCS_D)/docker-compose.yml
-COMPOSE_F	?=	$(SRCS_D)/docker-compose.prod.yml
+COMPOSE_F	?=	$(SRCS_D)/docker-compose.yml
 SERVICE		?=	#Leave blank
 TAIL		?=	100
 TV_D		:=	tv-app
@@ -12,9 +11,13 @@ TV_IP		?=	192.168.1.65:5555
 TV_PACKAGE	:=	com.hypertube.tv
 TV_APK		:=	$(TV_D)/app/build/outputs/apk/release/app-release.apk
 
+# Containers run with the host user's ids so they never create root-owned files
+export HOST_UID	:=	$(shell id -u)
+export HOST_GID	:=	$(shell id -g)
+
 ######################################################## FLAGS #########################################################
 FLAGS		=	-f $(COMPOSE_F)
-COMPOSE		=	docker-compose
+COMPOSE		=	docker compose
 DSHELL		=	/bin/sh
 
 ######################################################## RULES #########################################################

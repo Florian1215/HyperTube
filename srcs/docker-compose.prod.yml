@@ -48,6 +48,9 @@ services:
     build:
       context: "requirements/api"
       target: production
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
     depends_on:
       api-db:
         condition: service_healthy
@@ -76,6 +79,9 @@ services:
     build:
       context: "requirements/api"
       target: production
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
     depends_on:
       api-db:
         condition: service_healthy
