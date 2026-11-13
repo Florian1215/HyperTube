@@ -153,23 +153,43 @@ def select_tracks(streams: List[FFProbeStream], preferred_lang: str = '') -> dic
     return {'audio': audio, 'subtitles': subtitles}
 
 
+H264_ARGS = [
+    '-c:v',
+    'h264_videotoolbox',
+    '-b:v',
+    '5M',
+    '-maxrate',
+    '7M',
+    '-bufsize',
+    '10M',
+    # a keyframe at each segment start: players can start decoding anywhere (resume, seek)
+    '-force_key_frames',
+    'expr:gte(t,n_forced*5)',
+    '-bsf:v',
+    'h264_mp4toannexb',
+]
+
+
+def input_args(video_codec: str) -> List[str]:
+    # HEVC is decoded on the GPU, so the frames stay there for scale_vt
+    if video_codec == 'hevc':
+        return ['-hwaccel', 'videotoolbox', '-hwaccel_output_format', 'videotoolbox_vld']
+    return []
+
+
 def video_args(video_codec: str) -> List[str]:
     if video_codec == 'h264':
         return ['-c:v', 'copy', '-bsf:v', 'h264_mp4toannexb']
     if video_codec == 'hevc':
-        return ['-c:v', 'copy', '-bsf:v', 'hevc_mp4toannexb']
-    return [
-        '-c:v',
-        'h264_videotoolbox',
-        '-b:v',
-        '5M',
-        '-maxrate',
-        '7M',
-        '-bufsize',
-        '10M',
-        '-bsf:v',
-        'h264_mp4toannexb',
-    ]
+        # HEVC is not copied: browsers without HEVC support cannot play it, and x265 open GOPs
+        # (segments starting on CRA frames) cannot be decoded after a seek by Firefox.
+        # Re-encoded to H.264, at most 1080p, HDR tone-mapped to SDR.
+        return [
+            '-vf',
+            "scale_vt=w='min(1920,iw)':h=-2:color_matrix=bt709:color_primaries=bt709:color_transfer=bt709",
+            *H264_ARGS,
+        ]
+    return H264_ARGS
 
 
 AUDIO_ARGS = ['-c:a', 'aac', '-b:a', '256k', '-ac', '2']
@@ -177,7 +197,7 @@ HLS_ARGS = ['-avoid_negative_ts', 'make_zero', '-hls_time', '5', '-hls_list_size
 
 
 def build_args(input_path: str, output_dir: Path, video_codec: str, tracks: dict) -> List[str]:
-    args = ['-i', input_path, '-map', '0:v:0']
+    args = [*input_args(video_codec), '-i', input_path, '-map', '0:v:0']
     variants = ['v:0,agroup:audio' if tracks['audio'] else 'v:0']
     for i, track in enumerate(tracks['audio']):
         args.extend(['-map', f'0:{track["stream"]}'])
