@@ -1,3 +1,4 @@
+import os
 import re
 import shutil
 import time
@@ -86,7 +87,10 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
     stream_id = torrent.get_stream_id(episode_number)
     download_dir = TORRENT_DIR / torrent.id
     try:
-        download_dir.mkdir(parents=True, exist_ok=True)
+        # everything created by this worker (dirs, .torrent, libtorrent files) is world-accessible
+        os.umask(0)
+        download_dir.mkdir(mode=0o777, parents=True, exist_ok=True)
+        download_dir.chmod(0o777)
         Torrent.objects.filter(id=torrent.id).update(progress=0)
         set_status(torrent, stream_id, 'downloading')
         # -----------------------------
@@ -100,6 +104,7 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
             fetch_torrents(torrent.media, torrent.season_number)
         response.raise_for_status()
         torrent_path.write_bytes(response.content)
+        torrent_path.chmod(0o777)
 
         # -----------------------------
         # 2. Charger le torrent
