@@ -76,10 +76,6 @@ dusting		:
 			find . -path "*/__pycache__/*" -delete
 			find . -path "*/__pycache__" -delete
 
-.PHONY: dusting-migration
-dusting-migration:
-			find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-
 .PHONY: prune
 prune		:
 			docker system prune -af
@@ -88,4 +84,4 @@ prune		:
 re			:	clean all
 
 .PHONY: vre
-vre			:	dusting-migration fclean all
+vre			:	fclean all
