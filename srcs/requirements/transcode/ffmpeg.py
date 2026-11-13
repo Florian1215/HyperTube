@@ -6,7 +6,8 @@ import tempfile
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, List
+from typing import BinaryIO, List, Optional, Union
+import struct
 import logging
 
 from werkzeug.exceptions import ClientDisconnected
@@ -77,16 +78,18 @@ def read_head(reader: BinaryIO, size: int) -> bytes:
     return b''.join(chunks)
 
 
-def probe_streams(data: bytes) -> List[FFProbeStream]:
+def probe_streams(source: Union[bytes, Path]) -> List[FFProbeStream]:
+    """Probe either the first bytes of the stream or a complete file on disk."""
+    is_file = isinstance(source, Path)
     process = subprocess.run([
         'ffprobe',
         '-v',
-        'quiet',
+        'error',
         '-print_format',
         'json',
         '-show_streams',
-        'pipe:0',
-    ], input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        str(source) if is_file else 'pipe:0',
+    ], input=None if is_file else source, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if process.returncode != 0:
         raise RuntimeError(f'ffprobe: {process.stderr.decode(errors="replace")}')
@@ -265,41 +268,77 @@ def publish_subtitles(output_dir: Path, tracks: dict, process: subprocess.Popen)
             pass
 
 
-def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '') -> dict:
-    head = read_head(reader, PROBE_SIZE)
-    tracks = {'audio': [], 'subtitles': []}
+def needs_seekable_input(head: bytes) -> bool:
+    """MP4/MOV whose index (moov) comes after the media data (mdat): ffmpeg has to seek back
+    to the start of the file once it has read the index, which a pipe cannot do."""
+    if head[4:8] != b'ftyp':
+        return False
+    pos = 0
+    while pos + 8 <= len(head):
+        size, kind = struct.unpack('>I4s', head[pos:pos + 8])
+        if kind == b'moov':
+            return False
+        if kind == b'mdat':
+            return True
+        if size == 1:
+            if pos + 16 > len(head):
+                return False
+            size = struct.unpack('>Q', head[pos + 8:pos + 16])[0]
+        if size < 8:
+            return False
+        pos += size
+    return False
+
+
+def copy_upload(reader: BinaryIO, writer: BinaryIO) -> None:
     try:
-        streams = probe_streams(head)
+        shutil.copyfileobj(reader, writer, 1024 * 1024)
+    except OSError as exc:
+        # werkzeug raises 'Invalid chunk header' when the chunked upload ends without its final chunk
+        if isinstance(exc, ClientDisconnected) or 'chunk' in str(exc).lower():
+            raise ClientDisconnected() from exc
+        raise
+
+
+def probe_tracks(source: Union[bytes, Path], preferred_lang: str) -> Optional[tuple]:
+    try:
+        streams = probe_streams(source)
         video_codec = video_codec_name(streams)
         if not video_codec:
             raise RuntimeError('no video stream')
-        tracks = select_tracks(streams, preferred_lang)
-        logging.info('source video codec: %s, preferred language: %r, tracks: %s', video_codec, preferred_lang, tracks)
-        args = build_args('pipe:0', output_dir, video_codec, tracks)
     except Exception as exc:
         logging.warning('probe streams failed: %s', exc)
-        streams = None
-        args = build_legacy_args('pipe:0', output_dir)
+        return None
+    tracks = select_tracks(streams, preferred_lang)
+    logging.info('source video codec: %s, preferred language: %r, tracks: %s', video_codec, preferred_lang, tracks)
+    return video_codec, tracks
+
+
+def run_ffmpeg(input_path: str, output_dir: Path, probed: Optional[tuple], feed=None) -> dict:
+    """Transcode input_path to HLS; when feed is given, it writes the source into ffmpeg's stdin."""
+    tracks = {'audio': [], 'subtitles': []}
+    if probed:
+        video_codec, tracks = probed
+        args = build_args(input_path, output_dir, video_codec, tracks)
+    else:
+        args = build_legacy_args(input_path, output_dir)
     write_file(output_dir / TRACKS_FILE, json.dumps(tracks))
 
     with tempfile.TemporaryFile() as stderr:
-        process = subprocess.Popen(['ffmpeg', *args], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=stderr)
+        stdin = subprocess.PIPE if feed else subprocess.DEVNULL
+        process = subprocess.Popen(['ffmpeg', *args], stdin=stdin, stdout=subprocess.DEVNULL, stderr=stderr)
         threads = []
-        if streams is not None:
+        if probed:
             threads.append(threading.Thread(target=write_master_playlist, args=(output_dir, tracks, process), daemon=True))
             threads.append(threading.Thread(target=publish_subtitles, args=(output_dir, tracks, process), daemon=True))
         for thread in threads:
             thread.start()
         try:
-            process.stdin.write(head)
-            shutil.copyfileobj(reader, process.stdin, 1024 * 1024)
-            process.stdin.close()
+            if feed:
+                feed(process.stdin)
+                process.stdin.close()
         except BrokenPipeError:
             pass
-        except OSError as exc:
-            # werkzeug raises 'Invalid chunk header' when the chunked upload ends without its final chunk
-            process.kill()
-            raise ClientDisconnected() from exc
         except BaseException:
             process.kill()
             raise
@@ -311,3 +350,25 @@ def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '
             stderr.seek(0)
             raise RuntimeError(f'ffmpeg: {process.returncode}\n{stderr.read().decode(errors="replace")}')
     return tracks
+
+
+def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '') -> dict:
+    head = read_head(reader, PROBE_SIZE)
+    probed = None if needs_seekable_input(head) else probe_tracks(head, preferred_lang)
+
+    if probed:
+        def feed(stdin: BinaryIO) -> None:
+            stdin.write(head)
+            copy_upload(reader, stdin)
+
+        return run_ffmpeg('pipe:0', output_dir, probed, feed)
+
+    # The start of the stream is not enough to decode it (e.g. MP4 with its index at the end):
+    # store the whole upload on disk, then transcode the file, where ffmpeg can seek.
+    logging.warning('source cannot be streamed, buffering the whole upload to disk before transcoding')
+    with tempfile.NamedTemporaryFile(dir=output_dir, prefix='.source-', suffix='.tmp') as source:
+        source.write(head)
+        copy_upload(reader, source)
+        source.flush()
+        path = Path(source.name)
+        return run_ffmpeg(str(path), output_dir, probe_tracks(path, preferred_lang))
