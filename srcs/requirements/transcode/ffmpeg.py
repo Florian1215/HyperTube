@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import BinaryIO, List
 import logging
 
+from werkzeug.exceptions import ClientDisconnected
+
 
 PROBE_SIZE = 10 * 1024 * 1024
 MAX_AUDIO_TRACKS = 8
@@ -64,7 +66,10 @@ class FFProbeStream:
 def read_head(reader: BinaryIO, size: int) -> bytes:
     chunks = []
     while size > 0:
-        chunk = reader.read(size)
+        try:
+            chunk = reader.read(size)
+        except OSError as exc:
+            raise ClientDisconnected() from exc
         if not chunk:
             break
         chunks.append(chunk)
@@ -291,6 +296,10 @@ def convert_pipe_hls(reader: BinaryIO, output_dir: Path, preferred_lang: str = '
             process.stdin.close()
         except BrokenPipeError:
             pass
+        except OSError as exc:
+            # werkzeug raises 'Invalid chunk header' when the chunked upload ends without its final chunk
+            process.kill()
+            raise ClientDisconnected() from exc
         except BaseException:
             process.kill()
             raise

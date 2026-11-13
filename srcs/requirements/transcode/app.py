@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from flask import Flask, request, jsonify
+from werkzeug.exceptions import ClientDisconnected
 
 from ffmpeg import convert_pipe_hls
 
@@ -25,6 +26,10 @@ def transcode():
             output_dir=output_dir,
             preferred_lang=language,
         )
+    except ClientDisconnected:
+        # the uploader stopped mid-stream (celery worker restarted or killed)
+        print(f"Transcode aborted : {request.args['torrent_id']} upload interrupted by the client", flush=True)
+        return jsonify({'status': 'error', 'error': 'upload interrupted'}), 400
     except Exception as e:
         print(f"Transcode error : {e}", flush=True)
         return jsonify({'status': 'error', 'error': str(e)}), 500
