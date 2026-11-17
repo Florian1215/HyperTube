@@ -70,6 +70,10 @@ services:
     # The transcode service runs on the host
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # Host resolver (VPN 10.2.0.1) fails on some domains: use public DNS
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     networks:
       - backend_network
       - frontend_network
@@ -97,6 +101,10 @@ services:
     command: celery -A config worker -B -s /tmp/celerybeat-schedule -l INFO
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # Host resolver (VPN 10.2.0.1) fails on some domains: use public DNS
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     networks:
       - backend_network
       - api_network
