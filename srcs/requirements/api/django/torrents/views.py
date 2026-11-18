@@ -65,7 +65,12 @@ class TorrentsApiView(APIView):
                 status='downloading', language=lang, error=None, requested_by=user) == 1
         if not start:
             return self.get_response(torrent, stream_id, download.status, status.HTTP_200_OK)
-        (settings.STREAM_DIR / stream_id / 'stream.m3u8').unlink(missing_ok=True)
+        try:
+            # stream dirs are created by the transcode service on the host: the API user may not own them,
+            # the transcode service clears the old files itself before writing new ones
+            (settings.STREAM_DIR / stream_id / 'stream.m3u8').unlink(missing_ok=True)
+        except PermissionError:
+            pass
         download_and_transcode.delay(torrent.id, lang, episode_number)
         return self.get_response(torrent, stream_id, 'downloading', status.HTTP_201_CREATED)
 

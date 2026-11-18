@@ -15,6 +15,9 @@ def transcode():
     language = request.args['preferred_language']
     output_dir = base_dir / 'streams' / request.args['torrent_id']
     output_dir.mkdir(parents=True, exist_ok=True)
+    # the API container (other user) must be able to delete the stream files
+    for directory in (base_dir / 'streams', output_dir.parent, output_dir):
+        directory.chmod(0o777)
     for pattern in ('*.m3u8', '*.ts', '*.vtt', '*.json', '*.tmp', '*.part'):
         for old_file in output_dir.glob(pattern):
             old_file.unlink()
