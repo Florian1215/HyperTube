@@ -55,7 +55,7 @@ detach		:
 			$(COMPOSE) $(FLAGS) up --$@ $(SERVICE)
 
 .PHONY: logs
-logs		:	build
+logs		:
 			$(COMPOSE) $(FLAGS) $@ -f --tail=$(TAIL) $(SERVICE)
 
 .PHONY: exec
