@@ -13,7 +13,7 @@ from rest_framework.exceptions import APIException
 from config.errors import TORRENT_NOT_FOUND
 from config.settings import DOWNLOAD_RETENTION, TORRENT_DIR, TRANSCODE_URL
 from torrents.fetch import fetch_torrents, get_or_fetch_torrent
-from torrents.models import DownloadMedia, Torrent, TorrentRequest
+from torrents.models import DownloadMedia, FileDeletionError, Torrent, TorrentRequest
 
 
 def set_status(torrent, stream_id, status, error=None):
@@ -144,9 +144,13 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
 @shared_task
 def delete_expired_downloads():
     expired = DownloadMedia.objects.filter(last_watched_at__lt=timezone.now() - DOWNLOAD_RETENTION)
-    for download_id in list(expired.values_list('id', flat=True)):
-        print(f'Download {download_id}: expired, deleted', flush=True)
-    expired.delete()
+    for download in expired:
+        try:
+            download.delete()
+        except FileDeletionError as exc:
+            print(f'Download {download.id}: expired, {exc}', flush=True)
+            continue
+        print(f'Download {download.id}: expired, deleted', flush=True)
 
 
 @shared_task

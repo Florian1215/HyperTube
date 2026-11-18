@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from medias.models import BackdropUrl, Cast, Crew, Genre, Media, MediaLanguage
 from series.models import Season
+from torrents.admin_mixins import FileDeletionAdminMixin
 
 
 class MediaLanguageInline(admin.TabularInline):
@@ -22,7 +23,7 @@ class SeasonInline(admin.TabularInline):
 
 
 @admin.register(Media)
-class MediaAdmin(admin.ModelAdmin):
+class MediaAdmin(FileDeletionAdminMixin, admin.ModelAdmin):
     list_display = (
         'original_title',
         'type',

@@ -1,10 +1,11 @@
 from django.contrib import admin
 
+from torrents.admin_mixins import FileDeletionAdminMixin
 from torrents.models import DownloadMedia, Torrent, TorrentRequest
 
 
 @admin.register(Torrent)
-class TorrentAdmin(admin.ModelAdmin):
+class TorrentAdmin(FileDeletionAdminMixin, admin.ModelAdmin):
     list_display = (
         'title',
         'media',
@@ -38,7 +39,7 @@ class TorrentAdmin(admin.ModelAdmin):
 
 
 @admin.register(DownloadMedia)
-class DownloadMediaAdmin(admin.ModelAdmin):
+class DownloadMediaAdmin(FileDeletionAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'torrent', 'requested_by', 'size_gb', 'language', 'status', 'created_at', 'last_watched_at')
     search_fields = ('id', 'torrent__title', 'requested_by__username')
     autocomplete_fields = ('torrent', 'requested_by')

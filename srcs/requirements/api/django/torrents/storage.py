@@ -7,7 +7,7 @@ from django.utils import timezone
 from config.errors import NOT_ENOUGH_DISK_SPACE
 from config.exceptions import InsufficientStorage
 from config.settings import DATA_DIR
-from torrents.models import DownloadMedia
+from torrents.models import DownloadMedia, FileDeletionError
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +40,12 @@ def ensure_disk_space(torrent, episode_number=None):
         status='completed', last_watched_at__lt=timezone.now() - WATCHING_DELAY
     ).order_by('last_watched_at')
     for download in deletable:
+        try:
+            download.delete()
+        except FileDeletionError as exc:
+            logger.error('Download %s: %s', download.id, exc)
+            continue
         logger.warning('Download %s: deleted to make room', download.id)
-        download.delete()
         if get_free_space() >= needed:
             return
     raise InsufficientStorage(NOT_ENOUGH_DISK_SPACE)

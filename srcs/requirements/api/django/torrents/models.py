@@ -9,6 +9,22 @@ from django.utils import timezone
 from medias.models import Media
 
 
+class FileDeletionError(Exception):
+    """Files of a download could not be removed: raised inside the delete transaction, so nothing is deleted."""
+
+
+def remove_dir(path):
+    errors = []
+
+    def on_error(func, failed_path, exc):
+        if not isinstance(exc, FileNotFoundError):
+            errors.append(f'{failed_path}: {exc.strerror or exc}')
+
+    shutil.rmtree(path, onexc=on_error)
+    if errors:
+        raise FileDeletionError(f'Could not delete the files ({errors[0]}), nothing was deleted.')
+
+
 class Torrent(models.Model):
     id = models.CharField(primary_key=True)
     media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='torrents')
@@ -90,12 +106,12 @@ def delete_watched_torrent_requests(sender, instance, **kwargs):
 @receiver(post_delete, sender=DownloadMedia)
 def delete_download_files(sender, instance, **kwargs):
     stream_dir = settings.STREAM_DIR / instance.id
-    shutil.rmtree(stream_dir, ignore_errors=True)
+    remove_dir(stream_dir)
     if instance.id != instance.torrent_id:
         try:
             stream_dir.parent.rmdir()
         except OSError:
             pass
     if not DownloadMedia.objects.filter(torrent_id=instance.torrent_id).exists():
-        shutil.rmtree(settings.TORRENT_DIR / instance.torrent_id, ignore_errors=True)
+        remove_dir(settings.TORRENT_DIR / instance.torrent_id)
         Torrent.objects.filter(id=instance.torrent_id).update(status='not-downloaded', progress=0, error=None)

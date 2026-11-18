@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import date, datetime
 
@@ -8,7 +9,9 @@ from config.exceptions import external_service
 from medias.fetch import get_or_fetch_media
 from series.fetch import get_or_fetch_season
 from torrents.services.c411 import C411Client
-from torrents.models import Torrent
+from torrents.models import FileDeletionError, Torrent
+
+logger = logging.getLogger(__name__)
 
 SEASON_EPISODE_RE = re.compile(r'(?<![A-Za-z0-9])(?:S|Saison[ .]?)(\d{1,2})(?:[ .]?E(\d{1,3})|(?!\d))', re.IGNORECASE)
 
@@ -108,4 +111,9 @@ def fetch_torrents(media, season_number=None):
                     'episode_number': torrent_episode,
                 }
             )
-    Torrent.objects.filter(media=media, season_number=season_number).exclude(id__in=found).exclude(status__in=KEPT_STATUSES).delete()
+    stale = Torrent.objects.filter(media=media, season_number=season_number).exclude(id__in=found).exclude(status__in=KEPT_STATUSES)
+    for torrent in stale:
+        try:
+            torrent.delete()
+        except FileDeletionError as exc:
+            logger.error('Torrent %s: %s', torrent.id, exc)
