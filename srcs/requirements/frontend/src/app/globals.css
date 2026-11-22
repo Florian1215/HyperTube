@@ -37,6 +37,10 @@
     --color-red-hover: #FF787E;
 
     /*noinspection ALL*/
+    --cursor-default: url("/svg/default-cursor.svg") 1 1, auto;
+    /*noinspection ALL*/
+    --cursor-text: url("/svg/text-cursor.svg") 2 12, text;
+    /*noinspection ALL*/
     --cursor-left: url("/svg/left-cursor.svg") 25 25, auto;
     /*noinspection ALL*/
     --cursor-right: url("/svg/right-cursor.svg") 25 25, auto;
@@ -51,8 +55,12 @@
 
 @layer base {
     :root { color-scheme: light dark; }
+    html { cursor: var(--cursor-default); }
+    /* text fields and reading text, but not text inside something clickable */
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="submit"], [type="button"]), textarea, [contenteditable="true"],
+    :where(p, li, blockquote):not(a *, button *, label *, [role="button"] *) { cursor: var(--cursor-text); }
     body { @apply font-body bg-dwhite text-dblack }
-    h1, h2, h3, h4, h5, h6, .custom-condensed { @apply uppercase font-condensed tracking-wide hover:cursor-default; }
+    h1, h2, h3, h4, h5, h6, .custom-condensed { @apply uppercase font-condensed tracking-wide hover:cursor-(--cursor-default); }
     h1 { @apply text-5xl md:text-6xl xl:text-8xl 2xl:text-9xl; }
     h2 { @apply text-4xl md:text-5xl xl:text-7xl 2xl:text-8xl; }
     h3 { @apply text-4xl sm:text-6xl; }
