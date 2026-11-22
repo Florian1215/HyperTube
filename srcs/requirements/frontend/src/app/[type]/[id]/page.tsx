@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {useParams} from "next/navigation";
+import {useParams, useSearchParams} from "next/navigation";
 import {torrentStreaming, torrentStreamStatus, updateTorrentRequest, useMedia, useTorrentRequest, useTorrents} from "@/services/medias.service";
 import useHandleError from "@/hooks/useHandleError";
 import MediaHero from "@/components/MediaHero";
@@ -32,6 +32,16 @@ import {castToTv, useTvStatus} from "@/services/tv.service";
 
 const REQUESTABLE_DAYS = 365;
 
+function useUrlEpisode(type: tMedia) {
+    const searchParams = useSearchParams();
+    const season = Number(searchParams.get("season"));
+    const episode = Number(searchParams.get("episode"));
+
+    if (type !== "series" || !Number.isInteger(season) || !Number.isInteger(episode) || season < 1 || episode < 1)
+        return undefined;
+    return {season, episode};
+}
+
 export default function MediaPage() {
     const params = useParams();
     const id = params.id as string;
@@ -56,10 +66,12 @@ export default function MediaPage() {
     const featureBtn= (media && hasPerm(user, "medias.can_recommend_medias")) ? () => openModal({type: "set-feature", media: media}) : undefined;
     const [selectedEpisode, setSelectedEpisode] = useState<iWatchEpisode>();
     const nextEpisode = media && "next_episode" in media ? media.next_episode : undefined;
+    const urlEpisode = useUrlEpisode(type);
+    const isNextEpisode = !urlEpisode || (urlEpisode.season === nextEpisode?.season_number && urlEpisode.episode === nextEpisode?.episode_number);
     const watchedEpisode: iWatchEpisode = selectedEpisode ?? {
-        runtime: nextEpisode?.progress ?? 0,
-        episode: nextEpisode?.episode_number ?? 1,
-        season: nextEpisode?.season_number ?? 1,
+        runtime: isNextEpisode ? (nextEpisode?.progress ?? 0) : 0,
+        episode: urlEpisode?.episode ?? nextEpisode?.episode_number ?? 1,
+        season: urlEpisode?.season ?? nextEpisode?.season_number ?? 1,
     };
     const {data: torrents, isLoading: torrentsLoading} = useTorrents(media, watchedEpisode.season, watchedEpisode.episode);
     const {data: season} = useSeason(id, watchedEpisode.season, type === "series");
