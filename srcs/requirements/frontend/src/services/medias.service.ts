@@ -198,12 +198,17 @@ export function syncMediaProgress(queryClient: QueryClient, userId: number, medi
 
 type tTorrentStream = {id: string, status: iTorrent["status"], stream: string};
 
-export function torrentStreaming(torrentId: string, episode_number?: number) {
-    return apiClient<tTorrentStream>(`torrents/${torrentId}/`, undefined, {method: "POST", body: JSON.stringify({episode_number})});
+export function torrentStreaming(torrentId: string, episode_number?: number, season_number?: number) {
+    return apiClient<tTorrentStream>(`torrents/${torrentId}/`, undefined, {method: "POST", body: JSON.stringify({episode_number, season_number})});
 }
 
-export function torrentStreamStatus(torrentId: string, episode_number?: number) {
-    return apiClient<tTorrentStream>(`torrents/${torrentId}/${episode_number !== undefined ? `?episode_number=${episode_number}` : ""}`);
+export function torrentStreamStatus(torrentId: string, episode_number?: number, season_number?: number) {
+    const params = new URLSearchParams();
+    if (episode_number !== undefined)
+        params.set("episode_number", String(episode_number));
+    if (season_number !== undefined)
+        params.set("season_number", String(season_number));
+    return apiClient<tTorrentStream>(`torrents/${torrentId}/${params.size ? `?${params}` : ""}`);
 }
 
 export function useTorrents(media?: iMedia, season_number?: number, episode_number?: number) {

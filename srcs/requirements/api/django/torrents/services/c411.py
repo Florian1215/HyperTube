@@ -12,10 +12,10 @@ class C411Client:
     MAX_PAGES = 5
 
     @staticmethod
-    def search_medias(tmdbId, seasonNumber=None):
+    def search_medias(tmdbId, seasonNumber=None, tv=False):
         url = f'{C411_BASE_URL}/torznab?'
         params = {
-            't': 'movie' if seasonNumber is None else 'tvsearch',
+            't': 'tvsearch' if tv or seasonNumber is not None else 'movie',
             'apikey': C411_API_KEY,
             'tmdbid': tmdbId,
         }

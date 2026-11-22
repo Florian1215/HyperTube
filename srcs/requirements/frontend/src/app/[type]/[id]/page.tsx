@@ -117,7 +117,7 @@ export default function MediaPage() {
         if (preloadedTorrent.current === key)
             return;
         preloadedTorrent.current = key;
-        torrentStreaming(followingTorrent.id, followingEpisode.episode).catch(() => {});
+        torrentStreaming(followingTorrent.id, followingEpisode.episode, followingEpisode.season).catch(() => {});
     }, [preloadFollowing, followingEpisode, followingTorrent]);
 
     const [autoPlay, setAutoPlay] = useState(false);
@@ -146,12 +146,13 @@ export default function MediaPage() {
             if (torrentId) {
                 try {
                     const episode = media?.type === "series" ? watchedEpisode.episode : undefined;
-                    let res = await torrentStreaming(torrentId, episode);
+                    const seasonNumber = media?.type === "series" ? watchedEpisode.season : undefined;
+                    let res = await torrentStreaming(torrentId, episode, seasonNumber);
                     while (!cancelled && !(await fetch(`${API_URL}${res.stream}`)).ok) {
                         if (res.status === "error")
                             throw new Error(res.status);
                         await new Promise((resolve) => setTimeout(resolve, 2000));
-                        res = await torrentStreamStatus(torrentId, episode);
+                        res = await torrentStreamStatus(torrentId, episode, seasonNumber);
                     }
                     if (cancelled)
                         return;

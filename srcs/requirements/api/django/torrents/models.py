@@ -61,7 +61,14 @@ class Torrent(models.Model):
     def is_season_pack(self):
         return self.season_number is not None and self.episode_number is None
 
-    def get_stream_id(self, episode_number=None):
+    @property
+    def is_complete_pack(self):
+        """Every season of a series in one torrent: saved without a season number."""
+        return self.season_number is None and self.media.type == 'series'
+
+    def get_stream_id(self, episode_number=None, season_number=None):
+        if self.is_complete_pack:
+            return f'{self.id}/s{season_number}e{episode_number}'
         if self.is_season_pack:
             return f'{self.id}/e{episode_number}'
         return self.id

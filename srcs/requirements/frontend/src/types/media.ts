@@ -95,6 +95,7 @@ export interface iTorrent {
     peers: number
     created_at: string
     is_season_pack: boolean
+    is_complete_pack: boolean
 }
 
 export interface iProgress {
