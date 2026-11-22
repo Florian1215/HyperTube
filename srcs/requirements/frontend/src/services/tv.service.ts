@@ -3,17 +3,20 @@ import {useLocale} from "next-intl";
 import apiClient from "@/services/apiClient";
 import {tMedia} from "@/types/utils";
 
-const STATUS_INTERVAL_MS = 10_000;
-
+/** Asked once per page load: if it fails, the TV option stays hidden until the page is reloaded. */
 export function useTvStatus(enabled = true) {
     const locale = useLocale();
 
     return useQuery({
-        queryKey: ["tv-status", locale],
+        queryKey: ["tv-status"],
         queryFn: ({signal}) => apiClient<{online: boolean}>("tv/", locale, {signal}),
         enabled: enabled && !!locale,
-        refetchInterval: STATUS_INTERVAL_MS,
+        staleTime: Infinity,
+        gcTime: Infinity,
         retry: false,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });
 }
 
