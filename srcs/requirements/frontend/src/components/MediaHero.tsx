@@ -9,7 +9,7 @@ export default function MediaHero({children, media, childrenAction, actionButton
     const t = useTranslations("media");
 
     return (<div className={`${PAGE_PX} min-w-full`}>
-        <HoverEffect className="relative aspect-video xl:aspect-21/9" innerClassName="flex flex-col items-center gap-4 border" disabled={!onHoverChange || !media} scale={1.01} onHoverChange={onHoverChange}>
+        <HoverEffect className="relative aspect-video xl:aspect-21/9" innerClassName="flex flex-col items-center gap-4 border rounded-md overflow-hidden" disabled={!onHoverChange || !media} scale={1.01} onHoverChange={onHoverChange}>
             {media ?
                 <LoadingImage key={media.backdrop_url} className="absolute inset-0 size-full object-cover"
                     width={5000} height={5000} loading="eager"

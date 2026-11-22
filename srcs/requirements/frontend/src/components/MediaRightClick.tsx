@@ -48,7 +48,7 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     };
 
     if (contextMenu)
-        return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
+        return (<div className="fixed z-50 overflow-hidden custom-shadow-m rounded-sm bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
              onClick={(e) => e.stopPropagation()}
              onPointerDown={(e) => e.stopPropagation()}
         >
@@ -137,7 +137,7 @@ export function MenuAction({children, onClick, Icon}: {children: React.ReactNode
         e.preventDefault();
         e.stopPropagation();
         onClick();
-    }} className="flex items-center gap-2 w-full pl-3 pr-6 py-2 text-left text-sm transition hover:bg-dwhite-light">
+    }} className="flex items-center gap-2 w-full pl-3 pr-6 py-2 text-left text-sm transition hover:bg-dwhite-light rounded-xs">
         {Icon && <Icon size={20}/>}
         {children}
     </button>)

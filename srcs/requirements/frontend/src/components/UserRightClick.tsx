@@ -17,7 +17,7 @@ function UserRightClick({user, contextMenu, setContextMenu}: {user: iUser, conte
 
     if (!contextMenu)
         return null;
-    return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
+    return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border rounded-sm" style={{left: contextMenu.x, top: contextMenu.y}}
                  onClick={(e) => e.stopPropagation()}
                  onPointerDown={(e) => e.stopPropagation()}>
         <MenuAction Icon={({size}: {size: number}) => <BlockIcon size={size} color={user.is_blocked ? "dblack" : "red"}/>} onClick={() => {

@@ -42,7 +42,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
         {user && media && <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}
             seasonNumber={episode?.season_number}
             episodeNumber={episode?.episode_number}/>}
-        <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border" disabled={!!contextMenu}>
+        <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border rounded-xs" disabled={!!contextMenu}>
             <LoadingImage key={episode?.poster_url || media.backdrop_url} className="size-full object-cover transition-transform duration-200"
                    width={1000} height={1000} src={episode?.poster_url || media.backdrop_url} alt={t("posterAlt", {title: media.title})} loading="eager"
             />

@@ -95,8 +95,8 @@ function People({p, closeModal}: {p: iPeople, closeModal: () => void}) {
     const hover = useHoverEffect({shift: 6, highlightColor: CURRENT_COLOR_HIGHLIGHT});
 
     return (<Link {...hover.handlers} href={`/people/${p.id}`} className={`group/hover w-full min-w-0 ${hover.hoverClassName}`} onClick={closeModal}>
-        <div {...hover.moveProps} className={`relative flex gap-2 items-center p-2 group-hover/hover:bg-dwhite-light ${hover.moveClassName}`}>
-            <div className="relative border size-20 shrink-0 overflow-hidden">
+        <div {...hover.moveProps} className={`relative flex gap-2 items-center p-2 rounded-lg group-hover/hover:bg-dwhite-light ${hover.moveClassName}`}>
+            <div className="relative border size-20 shrink-0 overflow-hidden rounded-sm">
                 <div className="custom-noise opacity-25"/>
                 {
                     p.picture ?

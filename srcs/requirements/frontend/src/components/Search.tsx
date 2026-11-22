@@ -241,7 +241,7 @@ function UsersResults({t, users}: {t: tT, users?: iUser[]}) {
 
     return (<div className="divide-gray divide-y">
         {users?.map((user) => (
-            <UserContextMenu key={user.id} user={user}><div className="flex items-center p-3 hover:bg-dwhite-light">
+            <UserContextMenu key={user.id} user={user}><div className="flex items-center p-3 hover:bg-dwhite-light rounded-sm">
                 <Link href={`/users/${user.id}`} className="flex flex-1 items-center gap-4">
                     <ProfilePicture user={user}/>
                     <span className="text-bold truncate text-dblack">{user.username}</span>

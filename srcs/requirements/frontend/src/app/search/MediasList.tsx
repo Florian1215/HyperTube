@@ -112,7 +112,7 @@ function SelectedGenre({genres, deleteGenre, openGenreModal}: {genres: iGenre[],
     const showGenres = genres.slice(0, 2);
     const t = useTranslations("search");
 
-    const GenreTag = (id: number, name: string, onClick: () => void) => <button key={id} className="border flex items-center">
+    const GenreTag = (id: number, name: string, onClick: () => void) => <button key={id} className="rounded-md border flex items-center">
         <span onClick={openGenreModal}  className="font-hairline tracking-wider text-sm px-2 whitespace-nowrap">{name}</span>
         <CloseButton size={20} className="border-l px-1" onClickAction={onClick}/>
     </button>;

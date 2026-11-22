@@ -14,7 +14,7 @@ export default function PeopleCard({people}: {people: iPeople}) {
 
     return (<div className="flex gap-3 items-center min-w-0 p-3">
         <Link href={href} className="relative w-32 sm:w-64 shrink-0 aspect-2/3 sm:aspect-3/2">
-            <HoverEffect className="absolute inset-0" innerClassName="border overflow-hidden">
+            <HoverEffect className="absolute inset-0" innerClassName="border overflow-hidden rounded-sm">
                 <div className="custom-noise opacity-30"/>
                 {
                     people.picture ?

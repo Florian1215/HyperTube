@@ -33,7 +33,9 @@ export default function CommentsSection({media}: {media: iMedia}) {
     return (<div className="mx-auto max-w-2xl w-9/10 flex flex-col items-center gap-7 mb-10">
         <div className="w-full">
             <h2 className="text-center">{t("title")}</h2>
-            <Colors className="mt-1 sm:mt-2" />
+            <div className="rounded-md overflow-hidden mt-1 sm:mt-2">
+                <Colors/>
+            </div>
         </div>
         <div className="w-full text-center">
             {
@@ -85,7 +87,7 @@ function NewComment({user, media}: {user: iUser, media: iMedia}) {
     }
 
     return (<div className="flex flex-col items-center w-full gap-2">
-        <textarea ref={textareaRef} className={`border w-full block px-3 py-1.5 ${errors["content"] ? "border-red text-red" : ""}`}
+        <textarea ref={textareaRef} className={`border rounded-md w-full block px-3 py-1.5 ${errors["content"] ? "border-red text-red" : ""}`}
                   style={{resize: expendComment ? "vertical" : "none"}}
                   maxLength={1000} rows={expendComment ? 5 : 1}
                   placeholder={expendComment ? "" : t("writeComment")}

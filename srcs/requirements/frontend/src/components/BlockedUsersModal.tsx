@@ -25,7 +25,6 @@ function BlockedUsersList({onClose}: {onClose: () => void}) {
     const users = data?.pages.flatMap((page) => page.results) ?? [];
     const loader = <div className="h-14 relative"><div className="custom-loading"/></div>;
 
-    // blocked users can't be visited from here: their profile is not the point of this list
     return (<ModalLayout title={t("blockedTitle")} onCloseAction={onClose}>
         <div className="w-full sm:w-md max-h-100 overflow-y-auto">
             {isLoading ? loader : users.length === 0 ? <p className="p-2 text-gray">{t("noBlocked")}</p> :
