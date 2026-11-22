@@ -109,11 +109,17 @@ function formatEpisodeNumber(episode: number) {
     return `E${String(episode).padStart(2, "0")}`;
 }
 
-const STACK_OFFSET = 10;
-const STACK_OFFSET_HOVER = 44;
-const MAX_STACK = 4;
-const MAX_AVATARS = 3;
+const STACK_OFFSET = 8;
+const STACK_OFFSET_HOVER = 45;
+const STACK_OFFSET_Y = 3;
 
+/** Each episode goes up a bit more than the previous one, and the box from the bottom of the first episode
+ * to the top of the last one stays centered on the series card (it would otherwise be (count + 1) / 2 offsets too high). */
+function getStackY(index: number, count: number) {
+    return ((count + 1) / 2 - (index + 1)) * STACK_OFFSET_Y;
+}
+const MAX_STACK = 10;
+const MAX_AVATARS = 5;
 export function FriendActivityCard({activities}: {activities: iMediaActivity[]}) {
     const tMedia = useTranslations("media");
     const locale = useLocale();
@@ -153,8 +159,9 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                  className="group shrink-0 sm:pr-(--stack-pad) sm:hover:mr-(--stack-extra) sm:data-open:mr-(--stack-extra) transition-[margin] duration-300 ease-out"
                  style={{"--stack-pad": `${stack.length * STACK_OFFSET}px`, "--stack-extra": `${stack.length * (STACK_OFFSET_HOVER - STACK_OFFSET)}px`} as React.CSSProperties}>
         {menu}
+        {/* the episodes go up behind the card: the whole block goes down by half of it to stay centered */}
         <div className="relative isolate w-[78vw] sm:w-80 xl:w-96">
-            {stack.map((episode, index) => <FriendActivityEpisodeLayer key={getActivityKey(episode)} episode={episode} index={index}/>)}
+            {stack.map((episode, index) => <FriendActivityEpisodeLayer key={getActivityKey(episode)} episode={episode} index={index} count={stack.length}/>)}
             <Link href={href} title={media.title} className="block relative aspect-3/2" onClick={onFrontClick}>
                 <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border">
                     <LoadingImage className="size-full object-cover" width={400} height={225} src={media.backdrop_url} alt={tMedia("posterAlt", {title: media.title})}/>
@@ -191,7 +198,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     </div>);
 }
 
-function FriendActivityEpisodeLayer({episode, index}: {episode: iMediaActivity, index: number}) {
+function FriendActivityEpisodeLayer({episode, index, count}: {episode: iMediaActivity, index: number, count: number}) {
     const tSerie = useTranslations("serie");
     const {onContextMenu, menu} = useMediaRightClick(episode);
     const {season_number, episode_number, name, poster_url} = episode.episode!;
@@ -204,8 +211,8 @@ function FriendActivityEpisodeLayer({episode, index}: {episode: iMediaActivity, 
                       onContextMenu(e);
                   }}
                   className="group/layer absolute inset-0 z-(--layer-z) hover:z-20 max-sm:hidden sm:scale-y-[0.88] hover:scale-y-100
-                             sm:translate-x-(--stack-x) sm:group-hover:translate-x-(--stack-hover) sm:group-data-open:translate-x-(--stack-hover) transition-[translate] duration-300 ease-out"
-                  style={{"--stack-x": `${(index + 1) * STACK_OFFSET}px`, "--stack-hover": `${(index + 1) * STACK_OFFSET_HOVER}px`, "--layer-z": -1 - index} as React.CSSProperties}>
+                             sm:translate-x-(--stack-x) sm:group-hover:translate-x-(--stack-hover) sm:group-data-open:translate-x-(--stack-hover) sm:translate-y-(--stack-y) transition-[translate] duration-300 ease-out"
+                  style={{"--stack-x": `${(index + 1) * STACK_OFFSET}px`, "--stack-hover": `${(index + 1) * STACK_OFFSET_HOVER}px`, "--stack-y": `${getStackY(index, count)}px`, "--layer-z": -1 - index} as React.CSSProperties}>
         <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border bg-black">
             <LoadingImage className="size-full object-cover brightness-(--layer-brightness) group-hover/layer:brightness-100"
                           style={{"--layer-brightness": `${75 - index * 12}%`} as React.CSSProperties} width={400} height={225}
