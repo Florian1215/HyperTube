@@ -113,7 +113,8 @@
       "requestError": "Request error: {error}",
       "chooseBackdrop": "Choose a backdrop",
       "feature": "Feature this film"
-    }
+    },
+    "commented": "Commented"
   },
   "people": {
     "cast": "Actor",

@@ -253,9 +253,10 @@ class MediaActivitySerializer(MediaHistorySerializer):
     progress = serializers.SerializerMethodField()
     complete = serializers.SerializerMethodField()
     pourcent = serializers.SerializerMethodField()
+    has_comment = serializers.BooleanField(read_only=True, default=False)
 
     class Meta(MediaHistorySerializer.Meta):
-        fields = MediaHistorySerializer.Meta.fields + ['user']
+        fields = MediaHistorySerializer.Meta.fields + ['user', 'has_comment']
 
     def get_viewer_progress(self, obj, field, default):
         return MediaProgressMixin(context=self.context).get_progress_field(obj.media, field, default)

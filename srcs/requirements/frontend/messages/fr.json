@@ -113,7 +113,8 @@
       "requestError": "Erreur lors de la requete: {error}",
       "chooseBackdrop": "Choisir un arrière-plan",
       "feature": "Mettre en avant"
-    }
+    },
+    "commented": "A commenté"
   },
   "people": {
     "cast": "Acteur",

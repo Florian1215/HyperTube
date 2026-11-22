@@ -12,6 +12,7 @@ import {TitleMedia} from "@/components/Title";
 import useFormatDate from "@/utils/formatDate";
 import ExpandableText from "@/components/ui/ExpandableText";
 import ProfilePicture from "@/components/ProfilePicture";
+import CommentBadge from "@/components/CommentBadge";
 import Rating from "@/components/Rating";
 import {openMenuOnTouch, useMediaRightClick} from "@/components/MediaRightClick";
 
@@ -65,8 +66,9 @@ export default function MediaInfoSection({media, watchedBy} : {media?: iMovieDet
             <InfoMedia name={t("watchedBy")} onClick={openWatchedBy}>
                 <div className="flex flex-wrap items-center gap-1.5">
                     {watchedBy.slice(0, MAX_WATCHED_BY).map((user) => (<Link key={user.id} href={`/users/${user.id}`} title={user.username} className="flex isolate">
-                        {Array.from({length: Math.min(Math.max(user.watch_count, 1), 15)}, (_, i) => (<div key={i} className={i > 0 ? "-ml-6.5" : ""} style={{zIndex: 5 - i}}>
+                        {Array.from({length: Math.min(Math.max(user.watch_count, 1), 15)}, (_, i) => (<div key={i} className={`relative ${i > 0 ? "-ml-6.5" : ""}`} style={{zIndex: 5 - i}}>
                             <ProfilePicture size={3} user={user}/>
+                            {i === 0 && user.has_comment && <CommentBadge/>}
                         </div>))}
                     </Link>))}
                 </div>

@@ -9,6 +9,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from comments.models import Comment
 from config.errors import CANNOT_BLOCK_YOURSELF, CANNOT_FOLLOW_BLOCKED, CANNOT_FOLLOW_YOURSELF
 from medias.context import LangHistoryContext
 from medias.models import Media
@@ -215,7 +216,9 @@ class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
 
 
 class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
-    queryset = UserHistory.objects.select_related('user', 'media', 'episode')
+    # whether the friend also commented the media, whenever it was
+    queryset = UserHistory.objects.select_related('user', 'media', 'episode').annotate(
+        has_comment=Exists(Comment.objects.filter(user=OuterRef('user'), media=OuterRef('media'))))
     serializer_class = MediaActivitySerializer
     permission_classes = [IsAuthenticated]
 

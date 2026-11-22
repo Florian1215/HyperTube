@@ -12,7 +12,7 @@ import {UserContextMenu} from "@/components/UserRightClick";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {TitleMedia} from "@/components/Title";
 import {iMediaActivity} from "@/types/media";
-import {EyeIcon, RewatchIcon} from "@/components/Icons";
+import {CommentIcon, EyeIcon, RewatchIcon} from "@/components/Icons";
 import {useMediaRightClick} from "@/components/MediaRightClick";
 
 export function FriendsActivityList({activities}: {activities?: iMediaActivity[]}) {
@@ -49,6 +49,7 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
                     <span className="hidden sm:block font-semibold truncate">{activity.user.username}</span>
                 </Link></UserContextMenu>
                 <div className="flex items-center justify-end gap-2 sm:gap-4 ml-auto shrink-0">
+                    {activity.has_comment && <span title={tMedia("commented")} className="flex items-center"><CommentIcon size={14}/></span>}
                     {activity.rewatch && <span title={tMedia("rewatch")} className="flex items-center gap-1 text-sm">
                         <RewatchIcon/>
                         <span className="hidden sm:inline">{tMedia("rewatch")}</span>
@@ -123,6 +124,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     const stack = episodes.slice(0, MAX_STACK);
     const users = activities.filter((activity, index) => activities.findIndex((other) => other.user.id === activity.user.id) === index);
     const hiddenUsers = users.length - MAX_AVATARS;
+    const commenters = users.filter((activity) => activity.has_comment).map((activity) => activity.user.username);
 
     const href = formatURL(media) + (media.episode ? `?season=${media.episode.season_number}&episode=${media.episode.episode_number}` : "");
     const [open, setOpen] = useState(false);
@@ -166,8 +168,11 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                     </div>
                     {media.watched_at && <span title={media.rewatch ? tMedia("rewatch") : undefined}
                                                className="absolute -top-px -left-px z-10 flex items-center gap-1 px-2 py-1 border-b border-r bg-white text-black text-xs font-bold leading-4 max-sm:hidden opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200">
-                        {media.rewatch ? <RewatchIcon size={11}/> : <EyeIcon size={13}/>}
+                        {media.rewatch ? <RewatchIcon size={11} color="black"/> : <EyeIcon size={13} color="black"/>}
                         {formatRelativeDate(media.watched_at, locale)}
+                        {commenters.length > 0 && <span title={`${tMedia("commented")} · ${commenters.join(", ")}`} className="flex items-center ml-1">
+                            <CommentIcon size={13} color="black"/>
+                        </span>}
                     </span>}
                 </HoverEffect>
             </Link>

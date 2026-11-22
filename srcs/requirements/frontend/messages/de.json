@@ -113,7 +113,8 @@
       "requestError": "Fehler bei der Anfrage: {error}",
       "chooseBackdrop": "Wählen Sie ein Hintergrundbild",
       "feature": "Diesen Film vorstellen"
-    }
+    },
+    "commented": "Hat kommentiert"
   },
   "people": {
     "cast": "Schauspieler",
