@@ -173,7 +173,18 @@
     "profile": "Profile",
     "avatar": "Avatar",
     "password": "Password",
-    "account": "Account"
+    "account": "Account",
+    "historyVisibility": "History visibility",
+    "visibility": {
+      "public": "Public",
+      "friends": "Friends",
+      "private": "Private"
+    },
+    "visibilityDescription": {
+      "public": "Everyone can see your history, watchlist and comments on your profile.",
+      "friends": "Only people you follow who also follow you can see your history, watchlist and comments on your profile.",
+      "private": "Only you can see your history, watchlist and comments on your profile."
+    }
   },
   "profile": {
     "memberSince": "Member since {date}",
@@ -200,7 +211,10 @@
     "followingTitle": "Following",
     "followersTitle": "Followers",
     "noFollowing": "Not following anyone yet.",
-    "noFollowers": "No followers yet."
+    "noFollowers": "No followers yet.",
+    "privateHistory": "This history is private.",
+    "privateWatchlist": "This watchlist is private.",
+    "privateComments": "These comments are private."
   },
   "common": {
     "profilePictureAlt": "Profile picture",

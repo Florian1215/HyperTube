@@ -19,9 +19,19 @@ class User(AbstractUser):
         ('vf', 'French version')
     ]
 
+    HISTORY_PUBLIC = 'public'
+    HISTORY_FRIENDS = 'friends'
+    HISTORY_PRIVATE = 'private'
+    HISTORY_VISIBILITY_CHOICES = [
+        (HISTORY_PUBLIC, 'Everyone'),
+        (HISTORY_FRIENDS, 'Friends: users following each other'),
+        (HISTORY_PRIVATE, 'Only the user'),
+    ]
+
     color = models.CharField(max_length=10, choices=COLOR_CHOICES, blank=True)
     profile_picture = models.URLField(null=True, blank=True)
     preferred_language = models.CharField(max_length=2, choices=PREFERRED_LANGUAGE_CHOICES, default='vo')
+    history_visibility = models.CharField(max_length=10, choices=HISTORY_VISIBILITY_CHOICES, default=HISTORY_PUBLIC)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):

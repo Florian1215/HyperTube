@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Count, Exists, Max, OuterRef, Value
+from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, Max, OuterRef, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -15,6 +15,7 @@ from medias.models import Media
 from medias.serializers import MediaActivitySerializer, MediaComingSoonSerializer, MediaHistorySerializer, SmallMediaSerializer
 from users.models import User, UserFollow, UserHistory
 from users.permissions import IsUserOwner
+from users.visibility import can_see_history, history_visible
 from users.pictures import delete_profile_picture, save_profile_picture
 from users.watching import get_coming_soon, get_continue_watching
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
@@ -40,7 +41,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = super().get_queryset().annotate(
-            following_count=Count('following', distinct=True), followers_count=Count('followers', distinct=True))
+            following_count=Count('following', distinct=True), followers_count=Count('followers', distinct=True),
+            can_see_history=ExpressionWrapper(history_visible(user), output_field=BooleanField()))
         if not user.is_authenticated:
             return queryset.annotate(is_following=Value(False))
         return queryset.annotate(
@@ -126,6 +128,8 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
         return super().get_serializer_class()
 
     def filter_queryset(self, queryset):
+        if not can_see_history(self.request.user, self.kwargs['user_id']):
+            return Media.objects.none() if self.is_series() else queryset.none()
         if self.is_series():
             return Media.objects.filter(type='series', history__user=self.kwargs['user_id']).annotate(
                 last_watch=Max('history__updated_at')
@@ -142,7 +146,7 @@ class UserMediasApiView(LangHistoryContext, generics.ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs.get('user_id') or self.request.user.id
-        if user_id is None:
+        if user_id is None or not can_see_history(self.request.user, user_id):
             return []
         medias = type(self).get_medias(self.request, user_id)
         media_type = self.kwargs.get('type')
@@ -168,6 +172,8 @@ class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
     serializer_class = SmallMediaSerializer
 
     def get_queryset(self):
+        if not can_see_history(self.request.user, self.kwargs['user_id']):
+            return Media.objects.none()
         queryset = Media.objects.filter(watchlist__user=self.kwargs['user_id'])
         media_type = self.request.query_params.get('type')
         if media_type in ('movies', 'series'):
@@ -182,7 +188,7 @@ class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
 
     def filter_queryset(self, queryset):
         filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=7)}
-        queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
+        queryset = queryset.filter(history_visible(self.request.user, 'user'), user__followers__follower=self.request.user, **filters)
         if 'type' in self.kwargs:
             queryset = queryset.filter(media__type=self.kwargs['type'])
         return queryset.order_by('-watched_at')

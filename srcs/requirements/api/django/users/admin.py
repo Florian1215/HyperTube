@@ -48,7 +48,7 @@ class UserAdmin(BaseUserAdmin):
                        'followers_table', 'watchlist_table')
     fieldsets = (
         (None, {'fields': ('avatar_large', 'username', 'password')}),
-        ('Profile', {'fields': ('color', 'preferred_language', 'profile_picture')}),
+        ('Profile', {'fields': ('color', 'preferred_language', 'history_visibility', 'profile_picture')}),
         ('Activity', {'fields': ('stats', 'last_login', 'created_at')}),
         ('History', {'fields': ('history_table',)}),
         ('Following', {'fields': ('following_table',)}),

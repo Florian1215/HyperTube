@@ -15,6 +15,8 @@ export default function TabMediaHistory({user, type}: {user: iUser, type: tMedia
     const {data: watchMedias} = useUserHistory(user.id, type, index);
     const totalPage = computeTotalPage(watchMedias);
 
+    if (user.can_see_history === false)
+        return (<SmallText>{t("privateHistory")}</SmallText>);
     if (watchMedias && watchMedias.results.length === 0)
         return (<SmallText>{t("noMediasYet")}</SmallText>);
     return (<Pagination currentIndex={index} onClick={changeIndex} totalPage={totalPage} variableMT={true}>
@@ -27,6 +29,8 @@ export function TabWatchlist({user}: {user: iUser}) {
     const t = useTranslations("profile");
     const {data: medias} = useUserWatchlist(user.id, index);
 
+    if (user.can_see_history === false)
+        return (<SmallText>{t("privateWatchlist")}</SmallText>);
     if (medias && medias.results.length === 0)
         return (<SmallText>{t("noWatchlistYet")}</SmallText>);
     return (<Pagination currentIndex={index} onClick={setIndex} totalPage={computeTotalPage(medias)} variableMT={true}>

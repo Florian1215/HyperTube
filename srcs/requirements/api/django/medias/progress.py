@@ -5,6 +5,7 @@ from medias.models import Media
 from series.models import Episode
 from users.models import User, UserFollow, UserHistory, UserWatchlist
 from users.serializers import UserSerializer
+from users.visibility import history_visible
 
 
 def get_progress_ratio(watched, total):
@@ -34,7 +35,7 @@ def get_views(media, user):
 def get_watched_by(viewer, media):
     if not viewer.is_authenticated:
         return []
-    users = User.objects.filter(Q(id=viewer.id) | Q(followers__follower=viewer), history__media=media,
+    users = User.objects.filter(Q(id=viewer.id) | Q(followers__follower=viewer), history_visible(viewer), history__media=media,
                                 history__complete=True).distinct().order_by('username')
     res = []
     for watcher in users:
@@ -48,7 +49,7 @@ def get_season_watched_by(viewer, season):
         return {}
     followed = UserFollow.objects.filter(follower=viewer).values('followed')
     history = UserHistory.objects.filter(
-        Q(user=viewer) | Q(user__in=followed), episode__season=season, complete=True
+        Q(user=viewer) | Q(user__in=followed), history_visible(viewer, 'user'), episode__season=season, complete=True
     ).select_related('user').order_by('user__username', '-id')
     views = {}
     for h in history:

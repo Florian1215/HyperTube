@@ -173,7 +173,18 @@
     "profile": "Profil",
     "avatar": "Avatar",
     "password": "Mot de passe",
-    "account": "Compte"
+    "account": "Compte",
+    "historyVisibility": "Visibilité de l'historique",
+    "visibility": {
+      "public": "Public",
+      "friends": "Amis",
+      "private": "Privé"
+    },
+    "visibilityDescription": {
+      "public": "Tout le monde peut voir votre historique, votre watchlist et vos commentaires sur votre profil.",
+      "friends": "Seules les personnes que vous suivez et qui vous suivent peuvent voir votre historique, votre watchlist et vos commentaires sur votre profil.",
+      "private": "Vous seul pouvez voir votre historique, votre watchlist et vos commentaires sur votre profil."
+    }
   },
   "profile": {
     "memberSince": "Membre depuis {date}",
@@ -200,7 +211,10 @@
     "followingTitle": "Abonnements",
     "followersTitle": "Abonnés",
     "noFollowing": "Aucun abonnement pour le moment.",
-    "noFollowers": "Aucun abonné pour le moment."
+    "noFollowers": "Aucun abonné pour le moment.",
+    "privateHistory": "Cet historique est privé.",
+    "privateWatchlist": "Cette watchlist est privée.",
+    "privateComments": "Ces commentaires sont privés."
   },
   "common": {
     "profilePictureAlt": "Photo de profil",

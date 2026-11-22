@@ -173,7 +173,18 @@
     "profile": "Profil",
     "avatar": "Avatar",
     "password": "Passwort",
-    "account": "Konto"
+    "account": "Konto",
+    "historyVisibility": "Sichtbarkeit des Verlaufs",
+    "visibility": {
+      "public": "Öffentlich",
+      "friends": "Freunde",
+      "private": "Privat"
+    },
+    "visibilityDescription": {
+      "public": "Alle können deinen Verlauf, deine Watchlist und deine Kommentare auf deinem Profil sehen.",
+      "friends": "Nur Personen, denen du folgst und die dir folgen, können deinen Verlauf, deine Watchlist und deine Kommentare auf deinem Profil sehen.",
+      "private": "Nur du kannst deinen Verlauf, deine Watchlist und deine Kommentare auf deinem Profil sehen."
+    }
   },
   "profile": {
     "memberSince": "Mitglied seit {date}",
@@ -200,7 +211,10 @@
     "followingTitle": "Folgt",
     "followersTitle": "Follower",
     "noFollowing": "Folgt noch niemandem.",
-    "noFollowers": "Noch keine Follower."
+    "noFollowers": "Noch keine Follower.",
+    "privateHistory": "Dieser Verlauf ist privat.",
+    "privateWatchlist": "Diese Watchlist ist privat.",
+    "privateComments": "Diese Kommentare sind privat."
   },
   "common": {
     "profilePictureAlt": "Profilbild",
