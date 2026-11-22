@@ -325,5 +325,10 @@
     "connect": "Connecter",
     "signinRequired": "Connectez-vous pour relier la TV à votre compte.",
     "signin": "Se connecter"
+  },
+  "updates": {
+    "banner": "Nouvelle mise à jour {version}",
+    "title": "Mise à jour {version}",
+    "close": "Masquer"
   }
 }

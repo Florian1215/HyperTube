@@ -81,7 +81,8 @@ INSTALLED_APPS = [
     'people',
     'series',
     'torrents',
-    'users'
+    'users',
+    'updates',
 ]
 
 MIDDLEWARE = [

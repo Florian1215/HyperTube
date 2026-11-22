@@ -325,5 +325,10 @@
     "connect": "Verbinden",
     "signinRequired": "Melden Sie sich an, um den Fernseher mit Ihrem Konto zu verbinden.",
     "signin": "Anmelden"
+  },
+  "updates": {
+    "banner": "Neues Update {version}",
+    "title": "Update {version}",
+    "close": "Ausblenden"
   }
 }

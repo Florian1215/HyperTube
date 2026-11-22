@@ -23,5 +23,6 @@ urlpatterns = [
     path('api/v1/', include('users.urls')),
     path('api/v1/', include('people.urls')),
     path('api/v1/', include('torrents.urls')),
+    path('api/v1/', include('updates.urls')),
     re_path(r'^api/v1/media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}, name='media')
 ]

@@ -325,5 +325,10 @@
     "connect": "Connect",
     "signinRequired": "Sign in to connect the TV to your account.",
     "signin": "Sign in"
+  },
+  "updates": {
+    "banner": "New update {version}",
+    "title": "Update {version}",
+    "close": "Hide"
   }
 }
