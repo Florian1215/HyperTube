@@ -176,14 +176,15 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                     </span>}
                 </HoverEffect>
             </Link>
-            <div className="absolute top-1.5 right-1.5 z-10 flex items-center -space-x-2">
-                {users.slice(0, MAX_AVATARS).map((activity) => <UserContextMenu key={activity.user.id} user={activity.user}>
-                    <Link href={`/users/${activity.user.id}`} className="shrink-0 hover:z-10"
+            {/* the margin is on the avatars: their right click wrapper is `display: contents`, a space-x margin would be lost on it */}
+            <div className="absolute top-1.5 right-1.5 z-10 flex items-center">
+                {users.slice(0, MAX_AVATARS).map((activity, index) => <UserContextMenu key={activity.user.id} user={activity.user}>
+                    <Link href={`/users/${activity.user.id}`} className={`shrink-0 hover:z-10 ${index > 0 ? "-ml-2" : ""}`}
                           title={activity.user.username + (activity.watched_at ? ` · ${formatRelativeDate(activity.watched_at, locale)}` : "")}>
                         <ProfilePicture size={3} user={activity.user}/>
                     </Link>
                 </UserContextMenu>)}
-                {hiddenUsers > 0 && <span className="size-8 flex items-center justify-center rounded-full border bg-black text-white text-xs font-semibold"
+                {hiddenUsers > 0 && <span className="-ml-2 size-8 flex items-center justify-center rounded-full border bg-black text-white text-xs font-semibold"
                                           title={users.slice(MAX_AVATARS).map((activity) => activity.user.username).join(", ")}>+{hiddenUsers}</span>}
             </div>
         </div>
