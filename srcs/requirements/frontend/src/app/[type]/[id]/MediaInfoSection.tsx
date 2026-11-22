@@ -47,7 +47,7 @@ export default function MediaInfoSection({media, watchedBy} : {media?: iMovieDet
     const status = media.status === "Released" ? undefined : (tStatus.has(statusKey) ? tStatus(statusKey) : media.status);
 
     return (<div className="flex flex-col gap-2 xl:gap-4 max-w-full md:max-w-5/6 xl:max-w-2/3 mx-3 sm:mx-auto">
-        <div className="mx-auto pb-4" onContextMenu={onContextMenu} onClickCapture={openMenuOnTouch(menu ? onContextMenu : undefined)}>
+        <div className="mx-auto pb-4 px-4 max-w-full min-w-0" onContextMenu={onContextMenu} onClickCapture={openMenuOnTouch(menu ? onContextMenu : undefined)}>
             {menu}
             <TitleMedia media={media}/>
         </div>
