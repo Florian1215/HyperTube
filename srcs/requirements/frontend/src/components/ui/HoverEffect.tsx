@@ -47,7 +47,7 @@ export function useHoverEffect({disabled = false, shift = 10, scale = 1.03, high
         hoverClassName: disabled ? "" : HIDE_CURSOR,
         moveClassName: disabled ? "" : "transition-transform duration-150 ease-out motion-reduce:transition-none",
         moveProps: {"data-hover-move": true, style: disabled ? undefined : {transform: "translate(calc(var(--hover-x, 0px) + var(--shadow-shift, 0px)), calc(var(--hover-y, 0px) + var(--shadow-shift, 0px))) scale(var(--hover-scale, 1))"}},
-        highlight: disabled ? null : <span className="absolute inset-0 pointer-events-none opacity-0 motion-safe:group-hover/hover:opacity-20 transition-opacity duration-150"
+        highlight: disabled ? null : <span className="absolute inset-0 rounded-[inherit] pointer-events-none opacity-0 motion-safe:group-hover/hover:opacity-20 transition-opacity duration-150"
                                            style={{background: `radial-gradient(circle at var(--pointer-x, 50%) var(--pointer-y, 50%), ${highlightColor}, transparent 55%)`}}/>,
     };
 }

@@ -25,6 +25,53 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     const {openModal} = useModal();
     const locale = useLocale();
 
+    useCloseContextMenu(setContextMenu);
+
+    const handleAction = async (action: () => Promise<iProgress | null>) => {
+        try {
+            const data = await action();
+            syncMediaProgress(queryClient, user.id, media, data ?? undefined, episodeNumber);
+            setContextMenu(undefined);
+        } catch (e) {
+            addNotification(tError("failedChangeProgression", {error: e instanceof ApiError ? e.message : String(e)}), "error");
+        }
+    };
+
+    const openFeatureModal = async () => {
+        setContextMenu(undefined);
+        try {
+            const details = "backdrops_url" in media ? media as iMediaDetails : await apiClient<iMediaDetails>(`${media.type}/${media.id}/`, locale);
+            openModal({type: "set-feature", media: details});
+        } catch (e) {
+            addNotification(e instanceof ApiError ? e.message : tError("unknown"), "error");
+        }
+    };
+
+    if (contextMenu)
+        return (<div className="fixed z-50 overflow-hidden custom-shadow-m rounded-sm bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
+             onClick={(e) => e.stopPropagation()}
+             onPointerDown={(e) => e.stopPropagation()}
+        >
+            <MenuAction Icon={({size}: {size: number}) => <BookmarkIcon size={size} filled={media.in_watchlist}/>} onClick={() => {
+                setContextMenu(undefined);
+                void toggleWatchlist(media);
+            }}>{t(media.in_watchlist ? "removeFromWatchlist" : "addToWatchlist")}</MenuAction>
+            {progress.complete ?
+                <MenuAction Icon={(size: number) => <EyeIcon size={size} crossed={true}/>} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("setAsNotWatched")}</MenuAction> :
+                <MenuAction Icon={EyeIcon} onClick={() => handleAction(() => updateMediaProgress(media?.id, media.type, 0, 100, true, (progress.progress ?? 0) > 0, seasonNumber, episodeNumber))}>{t("setAsWatched")}</MenuAction>
+            }
+            {(media.type === "movies" || episodeNumber !== undefined) && <MenuAction Icon={EditIcon} onClick={() => {
+                setContextMenu(undefined);
+                openModal({type: "log-media", logMedia: {media, seasonNumber, episodeNumber, rewatch: progress.complete}});
+            }}>{t("logMedia", {type: episodeNumber !== undefined ? "episode" : "movie"})}</MenuAction>}
+            {hasPerm(user, "medias.can_recommend_medias") && <MenuAction Icon={({size}: {size: number}) => <StarIcon size={size} color="dblack"/>} onClick={() => void openFeatureModal()}>{t("setFeature")}</MenuAction>}
+            {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
+        </div>);
+    return null;
+}
+
+/** Closes a context menu on any click, scroll, Escape or other context menu. */
+export function useCloseContextMenu(setContextMenu: (val?: iAxe) => void) {
     useEffect(() => {
         const closeMenu = () => setContextMenu(undefined);
 
@@ -49,48 +96,6 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    const handleAction = async (action: () => Promise<iProgress | null>) => {
-        try {
-            const data = await action();
-            syncMediaProgress(queryClient, user.id, media, data ?? undefined, episodeNumber);
-            setContextMenu(undefined);
-        } catch (e) {
-            addNotification(tError("failedChangeProgression", {error: e instanceof ApiError ? e.message : String(e)}), "error");
-        }
-    };
-
-    const openFeatureModal = async () => {
-        setContextMenu(undefined);
-        try {
-            const details = "backdrops_url" in media ? media as iMediaDetails : await apiClient<iMediaDetails>(`${media.type}/${media.id}/`, locale);
-            openModal({type: "set-feature", media: details});
-        } catch (e) {
-            addNotification(e instanceof ApiError ? e.message : tError("unknown"), "error");
-        }
-    };
-
-    if (contextMenu)
-        return (<div className="fixed z-50 overflow-hidden custom-shadow-m bg-dwhite p-1 border" style={{left: contextMenu.x, top: contextMenu.y}}
-             onClick={(e) => e.stopPropagation()}
-             onPointerDown={(e) => e.stopPropagation()}
-        >
-            <MenuAction Icon={({size}: {size: number}) => <BookmarkIcon size={size} filled={media.in_watchlist}/>} onClick={() => {
-                setContextMenu(undefined);
-                void toggleWatchlist(media);
-            }}>{t(media.in_watchlist ? "removeFromWatchlist" : "addToWatchlist")}</MenuAction>
-            {progress.complete ?
-                <MenuAction Icon={(size: number) => <EyeIcon size={size} crossed={true}/>} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("setAsNotWatched")}</MenuAction> :
-                <MenuAction Icon={EyeIcon} onClick={() => handleAction(() => updateMediaProgress(media?.id, media.type, 0, 100, true, (progress.progress ?? 0) > 0, seasonNumber, episodeNumber))}>{t("setAsWatched")}</MenuAction>
-            }
-            {(media.type === "movies" || episodeNumber !== undefined) && <MenuAction Icon={EditIcon} onClick={() => {
-                setContextMenu(undefined);
-                openModal({type: "log-media", logMedia: {media, seasonNumber, episodeNumber, rewatch: progress.complete}});
-            }}>{t("logMedia", {type: episodeNumber !== undefined ? "episode" : "movie"})}</MenuAction>}
-            {hasPerm(user, "medias.can_recommend_medias") && <MenuAction Icon={({size}: {size: number}) => <StarIcon size={size} color="dblack"/>} onClick={() => void openFeatureModal()}>{t("setFeature")}</MenuAction>}
-            {!progress.complete && progress.pourcent > 0 && progress.pourcent < 100 && <MenuAction Icon={TrashIcon} onClick={() => handleAction(() => deleteMediaProgress(media?.id, media.type, seasonNumber, episodeNumber))}>{t("clearProgression")}</MenuAction>}
-        </div>);
-    return null;
 }
 
 let lastPointerType: string | undefined;
@@ -127,12 +132,12 @@ export function useMediaRightClick(media?: iMedia) {
     return {onContextMenu, menu};
 }
 
-function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onClick: () => void, Icon?: React.ElementType}) {
+export function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onClick: () => void, Icon?: React.ElementType}) {
     return (<button onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         onClick();
-    }} className="flex items-center gap-2 w-full pl-3 pr-6 py-2 text-left text-sm transition hover:bg-dwhite-light">
+    }} className="flex items-center gap-2 w-full pl-3 pr-6 py-2 text-left text-sm transition hover:bg-dwhite-light rounded-xs">
         {Icon && <Icon size={20}/>}
         {children}
     </button>)

@@ -1,10 +1,12 @@
 from django.db.models import Q
 from rest_framework import serializers
 
+from comments.models import Comment
 from medias.models import Media
 from series.models import Episode
 from users.models import User, UserFollow, UserHistory, UserWatchlist
 from users.serializers import UserSerializer
+from users.visibility import history_visible
 
 
 def get_progress_ratio(watched, total):
@@ -34,13 +36,19 @@ def get_views(media, user):
 def get_watched_by(viewer, media):
     if not viewer.is_authenticated:
         return []
-    users = User.objects.filter(Q(id=viewer.id) | Q(followers__follower=viewer), history__media=media,
+    users = User.objects.filter(Q(id=viewer.id) | Q(followers__follower=viewer), history_visible(viewer), history__media=media,
                                 history__complete=True).distinct().order_by('username')
+    commented = get_commenters(media, users)
     res = []
     for watcher in users:
         views = get_views(media, watcher)
-        res.append({**UserSerializer(watcher).data, 'watch_count': len(views), 'views': views})
+        res.append({**UserSerializer(watcher).data, 'watch_count': len(views), 'views': views, 'has_comment': watcher.id in commented})
     return res
+
+
+def get_commenters(media, users):
+    """The ids of the users who commented the media (the whole series for an episode), whenever it was."""
+    return set(Comment.objects.filter(media=media, user__in=users).values_list('user_id', flat=True))
 
 
 def get_season_watched_by(viewer, season):
@@ -48,12 +56,13 @@ def get_season_watched_by(viewer, season):
         return {}
     followed = UserFollow.objects.filter(follower=viewer).values('followed')
     history = UserHistory.objects.filter(
-        Q(user=viewer) | Q(user__in=followed), episode__season=season, complete=True
+        Q(user=viewer) | Q(user__in=followed), history_visible(viewer, 'user'), episode__season=season, complete=True
     ).select_related('user').order_by('user__username', '-id')
     views = {}
     for h in history:
         views.setdefault(h.episode_id, {}).setdefault(h.user, []).append(h.watched_at)
-    return {episode_id: [{**UserSerializer(user).data, 'watch_count': len(dates), 'views': dates}
+    commented = get_commenters(season.serie_id, {h.user_id for h in history})
+    return {episode_id: [{**UserSerializer(user).data, 'watch_count': len(dates), 'views': dates, 'has_comment': user.id in commented}
                          for user, dates in users.items()] for episode_id, users in views.items()}
 
 

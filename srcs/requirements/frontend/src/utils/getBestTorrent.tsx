@@ -29,6 +29,9 @@ function getExpectedSize(torrent: iTorrent, isSerie: boolean, episodeCount?: num
         return MOVIE_SIZE;
     if (!torrent.is_season_pack)
         return EPISODE_SIZE;
+    // the whole series: its size says nothing about the quality of one episode
+    if (torrent.is_complete_pack)
+        return null;
     if (!episodeCount)
         return null;
     return {min: EPISODE_SIZE.min * episodeCount, ideal: EPISODE_SIZE.ideal * episodeCount, max: EPISODE_SIZE.max * episodeCount};

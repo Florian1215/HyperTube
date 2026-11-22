@@ -65,7 +65,7 @@
     "stars": "Stars",
     "synopsis": "Synopsis",
     "posterAlt": "Poster of movie: {title}",
-    "mediaDownloading": "The {type, select, series {series} other {movie}} is being downloaded. This may take up to 1 minute. Please wait...",
+    "mediaDownloading": "The {type, select, series {series} other {movie}} is being downloaded. This may take up to 20 seconds. Please wait...",
     "torrentError": "An error occurred while trying to play the {type, select, series {series} other {movie}}. Please try refreshing the page or try again later.",
     "reloadPlayer": "Click Here to Reload Player",
     "audio": "Audio",
@@ -113,7 +113,8 @@
       "requestError": "Request error: {error}",
       "chooseBackdrop": "Choose a backdrop",
       "feature": "Feature this film"
-    }
+    },
+    "commented": "Commented"
   },
   "people": {
     "cast": "Actor",
@@ -173,7 +174,18 @@
     "profile": "Profile",
     "avatar": "Avatar",
     "password": "Password",
-    "account": "Account"
+    "account": "Account",
+    "historyVisibility": "History visibility",
+    "visibility": {
+      "public": "Public",
+      "friends": "Friends",
+      "private": "Private"
+    },
+    "visibilityDescription": {
+      "public": "Everyone can see your history, watchlist and comments on your profile.",
+      "friends": "Only people you follow who also follow you can see your history, watchlist and comments on your profile.",
+      "private": "Only you can see your history, watchlist and comments on your profile."
+    }
   },
   "profile": {
     "memberSince": "Member since {date}",
@@ -194,7 +206,24 @@
     "fields": {
       "submit": "Save",
       "username": "Username"
-    }
+    },
+    "following": "{count} following",
+    "followers": "{count, plural, =1 {1 follower} other {# followers}}",
+    "followingTitle": "Following",
+    "followersTitle": "Followers",
+    "noFollowing": "Not following anyone yet.",
+    "noFollowers": "No followers yet.",
+    "privateHistory": "This history is private.",
+    "privateWatchlist": "This watchlist is private.",
+    "privateComments": "These comments are private.",
+    "block": "Block {username}",
+    "unblock": "Unblock {username}",
+    "unblockShort": "Unblock",
+    "blocked": "{username} is blocked",
+    "unblocked": "{username} is unblocked",
+    "blockedTitle": "Blocked users",
+    "noBlocked": "You haven't blocked anyone.",
+    "seeBlocked": "See blocked users"
   },
   "common": {
     "profilePictureAlt": "Profile picture",
@@ -325,5 +354,10 @@
     "connect": "Connect",
     "signinRequired": "Sign in to connect the TV to your account.",
     "signin": "Sign in"
+  },
+  "updates": {
+    "banner": "New update {version}",
+    "title": "Update {version}",
+    "close": "Hide"
   }
 }

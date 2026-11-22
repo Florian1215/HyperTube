@@ -33,8 +33,12 @@ def remove_source_video(torrent, stream_id, video_path):
 VIDEO_EXTENSIONS = ('.mkv', '.mp4', '.avi', '.mov', '.webm', '.m4v')
 
 
-def find_video_file(files, season_number=None, episode_number=None):
+def find_video_file(files, season_number=None, episode_number=None, complete=False):
     videos = [f for f in files if f[1].lower().endswith(VIDEO_EXTENSIONS)]
+    if complete:
+        # a pack of the whole series: only the files of the season, found by their name or their folder
+        season_re = rf'(?<![A-Za-z0-9])(?:S|Saison[ ._]?|Season[ ._]?)0*{season_number}(?!\d)'
+        videos = [f for f in videos if re.search(season_re, f[1], re.IGNORECASE)]
     if episode_number is not None:
         patterns = [
             rf'S0*{season_number}(?:[ ._-]?E\d+)*[ ._-]?E0*{episode_number}(?!\d)',
@@ -82,9 +86,9 @@ def read_video(handle, info, video, path, torrent, stream_id):
 
 
 @shared_task
-def download_and_transcode(torrent_id, lang, episode_number=None):
+def download_and_transcode(torrent_id, lang, episode_number=None, season_number=None):
     torrent = Torrent.objects.get(id=torrent_id)
-    stream_id = torrent.get_stream_id(episode_number)
+    stream_id = torrent.get_stream_id(episode_number, season_number)
     download_dir = TORRENT_DIR / torrent.id
     try:
         # everything created by this worker (dirs, .torrent, libtorrent files) is world-accessible
@@ -114,7 +118,9 @@ def download_and_transcode(torrent_id, lang, episode_number=None):
         info = lt.torrent_info(str(torrent_path))
         storage = info.files()
         files = [(i, storage.file_path(i), storage.file_size(i)) for i in range(storage.num_files())]
-        if torrent.is_season_pack:
+        if torrent.is_complete_pack:
+            video = find_video_file(files, season_number, episode_number, complete=True)
+        elif torrent.is_season_pack:
             video = find_video_file(files, torrent.season_number, episode_number)
         else:
             video = find_video_file(files)

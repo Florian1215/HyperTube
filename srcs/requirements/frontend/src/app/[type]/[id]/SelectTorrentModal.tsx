@@ -80,25 +80,27 @@ export default function SelectTorrentModal() {
 
     return (<ModalLayout onCloseAction={closeModal} title={t("title")} addMaxWTitle={false}>
         <Pagination currentIndex={index} totalPage={totalPage} onClick={setIndex}>
-            <table className="w-full text-sm">
-                <thead>
-                <tr>
-                    {renderHeader("title", t("columns.title"))}
-                    {renderHeader("status", t("columns.status"))}
-                    {renderHeader("quality", t("columns.quality"))}
-                    {renderHeader("size", t("columns.size"))}
-                    {renderHeader("language", t("columns.language"))}
-                    {renderHeader("seeders", t("columns.seeds"))}
-                    <th />
-                </tr>
-                </thead>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead>
+                    <tr>
+                        {renderHeader("title", t("columns.title"))}
+                        {renderHeader("status", t("columns.status"))}
+                        {renderHeader("quality", t("columns.quality"))}
+                        {renderHeader("size", t("columns.size"))}
+                        {renderHeader("language", t("columns.language"))}
+                        {renderHeader("seeders", t("columns.seeds"))}
+                        <th />
+                    </tr>
+                    </thead>
 
-                <tbody>
-                {sortedTorrents.slice((index - 1) * itemPerPage, (index - 1) * itemPerPage + itemPerPage).map((torrent) => (
-                    <TorrentRow key={torrent.id} torrent={torrent} setTorrentId={activeModal.setTorrentId} closeModal={closeModal} t={t} autoSelected={torrent.id === bestTorrentId}/>
-                ))}
-                </tbody>
-            </table>
+                    <tbody>
+                    {sortedTorrents.slice((index - 1) * itemPerPage, (index - 1) * itemPerPage + itemPerPage).map((torrent) => (
+                        <TorrentRow key={torrent.id} torrent={torrent} setTorrentId={activeModal.setTorrentId} closeModal={closeModal} t={t} autoSelected={torrent.id === bestTorrentId}/>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
         </Pagination>
     </ModalLayout>);
 }

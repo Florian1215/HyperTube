@@ -2,7 +2,7 @@
 
 /* -------------------------------------------------- DEFAULT VALUE ------------------------------------------------- */
 @theme {
-    --black: #191919;
+    --black: #212121;
     --white: #FFFFFF;
     --black-light: #292929;
     --white-light: #dcdcdc;
@@ -37,6 +37,10 @@
     --color-red-hover: #FF787E;
 
     /*noinspection ALL*/
+    --cursor-default: url("/svg/default-cursor.svg") 1 1, auto;
+    /*noinspection ALL*/
+    --cursor-text: url("/svg/text-cursor.svg") 2 12, text;
+    /*noinspection ALL*/
     --cursor-left: url("/svg/left-cursor.svg") 25 25, auto;
     /*noinspection ALL*/
     --cursor-right: url("/svg/right-cursor.svg") 25 25, auto;
@@ -51,8 +55,12 @@
 
 @layer base {
     :root { color-scheme: light dark; }
+    html { cursor: var(--cursor-default); }
+    /* text fields and reading text, but not text inside something clickable */
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="submit"], [type="button"]), textarea, [contenteditable="true"],
+    :where(p, li, blockquote):not(a *, button *, label *, [role="button"] *) { cursor: var(--cursor-text); }
     body { @apply font-body bg-dwhite text-dblack }
-    h1, h2, h3, h4, h5, h6, .custom-condensed { @apply uppercase font-condensed tracking-wide hover:cursor-default; }
+    h1, h2, h3, h4, h5, h6, .custom-condensed { @apply uppercase font-condensed tracking-wide hover:cursor-(--cursor-default); }
     h1 { @apply text-5xl md:text-6xl xl:text-8xl 2xl:text-9xl; }
     h2 { @apply text-4xl md:text-5xl xl:text-7xl 2xl:text-8xl; }
     h3 { @apply text-4xl sm:text-6xl; }
@@ -61,6 +69,8 @@
     a, button:hover, Link:hover { @apply cursor-pointer; }
     button:disabled, button[disabled] { @apply cursor-not-allowed; }
     input:focus, textarea:focus { outline: none; }
+    /* results chosen with Tab in the search: framed with the user color */
+    [data-search-results] a:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
     input[type="search"]::-webkit-search-cancel-button {-webkit-appearance: none; appearance: none;}
     .responsive-text-hairline { @apply font-hairline text-xs sm:text-xl xl:text-3xl tracking-normal; }
     :root[data-accent="yellow"] { --accent: var(--color-yellow); }
@@ -138,4 +148,9 @@
     .scrollbar-hide::-webkit-scrollbar {display: none;}
 
     .custom-shadow-animation-s { transition: all 0.1s ease-out; transform: translate(var(--shadow-shift, 0px), var(--shadow-shift, 0px)); }
+
+    .custom-caps-centered { padding-block: 0.25rem; }
+    @supports (text-box: trim-both cap alphabetic) {
+        .custom-caps-centered { text-box: trim-both cap alphabetic; padding-block: calc((1em - 1cap) / 2 + 0.25rem); }
+    }
 }

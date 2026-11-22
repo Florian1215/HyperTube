@@ -49,7 +49,7 @@ export default function SerieSeasonsSection({serie, watchedEpisode, setWatchedEp
         </HorizontalScroll>
         {season ? <div>
             <div>
-                <div className="relative border h-50" onContextMenu={handleContextMenu}>
+                <div className="relative border h-50 rounded-md overflow-hidden" onContextMenu={handleContextMenu}>
                     {user && <MediaRightClick user={user} media={serie} progress={season} seasonNumber={season.season_number} contextMenu={contextMenu} setContextMenu={setContextMenu}/>}
                     <LoadingImage key={season.poster_url} width={2000} height={200} className="size-full object-cover" src={season.poster_url} alt={t("altSeason", {season: season.season_number, title: serie.title})}/>
                     <MediaWatchProgress user={user} media={season}/>

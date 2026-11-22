@@ -1,5 +1,5 @@
 import {iUser} from "@/types/user";
-import useApiQuery from "@/hooks/useApiQuery";
+import useApiQuery, {useApiInfiniteQuery} from "@/hooks/useApiQuery";
 import {tListResponse} from "@/types/api";
 import apiClient from "@/services/apiClient";
 import {iMedia, iMediaActivity} from "@/types/media";
@@ -19,6 +19,28 @@ export function useUser(userId: string, enabled=true, viewerId?: number) {
         ["user", userId, viewerId],
         (locale: string) => getUser(locale, userId),
         enabled
+    );
+}
+
+export function blockUser(locale: string, userId: number, block: boolean) {
+    return apiClient<iUser>(`users/${userId}/block/`, locale, {method: block ? "POST" : "DELETE"});
+}
+
+export function useBlockedUsers(enabled = true) {
+    return useApiInfiniteQuery<iUser>(
+        ["user-blocked"],
+        (locale, page, signal) => apiClient<tListResponse<iUser>>(`users/blocked/?page=${page}`, locale, {signal}),
+        enabled
+    );
+}
+
+export type tFollowList = "following" | "followers";
+
+export function useUserFollows(userId: number | undefined, list: tFollowList) {
+    return useApiInfiniteQuery<iUser>(
+        ["user-follows", userId, list],
+        (locale, page, signal) => apiClient<tListResponse<iUser>>(`users/${userId}/${list}/?page=${page}`, locale, {signal}),
+        !!userId
     );
 }
 

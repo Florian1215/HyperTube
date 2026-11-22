@@ -1,0 +1,4 @@
+.markdown-editor-wrapper { width: 100%; max-width: 60rem; }
+.markdown-editor-wrapper .EasyMDEContainer .CodeMirror { min-height: 16rem; }
+.markdown-editor-wrapper .editor-preview img, .markdown-editor-wrapper .editor-preview-side img { max-width: 100%; }
+.markdown-editor-wrapper .editor-toolbar button { color: inherit; }

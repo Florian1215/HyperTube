@@ -253,9 +253,10 @@ class MediaActivitySerializer(MediaHistorySerializer):
     progress = serializers.SerializerMethodField()
     complete = serializers.SerializerMethodField()
     pourcent = serializers.SerializerMethodField()
+    has_comment = serializers.BooleanField(read_only=True, default=False)
 
     class Meta(MediaHistorySerializer.Meta):
-        fields = MediaHistorySerializer.Meta.fields + ['user']
+        fields = MediaHistorySerializer.Meta.fields + ['user', 'has_comment']
 
     def get_viewer_progress(self, obj, field, default):
         return MediaProgressMixin(context=self.context).get_progress_field(obj.media, field, default)
@@ -272,6 +273,9 @@ class MediaActivitySerializer(MediaHistorySerializer):
 
 class MediaTorrentSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
+    # a whole series pack is streamed like a season pack: one episode at a time
+    is_season_pack = serializers.SerializerMethodField()
+    is_complete_pack = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Torrent
@@ -286,14 +290,19 @@ class MediaTorrentSerializer(serializers.ModelSerializer):
             'language',
             'published_at',
             'is_season_pack',
+            'is_complete_pack',
         ]
 
+    def get_is_season_pack(self, obj):
+        return obj.is_season_pack or obj.is_complete_pack
+
     def get_status(self, obj):
-        episode_number = self.context['request'].query_params.get('episode_number')
-        if obj.is_season_pack and episode_number is None:
+        params = self.context['request'].query_params
+        season_number, episode_number = params.get('season_number'), params.get('episode_number')
+        if self.get_is_season_pack(obj) and (episode_number is None or (obj.is_complete_pack and season_number is None)):
             return 'not-downloaded'
         if 'downloads' not in self.context:
             self.context['downloads'] = dict(DownloadMedia.objects.filter(torrent__media=obj.media_id).values_list('id', 'status'))
-        if obj.is_season_pack:
-            episode_number = int(episode_number)
-        return self.context['downloads'].get(obj.get_stream_id(episode_number), 'not-downloaded')
+        if self.get_is_season_pack(obj):
+            season_number, episode_number = int(season_number) if obj.is_complete_pack else None, int(episode_number)
+        return self.context['downloads'].get(obj.get_stream_id(episode_number, season_number), 'not-downloaded')

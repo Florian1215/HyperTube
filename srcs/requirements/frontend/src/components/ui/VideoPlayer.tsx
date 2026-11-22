@@ -547,7 +547,7 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
         </div>}
         <div className={`absolute inset-0 flex items-end pointer-events-none transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}>
             {showNextEpisode &&
-                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold whitespace-nowrap text-sm sm:text-base border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
+                <button onClick={nextEpisodeAction} className="pointer-events-auto absolute top-2 right-3 sm:top-4 sm:right-6 z-30 px-3 sm:px-5 h-8 sm:h-10 uppercase font-bold whitespace-nowrap text-sm sm:text-base rounded-md border bg-white text-black hover:bg-white-light">{tAction("nextEpisode")}</button>}
             <div className="bg-gradient" />
             {seasonNumber !== undefined && episodeNumber !== undefined && <div className="absolute top-2 left-3 sm:top-4 sm:left-6 z-20 max-w-1/2 text-left text-white">
                 {episodeName && <p className="font-semibold uppercase truncate sm:text-lg">{episodeName}</p>}
@@ -592,11 +592,12 @@ export default function VideoPlayer({media, src, runtime, startAt=0, seasonNumbe
 }
 
 function TracksMenu({title, onClose, children}: {title: string, onClose: () => void, children: React.ReactNode}) {
-    return (<div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 text-white sm:inset-auto sm:bottom-12 sm:right-8 sm:block sm:bg-transparent sm:py-6 sm:px-8" onClick={onClose}>
-        <div className="flex flex-col max-h-[75%] bg-black border-t border-white/30 sm:max-h-none sm:bg-transparent sm:border-0" onClick={(e) => e.stopPropagation()}>
-            <div className="flex shrink-0 items-center justify-between px-4 py-2 border-b border-white/30 sm:hidden">
+    return (<div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 text-dblack sm:inset-auto sm:bottom-12 sm:right-8 sm:block sm:bg-transparent sm:py-6 sm:px-8" onClick={onClose}>
+        {/* mobile: a bottom sheet following the light / dark theme */}
+        <div className="flex flex-col max-h-[75%] bg-dwhite border-t border-dblack/30 sm:max-h-none sm:bg-transparent sm:border-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex shrink-0 items-center justify-between px-4 py-2 border-b border-dblack/30 sm:hidden">
                 <p className="font-wide uppercase">{title}</p>
-                <CloseButton size={24} color="white" onClickAction={onClose}/>
+                <CloseButton size={24} color="dblack" onClickAction={onClose}/>
             </div>
             <div className="flex min-h-0 flex-col overflow-y-auto overscroll-contain sm:gap-1 sm:items-start sm:bg-white sm:py-4 sm:px-5 sm:shadow-[8px_7px_0_var(--color-cblack)] sm:border sm:border-black sm:text-black sm:text-left sm:max-h-[60vh]">
                 {children}
@@ -606,7 +607,7 @@ function TracksMenu({title, onClose, children}: {title: string, onClose: () => v
 }
 
 function TrackButton({selected, onClick, children}: {selected: boolean, onClick: () => void, children: React.ReactNode}) {
-    return (<button className={`flex items-center gap-3 w-full px-4 py-3 border-b border-white/15 text-base text-left wrap-break-word sm:w-auto sm:p-0 sm:border-0 sm:text-lg sm:whitespace-nowrap ${selected ? "font-base font-light text-accent sm:text-black" : "font-hairline hover:text-accent"}`} onClick={onClick}>
+    return (<button className={`flex items-center gap-3 w-full px-4 py-3 border-b border-dblack/15 text-base text-left wrap-break-word sm:w-auto sm:p-0 sm:border-0 sm:text-lg sm:whitespace-nowrap ${selected ? "font-base font-light text-accent sm:text-black" : "font-hairline hover:text-accent"}`} onClick={onClick}>
         <span className={`size-2 shrink-0 rounded-full bg-accent sm:hidden ${selected ? "" : "invisible"}`}/>
         {children}
     </button>);

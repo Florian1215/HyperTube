@@ -15,6 +15,7 @@ import Label from "@/components/ui/Label";
 import LoadingImage from "@/components/ui/LoadingImage";
 import LoadingText from "@/components/LoadingText";
 import MediaCard from "@/components/MediaCard";
+import {GAP, PAGE_PX} from "@/utils/spacing";
 import Pagination from "@/components/ui/Pagination";
 import PeopleWatchedCount from "@/components/PeopleWatchedCount";
 import SmallText from "@/components/ui/SmallText";
@@ -64,14 +65,14 @@ export default function Page() {
         setIndex(1);
     }
 
-    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-8 sm:mt-12">
+    return (<div className={`flex flex-col gap-6 sm:gap-12 xl:gap-16 ${PAGE_PX} mt-8 sm:mt-12`}>
         {meta}
         {person ? <PersonInfo person={person}/> : <LoadingText center={true}/>}
         {counts && roles.length > 0 && <Tabs tabs={roles.map((role) => t(role))} counts={roles.map((role) => counts[role])} activeTab={roles.indexOf(activeRole)} onChange={switchTab}/>}
         {medias && medias.results.length === 0 ?
             <SmallText>{t("noMedias")}</SmallText> :
             <Pagination currentIndex={index} onClick={setIndex} totalPage={computeTotalPage(medias)} variableMT={true}>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4">
+                <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 ${GAP}`}>
                     {medias ?
                         medias.results.map((media) => (<MediaCard key={`${media.type}-${media.id}`} media={media} user={user} label={media.roles.join(", ")}/>)) :
                         [...Array(3)].map((_, i) => (<MediaCard key={i} user={user}/>))

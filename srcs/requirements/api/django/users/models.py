@@ -19,9 +19,19 @@ class User(AbstractUser):
         ('vf', 'French version')
     ]
 
+    HISTORY_PUBLIC = 'public'
+    HISTORY_FRIENDS = 'friends'
+    HISTORY_PRIVATE = 'private'
+    HISTORY_VISIBILITY_CHOICES = [
+        (HISTORY_PUBLIC, 'Everyone'),
+        (HISTORY_FRIENDS, 'Friends: users following each other'),
+        (HISTORY_PRIVATE, 'Only the user'),
+    ]
+
     color = models.CharField(max_length=10, choices=COLOR_CHOICES, blank=True)
     profile_picture = models.URLField(null=True, blank=True)
     preferred_language = models.CharField(max_length=2, choices=PREFERRED_LANGUAGE_CHOICES, default='vo')
+    history_visibility = models.CharField(max_length=10, choices=HISTORY_VISIBILITY_CHOICES, default=HISTORY_PUBLIC)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -54,6 +64,20 @@ class UserFollow(models.Model):
 
     def __str__(self):
         return f'{self.follower} -> {self.followed}'
+
+
+class UserBlock(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocking')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['blocker', 'blocked'], name='unique_user_block')
+        ]
+
+    def __str__(self):
+        return f'{self.blocker} blocked {self.blocked}'
 
 
 class UserHistory(models.Model):

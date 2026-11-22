@@ -27,7 +27,7 @@ export default function Title({title, exp, parenthesis=true, tag: Tag="h1", clic
         return () => observer.disconnect();
     }, [tightTruncate, title]);
 
-    return (<Tag className={`flex gap-1 w-full hover:cursor-default ${white ? " text-white" : "text-dblack"} ${className}`}>
+    return (<Tag className={`flex gap-1 w-full hover:cursor-(--cursor-default) ${white ? " text-white" : "text-dblack"} ${className}`}>
         <span ref={titleRef} className={`min-w-0 truncate ${clickable && !white ? "hover:text-accent" : ""}`}>{title}</span>
         <span style={expShift ? {transform: `translateX(-${expShift}px)`} : undefined} className={`shrink-0 responsive-text-hairline ${expClassName}`}>{exp}</span>
     </Tag>)

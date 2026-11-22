@@ -19,7 +19,10 @@ WATCHING_DELAY = timedelta(hours=4)
 
 def get_download_size(torrent, episode_number=None):
     size = torrent.size * GB
-    if torrent.is_season_pack and episode_number is not None:
+    if torrent.is_complete_pack and episode_number is not None:
+        if torrent.media.number_of_episodes:
+            size /= torrent.media.number_of_episodes
+    elif torrent.is_season_pack and episode_number is not None:
         season = torrent.media.seasons.filter(season_number=torrent.season_number).first()
         episodes = season.episodes.count() if season else 0
         if episodes:

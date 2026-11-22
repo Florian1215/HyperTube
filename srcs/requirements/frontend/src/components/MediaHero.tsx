@@ -3,12 +3,13 @@ import React from "react";
 import LoadingImage from "@/components/ui/LoadingImage";
 import {iMedia} from "@/types/media";
 import HoverEffect from "@/components/ui/HoverEffect";
+import {PAGE_PX} from "@/utils/spacing";
 
 export default function MediaHero({children, media, childrenAction, actionButton, onHoverChange}: {children?: React.ReactNode, media?: Pick<iMedia, "title" | "backdrop_url">, childrenAction?: () => React.ReactNode, actionButton?: () => React.ReactNode, onHoverChange?: (hover: boolean) => void}) {
     const t = useTranslations("media");
 
-    return (<div className="px-4 sm:px-6 min-w-full">
-        <HoverEffect className="relative aspect-video xl:aspect-21/9" innerClassName="flex flex-col items-center gap-4 border" disabled={!onHoverChange || !media} scale={1.01} onHoverChange={onHoverChange}>
+    return (<div className={`${PAGE_PX} min-w-full`}>
+        <HoverEffect className="relative aspect-video xl:aspect-21/9" innerClassName="flex flex-col items-center gap-4 border rounded-md overflow-hidden" disabled={!onHoverChange || !media} scale={1.01} onHoverChange={onHoverChange}>
             {media ?
                 <LoadingImage key={media.backdrop_url} className="absolute inset-0 size-full object-cover"
                     width={5000} height={5000} loading="eager"

@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {GAP, PAGE_PX} from "@/utils/spacing";
 import {HypertubeLogo} from "@/components/Icons";
 import {useLocale, useTranslations} from "next-intl";
 import Colors from "@/components/Colors";
@@ -74,9 +75,9 @@ export default function HomePage() {
         <SliderHero medias={sortedFeatured.slice(0, 5)}/>
         <GenreTags genreCount={genreCount} className="justify-center w-full my-6 md:my-8"/>
 
-        <div className="flex flex-col gap-4 px-4 sm:gap-8 sm:px-6" >
+        <div className={`flex flex-col ${GAP} ${PAGE_PX}`}>
             {activities.length > 0 && <Section title={t("friendsActivity")} href={`/search?type=${activities[0].type}&q=${encodeURIComponent(SEARCH_FRIENDS)}`}>
-                <div className="flex gap-x-2 sm:gap-x-4 overflow-x-auto scrollbar-hide p-3 -m-3">
+                <div className={`flex ${GAP} overflow-x-auto scrollbar-hide p-3 -m-3`}>
                     {groupActivities(activities).map((group) => <FriendActivityCard key={getActivityKey(group[0])} activities={group}/>)}
                 </div>
             </Section>}
@@ -119,7 +120,7 @@ export default function HomePage() {
 
 function Section({children, title, href}: {children: React.ReactNode, title: string, href: string}) {
     return (<section className="flex flex-col">
-        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit p-2 overflow-x-hidden whitespace-nowrap" href={href}>{`${title} >`}</Link>
+        <Link className="uppercase font-wide text-lg sm:text-xl font-bold hover:text-accent w-fit py-2 overflow-x-hidden whitespace-nowrap" href={href}>{`${title} >`}</Link>
         {children}
     </section>);
 }

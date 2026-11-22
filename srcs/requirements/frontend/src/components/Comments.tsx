@@ -14,6 +14,7 @@ import useModal from "@/contexts/ModalContext";
 import MediaCard from "@/components/MediaCard";
 import Link from "next/link";
 import ProfilePicture from "@/components/ProfilePicture";
+import {UserContextMenu} from "@/components/UserRightClick";
 import IconButton from "@/components/ui/Button/IconButton";
 import {EditIcon, TrashIcon} from "@/components/Icons";
 import ExpandableText from "@/components/ui/ExpandableText";
@@ -77,11 +78,11 @@ function Comment({comment, currentUser, updateComment, deleteComment, previousCo
         {displayMovie && previousCommentMovieId != comment.media.id && <div className="flex justify-center mb-6">
             <MediaCard user={currentUser} className="aspect-21/9" media={comment.media}/></div>}
         <div className={`flex gap-2 sm:gap-4 ${(!updateComment) ? "flex-col sm:flex-row mx-4" : ""} ${displayMovie ? "px-4" : ""}`}>
-            <Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link>
+            <UserContextMenu user={user}><Link href={`/users/${user.id}`}><ProfilePicture user={user} /></Link></UserContextMenu>
             <div className="w-full">
                 <div className="flex justify-between w-full">
                     <div>
-                        <Link href={`/users/${user.id}`} className="text-bold hover:text-dblack-light">{user.username}</Link>
+                        <UserContextMenu user={user}><Link href={`/users/${user.id}`} className="text-bold hover:text-dblack-light">{user.username}</Link></UserContextMenu>
                         <p className="text-sm font-normal text-gray leading-4 mb-2">{dayjs(comment.updated_at).fromNow()} {comment.edited && ` • ${t("edited")}`}</p>
                     </div>
                     {

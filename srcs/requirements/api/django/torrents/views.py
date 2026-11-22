@@ -10,6 +10,7 @@ from rest_framework import status
 from config import settings
 from config.errors import TORRENT_NOT_FOUND
 from config.exceptions import external_service
+from torrents.fetch import to_int
 from torrents.models import DownloadMedia, Torrent
 from torrents.storage import ensure_disk_space
 from torrents.tasks import download_and_transcode
@@ -23,13 +24,13 @@ class TorrentsApiView(APIView):
             raise NotFound(TORRENT_NOT_FOUND)
 
     @staticmethod
-    def get_episode_number(torrent, data):
-        if not torrent.is_season_pack:
-            return None
-        try:
-            return int(data.get('episode_number'))
-        except (TypeError, ValueError):
-            raise ValidationError()
+    def get_episode(torrent, data):
+        """The (season, episode) to stream from a pack: a whole series pack needs both."""
+        if torrent.is_complete_pack:
+            return to_int(data.get('season_number')), to_int(data.get('episode_number'))
+        if torrent.is_season_pack:
+            return torrent.season_number, to_int(data.get('episode_number'))
+        return None, None
 
     @staticmethod
     def get_response(torrent, stream_id, download_status, code):
@@ -41,7 +42,8 @@ class TorrentsApiView(APIView):
 
     def get(self, request, *args, **kwargs):
         torrent = self.get_object()
-        stream_id = torrent.get_stream_id(self.get_episode_number(torrent, request.query_params))
+        season_number, episode_number = self.get_episode(torrent, request.query_params)
+        stream_id = torrent.get_stream_id(episode_number, season_number)
         try:
             download_status = DownloadMedia.objects.get(id=stream_id).status
         except DownloadMedia.DoesNotExist:
@@ -54,8 +56,8 @@ class TorrentsApiView(APIView):
             lang = torrent.media.original_language
         else:
             lang = 'fr'
-        episode_number = self.get_episode_number(torrent, request.data)
-        stream_id = torrent.get_stream_id(episode_number)
+        season_number, episode_number = self.get_episode(torrent, request.data)
+        stream_id = torrent.get_stream_id(episode_number, season_number)
         user = request.user if request.user.is_authenticated else None
         if not DownloadMedia.objects.filter(id=stream_id).exclude(status='error').exists():
             ensure_disk_space(torrent, episode_number)
@@ -71,7 +73,7 @@ class TorrentsApiView(APIView):
             (settings.STREAM_DIR / stream_id / 'stream.m3u8').unlink(missing_ok=True)
         except PermissionError:
             pass
-        download_and_transcode.delay(torrent.id, lang, episode_number)
+        download_and_transcode.delay(torrent.id, lang, episode_number, season_number)
         return self.get_response(torrent, stream_id, 'downloading', status.HTTP_201_CREATED)
 
 

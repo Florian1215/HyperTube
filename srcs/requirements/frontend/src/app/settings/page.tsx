@@ -3,7 +3,7 @@
 import React, {useEffect, useRef} from "react";
 import {useRouter} from "@/i18n/navigation";
 import useAuth from "@/contexts/AuthContext";
-import {iToken, iUser} from "@/types/user";
+import {HISTORY_VISIBILITIES, iToken, iUser, tHistoryVisibility} from "@/types/user";
 import useNotification from "@/contexts/NotificationContext";
 import {useLocale, useTranslations} from "next-intl";
 import Form from "@/components/ui/Form";
@@ -13,6 +13,8 @@ import useApiMutation from "@/hooks/useApiMutation";
 import ProfilePicture from "@/components/ProfilePicture";
 import TextButton from "@/components/ui/Button/TextButton";
 import PageMeta from "@/components/PageMeta";
+import RadioButton from "@/components/ui/Button/RadioButton";
+import SmallText from "@/components/ui/SmallText";
 
 export default function Page() {
     const {user, loading, updateUser} = useAuth();
@@ -36,6 +38,7 @@ export default function Page() {
         <div className="flex flex-col items-center gap-12 sm:gap-24 w-full max-w-xs mt-12 sm:mt-16 [&_form>button]:w-full">
             <AvatarSection user={user} updateUser={updateUser}/>
             <ProfileSection user={user} updateUser={updateUser}/>
+            <HistoryVisibilitySection user={user} updateUser={updateUser}/>
             <PasswordSection/>
             <AccountSection/>
         </div>
@@ -58,6 +61,31 @@ function ProfileSection({user, updateUser}: {user: iUser, updateUser?: (patch: P
     return (<div className="flex flex-col gap-8 w-full">
         <Form formType="update" request={patchUser} handleRequest={handleUpdateUser} t={t} extraParam={user.id}
               fields={["username"]} />
+    </div>);
+}
+
+function HistoryVisibilitySection({user, updateUser}: {user: iUser, updateUser?: (patch: Partial<iUser>) => void}) {
+    const t = useTranslations("settings");
+    const {execute} = useApiMutation();
+    const current = user.history_visibility ?? "public";
+
+    const changeVisibility = async (visibility: tHistoryVisibility) => {
+        if (visibility === current)
+            return;
+        const data = await execute((locale) => patchUser(locale, ["history_visibility", visibility], user.id));
+        if (data && updateUser)
+            updateUser({history_visibility: visibility});
+    };
+
+    return (<div className="flex flex-col gap-3 items-center w-full">
+        <p className="uppercase font-bold">{t("historyVisibility")}</p>
+        <div className="flex gap-2 justify-center">
+            {HISTORY_VISIBILITIES.map((visibility) =>
+                <RadioButton key={visibility} selected={current === visibility} onClick={() => void changeVisibility(visibility)}>
+                    {t(`visibility.${visibility}`)}
+                </RadioButton>)}
+        </div>
+        <SmallText className="text-[0.6875rem]! sm:text-xs!">{t(`visibilityDescription.${current}`)}</SmallText>
     </div>);
 }
 
@@ -146,7 +174,10 @@ function AccountSection() {
         }});
     };
 
-    return (<div className="flex justify-center w-full">
+    return (<div className="flex flex-col items-center gap-6 w-full">
+        <button className="text-xs text-gray hover:text-dblack cursor-pointer" onClick={() => openModal({type: "blocked"})}>
+            {tProfile("seeBlocked")}
+        </button>
         <TextButton className="text-red hover:text-red-hover" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
     </div>);
 }

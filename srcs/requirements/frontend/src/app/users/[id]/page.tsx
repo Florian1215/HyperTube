@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useEffect, useState} from "react";
+import {PAGE_PX} from "@/utils/spacing";
 import useHandleError from "@/hooks/useHandleError";
 import {useUser, useUserHistory, useUserWatchlist} from "@/services/users.service";
 import {useProfileComments} from "@/services/comments.service";
@@ -16,6 +17,8 @@ import ProfilePicture from "@/components/ProfilePicture";
 import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
 import PageMeta from "@/components/PageMeta";
+import {UserContextMenu} from "@/components/UserRightClick";
+import useModal from "@/contexts/ModalContext";
 
 const tabs: tTab = [{name: "movies", comp: TabMovies}, {name: "series", comp: TabSeries}, {name: "watchlist", comp: TabWatchlist}, {name: "comments", comp: TabComments}];
 
@@ -33,6 +36,7 @@ export default function Page() {
     const tMeta = useTranslations("meta");
     const locale = useLocale();
     const {user: authUser, loading} = useAuth();
+    const {openModal} = useModal();
     const {data: user, error} = useUser(userId, !loading, authUser?.id);
     const meta = <PageMeta title={user?.username ?? tMeta("user")} description={user ? tMeta("userDescription", {username: user.username}) : undefined}/>;
     const {data: movies} = useUserHistory(user?.id, "movies");
@@ -64,16 +68,23 @@ export default function Page() {
         }
     }
 
-    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-8 sm:mt-12">
+    return (<div className={`flex flex-col gap-6 sm:gap-12 xl:gap-16 ${PAGE_PX} mt-8 sm:mt-12`}>
         {meta}
         <div className="flex flex-col gap-4 items-center mb-6">
-            <div className="flex items-center gap-4 justify-center">
+            <UserContextMenu user={user}><div className="flex items-center gap-6 justify-center">
                 <ProfilePicture user={user} size={1}/>
                 <div className="flex flex-col items-start">
                     <h3>{user.username}</h3>
-                    <p className="uppercase mb-2">{tProfile("memberSince", {date: memberSince})}</p>
+                    <p className="uppercase mb-1">{tProfile("memberSince", {date: memberSince})}</p>
+                    <div className="flex gap-4 text-sm">
+                        {(["following", "followers"] as const).map((list) =>
+                            <button key={list} className="hover:text-accent cursor-pointer font-light capitalize"
+                                    onClick={() => openModal({type: "follows", follows: {user, list}})}>
+                                {tProfile(list, {count: (list === "following" ? user.following_count : user.followers_count) ?? 0})}
+                            </button>)}
+                    </div>
                 </div>
-            </div>
+            </div></UserContextMenu>
             <FollowButton user={user} className="w-32"/>
         </div>
         <Tabs tabs={tabs.map((tab) => t(tab.name))} counts={tabs.map((tab) => counts[tab.name])} activeTab={activeTab} onChange={switchTab}/>

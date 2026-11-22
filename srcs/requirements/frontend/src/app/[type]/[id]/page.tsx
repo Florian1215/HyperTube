@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useEffect, useRef, useState} from "react";
-import {useParams} from "next/navigation";
+import {useParams, useSearchParams} from "next/navigation";
 import {torrentStreaming, torrentStreamStatus, updateTorrentRequest, useMedia, useTorrentRequest, useTorrents} from "@/services/medias.service";
 import useHandleError from "@/hooks/useHandleError";
 import MediaHero from "@/components/MediaHero";
@@ -32,6 +32,21 @@ import {castToTv, useTvStatus} from "@/services/tv.service";
 
 const REQUESTABLE_DAYS = 365;
 
+/** Episode images are stored small (w500): the hero takes the original size from TMDB. */
+function getFullSizeImage(url: string) {
+    return url.replace(/(image\.tmdb\.org\/t\/p\/)w\d+\//, "$1original/");
+}
+
+function useUrlEpisode(type: tMedia) {
+    const searchParams = useSearchParams();
+    const season = Number(searchParams.get("season"));
+    const episode = Number(searchParams.get("episode"));
+
+    if (type !== "series" || !Number.isInteger(season) || !Number.isInteger(episode) || season < 1 || episode < 1)
+        return undefined;
+    return {season, episode};
+}
+
 export default function MediaPage() {
     const params = useParams();
     const id = params.id as string;
@@ -55,15 +70,35 @@ export default function MediaPage() {
     const toggleWatchlist = useWatchlist();
     const featureBtn= (media && hasPerm(user, "medias.can_recommend_medias")) ? () => openModal({type: "set-feature", media: media}) : undefined;
     const [selectedEpisode, setSelectedEpisode] = useState<iWatchEpisode>();
+    // an episode picked in the list or opened from a link (friends activity) shows its own image in the hero
+    const [episodeChosen, setEpisodeChosen] = useState(false);
     const nextEpisode = media && "next_episode" in media ? media.next_episode : undefined;
+    const urlEpisode = useUrlEpisode(type);
+    const isNextEpisode = !urlEpisode || (urlEpisode.season === nextEpisode?.season_number && urlEpisode.episode === nextEpisode?.episode_number);
     const watchedEpisode: iWatchEpisode = selectedEpisode ?? {
-        runtime: nextEpisode?.progress ?? 0,
-        episode: nextEpisode?.episode_number ?? 1,
-        season: nextEpisode?.season_number ?? 1,
+        runtime: isNextEpisode ? (nextEpisode?.progress ?? 0) : 0,
+        episode: urlEpisode?.episode ?? nextEpisode?.episode_number ?? 1,
+        season: urlEpisode?.season ?? nextEpisode?.season_number ?? 1,
     };
     const {data: torrents, isLoading: torrentsLoading} = useTorrents(media, watchedEpisode.season, watchedEpisode.episode);
     const {data: season} = useSeason(id, watchedEpisode.season, type === "series");
     const episodeDetails = season?.episodes.find((e) => e.episode_number === watchedEpisode.episode);
+    const episodeBackdrop = type === "series" && (episodeChosen || !!urlEpisode) ? episodeDetails?.poster_url : undefined;
+    const heroMedia = media && episodeBackdrop ? {...media, backdrop_url: getFullSizeImage(episodeBackdrop)} : media;
+
+    // the episode asked in the URL becomes the selected one, then the URL is cleaned
+    useEffect(() => {
+        if (!urlEpisode || !media)
+            return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedEpisode(watchedEpisode);
+        setEpisodeChosen(true);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("season");
+        url.searchParams.delete("episode");
+        window.history.replaceState(window.history.state, "", url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [urlEpisode?.season, urlEpisode?.episode, media]);
     const queryClient = useQueryClient();
     const bestTorrent = getBestTorrent(torrents?.results, type === "series", season?.episodes.length);
     const unavailable = !!media && !torrentsLoading && !bestTorrent;
@@ -105,7 +140,7 @@ export default function MediaPage() {
         if (preloadedTorrent.current === key)
             return;
         preloadedTorrent.current = key;
-        torrentStreaming(followingTorrent.id, followingEpisode.episode).catch(() => {});
+        torrentStreaming(followingTorrent.id, followingEpisode.episode, followingEpisode.season).catch(() => {});
     }, [preloadFollowing, followingEpisode, followingTorrent]);
 
     const [autoPlay, setAutoPlay] = useState(false);
@@ -134,12 +169,13 @@ export default function MediaPage() {
             if (torrentId) {
                 try {
                     const episode = media?.type === "series" ? watchedEpisode.episode : undefined;
-                    let res = await torrentStreaming(torrentId, episode);
+                    const seasonNumber = media?.type === "series" ? watchedEpisode.season : undefined;
+                    let res = await torrentStreaming(torrentId, episode, seasonNumber);
                     while (!cancelled && !(await fetch(`${API_URL}${res.stream}`)).ok) {
                         if (res.status === "error")
                             throw new Error(res.status);
                         await new Promise((resolve) => setTimeout(resolve, 2000));
-                        res = await torrentStreamStatus(torrentId, episode);
+                        res = await torrentStreamStatus(torrentId, episode, seasonNumber);
                     }
                     if (cancelled)
                         return;
@@ -183,6 +219,7 @@ export default function MediaPage() {
     const selectEpisode = (episode: iWatchEpisode) => {
         closePlayer();
         setSelectedEpisode(episode);
+        setEpisodeChosen(true);
     }
 
     const showFollowingEpisode = () => {
@@ -236,7 +273,7 @@ export default function MediaPage() {
 
     return (<div className="flex flex-col gap-6 xl:gap-10">
         {meta}
-        <MediaHero media={media} childrenAction={() => {
+        <MediaHero media={heroMedia} childrenAction={() => {
             if (errorStr || !media)
                 return undefined;
             if (startVideo && streamPath && runtime !== undefined) {

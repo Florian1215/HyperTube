@@ -106,7 +106,7 @@ function AccountMenu({label, items, onClick, hasMenu, children}: {label: string,
             {children(isOpen)}
         </button>
         {isOpen && <div className="absolute z-50 top-full right-0 pt-2 sm:pt-4" role="menu">
-            <div className="flex flex-col gap-1 items-start bg-dwhite py-4 px-5 custom-shadow-m border border-dblack">
+            <div className="flex flex-col gap-1 items-start bg-dwhite py-4 px-5 custom-shadow-m border border-dblack rounded-sm">
                 {items.map((item) => item.href && item.external ?
                     <a key={item.name} role="menuitem" className={`${itemClassName} hover:text-accent`} href={item.href} target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>{item.name}</a> :
                     item.href ?

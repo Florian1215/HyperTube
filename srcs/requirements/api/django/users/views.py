@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Max, Value, Exists, OuterRef
+from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, Max, OuterRef, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -9,12 +9,14 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from config.errors import CANNOT_FOLLOW_YOURSELF
+from comments.models import Comment
+from config.errors import CANNOT_BLOCK_YOURSELF, CANNOT_FOLLOW_BLOCKED, CANNOT_FOLLOW_YOURSELF
 from medias.context import LangHistoryContext
 from medias.models import Media
 from medias.serializers import MediaActivitySerializer, MediaComingSoonSerializer, MediaHistorySerializer, SmallMediaSerializer
-from users.models import User, UserFollow, UserHistory
+from users.models import User, UserBlock, UserFollow, UserHistory
 from users.permissions import IsUserOwner
+from users.visibility import blocked_viewer, can_see_history, history_visible
 from users.pictures import delete_profile_picture, save_profile_picture
 from users.watching import get_coming_soon, get_continue_watching
 from users.serializers import UserSerializer, RegisterSerializer, UserMeSerializer, UserProfileSerializer, \
@@ -37,12 +39,19 @@ class UserViewSet(viewsets.ModelViewSet):
                     return new_q
         return queryset
 
-    def get_queryset(self):
+    def get_queryset(self, hide_blockers=True):
         user = self.request.user
+        queryset = super().get_queryset().annotate(
+            following_count=Count('following', distinct=True), followers_count=Count('followers', distinct=True),
+            can_see_history=ExpressionWrapper(history_visible(user), output_field=BooleanField()))
         if not user.is_authenticated:
-            return super().get_queryset().annotate(is_following=Value(False))
-        return super().get_queryset().annotate(
-            is_following=Exists(UserFollow.objects.filter(follower=user, followed=OuterRef('pk')))
+            return queryset.annotate(is_following=Value(False), is_blocked=Value(False))
+        if hide_blockers:
+            # the users who blocked the viewer don't exist for them: no profile, no search result
+            queryset = queryset.exclude(blocked_viewer(user))
+        return queryset.annotate(
+            is_following=Exists(UserFollow.objects.filter(follower=user, followed=OuterRef('pk'))),
+            is_blocked=Exists(UserBlock.objects.filter(blocker=user, blocked=OuterRef('pk'))),
         )
 
     def get_serializer_class(self):
@@ -50,7 +59,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return RegisterSerializer
         elif self.action in ['me', 'profile_picture']:
             return UserMeSerializer
-        elif self.action in ['list', 'retrieve', 'follow']:
+        elif self.action in ['list', 'retrieve', 'follow', 'following', 'followers', 'block', 'blocked']:
             return UserProfileSerializer
         elif self.action in ['update', 'partial_update']:
             return UserSettingsSerializer
@@ -59,7 +68,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['me', 'update', 'partial_update', 'destroy', 'profile_picture']:
             return [IsAuthenticated(), IsUserOwner()]
-        elif self.action == 'follow':
+        elif self.action in ['follow', 'block', 'blocked']:
             return [IsAuthenticated()]
         return []
 
@@ -90,10 +99,54 @@ class UserViewSet(viewsets.ModelViewSet):
         if user == request.user:
             raise ValidationError({'detail': CANNOT_FOLLOW_YOURSELF})
         if request.method == 'POST':
+            if user.is_blocked:
+                raise ValidationError({'detail': CANNOT_FOLLOW_BLOCKED})
             UserFollow.objects.get_or_create(follower=request.user, followed=user)
         else:
             UserFollow.objects.filter(follower=request.user, followed=user).delete()
         return Response(self.get_serializer(self.get_object()).data)
+
+    def list_follows(self, filters):
+        user = self.get_object()
+        # the users followed by / following this user, the most recent first
+        queryset = self.get_queryset().filter(**{filters: user}).order_by(f'-{filters.split("__")[0]}__created_at')
+        page = self.paginate_queryset(queryset)
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+    @action(detail=True, methods=['get'], url_path='following')
+    def following(self, request, id=None):
+        return self.list_follows('followers__follower')
+
+    @action(detail=True, methods=['get'], url_path='followers')
+    def followers(self, request, id=None):
+        return self.list_follows('following__followed')
+
+    def get_any_user(self):
+        """A user even if they blocked the viewer back: blocking and unblocking must always work."""
+        queryset = self.get_queryset(hide_blockers=False)
+        obj = generics.get_object_or_404(queryset, id=self.kwargs['id'])
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    @action(detail=True, methods=['post', 'delete'], url_path='block')
+    def block(self, request, id=None):
+        user = self.get_any_user()
+        if user == request.user:
+            raise ValidationError({'detail': CANNOT_BLOCK_YOURSELF})
+        if request.method == 'POST':
+            UserBlock.objects.get_or_create(blocker=request.user, blocked=user)
+            # neither of them follows the other anymore
+            UserFollow.objects.filter(follower=user, followed=request.user).delete()
+            UserFollow.objects.filter(follower=request.user, followed=user).delete()
+        else:
+            UserBlock.objects.filter(blocker=request.user, blocked=user).delete()
+        return Response(self.get_serializer(self.get_any_user()).data)
+
+    @action(detail=False, methods=['get'], url_path='blocked')
+    def blocked(self, request):
+        queryset = self.get_queryset(hide_blockers=False).filter(blocked_by__blocker=request.user).order_by('-blocked_by__created_at')
+        page = self.paginate_queryset(queryset)
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
 
 
 class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
@@ -109,6 +162,8 @@ class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):
         return super().get_serializer_class()
 
     def filter_queryset(self, queryset):
+        if not can_see_history(self.request.user, self.kwargs['user_id']):
+            return Media.objects.none() if self.is_series() else queryset.none()
         if self.is_series():
             return Media.objects.filter(type='series', history__user=self.kwargs['user_id']).annotate(
                 last_watch=Max('history__updated_at')
@@ -125,7 +180,7 @@ class UserMediasApiView(LangHistoryContext, generics.ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs.get('user_id') or self.request.user.id
-        if user_id is None:
+        if user_id is None or not can_see_history(self.request.user, user_id):
             return []
         medias = type(self).get_medias(self.request, user_id)
         media_type = self.kwargs.get('type')
@@ -151,6 +206,8 @@ class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
     serializer_class = SmallMediaSerializer
 
     def get_queryset(self):
+        if not can_see_history(self.request.user, self.kwargs['user_id']):
+            return Media.objects.none()
         queryset = Media.objects.filter(watchlist__user=self.kwargs['user_id'])
         media_type = self.request.query_params.get('type')
         if media_type in ('movies', 'series'):
@@ -159,13 +216,15 @@ class UserWatchlistApiView(LangHistoryContext, generics.ListAPIView):
 
 
 class UserFollowingActivityApiView(LangHistoryContext, generics.ListAPIView):
-    queryset = UserHistory.objects.select_related('user', 'media', 'episode')
+    # whether the friend also commented the media, whenever it was
+    queryset = UserHistory.objects.select_related('user', 'media', 'episode').annotate(
+        has_comment=Exists(Comment.objects.filter(user=OuterRef('user'), media=OuterRef('media'))))
     serializer_class = MediaActivitySerializer
     permission_classes = [IsAuthenticated]
 
     def filter_queryset(self, queryset):
         filters = {'complete': True, 'watched_at__gte': timezone.now() - timedelta(days=7)}
-        queryset = queryset.filter(user__followers__follower=self.request.user, **filters)
+        queryset = queryset.filter(history_visible(self.request.user, 'user'), user__followers__follower=self.request.user, **filters)
         if 'type' in self.kwargs:
             queryset = queryset.filter(media__type=self.kwargs['type'])
         return queryset.order_by('-watched_at')

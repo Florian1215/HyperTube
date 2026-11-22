@@ -65,7 +65,7 @@
     "stars": "Schauspieler",
     "synopsis": "Zusammenfassung",
     "posterAlt": "Filmplakat: {title}",
-    "mediaDownloading": "{type, select, series {Die Serie} other {Der Film}} wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
+    "mediaDownloading": "{type, select, series {Die Serie} other {Der Film}} wird heruntergeladen. Dies kann bis zu 20 Sekunden dauern. Bitte warten...",
     "torrentError": "Beim Abspielen {type, select, series {der Serie} other {des Films}} ist ein Fehler aufgetreten. Bitte versuchen Sie, die Seite zu aktualisieren oder später erneut.",
     "reloadPlayer": "Klicken Sie hier, um den Player neu zu laden",
     "audio": "Audio",
@@ -113,7 +113,8 @@
       "requestError": "Fehler bei der Anfrage: {error}",
       "chooseBackdrop": "Wählen Sie ein Hintergrundbild",
       "feature": "Diesen Film vorstellen"
-    }
+    },
+    "commented": "Hat kommentiert"
   },
   "people": {
     "cast": "Schauspieler",
@@ -173,7 +174,18 @@
     "profile": "Profil",
     "avatar": "Avatar",
     "password": "Passwort",
-    "account": "Konto"
+    "account": "Konto",
+    "historyVisibility": "Sichtbarkeit des Verlaufs",
+    "visibility": {
+      "public": "Öffentlich",
+      "friends": "Freunde",
+      "private": "Privat"
+    },
+    "visibilityDescription": {
+      "public": "Alle können deinen Verlauf, deine Watchlist und deine Kommentare auf deinem Profil sehen.",
+      "friends": "Nur Personen, denen du folgst und die dir folgen, können deinen Verlauf, deine Watchlist und deine Kommentare auf deinem Profil sehen.",
+      "private": "Nur du kannst deinen Verlauf, deine Watchlist und deine Kommentare auf deinem Profil sehen."
+    }
   },
   "profile": {
     "memberSince": "Mitglied seit {date}",
@@ -194,7 +206,24 @@
     "fields": {
       "submit": "Speichern",
       "username": "Benutzername"
-    }
+    },
+    "following": "{count} folgt",
+    "followers": "{count, plural, =1 {1 Follower} other {# Follower}}",
+    "followingTitle": "Folgt",
+    "followersTitle": "Follower",
+    "noFollowing": "Folgt noch niemandem.",
+    "noFollowers": "Noch keine Follower.",
+    "privateHistory": "Dieser Verlauf ist privat.",
+    "privateWatchlist": "Diese Watchlist ist privat.",
+    "privateComments": "Diese Kommentare sind privat.",
+    "block": "{username} blockieren",
+    "unblock": "{username} entsperren",
+    "unblockShort": "Entsperren",
+    "blocked": "{username} ist blockiert",
+    "unblocked": "{username} ist entsperrt",
+    "blockedTitle": "Blockierte Nutzer",
+    "noBlocked": "Du hast niemanden blockiert.",
+    "seeBlocked": "Blockierte Nutzer anzeigen"
   },
   "common": {
     "profilePictureAlt": "Profilbild",
@@ -325,5 +354,10 @@
     "connect": "Verbinden",
     "signinRequired": "Melden Sie sich an, um den Fernseher mit Ihrem Konto zu verbinden.",
     "signin": "Anmelden"
+  },
+  "updates": {
+    "banner": "Neues Update {version}",
+    "title": "Update {version}",
+    "close": "Ausblenden"
   }
 }

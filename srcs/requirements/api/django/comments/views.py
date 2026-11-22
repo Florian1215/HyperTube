@@ -8,6 +8,7 @@ from comments.serializers import CommentSerializer, CommentDetailSerializer
 from comments.permissions import IsOwner
 from medias.context import LangHistoryContext
 from medias.fetch import get_or_fetch_media
+from users.visibility import can_see_history
 
 
 class CommentAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -38,4 +39,7 @@ class CommentUserAPIView(LangHistoryContext, generics.ListAPIView):
     ordering_fields = ['updated_at']
 
     def get_queryset(self):
+        # the profile list follows the history visibility: comments stay visible under each media
+        if not can_see_history(self.request.user, self.kwargs['user_id']):
+            return Comment.objects.none()
         return Comment.objects.filter(user_id=self.kwargs['user_id'])
