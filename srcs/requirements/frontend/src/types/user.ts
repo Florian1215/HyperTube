@@ -22,5 +22,7 @@ export interface iUser {
     created_at: string
     perm?: string
     is_following?: boolean
+    following_count?: number
+    followers_count?: number
     preferred_language?: tPreferredLanguage
 }

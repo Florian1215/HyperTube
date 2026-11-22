@@ -26,6 +26,7 @@ import AuthModalLayout from "@/components/layout/AuthModalLayout";
 import NotificationList from "@/components/ui/Notifications";
 import UpdateBanner from "@/components/UpdateBanner";
 import UpdateModal from "@/components/UpdateModal";
+import FollowsModal from "@/components/FollowsModal";
 
 export const metadata: Metadata = {
     icons: {
@@ -86,6 +87,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <WatchedByModal/>
                             <SelectTorrentModal/>
                             <UpdateModal/>
+                            <FollowsModal/>
 
                             <UpdateBanner/>
                             <Navbar/>

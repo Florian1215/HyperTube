@@ -27,9 +27,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(UserSerializer):
     is_following = serializers.BooleanField(read_only=True)
+    following_count = serializers.IntegerField(read_only=True)
+    followers_count = serializers.IntegerField(read_only=True)
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['is_following']
+        fields = UserSerializer.Meta.fields + ['is_following', 'following_count', 'followers_count']
 
 
 class UserSettingsSerializer(UserSerializer):

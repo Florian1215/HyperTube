@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Max, Value, Exists, OuterRef
+from django.db.models import Count, Exists, Max, OuterRef, Value
 from django.utils import timezone
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -39,9 +39,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = super().get_queryset().annotate(
+            following_count=Count('following', distinct=True), followers_count=Count('followers', distinct=True))
         if not user.is_authenticated:
-            return super().get_queryset().annotate(is_following=Value(False))
-        return super().get_queryset().annotate(
+            return queryset.annotate(is_following=Value(False))
+        return queryset.annotate(
             is_following=Exists(UserFollow.objects.filter(follower=user, followed=OuterRef('pk')))
         )
 
@@ -50,7 +52,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return RegisterSerializer
         elif self.action in ['me', 'profile_picture']:
             return UserMeSerializer
-        elif self.action in ['list', 'retrieve', 'follow']:
+        elif self.action in ['list', 'retrieve', 'follow', 'following', 'followers']:
             return UserProfileSerializer
         elif self.action in ['update', 'partial_update']:
             return UserSettingsSerializer
@@ -94,6 +96,21 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             UserFollow.objects.filter(follower=request.user, followed=user).delete()
         return Response(self.get_serializer(self.get_object()).data)
+
+    def list_follows(self, filters):
+        user = self.get_object()
+        # the users followed by / following this user, the most recent first
+        queryset = self.get_queryset().filter(**{filters: user}).order_by(f'-{filters.split("__")[0]}__created_at')
+        page = self.paginate_queryset(queryset)
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+    @action(detail=True, methods=['get'], url_path='following')
+    def following(self, request, id=None):
+        return self.list_follows('followers__follower')
+
+    @action(detail=True, methods=['get'], url_path='followers')
+    def followers(self, request, id=None):
+        return self.list_follows('following__followed')
 
 
 class UserHistoryApiView(LangHistoryContext, generics.ListAPIView):

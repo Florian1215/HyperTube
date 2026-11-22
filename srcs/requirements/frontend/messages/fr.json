@@ -194,7 +194,13 @@
     "fields": {
       "submit": "Enregistrer",
       "username": "Nom d'utilisateur"
-    }
+    },
+    "following": "{count, plural, =0 {0 abonnement} =1 {1 abonnement} other {# abonnements}}",
+    "followers": "{count, plural, =0 {0 abonné} =1 {1 abonné} other {# abonnés}}",
+    "followingTitle": "Abonnements",
+    "followersTitle": "Abonnés",
+    "noFollowing": "Aucun abonnement pour le moment.",
+    "noFollowers": "Aucun abonné pour le moment."
   },
   "common": {
     "profilePictureAlt": "Photo de profil",

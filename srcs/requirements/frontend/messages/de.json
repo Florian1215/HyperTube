@@ -194,7 +194,13 @@
     "fields": {
       "submit": "Speichern",
       "username": "Benutzername"
-    }
+    },
+    "following": "{count} folgt",
+    "followers": "{count, plural, =1 {1 Follower} other {# Follower}}",
+    "followingTitle": "Folgt",
+    "followersTitle": "Follower",
+    "noFollowing": "Folgt noch niemandem.",
+    "noFollowers": "Noch keine Follower."
   },
   "common": {
     "profilePictureAlt": "Profilbild",

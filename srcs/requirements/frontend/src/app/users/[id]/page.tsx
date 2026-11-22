@@ -16,6 +16,7 @@ import ProfilePicture from "@/components/ProfilePicture";
 import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
 import PageMeta from "@/components/PageMeta";
+import useModal from "@/contexts/ModalContext";
 
 const tabs: tTab = [{name: "movies", comp: TabMovies}, {name: "series", comp: TabSeries}, {name: "watchlist", comp: TabWatchlist}, {name: "comments", comp: TabComments}];
 
@@ -33,6 +34,7 @@ export default function Page() {
     const tMeta = useTranslations("meta");
     const locale = useLocale();
     const {user: authUser, loading} = useAuth();
+    const {openModal} = useModal();
     const {data: user, error} = useUser(userId, !loading, authUser?.id);
     const meta = <PageMeta title={user?.username ?? tMeta("user")} description={user ? tMeta("userDescription", {username: user.username}) : undefined}/>;
     const {data: movies} = useUserHistory(user?.id, "movies");
@@ -72,6 +74,13 @@ export default function Page() {
                 <div className="flex flex-col items-start">
                     <h3>{user.username}</h3>
                     <p className="uppercase mb-2">{tProfile("memberSince", {date: memberSince})}</p>
+                    <div className="flex gap-4 text-sm">
+                        {(["following", "followers"] as const).map((list) =>
+                            <button key={list} className="hover:text-accent cursor-pointer font-light capitalize"
+                                    onClick={() => openModal({type: "follows", follows: {user, list}})}>
+                                {tProfile(list, {count: (list === "following" ? user.following_count : user.followers_count) ?? 0})}
+                            </button>)}
+                    </div>
                 </div>
             </div>
             <FollowButton user={user} className="w-32"/>
