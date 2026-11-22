@@ -16,6 +16,7 @@ import ProfilePicture from "@/components/ProfilePicture";
 import Tabs from "@/components/ui/Tabs";
 import FollowButton from "@/components/FollowButton";
 import PageMeta from "@/components/PageMeta";
+import {UserContextMenu} from "@/components/UserRightClick";
 import useModal from "@/contexts/ModalContext";
 
 const tabs: tTab = [{name: "movies", comp: TabMovies}, {name: "series", comp: TabSeries}, {name: "watchlist", comp: TabWatchlist}, {name: "comments", comp: TabComments}];
@@ -69,7 +70,7 @@ export default function Page() {
     return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-8 sm:mt-12">
         {meta}
         <div className="flex flex-col gap-4 items-center mb-6">
-            <div className="flex items-center gap-6 justify-center">
+            <UserContextMenu user={user}><div className="flex items-center gap-6 justify-center">
                 <ProfilePicture user={user} size={1}/>
                 <div className="flex flex-col items-start">
                     <h3>{user.username}</h3>
@@ -82,7 +83,7 @@ export default function Page() {
                             </button>)}
                     </div>
                 </div>
-            </div>
+            </div></UserContextMenu>
             <FollowButton user={user} className="w-32"/>
         </div>
         <Tabs tabs={tabs.map((tab) => t(tab.name))} counts={tabs.map((tab) => counts[tab.name])} activeTab={activeTab} onChange={switchTab}/>

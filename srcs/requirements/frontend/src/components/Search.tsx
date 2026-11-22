@@ -31,6 +31,7 @@ import computeTotalPage from "@/utils/computeTotalPage";
 import {iUser} from "@/types/user";
 import ProfilePicture from "@/components/ProfilePicture";
 import FollowButton from "@/components/FollowButton";
+import {UserContextMenu} from "@/components/UserRightClick";
 import useAuth from "@/contexts/AuthContext";
 import useModal from "@/contexts/ModalContext";
 import {Link} from "@/i18n/navigation";
@@ -227,13 +228,13 @@ function UsersResults({t, users}: {t: tT, users?: iUser[]}) {
 
     return (<div className="divide-gray divide-y gap-2 sm:gap-4 px-6">
         {users?.map((user) => (
-            <div key={user.id} className="flex items-center p-3 hover:bg-dwhite-light">
+            <UserContextMenu key={user.id} user={user}><div className="flex items-center p-3 hover:bg-dwhite-light">
                 <Link href={`/users/${user.id}`} className="flex flex-1 items-center gap-4">
                     <ProfilePicture user={user}/>
                     <span className="text-bold truncate text-dblack">{user.username}</span>
                 </Link>
                 <FollowButton user={user}/>
-            </div>
+            </div></UserContextMenu>
         ))}
     </div>);
 }

@@ -30,9 +30,10 @@ class UserProfileSerializer(UserSerializer):
     following_count = serializers.IntegerField(read_only=True)
     followers_count = serializers.IntegerField(read_only=True)
     can_see_history = serializers.BooleanField(read_only=True)
+    is_blocked = serializers.BooleanField(read_only=True)
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['is_following', 'following_count', 'followers_count', 'can_see_history']
+        fields = UserSerializer.Meta.fields + ['is_following', 'following_count', 'followers_count', 'can_see_history', 'is_blocked']
 
 
 class UserSettingsSerializer(UserSerializer):

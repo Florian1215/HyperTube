@@ -300,3 +300,12 @@ export function DownloadIcon({color="dblack", size=20}) {
         <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z" fill={fullColor}/>
     </svg>);
 }
+
+export function BlockIcon({color="dblack", size=20}) {
+    const fullColor = `var(--color-${color})`;
+
+    return (<svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke={fullColor} strokeWidth="2"/>
+        <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" stroke={fullColor} strokeWidth="2"/>
+    </svg>);
+}

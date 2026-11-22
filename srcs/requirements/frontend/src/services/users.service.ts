@@ -22,6 +22,18 @@ export function useUser(userId: string, enabled=true, viewerId?: number) {
     );
 }
 
+export function blockUser(locale: string, userId: number, block: boolean) {
+    return apiClient<iUser>(`users/${userId}/block/`, locale, {method: block ? "POST" : "DELETE"});
+}
+
+export function useBlockedUsers(enabled = true) {
+    return useApiInfiniteQuery<iUser>(
+        ["user-blocked"],
+        (locale, page, signal) => apiClient<tListResponse<iUser>>(`users/blocked/?page=${page}`, locale, {signal}),
+        enabled
+    );
+}
+
 export type tFollowList = "following" | "followers";
 
 export function useUserFollows(userId: number | undefined, list: tFollowList) {

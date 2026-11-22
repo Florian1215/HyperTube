@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.timezone import localtime
 
-from users.models import User, UserFollow, UserHistory, UserWatchlist
+from users.models import User, UserBlock, UserFollow, UserHistory, UserWatchlist
 
 
 HISTORY_LIMIT = 50
@@ -146,3 +146,11 @@ class UserWatchlistAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'media__original_title')
     autocomplete_fields = ('user', 'media')
     list_select_related = ('user', 'media')
+
+
+@admin.register(UserBlock)
+class UserBlockAdmin(admin.ModelAdmin):
+    list_display = ('blocker', 'blocked', 'created_at')
+    search_fields = ('blocker__username', 'blocked__username')
+    autocomplete_fields = ('blocker', 'blocked')
+    list_select_related = ('blocker', 'blocked')

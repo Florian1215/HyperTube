@@ -10,6 +10,7 @@ import useApiMutation from "@/hooks/useApiMutation";
 import {updateQuery} from "@/hooks/useApiQuery";
 import {followUser} from "@/services/users.service";
 import TagButton from "@/components/ui/Button/TagButton";
+import useBlockUser from "@/hooks/useBlockUser";
 
 export default function FollowButton({user, className}: {user: iUser, className?: string}) {
     const {user: authUser} = useAuth();
@@ -18,9 +19,17 @@ export default function FollowButton({user, className}: {user: iUser, className?
     const queryClient = useQueryClient();
     const t = useTranslations("profile");
     const [pending, setPending] = useState(false);
+    const toggleBlock = useBlockUser();
 
     if (authUser?.id === user.id)
         return null;
+    // a blocked user can't be followed: unblock first
+    if (user.is_blocked)
+        return (<TagButton disabled={pending} className={className} onClick={async () => {
+            setPending(true);
+            await toggleBlock(user, false);
+            setPending(false);
+        }}>{t("unblockShort")}</TagButton>);
 
     const handleFollow = async () => {
         if (!authUser) {

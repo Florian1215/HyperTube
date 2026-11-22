@@ -174,7 +174,10 @@ function AccountSection() {
         }});
     };
 
-    return (<div className="flex justify-center w-full">
+    return (<div className="flex flex-col items-center gap-6 w-full">
+        <button className="text-xs text-gray hover:text-dblack cursor-pointer" onClick={() => openModal({type: "blocked"})}>
+            {tProfile("seeBlocked")}
+        </button>
         <TextButton className="text-red hover:text-red-hover" onClick={handleDeleteAccount}>{tProfile("deleteAccount")}</TextButton>
     </div>);
 }

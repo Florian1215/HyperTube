@@ -25,30 +25,7 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     const {openModal} = useModal();
     const locale = useLocale();
 
-    useEffect(() => {
-        const closeMenu = () => setContextMenu(undefined);
-
-        const handleKeyDown = (ev: KeyboardEvent) => {
-            if (ev.key === "Escape") {
-                setContextMenu(undefined);
-            }
-        };
-
-        document.addEventListener("click", closeMenu);
-        document.addEventListener("keydown", handleKeyDown);
-        document.addEventListener("contextmenu", closeMenu, true);
-        document.addEventListener(CLOSE_MENUS_EVENT, closeMenu);
-        window.addEventListener("scroll", closeMenu, true);
-
-        return () => {
-            document.removeEventListener("click", closeMenu);
-            document.removeEventListener("keydown", handleKeyDown);
-            document.removeEventListener("contextmenu", closeMenu, true);
-            document.removeEventListener(CLOSE_MENUS_EVENT, closeMenu);
-            window.removeEventListener("scroll", closeMenu, true);
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    useCloseContextMenu(setContextMenu);
 
     const handleAction = async (action: () => Promise<iProgress | null>) => {
         try {
@@ -93,6 +70,34 @@ export default function MediaRightClick({user, media, contextMenu, setContextMen
     return null;
 }
 
+/** Closes a context menu on any click, scroll, Escape or other context menu. */
+export function useCloseContextMenu(setContextMenu: (val?: iAxe) => void) {
+    useEffect(() => {
+        const closeMenu = () => setContextMenu(undefined);
+
+        const handleKeyDown = (ev: KeyboardEvent) => {
+            if (ev.key === "Escape") {
+                setContextMenu(undefined);
+            }
+        };
+
+        document.addEventListener("click", closeMenu);
+        document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("contextmenu", closeMenu, true);
+        document.addEventListener(CLOSE_MENUS_EVENT, closeMenu);
+        window.addEventListener("scroll", closeMenu, true);
+
+        return () => {
+            document.removeEventListener("click", closeMenu);
+            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("contextmenu", closeMenu, true);
+            document.removeEventListener(CLOSE_MENUS_EVENT, closeMenu);
+            window.removeEventListener("scroll", closeMenu, true);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+}
+
 let lastPointerType: string | undefined;
 if (typeof window !== "undefined")
     window.addEventListener("pointerdown", (e) => lastPointerType = e.pointerType, {capture: true, passive: true});
@@ -127,7 +132,7 @@ export function useMediaRightClick(media?: iMedia) {
     return {onContextMenu, menu};
 }
 
-function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onClick: () => void, Icon?: React.ElementType}) {
+export function MenuAction({children, onClick, Icon}: {children: React.ReactNode, onClick: () => void, Icon?: React.ElementType}) {
     return (<button onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();

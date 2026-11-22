@@ -8,6 +8,7 @@ import formatURL from "@/utils/formatURL";
 import LoadingImage from "@/components/ui/LoadingImage";
 import HoverEffect from "@/components/ui/HoverEffect";
 import ProfilePicture from "@/components/ProfilePicture";
+import {UserContextMenu} from "@/components/UserRightClick";
 import EpisodeLabel from "@/components/EpisodeLabel";
 import {TitleMedia} from "@/components/Title";
 import {iMediaActivity} from "@/types/media";
@@ -43,10 +44,10 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
                 </div>}
             </Link>
             <div className="flex items-center gap-3 min-w-0 lg:contents">
-                <Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 lg:ml-4">
+                <UserContextMenu user={activity.user}><Link href={`/users/${activity.user.id}`} className="flex items-center gap-2 min-w-0 lg:ml-4">
                     <ProfilePicture size={3} user={activity.user}/>
                     <span className="hidden sm:block font-semibold truncate">{activity.user.username}</span>
-                </Link>
+                </Link></UserContextMenu>
                 <div className="flex items-center justify-end gap-2 sm:gap-4 ml-auto shrink-0">
                     {activity.rewatch && <span title={tMedia("rewatch")} className="flex items-center gap-1 text-sm">
                         <RewatchIcon/>
@@ -171,11 +172,12 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                 </HoverEffect>
             </Link>
             <div className="absolute top-1.5 right-1.5 z-10 flex items-center -space-x-2">
-                {users.slice(0, MAX_AVATARS).map((activity) =>
-                    <Link key={activity.user.id} href={`/users/${activity.user.id}`} className="shrink-0 hover:z-10"
+                {users.slice(0, MAX_AVATARS).map((activity) => <UserContextMenu key={activity.user.id} user={activity.user}>
+                    <Link href={`/users/${activity.user.id}`} className="shrink-0 hover:z-10"
                           title={activity.user.username + (activity.watched_at ? ` · ${formatRelativeDate(activity.watched_at, locale)}` : "")}>
                         <ProfilePicture size={3} user={activity.user}/>
-                    </Link>)}
+                    </Link>
+                </UserContextMenu>)}
                 {hiddenUsers > 0 && <span className="size-8 flex items-center justify-center rounded-full border bg-black text-white text-xs font-semibold"
                                           title={users.slice(MAX_AVATARS).map((activity) => activity.user.username).join(", ")}>+{hiddenUsers}</span>}
             </div>

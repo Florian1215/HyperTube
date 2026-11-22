@@ -66,6 +66,20 @@ class UserFollow(models.Model):
         return f'{self.follower} -> {self.followed}'
 
 
+class UserBlock(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocking')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['blocker', 'blocked'], name='unique_user_block')
+        ]
+
+    def __str__(self):
+        return f'{self.blocker} blocked {self.blocked}'
+
+
 class UserHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='history')
     media = models.ForeignKey('medias.Media', on_delete=models.CASCADE, related_name='history')

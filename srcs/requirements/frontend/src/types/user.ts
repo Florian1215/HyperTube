@@ -27,6 +27,7 @@ export interface iUser {
     following_count?: number
     followers_count?: number
     can_see_history?: boolean
+    is_blocked?: boolean
     history_visibility?: tHistoryVisibility
     preferred_language?: tPreferredLanguage
 }

@@ -27,6 +27,7 @@ import NotificationList from "@/components/ui/Notifications";
 import UpdateBanner from "@/components/UpdateBanner";
 import UpdateModal from "@/components/UpdateModal";
 import FollowsModal from "@/components/FollowsModal";
+import BlockedUsersModal from "@/components/BlockedUsersModal";
 
 export const metadata: Metadata = {
     icons: {
@@ -88,6 +89,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
                             <SelectTorrentModal/>
                             <UpdateModal/>
                             <FollowsModal/>
+                            <BlockedUsersModal/>
 
                             <UpdateBanner/>
                             <Navbar/>

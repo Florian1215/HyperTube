@@ -214,7 +214,15 @@
     "noFollowers": "Aucun abonné pour le moment.",
     "privateHistory": "Cet historique est privé.",
     "privateWatchlist": "Cette watchlist est privée.",
-    "privateComments": "Ces commentaires sont privés."
+    "privateComments": "Ces commentaires sont privés.",
+    "block": "Bloquer {username}",
+    "unblock": "Débloquer {username}",
+    "unblockShort": "Débloquer",
+    "blocked": "{username} est bloqué",
+    "unblocked": "{username} est débloqué",
+    "blockedTitle": "Utilisateurs bloqués",
+    "noBlocked": "Vous n'avez bloqué personne.",
+    "seeBlocked": "Voir les utilisateurs bloqués"
   },
   "common": {
     "profilePictureAlt": "Photo de profil",

@@ -6,7 +6,7 @@ import {iMedia, iMediaDetails, iPeople, iTorrent, iWatchedBy} from "@/types/medi
 import {iUpdate} from "@/types/update";
 import {iUser} from "@/types/user";
 
-type ModalType = "signin" | "register" | "genre" | "filter-genre" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | "log-media" | "update" | "follows" | null;
+type ModalType = "signin" | "register" | "genre" | "filter-genre" | "delete-confirmation" | "select-torrent" | "credits" | "watched-by" | "set-feature" | "log-media" | "update" | "follows" | "blocked" | null;
 
 export interface ModalState {
     type: ModalType;

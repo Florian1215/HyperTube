@@ -7,6 +7,7 @@ import ModalLayout from "@/components/layout/ModalLayout";
 import {Link} from "@/i18n/navigation";
 import ProfilePicture from "@/components/ProfilePicture";
 import FollowButton from "@/components/FollowButton";
+import {UserContextMenu} from "@/components/UserRightClick";
 import InfiniteScroll from "@/components/ui/InfiniteScroll";
 import {useUserFollows} from "@/services/users.service";
 
@@ -30,13 +31,13 @@ function FollowsList({userId, list, onClose}: {userId: number, list: "following"
             {isLoading ? loader : users.length === 0 ? <p className="p-2 text-gray">{t(list === "following" ? "noFollowing" : "noFollowers")}</p> :
                 <InfiniteScroll hasMore={!!hasNextPage} loading={isFetchingNextPage} onLoadMore={() => void fetchNextPage()} loader={loader}>
                     <div className="divide-y divide-gray">
-                        {users.map((user) => <div key={user.id} className="flex items-center gap-4 p-2 hover:bg-dwhite-light">
+                        {users.map((user) => <UserContextMenu key={user.id} user={user}><div className="flex items-center gap-4 p-2 hover:bg-dwhite-light">
                             <Link href={`/users/${user.id}`} onClick={onClose} className="flex flex-1 min-w-0 items-center gap-4">
                                 <ProfilePicture size={3} user={user}/>
                                 <span className="flex-1 min-w-0 truncate text-left font-semibold">{user.username}</span>
                             </Link>
                             <FollowButton user={user} className="w-28 shrink-0"/>
-                        </div>)}
+                        </div></UserContextMenu>)}
                     </div>
                 </InfiniteScroll>}
         </div>

@@ -214,7 +214,15 @@
     "noFollowers": "No followers yet.",
     "privateHistory": "This history is private.",
     "privateWatchlist": "This watchlist is private.",
-    "privateComments": "These comments are private."
+    "privateComments": "These comments are private.",
+    "block": "Block {username}",
+    "unblock": "Unblock {username}",
+    "unblockShort": "Unblock",
+    "blocked": "{username} is blocked",
+    "unblocked": "{username} is unblocked",
+    "blockedTitle": "Blocked users",
+    "noBlocked": "You haven't blocked anyone.",
+    "seeBlocked": "See blocked users"
   },
   "common": {
     "profilePictureAlt": "Profile picture",
