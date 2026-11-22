@@ -40,6 +40,9 @@ type tViewType = | "grid" | "list";
 
 const NO_PARAMS = new URLSearchParams();
 
+// quick search: a symbol key switches the searched type
+const TYPE_SHORTCUTS: Record<string, tSearch> = {"!": "movies", "@": "series", "#": "people", "$": "users"};
+
 export default function Search({modal = false}: {modal?: boolean}) {
     const urlParams = useSearchParams();
     const searchParams = modal ? NO_PARAMS : urlParams;
@@ -89,6 +92,15 @@ export default function Search({modal = false}: {modal?: boolean}) {
         if (!modal || hasModal)
             return;
         const handleKeyDown = (e: KeyboardEvent) => {
+            const shortcut = TYPE_SHORTCUTS[e.key];
+            if (shortcut && !e.isComposing && !e.ctrlKey && !e.metaKey) {
+                // the symbol switches the type instead of being typed
+                e.preventDefault();
+                localStorage.setItem("searchType", shortcut);
+                setTypeSearch(shortcut);
+                setPage(1);
+                return;
+            }
             if ((e.key !== "Tab" && e.key !== "Enter") || e.isComposing)
                 return;
             const hrefs = new Set<string>();
@@ -191,7 +203,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
         </div>
 
         {showResults && (isUsersSearch || isPeopleSearch) && <Pagination currentIndex={page} onClick={setPage} totalPage={computeTotalPage(found)} variableMT={true}>
-            <div ref={resultsRef}>
+            <div ref={resultsRef} data-search-results>
             {isUsersSearch ?
                 <UsersResults t={t} users={isUsersError ? [] : users?.results}/> :
                 <PeopleResults t={t} people={isPeopleError ? [] : people?.results}/>
@@ -200,7 +212,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
         </Pagination>}
         {showResults && !isUsersSearch && !isPeopleSearch && <InfiniteScroll hasMore={!isError && hasNextPage} loading={isFetchingNextPage} onLoadMore={loadMore}
                 loader={viewType === "grid" && debouncedSearch !== SEARCH_FRIENDS ? <MediasGrid className="mt-2 sm:mt-4"/> : <div className="px-6"><LoadingText/></div>}>
-            <div ref={resultsRef}>
+            <div ref={resultsRef} data-search-results>
                 <Results t={t} medias={isError ? [] : medias} search={debouncedSearch} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre} hasMore={!isError && hasNextPage}/>
             </div>
         </InfiniteScroll>}
