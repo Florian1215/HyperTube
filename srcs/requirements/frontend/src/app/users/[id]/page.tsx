@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useEffect, useState} from "react";
+import {PAGE_PX} from "@/utils/spacing";
 import useHandleError from "@/hooks/useHandleError";
 import {useUser, useUserHistory, useUserWatchlist} from "@/services/users.service";
 import {useProfileComments} from "@/services/comments.service";
@@ -67,7 +68,7 @@ export default function Page() {
         }
     }
 
-    return (<div className="flex flex-col gap-6 sm:gap-12 xl:gap-16 px-2 md:px-4 mt-8 sm:mt-12">
+    return (<div className={`flex flex-col gap-6 sm:gap-12 xl:gap-16 ${PAGE_PX} mt-8 sm:mt-12`}>
         {meta}
         <div className="flex flex-col gap-4 items-center mb-6">
             <UserContextMenu user={user}><div className="flex items-center gap-6 justify-center">

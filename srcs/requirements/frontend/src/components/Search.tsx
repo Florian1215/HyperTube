@@ -12,6 +12,7 @@ import {FriendsActivityList} from "@/components/FriendsActivity";
 import formatReleaseDate from "@/utils/formatReleaseDate";
 import CloseButton from "@/components/ui/Button/CloseButton";
 import MediasGrid from "@/components/MediasGrid";
+import {GAP, PAGE_PX} from "@/utils/spacing";
 import SmallText from "@/components/ui/SmallText";
 import IconButton from "@/components/ui/Button/IconButton";
 import {usePathname, useRouter} from "@/i18n/navigation";
@@ -176,9 +177,9 @@ export default function Search({modal = false}: {modal?: boolean}) {
 
     const searchBar = (<>
         {/* ---------- SEARCH BAR ---------- */}
-        <div className="relative flex items-center px-6">
+        <div className="relative flex items-center">
             <input id="search-bar" ref={inputRef} type="search" placeholder={t(typeSearch + "SearchPlaceholder")} value={searchValue} onChange={handleSearchChange} className="z-10 w-full text-5xl md:text-7xl xl:text-8xl 2xl:text-9xl font-condensed uppercase border-b focus:border-b-2" />
-            <CloseButton className="absolute right-8 z-20" disabled={!modal && searchValue.length === 0} onClickAction={() => {
+            <CloseButton className="absolute right-2 z-20" disabled={!modal && searchValue.length === 0} onClickAction={() => {
                 handleSearchChange();
                 if (modal)
                     closeSearch();
@@ -187,7 +188,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
     </>);
     const results = (<>
         {/* ---------- Filter ---------- */}
-        <div className="flex justify-between px-6 gap-4">
+        <div className="flex justify-between gap-4">
             <div className="min-w-0">
                 <HorizontalScroll className="gap-2 sm:gap-4">
                     {SEARCH_TYPES.map((type) => <RadioButton key={type} selected={typeSearch === type} onClick={() => handleChangeSearchType(type)}>{t(type)}</RadioButton>)}
@@ -211,7 +212,7 @@ export default function Search({modal = false}: {modal?: boolean}) {
             </div>
         </Pagination>}
         {showResults && !isUsersSearch && !isPeopleSearch && <InfiniteScroll hasMore={!isError && hasNextPage} loading={isFetchingNextPage} onLoadMore={loadMore}
-                loader={viewType === "grid" && debouncedSearch !== SEARCH_FRIENDS ? <MediasGrid className="mt-2 sm:mt-4"/> : <div className="px-6"><LoadingText/></div>}>
+                loader={viewType === "grid" && debouncedSearch !== SEARCH_FRIENDS ? <MediasGrid className="mt-4 xl:mt-6"/> : <LoadingText/>}>
             <div ref={resultsRef} data-search-results>
                 <Results t={t} medias={isError ? [] : medias} search={debouncedSearch} viewType={viewType} sort={sort} changeSort={changeSort} genre={genre} hasMore={!isError && hasNextPage}/>
             </div>
@@ -220,15 +221,15 @@ export default function Search({modal = false}: {modal?: boolean}) {
 
     if (modal)
         return (<>
-            <div className="bg-dwhite border-b px-2 md:px-4 xl:px-6 pb-4 md:pb-6 shrink-0">
+            <div className={`bg-dwhite border-b ${PAGE_PX} pb-4 xl:pb-6 shrink-0`}>
                 {searchBar}
             </div>
-            <div data-search-background="" className="dark-mode flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-2 md:gap-4 px-2 md:px-4 xl:px-6 py-4 md:py-6">
+            <div data-search-background="" className={`dark-mode flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col ${GAP} ${PAGE_PX} py-4 xl:py-6`}>
                 {results}
             </div>
         </>);
 
-    return (<div className="flex flex-col gap-2 md:gap-4 mx-2 md:mx-4 xl:mx-6 pb-2 md:pb-4 xl:pb-6">
+    return (<div className={`flex flex-col ${GAP} ${PAGE_PX} pb-4 xl:pb-6`}>
         {searchBar}
         {results}
     </div>);
@@ -238,7 +239,7 @@ function UsersResults({t, users}: {t: tT, users?: iUser[]}) {
     if (users && users.length === 0)
         return (<SmallText>{t("noUsers")}</SmallText>);
 
-    return (<div className="divide-gray divide-y gap-2 sm:gap-4 px-6">
+    return (<div className="divide-gray divide-y">
         {users?.map((user) => (
             <UserContextMenu key={user.id} user={user}><div className="flex items-center p-3 hover:bg-dwhite-light">
                 <Link href={`/users/${user.id}`} className="flex flex-1 items-center gap-4">
@@ -255,7 +256,7 @@ function PeopleResults({t, people}: {t: tT, people?: iPeople[]}) {
     if (people && people.length === 0)
         return (<SmallText>{t("noPeople")}</SmallText>);
 
-    return (<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 sm:gap-x-4 px-6">
+    return (<div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 ${GAP}`}>
         {people?.map((p) => <PeopleCard key={p.id} people={p}/>)}
     </div>);
 }
@@ -269,7 +270,7 @@ function Results({t, medias, search, viewType, sort, changeSort, genre, hasMore}
     if (search === SEARCH_UPCOMING)
         return (<MediasGrid mediaSets={medias} showEpisode={true} showProgress={false} getLabel={(media) => formatReleaseDate(media, locale)}/>);
     if (search === SEARCH_FRIENDS)
-        return (<div className="px-6"><FriendsActivityList activities={medias as iMediaActivity[] | undefined}/></div>);
+        return (<FriendsActivityList activities={medias as iMediaActivity[] | undefined}/>);
     if (search === SEARCH_CONTINUE)
         return (<MediasGrid mediaSets={medias} showEpisode={true}/>);
     if (search === SEARCH_DIRECTSTREAM)
