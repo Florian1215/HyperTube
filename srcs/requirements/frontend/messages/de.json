@@ -65,7 +65,7 @@
     "stars": "Schauspieler",
     "synopsis": "Zusammenfassung",
     "posterAlt": "Filmplakat: {title}",
-    "mediaDownloading": "{type, select, series {Die Serie} other {Der Film}} wird heruntergeladen. Dies kann bis zu 1 Minute dauern. Bitte warten...",
+    "mediaDownloading": "{type, select, series {Die Serie} other {Der Film}} wird heruntergeladen. Dies kann bis zu 20 Sekunden dauern. Bitte warten...",
     "torrentError": "Beim Abspielen {type, select, series {der Serie} other {des Films}} ist ein Fehler aufgetreten. Bitte versuchen Sie, die Seite zu aktualisieren oder später erneut.",
     "reloadPlayer": "Klicken Sie hier, um den Player neu zu laden",
     "audio": "Audio",

@@ -65,7 +65,7 @@
     "stars": "Acteurs",
     "synopsis": "Synopsis",
     "posterAlt": "Affiche du {title}",
-    "mediaDownloading": "Le téléchargement {type, select, series {de la série} other {du film}} est en cours. Cela peut prendre jusqu'à 1 minute. Veuillez patienter...",
+    "mediaDownloading": "Le téléchargement {type, select, series {de la série} other {du film}} est en cours. Cela peut prendre jusqu'à 20 secondes. Veuillez patienter...",
     "torrentError": "Erreur lors de la lecture {type, select, series {de la série} other {du film}}. Veuillez actualiser la page ou réessayer plus tard.",
     "reloadPlayer": "Cliquez ici pour recharger le lecteur",
     "audio": "Audio",
