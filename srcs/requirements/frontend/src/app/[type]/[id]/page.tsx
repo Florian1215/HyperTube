@@ -32,6 +32,11 @@ import {castToTv, useTvStatus} from "@/services/tv.service";
 
 const REQUESTABLE_DAYS = 365;
 
+/** Episode images are stored small (w500): the hero takes the original size from TMDB. */
+function getFullSizeImage(url: string) {
+    return url.replace(/(image\.tmdb\.org\/t\/p\/)w\d+\//, "$1original/");
+}
+
 function useUrlEpisode(type: tMedia) {
     const searchParams = useSearchParams();
     const season = Number(searchParams.get("season"));
@@ -65,6 +70,8 @@ export default function MediaPage() {
     const toggleWatchlist = useWatchlist();
     const featureBtn= (media && hasPerm(user, "medias.can_recommend_medias")) ? () => openModal({type: "set-feature", media: media}) : undefined;
     const [selectedEpisode, setSelectedEpisode] = useState<iWatchEpisode>();
+    // an episode picked in the list or opened from a link (friends activity) shows its own image in the hero
+    const [episodeChosen, setEpisodeChosen] = useState(false);
     const nextEpisode = media && "next_episode" in media ? media.next_episode : undefined;
     const urlEpisode = useUrlEpisode(type);
     const isNextEpisode = !urlEpisode || (urlEpisode.season === nextEpisode?.season_number && urlEpisode.episode === nextEpisode?.episode_number);
@@ -76,6 +83,22 @@ export default function MediaPage() {
     const {data: torrents, isLoading: torrentsLoading} = useTorrents(media, watchedEpisode.season, watchedEpisode.episode);
     const {data: season} = useSeason(id, watchedEpisode.season, type === "series");
     const episodeDetails = season?.episodes.find((e) => e.episode_number === watchedEpisode.episode);
+    const episodeBackdrop = type === "series" && (episodeChosen || !!urlEpisode) ? episodeDetails?.poster_url : undefined;
+    const heroMedia = media && episodeBackdrop ? {...media, backdrop_url: getFullSizeImage(episodeBackdrop)} : media;
+
+    // the episode asked in the URL becomes the selected one, then the URL is cleaned
+    useEffect(() => {
+        if (!urlEpisode || !media)
+            return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedEpisode(watchedEpisode);
+        setEpisodeChosen(true);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("season");
+        url.searchParams.delete("episode");
+        window.history.replaceState(window.history.state, "", url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [urlEpisode?.season, urlEpisode?.episode, media]);
     const queryClient = useQueryClient();
     const bestTorrent = getBestTorrent(torrents?.results, type === "series", season?.episodes.length);
     const unavailable = !!media && !torrentsLoading && !bestTorrent;
@@ -196,6 +219,7 @@ export default function MediaPage() {
     const selectEpisode = (episode: iWatchEpisode) => {
         closePlayer();
         setSelectedEpisode(episode);
+        setEpisodeChosen(true);
     }
 
     const showFollowingEpisode = () => {
@@ -249,7 +273,7 @@ export default function MediaPage() {
 
     return (<div className="flex flex-col gap-6 xl:gap-10">
         {meta}
-        <MediaHero media={media} childrenAction={() => {
+        <MediaHero media={heroMedia} childrenAction={() => {
             if (errorStr || !media)
                 return undefined;
             if (startVideo && streamPath && runtime !== undefined) {
