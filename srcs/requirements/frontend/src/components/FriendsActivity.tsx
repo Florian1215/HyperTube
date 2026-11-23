@@ -28,7 +28,7 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
 
     return (<div className="flex items-center gap-3 p-3 lg:grid lg:grid-cols-subgrid lg:col-span-full lg:gap-x-4 lg:gap-y-1">
         <div className="flex shrink-0 gap-4" onContextMenu={onContextMenu}>
-            <Link href={formatURL(activity)} title={activity.episode?.name || activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0">
+            <Link href={formatURL(activity, activity.episode)} title={activity.episode?.name || activity.title} className="relative w-28 sm:w-38 aspect-3/2 shrink-0">
                 <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border">
                     <LoadingImage className="size-full object-cover" width={400} height={225} src={activity.episode?.poster_url || activity.backdrop_url} alt={tMedia("posterAlt", {title: activity.episode?.name || activity.title})}/>
                     <div className="custom-noise opacity-30"/>
@@ -36,7 +36,7 @@ function FriendActivityRow({activity}: {activity: iMediaActivity}) {
             </Link>
         </div>
         <div className="flex flex-col flex-1 gap-1.5 min-w-0 lg:contents">
-            <Link href={formatURL(activity)} className="flex flex-col lg:flex-row lg:flex-wrap lg:items-baseline gap-x-2 min-w-0 lg:max-w-md group" onContextMenu={onContextMenu}>
+            <Link href={formatURL(activity, activity.episode)} className="flex flex-col lg:flex-row lg:flex-wrap lg:items-baseline gap-x-2 min-w-0 lg:max-w-md group" onContextMenu={onContextMenu}>
                 <span className="font-semibold uppercase line-clamp-2 lg:line-clamp-none group-hover:text-accent truncate">{activity.title}</span>
                 {activity.episode && <div className="flex items-baseline gap-2 min-w-0 text-sm text-gray">
                     <span className="shrink-0"><EpisodeLabel season={activity.episode.season_number} episode={activity.episode.episode_number}/></span>
@@ -136,7 +136,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     const hiddenUsers = users.length - MAX_AVATARS;
     const commenters = users.filter((activity) => activity.has_comment).map((activity) => activity.user.username);
 
-    const href = formatURL(media) + (media.episode ? `?season=${media.episode.season_number}&episode=${media.episode.episode_number}` : "");
+    const href = formatURL(media, media.episode);
     const [open, setOpen] = useState(false);
     const [selectedEpisode, setSelectedEpisode] = useState<string>();
     const ref = useRef<HTMLDivElement>(null);
@@ -224,7 +224,7 @@ function FriendActivityEpisodeLayer({episode, index, count, selected, onClick}: 
 
     return (<>
         {menu}
-        <Link href={`${formatURL(episode)}?season=${season_number}&episode=${episode_number}`} title={formatEpisodeNumber(episode_number) + (name ? ` · ${name}` : "")}
+        <Link href={formatURL(episode, episode.episode)} title={formatEpisodeNumber(episode_number) + (name ? ` · ${name}` : "")}
                   data-selected={selected || undefined} onClick={onClick}
                   onContextMenu={(e) => {
                       e.stopPropagation();

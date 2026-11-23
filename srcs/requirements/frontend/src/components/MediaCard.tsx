@@ -37,7 +37,7 @@ export default function MediaCard({media, user, className, showTitle=true, inHis
 
     const episode = (inHistory || showEpisode) ? media.episode : undefined;
 
-    return (<Link href={formatURL(media)} className={`block relative w-full aspect-10/7 group hover:z-10 ${className}`}
+    return (<Link href={formatURL(media, episode)} className={`block relative w-full aspect-10/7 group hover:z-10 ${className}`}
                   onContextMenu={handleContextMenu}>
         {user && media && <MediaRightClick user={user} media={media} contextMenu={contextMenu} setContextMenu={setContextMenu}
             seasonNumber={episode?.season_number}
