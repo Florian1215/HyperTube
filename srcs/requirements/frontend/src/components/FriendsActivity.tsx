@@ -193,7 +193,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                         </div>
                     </div>
                     {media.watched_at && <span title={media.rewatch ? tMedia("rewatch") : undefined}
-                                               className="absolute -top-px -left-px z-10 flex items-center gap-1 px-2 py-1 border-b border-r bg-white text-black text-xs font-bold leading-4 opacity-0 group-hover:opacity-100 group-data-open:opacity-100 transition-opacity duration-200">
+                                               className="absolute -top-px -left-px z-10 flex items-center gap-1 px-2 py-1 border-dblack border-b border-r rounded-b-sm  rounded-tr-sm bg-white text-black text-xs font-bold leading-4 opacity-0 group-hover:opacity-100 group-data-open:opacity-100 transition-opacity duration-200">
                         {media.rewatch ? <RewatchIcon size={11} color="black"/> : <EyeIcon size={13} color="black"/>}
                         {formatRelativeDate(media.watched_at, locale)}
                         {commenters.length > 0 && <span title={`${tMedia("commented")} · ${commenters.join(", ")}`} className="flex items-center ml-1">
