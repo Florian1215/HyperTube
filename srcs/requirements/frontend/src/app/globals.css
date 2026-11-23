@@ -109,6 +109,10 @@
         background-image: url("/noise.png");
     }
     .custom-noise-bg { @apply mix-blend-color-burn brightness-50 hidden sm:block; }
+    /* Safari (WebKit only knows this font keyword) renders the color-burn noise over the whole page as black: only the dimmed background is kept */
+    @supports (font: -apple-system-body) {
+        .custom-noise-bg { display: none !important; }
+    }
 
     @keyframes marquee {
         from {transform: translateX(0);}
