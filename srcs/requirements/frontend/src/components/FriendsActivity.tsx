@@ -105,6 +105,10 @@ export function groupActivities(activities: iMediaActivity[]) {
     return [...stacks.values()];
 }
 
+function isTouchScreen() {
+    return window.matchMedia("(hover: none)").matches;
+}
+
 function formatEpisodeNumber(episode: number) {
     return `E${String(episode).padStart(2, "0")}`;
 }
@@ -134,33 +138,49 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
 
     const href = formatURL(media) + (media.episode ? `?season=${media.episode.season_number}&episode=${media.episode.episode_number}` : "");
     const [open, setOpen] = useState(false);
+    const [selectedEpisode, setSelectedEpisode] = useState<string>();
     const ref = useRef<HTMLDivElement>(null);
+
+    const toggle = (value: boolean) => {
+        setOpen(value);
+        setSelectedEpisode(undefined);
+    };
 
     useEffect(() => {
         if (!open)
             return;
         const close = (e: PointerEvent) => {
             if (!ref.current?.contains(e.target as Node))
-                setOpen(false);
+                toggle(false);
         };
         document.addEventListener("pointerdown", close);
         return () => document.removeEventListener("pointerdown", close);
     }, [open]);
 
-    // On touch screens there is no hover: the first tap opens the stack, the second one follows the link (the stack is hidden on small screens)
+    // On touch screens there is no hover: a tap on a series opens or closes its episodes and the watch date, a movie follows its link
     const onFrontClick = (e: React.MouseEvent) => {
-        if (open || stack.length === 0 || !window.matchMedia("(hover: none) and (min-width: 40rem)").matches)
+        if (!isTouchScreen() || stack.length === 0)
+            return;
+        e.preventDefault();
+        toggle(!open);
+    };
+
+    // first tap on an episode brings it to the front, the second one follows its link
+    const onEpisodeClick = (e: React.MouseEvent, key: string) => {
+        if (!isTouchScreen() || (open && selectedEpisode === key))
             return;
         e.preventDefault();
         setOpen(true);
+        setSelectedEpisode(key);
     };
 
     return (<div ref={ref} data-open={open || undefined} onContextMenu={onContextMenu}
-                 className="group shrink-0 sm:pr-(--stack-pad) sm:hover:mr-(--stack-extra) sm:data-open:mr-(--stack-extra) transition-[margin] duration-300 ease-out"
+                 className="group shrink-0 pr-(--stack-pad) hover:mr-(--stack-extra) data-open:mr-(--stack-extra) transition-[margin] duration-300 ease-out"
                  style={{"--stack-pad": `${stack.length * STACK_OFFSET}px`, "--stack-extra": `${stack.length * (STACK_OFFSET_HOVER - STACK_OFFSET)}px`} as React.CSSProperties}>
         {menu}
         <div className="relative isolate w-[78vw] sm:w-80 xl:w-96">
-            {stack.map((episode, index) => <FriendActivityEpisodeLayer key={getActivityKey(episode)} episode={episode} index={index} count={stack.length}/>)}
+            {stack.map((episode, index) => <FriendActivityEpisodeLayer key={getActivityKey(episode)} episode={episode} index={index} count={stack.length}
+                                                                        selected={selectedEpisode === getActivityKey(episode)} onClick={(e) => onEpisodeClick(e, getActivityKey(episode))}/>)}
             <Link href={href} title={media.title} className="block relative aspect-3/2" onClick={onFrontClick}>
                 <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border rounded-xs">
                     <LoadingImage className="size-full object-cover" width={400} height={225} src={media.backdrop_url} alt={tMedia("posterAlt", {title: media.title})}/>
@@ -173,7 +193,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
                         </div>
                     </div>
                     {media.watched_at && <span title={media.rewatch ? tMedia("rewatch") : undefined}
-                                               className="absolute -top-px -left-px z-10 flex items-center gap-1 px-2 py-1 border-b border-r bg-white text-black text-xs font-bold leading-4 max-sm:hidden opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200">
+                                               className="absolute -top-px -left-px z-10 flex items-center gap-1 px-2 py-1 border-b border-r bg-white text-black text-xs font-bold leading-4 opacity-0 group-hover:opacity-100 group-data-open:opacity-100 transition-opacity duration-200">
                         {media.rewatch ? <RewatchIcon size={11} color="black"/> : <EyeIcon size={13} color="black"/>}
                         {formatRelativeDate(media.watched_at, locale)}
                         {commenters.length > 0 && <span title={`${tMedia("commented")} · ${commenters.join(", ")}`} className="flex items-center ml-1">
@@ -197,7 +217,7 @@ export function FriendActivityCard({activities}: {activities: iMediaActivity[]})
     </div>);
 }
 
-function FriendActivityEpisodeLayer({episode, index, count}: {episode: iMediaActivity, index: number, count: number}) {
+function FriendActivityEpisodeLayer({episode, index, count, selected, onClick}: {episode: iMediaActivity, index: number, count: number, selected: boolean, onClick: (e: React.MouseEvent) => void}) {
     const tSerie = useTranslations("serie");
     const {onContextMenu, menu} = useMediaRightClick(episode);
     const {season_number, episode_number, name, poster_url} = episode.episode!;
@@ -205,22 +225,23 @@ function FriendActivityEpisodeLayer({episode, index, count}: {episode: iMediaAct
     return (<>
         {menu}
         <Link href={`${formatURL(episode)}?season=${season_number}&episode=${episode_number}`} title={formatEpisodeNumber(episode_number) + (name ? ` · ${name}` : "")}
+                  data-selected={selected || undefined} onClick={onClick}
                   onContextMenu={(e) => {
                       e.stopPropagation();
                       onContextMenu(e);
                   }}
-                  className="group/layer absolute inset-0 z-(--layer-z) hover:z-20 max-sm:hidden sm:scale-y-[0.88] hover:scale-y-100
-                             sm:translate-x-(--stack-x) sm:group-hover:translate-x-(--stack-hover) sm:group-data-open:translate-x-(--stack-hover) sm:translate-y-(--stack-y) transition-[translate] duration-300 ease-out"
+                  className="group/layer absolute inset-0 z-(--layer-z) hover:z-20 data-selected:z-20 scale-y-[0.88] hover:scale-y-100 data-selected:scale-y-100
+                             translate-x-(--stack-x) group-hover:translate-x-(--stack-hover) group-data-open:translate-x-(--stack-hover) translate-y-(--stack-y) transition-[translate] duration-300 ease-out"
                   style={{"--stack-x": `${(index + 1) * STACK_OFFSET}px`, "--stack-hover": `${(index + 1) * STACK_OFFSET_HOVER}px`, "--stack-y": `${getStackY(index, count)}px`, "--layer-z": -1 - index} as React.CSSProperties}>
         <HoverEffect className="absolute inset-0" innerClassName="overflow-hidden border bg-black rounded-xs">
-            <LoadingImage className="size-full object-cover brightness-(--layer-brightness) group-hover/layer:brightness-100"
+            <LoadingImage className="size-full object-cover brightness-(--layer-brightness) group-hover/layer:brightness-100 group-data-selected/layer:brightness-100"
                           style={{"--layer-brightness": `${75 - index * 12}%`} as React.CSSProperties} width={400} height={225}
                           src={poster_url || episode.backdrop_url} alt={tSerie("altEpisode", {episode: episode_number, season: season_number, title: episode.title})}/>
             <div className="custom-noise opacity-30"/>
             <span className="absolute -top-px -right-px z-10 px-1.5 py-0.5 border-b border-l bg-white text-black text-xs font-bold leading-4 opacity-0 group-hover:opacity-100 group-data-open:opacity-100 transition-opacity duration-200 group-hover:delay-100 group-data-open:delay-100">
                 {formatEpisodeNumber(episode_number)}
             </span>
-            {name && <div className="absolute inset-0 flex items-end p-2 opacity-0 group-hover/layer:opacity-100">
+            {name && <div className="absolute inset-0 flex items-end p-2 opacity-0 group-hover/layer:opacity-100 group-data-selected/layer:opacity-100">
                 <div className="bg-gradient"/>
                 <p className="relative w-full text-xs opacity-70 text-white text-center truncate">{name}</p>
             </div>}
